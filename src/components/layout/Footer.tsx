@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import Container from '@/components/ui/Container';
 
 export default function Footer() {
@@ -153,8 +154,14 @@ export default function Footer() {
               <Link href="/" className="group flex items-center space-x-3 mb-8 w-fit">
                 <div className="relative">
                   <div className="absolute inset-0 bg-gradient-to-br from-primary to-primary/80 rounded-full blur-xl opacity-50 group-hover:opacity-100 transition-opacity duration-500"></div>
-                  <div className="relative w-14 h-14 rounded-full bg-gradient-to-br from-primary via-primary to-primary/80 flex items-center justify-center shadow-2xl shadow-primary/40 group-hover:shadow-primary/60 group-hover:scale-110 transition-all duration-500">
-                    <span className="text-white font-bold text-xl">JR</span>
+                  <div className="relative w-14 h-14 rounded-full bg-white/5 backdrop-blur-sm flex items-center justify-center shadow-2xl shadow-primary/40 group-hover:shadow-primary/60 group-hover:scale-110 transition-all duration-500 overflow-hidden">
+                    <Image
+                      src="/logo-oficial.webp"
+                      alt="Jardines del Renacer"
+                      width={56}
+                      height={56}
+                      className="object-contain p-1"
+                    />
                   </div>
                 </div>
                 <div>

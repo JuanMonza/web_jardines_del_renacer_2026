@@ -77,7 +77,7 @@ export default function Navbar() {
           <Link href="/" className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
             <div className="w-14 h-14 lg:w-16 lg:h-16 relative">
               <Image
-                src="/logo.png"
+                src="/logo-oficial.webp"
                 alt="Jardines del Renacer"
                 fill
                 className="object-contain"

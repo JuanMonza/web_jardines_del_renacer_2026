@@ -81,7 +81,7 @@ export default function DashboardLayout({
         <div className="absolute bottom-0 left-0 right-0 p-6 border-t border-border">
           <div className="glass rounded-xl p-4 border border-primary/20">
             <p className="text-xs text-primary font-medium mb-1">Jardines del Renacer</p>
-            <p className="text-[10px] text-textLight">Sistema de Gestión v1.0</p>
+            <p className="text-[10px] text-textLight">Sistema de Gestión v1.5.6</p>
           </div>
         </div>
       </aside>
