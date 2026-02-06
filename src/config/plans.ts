@@ -1,0 +1,111 @@
+/**
+ * Planes - Jardines del Renacer
+ * Configuración de todos los planes disponibles
+ */
+
+export const PLANS_CONFIG = {
+  excellence: {
+    id: "excellence",
+    name: "Excellence",
+    tagline: "Lo mejor para tu familia",
+    price: "Desde $XXX/mes",
+    image: "/plans/excellence.jpg",
+    featured: true,
+    benefits: [
+      "Sala premium",
+      "Ataúd de lujo",
+      "Carroza especial",
+      "Arreglos florales incluidos",
+      "Ceremonia personalizada",
+      "Asesoría legal completa",
+      "Libro de condolencias digital",
+      "Transmisión en vivo",
+    ],
+  },
+  exequial: {
+    id: "exequial",
+    name: "Exequial",
+    tagline: "Servicio completo",
+    price: "Desde $XXX/mes",
+    image: "/plans/exequial.jpg",
+    featured: false,
+    benefits: [
+      "Sala estándar",
+      "Ataúd clásico",
+      "Carroza tradicional",
+      "Arreglo floral básico",
+      "Ceremonia estándar",
+      "Asesoría básica",
+      "Libro de condolencias",
+    ],
+  },
+  premium: {
+    id: "premium",
+    name: "Premium",
+    tagline: "Elegancia y dignidad",
+    price: "Desde $XXX/mes",
+    image: "/plans/premium.jpg",
+    featured: true,
+    benefits: [
+      "Sala VIP",
+      "Ataúd premium",
+      "Carroza de lujo",
+      "Arreglos florales exclusivos",
+      "Ceremonia especial",
+      "Asesoría completa",
+      "Video homenaje",
+      "Música en vivo",
+    ],
+  },
+  familiar: {
+    id: "familiar",
+    name: "Familiar",
+    tagline: "Protege a los tuyos",
+    price: "Desde $XXX/mes",
+    image: "/plans/familiar.jpg",
+    featured: false,
+    benefits: [
+      "Cobertura para toda la familia",
+      "Sala familiar",
+      "Ataúd estándar",
+      "Carroza",
+      "Arreglos florales",
+      "Asesoría básica",
+      "Hasta 6 beneficiarios",
+    ],
+  },
+  corporativo: {
+    id: "corporativo",
+    name: "Corporativo",
+    tagline: "Beneficio empresarial",
+    price: "Cotización especial",
+    image: "/plans/corporativo.jpg",
+    featured: false,
+    benefits: [
+      "Planes para colaboradores",
+      "Tarifas preferenciales",
+      "Gestión centralizada",
+      "Asesoría empresarial",
+      "Reportes mensuales",
+      "Soporte prioritario",
+    ],
+  },
+  mascotas: {
+    id: "mascotas",
+    name: "Mascotas",
+    tagline: "También son familia",
+    price: "Desde $XXX",
+    image: "/plans/mascotas.jpg",
+    featured: false,
+    benefits: [
+      "Cremación individual",
+      "Urna personalizada",
+      "Certificado",
+      "Jardín del recuerdo",
+      "Placa conmemorativa",
+      "Ceremonia opcional",
+    ],
+  },
+} as const;
+
+export type PlanId = keyof typeof PLANS_CONFIG;
