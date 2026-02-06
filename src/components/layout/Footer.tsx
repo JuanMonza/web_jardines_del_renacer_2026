@@ -86,17 +86,17 @@ export default function Footer() {
   return (
     <footer className="mt-20 relative overflow-hidden">
       {/* Animated Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary-dark to-primary">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(255,255,255,0.1),rgba(255,255,255,0))]"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-[#3C60A2]/95 via-[#2f4d82]/90 to-[#3C60A2]/95 backdrop-blur-2xl">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(255,255,255,0.15),rgba(255,255,255,0))]"></div>
       </div>
       
       {/* Content */}
-      <div className="relative z-10 border-t border-white/10 text-white">
+      <div className="relative z-10 border-t border-white/20 text-white">
         {/* Newsletter Section */}
-        <div className="relative bg-gradient-to-r from-primary-dark via-primary to-primary-dark py-16 overflow-hidden">
+        <div className="relative glass py-16 overflow-hidden border-b border-white/10">
           {/* Decorative elements */}
-          <div className="absolute top-0 right-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
+          <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-white/5 rounded-full blur-3xl"></div>
           
           <Container maxWidth="2xl">
             <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8">
