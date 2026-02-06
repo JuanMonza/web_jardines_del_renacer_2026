@@ -13,7 +13,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const userData = localStorage.getItem('user');
+    const userData = localStorage.getItem('adminUser');
     if (!userData) {
       router.push('/login/admin');
       return;
@@ -23,7 +23,7 @@ export default function DashboardPage() {
   }, [router]);
 
   const handleLogout = () => {
-    localStorage.removeItem('user');
+    localStorage.removeItem('adminUser');
     router.push('/');
   };
 
