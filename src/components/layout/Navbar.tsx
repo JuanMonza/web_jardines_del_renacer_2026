@@ -17,7 +17,7 @@ export default function Navbar() {
   ];
 
   return (
-    <nav className="fixed w-full z-50 top-0 left-0 bg-gradient-to-b from-primary to-primary/95 backdrop-blur-md shadow-lg">
+    <nav className="fixed w-full z-50 top-0 left-0 bg-gradient-to-b from-[#3C60A2] to-[#3C60A2]/95 backdrop-blur-md shadow-lg">
       <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="relative flex items-center justify-between h-20">
           {/* Desktop Navigation - Izquierda */}
