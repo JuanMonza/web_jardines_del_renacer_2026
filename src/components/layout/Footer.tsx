@@ -86,14 +86,14 @@ export default function Footer() {
   return (
     <footer className="mt-20 relative overflow-hidden">
       {/* Animated Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#0a1929] via-[#0d2137] to-[#0a1929]">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(120,119,198,0.1),rgba(255,255,255,0))]"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary-dark to-primary">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(255,255,255,0.1),rgba(255,255,255,0))]"></div>
       </div>
       
       {/* Content */}
       <div className="relative z-10 border-t border-white/10 text-white">
         {/* Newsletter Section */}
-        <div className="relative bg-gradient-to-r from-[#1a4d5e] via-[#2d5a6e] to-[#1a4d5e] py-16 overflow-hidden">
+        <div className="relative bg-gradient-to-r from-primary-dark via-primary to-primary-dark py-16 overflow-hidden">
           {/* Decorative elements */}
           <div className="absolute top-0 right-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl"></div>
           <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
@@ -136,7 +136,7 @@ export default function Footer() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="px-10 py-3.5 rounded-xl bg-white text-[#1a4d5e] hover:bg-gradient-to-r hover:from-primary hover:to-primary/90 hover:text-white transition-all duration-300 font-bold whitespace-nowrap shadow-2xl hover:shadow-primary/50 hover:scale-105 hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:translate-y-0"
+                    className="px-10 py-3.5 rounded-xl bg-white text-primary hover:bg-gradient-to-r hover:from-primary hover:to-primary-hover hover:text-white transition-all duration-300 font-bold whitespace-nowrap shadow-2xl hover:shadow-primary/50 hover:scale-105 hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:translate-y-0"
                   >
                     {loading ? 'Enviando...' : 'REGISTRARSE'}
                   </button>

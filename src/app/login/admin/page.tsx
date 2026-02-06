@@ -88,10 +88,10 @@ export default function AdminLoginPage() {
             {/* Header */}
             <div className="text-center mb-10">
               <div className="relative inline-block mb-6">
-                <div className="absolute inset-0 bg-red-500/20 rounded-full blur-xl animate-pulse"></div>
-                <div className="relative w-24 h-24 mx-auto rounded-full glass border-2 border-red-500/30 flex items-center justify-center">
+                <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl animate-pulse"></div>
+                <div className="relative w-24 h-24 mx-auto rounded-full glass border-2 border-primary/30 flex items-center justify-center">
                   <svg 
-                    className="w-12 h-12 text-red-600" 
+                    className="w-12 h-12 text-primary" 
                     fill="none" 
                     stroke="currentColor" 
                     viewBox="0 0 24 24"
@@ -105,22 +105,22 @@ export default function AdminLoginPage() {
                   </svg>
                 </div>
               </div>
-              <h1 className="text-4xl font-display text-text mb-3 bg-gradient-to-r from-text to-red-600 bg-clip-text text-transparent">
+              <h1 className="text-4xl font-display text-text mb-3 bg-gradient-to-r from-text to-primary bg-clip-text text-transparent">
                 Acceso Administrativo
               </h1>
               <p className="text-textLight text-lg">
                 Panel de Gestión de Obituarios
               </p>
-              <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-red-500/20">
+              <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-primary/20">
                 <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
                 <span className="text-xs text-textLight font-medium">Acceso Restringido - Solo Administradores</span>
               </div>
             </div>
 
             {/* Login Card */}
-            <div className="glass border-2 border-red-500/20 p-8 rounded-3xl shadow-2xl backdrop-blur-xl relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-20 h-20 border-t-2 border-l-2 border-red-500/30 rounded-tl-3xl"></div>
-              <div className="absolute bottom-0 right-0 w-20 h-20 border-b-2 border-r-2 border-red-500/30 rounded-br-3xl"></div>
+            <div className="glass border-2 border-primary/20 p-8 rounded-3xl shadow-2xl backdrop-blur-xl relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-20 h-20 border-t-2 border-l-2 border-primary/30 rounded-tl-3xl"></div>
+              <div className="absolute bottom-0 right-0 w-20 h-20 border-b-2 border-r-2 border-primary/30 rounded-br-3xl"></div>
               
               <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
                 <div className="group">
@@ -163,7 +163,7 @@ export default function AdminLoginPage() {
                     htmlFor="password" 
                     className="text-sm font-semibold text-text mb-3 flex items-center gap-2"
                   >
-                    <svg className="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="w-4 h-4 text-primary" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
                     </svg>
                     Contraseña
@@ -177,9 +177,9 @@ export default function AdminLoginPage() {
                       value={formData.password}
                       onChange={handleChange}
                       required
-                      className="w-full pl-12 h-12 text-lg border-2 border-transparent focus:border-red-500/50 transition-all"
+                      className="w-full pl-12 h-12 text-lg border-2 border-transparent focus:border-primary/50 transition-all"
                     />
-                    <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-red-600/50">
+                    <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-primary/50">
                       <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M18 8a6 6 0 01-7.743 5.743L10 14l-1 1-1 1H6v2H2v-4l4.257-4.257A6 6 0 1118 8zm-6-4a1 1 0 100 2 2 2 0 012 2 1 1 0 102 0 4 4 0 00-4-4z" clipRule="evenodd" />
                       </svg>
@@ -188,8 +188,8 @@ export default function AdminLoginPage() {
                 </div>
 
                 {error && (
-                  <div className="p-4 rounded-xl bg-red-500/10 border-2 border-red-500/30 animate-shake">
-                    <p className="text-sm text-red-600 flex items-center gap-2 font-medium">
+                  <div className="p-4 rounded-xl bg-primary/10 border-2 border-primary/30 animate-shake">
+                    <p className="text-sm text-primary flex items-center gap-2 font-medium">
                       <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                       </svg>
@@ -198,8 +198,8 @@ export default function AdminLoginPage() {
                   </div>
                 )}
 
-                <div className="p-5 rounded-xl bg-gradient-to-br from-red-500/5 via-red-500/10 to-red-500/5 border-2 border-red-500/20">
-                  <p className="text-xs font-bold text-red-600 mb-3 flex items-center gap-2">
+                <div className="p-5 rounded-xl bg-gradient-to-br from-primary/5 via-primary/10 to-primary/5 border-2 border-primary/20">
+                  <p className="text-xs font-bold text-primary mb-3 flex items-center gap-2">
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clipRule="evenodd" />
                     </svg>
@@ -208,11 +208,11 @@ export default function AdminLoginPage() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between p-2 rounded-lg bg-white/50">
                       <span className="text-xs text-textLight font-medium">Cédula:</span>
-                      <span className="text-sm font-mono font-bold text-red-600">1234567890</span>
+                      <span className="text-sm font-mono font-bold text-primary">1234567890</span>
                     </div>
                     <div className="flex items-center justify-between p-2 rounded-lg bg-white/50">
                       <span className="text-xs text-textLight font-medium">Contraseña:</span>
-                      <span className="text-sm font-mono font-bold text-red-600">admin123</span>
+                      <span className="text-sm font-mono font-bold text-primary">admin123</span>
                     </div>
                   </div>
                 </div>

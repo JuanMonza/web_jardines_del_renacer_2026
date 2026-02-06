@@ -24,7 +24,7 @@ export default function DashboardLayout({
         {/* Profile Section */}
         <div className="p-6 border-b border-border">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-pink-500 flex items-center justify-center text-white font-bold text-xl shadow-lg">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-primary-hover flex items-center justify-center text-white font-bold text-xl shadow-lg">
               {user?.name?.charAt(0).toUpperCase() || 'A'}
             </div>
             <div className="flex-1">
