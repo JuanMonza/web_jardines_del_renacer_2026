@@ -37,8 +37,9 @@ export default function FloatingButtons() {
 
   return (
     <>
-      {/* Botón Scroll to Top - Esquina inferior izquierda */}
-      <div className="fixed bottom-6 left-6 z-50">
+      {/* Botones lado izquierdo - Esquina inferior izquierda */}
+      <div className="fixed bottom-6 left-6 z-40 flex flex-col gap-3">
+        {/* Botón Scroll to Top */}
         <button
           onClick={scrollToTop}
           className={cn(
@@ -67,14 +68,11 @@ export default function FloatingButtons() {
             Volver arriba
           </span>
         </button>
-      </div>
 
-      {/* Botones flotantes - Esquina inferior derecha */}
-      <div className="fixed bottom-6 right-6 z-40 flex flex-col gap-3">
         {/* Botón Reportar Fallecimiento 24/7 */}
         <button
           onClick={reportarFallecimiento}
-          className="group relative w-14 h-14 bg-gradient-to-br from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-full shadow-lg hover:shadow-2xl transition-all duration-300 flex items-center justify-center hover:scale-110 active:scale-95 border-2 border-red-500/30"
+          className="group relative w-14 h-14 bg-gradient-to-br from-[#3C60A2] to-[#2B4A7C] hover:from-[#2B4A7C] hover:to-[#1a3558] text-white rounded-full shadow-lg hover:shadow-2xl transition-all duration-300 flex items-center justify-center hover:scale-110 active:scale-95 border-2 border-[#3C60A2]/50"
           aria-label="Reportar Fallecimiento 24/7"
         >
           {/* Ícono de teléfono con pulso */}
@@ -87,21 +85,23 @@ export default function FloatingButtons() {
               <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
             </svg>
             {/* Badge 24/7 */}
-            <span className="absolute -top-1 -right-1 bg-white text-red-600 text-[8px] font-bold px-1 py-0.5 rounded-full shadow-md">
+            <span className="absolute -top-1 -right-1 bg-white text-[#3C60A2] text-[8px] font-bold px-1 py-0.5 rounded-full shadow-md">
               24/7
             </span>
           </div>
 
           {/* Tooltip */}
-          <span className="absolute right-full mr-3 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none shadow-xl">
+          <span className="absolute left-full ml-3 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none shadow-xl">
             Reportar Fallecimiento 24/7
           </span>
 
           {/* Pulso animado permanente */}
-          <span className="absolute inset-0 rounded-full bg-red-600 animate-ping opacity-30"></span>
+          <span className="absolute inset-0 rounded-full bg-[#3C60A2] animate-ping opacity-30"></span>
         </button>
+      </div>
 
-        {/* Botón de WhatsApp */}
+      {/* Botón WhatsApp - Esquina inferior derecha */}
+      <div className="fixed bottom-6 right-6 z-50">
         <button
           onClick={openWhatsApp}
           className="group relative w-14 h-14 bg-[#25D366] hover:bg-[#20BA5A] text-white rounded-full shadow-lg hover:shadow-2xl transition-all duration-300 flex items-center justify-center hover:scale-110 active:scale-95"
@@ -133,13 +133,13 @@ export default function FloatingButtons() {
           onClick={() => setShowModal(false)}
         >
           <div 
-            className="glass rounded-3xl border-2 border-primary/30 p-8 max-w-md w-full shadow-2xl"
+            className="glass rounded-3xl border-2 border-primary/30 p-8 max-w-md w-full shadow-2xl relative"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Botón cerrar */}
             <button
               onClick={() => setShowModal(false)}
-              className="absolute top-4 right-4 w-10 h-10 rounded-full bg-teal-600 hover:bg-teal-700 text-white flex items-center justify-center transition-colors"
+              className="absolute top-4 right-4 w-10 h-10 rounded-full bg-[#3C60A2] hover:bg-[#2B4A7C] text-white flex items-center justify-center transition-colors z-10"
               aria-label="Cerrar"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -174,11 +174,11 @@ export default function FloatingButtons() {
               {/* Botón principal */}
               <a
                 href="tel:8004296776"
-                className="flex items-center justify-between w-full rounded-2xl bg-gradient-to-r from-lime-400 to-yellow-300 hover:from-lime-500 hover:to-yellow-400 text-gray-800 p-4 shadow-lg hover:shadow-xl transition-all group"
+                className="flex items-center justify-between w-full rounded-2xl bg-gradient-to-r from-[#3C60A2] to-[#2B4A7C] hover:from-[#2B4A7C] hover:to-[#1a3558] text-white p-4 shadow-lg hover:shadow-xl transition-all group"
               >
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-teal-600 flex items-center justify-center flex-shrink-0">
-                    <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center flex-shrink-0">
+                    <svg className="w-6 h-6 text-[#3C60A2]" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
                     </svg>
                   </div>

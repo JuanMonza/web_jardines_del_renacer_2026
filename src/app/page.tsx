@@ -22,21 +22,26 @@ export default function HomePage() {
             src="/images/hero-parque.jpg"
             alt="Jardines del Renacer"
             fill
-            className="object-cover"
+            className="object-cover brightness-100"
             priority
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-background" />
+          {/* Overlay sutil solo en la parte del texto para legibilidad */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/30" />
         </div>
 
         <Container className="relative z-10 text-center text-white">
           <FadeIn>
-            <h1 className="text-5xl md:text-7xl font-display mb-6 text-balance">
+            <h1 className="text-5xl md:text-7xl font-display mb-6 text-balance drop-shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-1000">
               Un lugar para recordar, un espacio para renacer
             </h1>
-            <p className="text-xl md:text-2xl mb-8 max-w-2xl mx-auto text-balance">
+          </FadeIn>
+          <FadeIn delay={0.3}>
+            <p className="text-xl md:text-2xl mb-8 max-w-2xl mx-auto text-balance drop-shadow-lg animate-in fade-in slide-in-from-bottom-6 duration-1000 delay-300">
               Cuidando de cada detalle para una despedida con amor
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          </FadeIn>
+          <FadeIn delay={0.6}>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-500">
               <Link href="#conoce-mas">
                 <Button variant="primary" size="lg">
                   Conoce Más

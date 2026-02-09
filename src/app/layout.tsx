@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import FloatingButtons from '@/components/ui/FloatingButtons';
+import Preloader from '@/components/layout/Preloader';
 
 export default function RootLayout({
   children,
@@ -22,8 +23,9 @@ export default function RootLayout({
         <link rel="icon" href="/logos_jr_favico.png" />
       </head>
       <body className="antialiased">
+        <Preloader />
         {!isDashboard && <Navbar />}
-        <main className={!isDashboard ? "pt-20" : ""}>
+        <main className={!isDashboard ? "pt-16" : ""}>
           {children}
         </main>
         {!isDashboard && <Footer />}
