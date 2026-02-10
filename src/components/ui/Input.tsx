@@ -7,7 +7,7 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
 }
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, label, error, type = 'text', ...props }, ref) => {
+  ({ className, label, error, type = 'text', disabled, ...props }, ref) => {
     return (
       <div className="w-full">
         {label && (
@@ -18,6 +18,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         <input
           ref={ref}
           type={type}
+          disabled={disabled}
           className={cn(
             'w-full px-4 py-3 rounded-xl',
             'glass',
@@ -26,6 +27,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             'focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent',
             'transition-all duration-300',
             error && 'border-red-500 focus:ring-red-500',
+            disabled && 'opacity-60 cursor-not-allowed bg-gray-100',
             className
           )}
           {...props}
