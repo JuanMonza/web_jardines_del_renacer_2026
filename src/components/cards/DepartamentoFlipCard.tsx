@@ -24,8 +24,18 @@ const DEPT_ACCENT: Record<string, { from: string; to: string }> = {
 // Imágenes reales por slug de departamento
 // Agrega aquí el nombre de archivo cuando tengas la imagen de cada departamento
 const DEPT_IMAGES: Record<string, string> = {
-  'antioquia': 'ronyr3-sunset-6006537_1920.webp',
-    'arauca': 'denisdoukhan-capybara-3979875_1920.webp',
+  'antioquia':     'ronyr3-sunset-6006537_1920.webp',
+  'arauca':        'denisdoukhan-capybara-3979875_1280.webp',
+  'atlantico':     'camiluisa4237-woman-8297321_1280.webp',
+  'bogota-dc':     'banner-bogota-colombia.webp',
+  'cauca':         'makalu-colombia-4915141_1280.webp',
+  'cundinamarca':  '6585638b8a22c2f261065224_candelaria.webp',
+  'huila':         'aleafar-tatacoa-6292128_1280.webp',
+  'meta':          'denisdoukhan-capybara-3979875_1280.webp',
+  'risaralda':     'denisdoukhan-capybara-3979875_1280.webp',
+  'santander':     'denisdoukhan-capybara-3979875_1280.webp',
+  'tolima':        'denisdoukhan-capybara-3979875_1280.webp',
+  'valle-del-cauca': 'denisdoukhan-capybara-3979875_1280.webp',
 };
 
 interface DepartamentoFlipCardProps {
