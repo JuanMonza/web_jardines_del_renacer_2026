@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Container from '@/components/ui/Container';
 import Button from '@/components/ui/Button';
 import FadeIn from '@/components/animations/FadeIn';
 import Link from 'next/link';
 
-export default function PagoExitosoPage() {
+function PagoExitosoContent() {
   const searchParams = useSearchParams();
   const [transactionId, setTransactionId] = useState<string | null>(null);
   const [status, setStatus] = useState<string>('processing');
@@ -15,8 +15,6 @@ export default function PagoExitosoPage() {
   useEffect(() => {
     // Obtener datos de la transacción de la URL
     const id = searchParams.get('id');
-    const amount = searchParams.get('amount');
-    const method = searchParams.get('method');
     
     setTransactionId(id);
 
@@ -174,5 +172,13 @@ export default function PagoExitosoPage() {
         </FadeIn>
       </Container>
     </div>
+  );
+}
+
+export default function PagoExitosoPage() {
+  return (
+    <Suspense fallback={null}>
+      <PagoExitosoContent />
+    </Suspense>
   );
 }

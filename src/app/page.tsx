@@ -82,8 +82,8 @@ export default function HomePage() {
                 link: '/planes',
               },
               {
-                title: 'Homenajes Digitales',
-                description: 'Preserva la memoria con obituarios y galerías online',
+                title: 'Siempre Contigo',
+                description: '"Cerca, Incluso cuando no puedes estar"',
                 icon: '',
                 link: '/obituarios',
               },

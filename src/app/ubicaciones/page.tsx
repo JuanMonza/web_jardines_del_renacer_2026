@@ -6,7 +6,7 @@ import Container from '@/components/ui/Container';
 import SectionTitle from '@/components/ui/SectionTitle';
 import FadeIn from '@/components/animations/FadeIn';
 import { SEDES, getAllDepartamentos } from '@/data/sedes';
-import { CIUDAD_IMAGES } from '@/config/ciudades';
+import { getCiudadImagePath } from '@/config/ciudades';
 
 export default function UbicacionesPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -112,7 +112,10 @@ export default function UbicacionesPage() {
                 </div>
               )}
 
-              {filtered.map((sede, index) => (
+              {filtered.map((sede, index) => {
+                const cityImage = getCiudadImagePath(sede.departamento, sede.ciudad);
+
+                return (
                 <FadeIn key={sede.id} delay={Math.min(index * 0.05, 0.4)}>
                   <div
                     onClick={() => setSelectedId(sede.id === selectedId ? null : sede.id)}
@@ -125,10 +128,10 @@ export default function UbicacionesPage() {
                     <div className="flex gap-4">
                       {/* Imagen de la ciudad */}
                       <div className="relative w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-primary/10 border border-primary/20 flex items-center justify-center">
-                        {CIUDAD_IMAGES[sede.ciudad] ? (
+                        {cityImage ? (
                           <Image
-                            src={`/images/ciudades/${CIUDAD_IMAGES[sede.ciudad]}`}
-                            alt={sede.ciudad}
+                            src={cityImage}
+                            alt={`${sede.ciudad}, ${sede.departamento}`}
                             fill
                             className="object-cover"
                           />
@@ -209,7 +212,8 @@ export default function UbicacionesPage() {
                     </div>
                   </div>
                 </FadeIn>
-              ))}
+                );
+              })}
             </div>
 
             {/* Panel Mapa */}

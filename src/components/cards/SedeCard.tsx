@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import type { Sede } from '@/data/sedes';
-import { CIUDAD_IMAGES } from '@/config/ciudades';
+import { getCiudadImagePath } from '@/config/ciudades';
 
 interface SedeCardProps {
   sede: Sede;
@@ -9,6 +9,7 @@ interface SedeCardProps {
 export default function SedeCard({ sede }: SedeCardProps) {
   const phoneDigits = sede.telefono.replace(/\s/g, '');
   const phoneHref = phoneDigits ? `tel:+57${phoneDigits}` : null;
+  const cityImage = getCiudadImagePath(sede.departamento, sede.ciudad);
 
   const mapsQuery = encodeURIComponent(
     `${sede.direccion}, ${sede.ciudad}, ${sede.departamento}, Colombia`,
@@ -22,10 +23,10 @@ export default function SedeCard({ sede }: SedeCardProps) {
       {/* ── Zona superior con imagen de ciudad ─────────────── */}
       <div className="relative h-[280px] bg-gradient-to-br from-primary/20 via-primary/10 to-[#e8edf5] overflow-hidden">
         {/* Imagen de fondo de la ciudad */}
-        {CIUDAD_IMAGES[sede.ciudad] && (
+        {cityImage && (
           <Image
-            src={`/images/ciudades/${CIUDAD_IMAGES[sede.ciudad]}`}
-            alt={sede.ciudad}
+            src={cityImage}
+            alt={`${sede.ciudad}, ${sede.departamento}`}
             fill
             className="object-cover"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
