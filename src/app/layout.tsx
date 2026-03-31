@@ -6,6 +6,7 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import FloatingButtons from '@/components/ui/FloatingButtons';
 import Preloader from '@/components/layout/Preloader';
+import MonthlyGiveawayPopup from '@/components/layout/MonthlyGiveawayPopup';
 
 export default function RootLayout({
   children,
@@ -24,6 +25,7 @@ export default function RootLayout({
       </head>
       <body className="antialiased">
         <Preloader />
+        {!isDashboard && <MonthlyGiveawayPopup />}
         {!isDashboard && <Navbar />}
         <main className={!isDashboard ? "pt-16" : ""}>
           {children}

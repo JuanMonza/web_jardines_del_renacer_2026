@@ -1,12 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import Container from '@/components/ui/Container';
 import SectionTitle from '@/components/ui/SectionTitle';
 import Input from '@/components/ui/Input';
 import Textarea from '@/components/ui/Textarea';
 import Button from '@/components/ui/Button';
 import FadeIn from '@/components/animations/FadeIn';
+import { CONTACT_INFO, buildWhatsAppUrl } from '@/config/contact';
 
 export default function ContactoPage() {
   const [formData, setFormData] = useState({
@@ -142,8 +144,13 @@ export default function ContactoPage() {
                       </div>
                       <div>
                         <h4 className="font-semibold text-text mb-1">Teléfono</h4>
-                        <p className="text-textLight">+57 300 123 4567</p>
-                        <p className="text-textLight">Línea gratuita: 01 8000 123 456</p>
+                        <a
+                          href={CONTACT_INFO.primaryLine.href}
+                          className="text-textLight hover:text-primary transition-colors"
+                        >
+                          {CONTACT_INFO.primaryLine.number}
+                        </a>
+                        <p className="text-textLight">{CONTACT_INFO.primaryLine.detail}</p>
                       </div>
                     </div>
 
@@ -154,9 +161,16 @@ export default function ContactoPage() {
                         </svg>
                       </div>
                       <div>
-                        <h4 className="font-semibold text-text mb-1">Email</h4>
-                        <p className="text-textLight">info@jardinesdelrenacer.com</p>
-                        <p className="text-textLight">atencion@jardinesdelrenacer.com</p>
+                        <h4 className="font-semibold text-text mb-1">WhatsApp</h4>
+                        <a
+                          href={buildWhatsAppUrl()}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-textLight hover:text-primary transition-colors"
+                        >
+                          {CONTACT_INFO.whatsappDisplay}
+                        </a>
+                        <p className="text-textLight">Respuesta rápida y orientación inicial</p>
                       </div>
                     </div>
 
@@ -168,9 +182,14 @@ export default function ContactoPage() {
                         </svg>
                       </div>
                       <div>
-                        <h4 className="font-semibold text-text mb-1">Dirección</h4>
-                        <p className="text-textLight">Calle 123 #45-67</p>
-                        <p className="text-textLight">Bogotá, Colombia</p>
+                        <h4 className="font-semibold text-text mb-1">Sedes</h4>
+                        <p className="text-textLight">Cobertura nacional con atención presencial</p>
+                        <Link
+                          href={CONTACT_INFO.locationsHref}
+                          className="text-primary hover:underline"
+                        >
+                          Ver ubicaciones y líneas por ciudad
+                        </Link>
                       </div>
                     </div>
 
@@ -182,10 +201,35 @@ export default function ContactoPage() {
                       </div>
                       <div>
                         <h4 className="font-semibold text-text mb-1">Horario</h4>
-                        <p className="text-textLight">Atención 24 horas</p>
+                        <p className="text-textLight">{CONTACT_INFO.supportHours}</p>
                         <p className="text-textLight">Todos los días del año</p>
                       </div>
                     </div>
+                  </div>
+                </div>
+
+                <div className="glass rounded-2xl p-8">
+                  <h3 className="text-xl font-display mb-4 text-text">
+                    Líneas Regionales
+                  </h3>
+                  <div className="space-y-3">
+                    {CONTACT_INFO.regionalLines.map((line) => (
+                      <a
+                        key={line.label}
+                        href={line.href}
+                        className="flex items-center justify-between rounded-xl glass border border-border px-4 py-3 hover:border-primary/40 transition-colors"
+                      >
+                        <div>
+                          <p className="text-xs uppercase tracking-[0.18em] text-primary mb-1">
+                            {line.label}
+                          </p>
+                          <p className="text-text font-semibold">{line.number}</p>
+                        </div>
+                        <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14m-7-7l7 7-7 7" />
+                        </svg>
+                      </a>
+                    ))}
                   </div>
                 </div>
 
@@ -197,7 +241,7 @@ export default function ContactoPage() {
                     Para casos de urgencia, contáctanos por WhatsApp:
                   </p>
                   <a 
-                    href="https://wa.me/573001234567" 
+                    href={buildWhatsAppUrl('Hola, necesito orientacion inmediata sobre los servicios de Jardines del Renacer.')}
                     target="_blank" 
                     rel="noopener noreferrer"
                   >
@@ -208,6 +252,11 @@ export default function ContactoPage() {
                       Chatear por WhatsApp
                     </Button>
                   </a>
+                  <Link href={CONTACT_INFO.locationsHref} className="block mt-3">
+                    <Button variant="secondary" className="w-full">
+                      Ver sedes en todo Colombia
+                    </Button>
+                  </Link>
                 </div>
               </div>
             </FadeIn>

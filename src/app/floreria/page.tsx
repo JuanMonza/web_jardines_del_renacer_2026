@@ -8,6 +8,7 @@ import SectionTitle from '@/components/ui/SectionTitle';
 import FadeIn from '@/components/animations/FadeIn';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
+import { CONTACT_INFO, buildWhatsAppUrl } from '@/config/contact';
 
 interface ArregloFloral {
   id: string;
@@ -172,8 +173,7 @@ export default function FloreriaPage() {
       `Fecha entrega: ${formData.fechaEntrega}\n\n` +
       `*Mensaje en tarjeta:*\n${formData.mensaje}`;
 
-    const phoneNumber = '573001234567'; // Reemplazar con tu número
-    const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(mensaje)}`;
+    const url = buildWhatsAppUrl(mensaje);
     
     window.open(url, '_blank');
     setShowModal(false);
@@ -456,8 +456,7 @@ export default function FloreriaPage() {
                         carrito.map((item, i) => `${i + 1}. ${item.nombre} - $${item.precio.toLocaleString('es-CO')}`).join('\n') +
                         `\n\n*TOTAL: $${calcularTotal().toLocaleString('es-CO')}*\n\n` +
                         `Por favor, necesito información para completar mi pedido.`;
-                      const phoneNumber = '573001234567';
-                      window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(mensaje)}`, '_blank');
+                      window.open(buildWhatsAppUrl(mensaje), '_blank');
                     }}
                     className="flex-1 h-14 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white rounded-xl font-semibold transition-all hover:scale-105 flex items-center justify-center gap-2"
                   >
@@ -596,7 +595,7 @@ export default function FloreriaPage() {
               </Button>
 
               <p className="text-xs text-textLight text-center">
-                Al hacer clic, se abrirá WhatsApp con tu pedido listo para enviar
+                Al hacer clic, se abrirá WhatsApp en la línea corporativa {CONTACT_INFO.whatsappDisplay} con tu pedido listo para enviar
               </p>
             </form>
           </motion.div>

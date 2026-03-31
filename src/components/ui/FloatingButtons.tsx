@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { CONTACT_INFO, buildWhatsAppUrl } from '@/config/contact';
 
 export default function FloatingButtons() {
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -25,10 +27,7 @@ export default function FloatingButtons() {
   };
 
   const openWhatsApp = () => {
-    // Reemplaza con tu número de WhatsApp (incluye código de país sin el +)
-    const phoneNumber = '573001234567'; // Ejemplo: 57 (Colombia) + número
-    const message = encodeURIComponent('Hola, me gustaría obtener más información sobre sus servicios.');
-    window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank');
+    window.open(buildWhatsAppUrl(), '_blank');
   };
 
   const reportarFallecimiento = () => {
@@ -37,13 +36,12 @@ export default function FloatingButtons() {
 
   return (
     <>
-      {/* Botones lado izquierdo - Esquina inferior izquierda */}
-      <div className="fixed bottom-6 left-6 z-40 flex flex-col gap-3">
+      <div className="fixed bottom-5 left-4 z-40 flex flex-col gap-3 sm:bottom-6 sm:left-6">
         {/* Botón Scroll to Top */}
         <button
           onClick={scrollToTop}
           className={cn(
-            'group relative w-14 h-14 glass border border-primary/30 text-primary hover:bg-primary hover:text-white rounded-full shadow-lg hover:shadow-2xl transition-all duration-300 flex items-center justify-center hover:scale-110 active:scale-95',
+            'group relative w-12 h-12 glass border border-primary/25 text-primary hover:bg-primary hover:text-white rounded-full shadow-lg hover:shadow-2xl transition-all duration-300 flex items-center justify-center hover:scale-110 active:scale-95',
             showScrollTop ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
           )}
           aria-label="Volver arriba"
@@ -69,14 +67,17 @@ export default function FloatingButtons() {
           </span>
         </button>
 
-        {/* Botón Reportar Fallecimiento 24/7 */}
         <button
           onClick={reportarFallecimiento}
-          className="group relative w-14 h-14 bg-gradient-to-br from-[#3C60A2] to-[#2B4A7C] hover:from-[#2B4A7C] hover:to-[#1a3558] text-white rounded-full shadow-lg hover:shadow-2xl transition-all duration-300 flex items-center justify-center hover:scale-110 active:scale-95 border-2 border-[#3C60A2]/50"
+          className="group relative flex items-center rounded-full bg-white/85 backdrop-blur-xl border border-white/70 shadow-[0_20px_45px_rgba(23,43,77,0.16)] hover:shadow-[0_24px_55px_rgba(23,43,77,0.22)] transition-all duration-500 ease-out active:scale-[0.98] p-2"
           aria-label="Reportar Fallecimiento 24/7"
         >
-          {/* Ícono de teléfono con pulso */}
-          <div className="relative">
+          <span
+            aria-hidden="true"
+            className="absolute left-2 top-1/2 h-16 w-16 -translate-y-1/2 rounded-full bg-primary/12 blur-sm"
+          />
+
+          <div className="relative z-10 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-[#3C60A2] to-[#27497E] text-white shadow-lg shadow-primary/25">
             <svg
               className="w-6 h-6"
               fill="currentColor"
@@ -84,45 +85,56 @@ export default function FloatingButtons() {
             >
               <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
             </svg>
-            {/* Badge 24/7 */}
-            <span className="absolute -top-1 -right-1 bg-white text-[#3C60A2] text-[8px] font-bold px-1 py-0.5 rounded-full shadow-md">
+
+            <span className="absolute -top-1 -right-1 rounded-full bg-white px-1.5 py-0.5 text-[9px] font-bold text-primary shadow-md">
               24/7
             </span>
           </div>
 
-          {/* Tooltip */}
-          <span className="absolute left-full ml-3 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none shadow-xl">
-            Reportar Fallecimiento 24/7
+          <span className="relative z-10 hidden overflow-hidden transition-all duration-500 ease-out sm:block sm:max-w-0 sm:translate-x-[-6px] sm:opacity-0 sm:group-hover:max-w-[260px] sm:group-hover:translate-x-0 sm:group-hover:opacity-100">
+            <span className="block pl-3 pr-4 text-left whitespace-nowrap">
+              <span className="block text-[11px] font-semibold uppercase tracking-[0.24em] text-primary/70">
+                Servicio 24/7
+              </span>
+              <span className="block text-sm font-bold uppercase tracking-[0.08em] text-primary">
+                Reportar fallecimiento
+              </span>
+            </span>
           </span>
-
-          {/* Pulso animado permanente */}
-          <span className="absolute inset-0 rounded-full bg-[#3C60A2] animate-ping opacity-30"></span>
         </button>
       </div>
 
-      {/* Botón WhatsApp - Esquina inferior derecha */}
-      <div className="fixed bottom-6 right-6 z-50">
+      <div className="fixed bottom-5 right-4 z-50 sm:bottom-6 sm:right-6">
         <button
           onClick={openWhatsApp}
-          className="group relative w-14 h-14 bg-[#25D366] hover:bg-[#20BA5A] text-white rounded-full shadow-lg hover:shadow-2xl transition-all duration-300 flex items-center justify-center hover:scale-110 active:scale-95"
+          className="group relative flex items-center rounded-full bg-white/85 backdrop-blur-xl border border-white/70 shadow-[0_20px_45px_rgba(18,60,33,0.16)] hover:shadow-[0_24px_55px_rgba(18,60,33,0.22)] transition-all duration-500 ease-out active:scale-[0.98] p-2"
           aria-label="Contactar por WhatsApp"
         >
-          {/* Icono de WhatsApp */}
-          <svg
-            className="w-7 h-7"
-            fill="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-          </svg>
+          <span
+            aria-hidden="true"
+            className="absolute left-2 top-1/2 h-16 w-16 -translate-y-1/2 rounded-full bg-green-500/15 blur-sm"
+          />
 
-          {/* Tooltip */}
-          <span className="absolute right-full mr-3 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-            Chatea con nosotros
+          <div className="relative z-10 flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg shadow-green-500/30">
+            <svg
+              className="w-7 h-7"
+              fill="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+            </svg>
+          </div>
+
+          <span className="relative z-10 hidden overflow-hidden transition-all duration-500 ease-out sm:block sm:max-w-0 sm:translate-x-[-6px] sm:opacity-0 sm:group-hover:max-w-[240px] sm:group-hover:translate-x-0 sm:group-hover:opacity-100">
+            <span className="block pl-3 pr-4 text-left whitespace-nowrap">
+              <span className="block text-[11px] font-semibold uppercase tracking-[0.24em] text-green-700/70">
+                WhatsApp
+              </span>
+              <span className="block text-sm font-bold uppercase tracking-[0.08em] text-green-700">
+                Chatea con nosotros
+              </span>
+            </span>
           </span>
-
-          {/* Pulso animado */}
-          <span className="absolute inset-0 rounded-full bg-[#25D366] animate-ping opacity-20"></span>
         </button>
       </div>
 
@@ -149,48 +161,78 @@ export default function FloatingButtons() {
 
             {/* Contenido del modal */}
             <div className="space-y-6">
-              {/* Opción 1: Desde tu teléfono */}
-              <div className="glass rounded-2xl p-6 border border-border">
-                <p className="text-textLight text-sm mb-2">Desde tu teléfono</p>
-                <a 
-                  href="tel:8004296776"
+              <div className="glass rounded-2xl p-6 border border-primary/20">
+                <p className="text-textLight text-sm mb-2">{CONTACT_INFO.deathReportLine.label}</p>
+                <a
+                  href={CONTACT_INFO.deathReportLine.href}
                   className="text-3xl font-bold text-text hover:text-primary transition-colors block"
                 >
-                  800 4296776
+                  {CONTACT_INFO.deathReportLine.number}
                 </a>
+                <p className="text-sm text-textLight mt-2">
+                  {CONTACT_INFO.deathReportLine.detail}
+                </p>
               </div>
 
-              {/* Opción 2: Desde tu móvil */}
-              <div className="glass rounded-2xl p-6 border border-border">
-                <p className="text-textLight text-sm mb-2">Desde tu móvil</p>
-                <a 
-                  href="tel:*247"
-                  className="text-4xl font-bold text-text hover:text-primary transition-colors block"
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {CONTACT_INFO.regionalLines.map((line) => (
+                  <a
+                    key={line.label}
+                    href={line.href}
+                    className="glass rounded-2xl p-4 border border-border hover:border-primary/40 transition-colors"
+                  >
+                    <p className="text-xs uppercase tracking-[0.18em] text-primary mb-1">
+                      {line.label}
+                    </p>
+                    <p className="text-lg font-semibold text-text">{line.number}</p>
+                  </a>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <a
+                  href={buildWhatsAppUrl('Hola, necesito orientacion inmediata sobre los servicios de Jardines del Renacer.')}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between rounded-2xl bg-green-500 text-white p-4 shadow-lg hover:shadow-xl transition-all group"
                 >
-                  *247
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                      </svg>
+                    </div>
+                    <div className="text-left">
+                      <p className="font-bold text-base leading-tight">WhatsApp</p>
+                      <p className="text-sm opacity-90">{CONTACT_INFO.whatsappDisplay}</p>
+                    </div>
+                  </div>
+                  <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
                 </a>
-              </div>
 
-              {/* Botón principal */}
-              <a
-                href="tel:8004296776"
-                className="flex items-center justify-between w-full rounded-2xl bg-gradient-to-r from-[#3C60A2] to-[#2B4A7C] hover:from-[#2B4A7C] hover:to-[#1a3558] text-white p-4 shadow-lg hover:shadow-xl transition-all group"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center flex-shrink-0">
-                    <svg className="w-6 h-6 text-[#3C60A2]" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
-                    </svg>
+                <Link
+                  href={CONTACT_INFO.locationsHref}
+                  className="flex items-center justify-between rounded-2xl glass border border-primary/20 text-text p-4 shadow-lg hover:shadow-xl transition-all group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    </div>
+                    <div className="text-left">
+                      <p className="font-bold text-base leading-tight">Buscar sede</p>
+                      <p className="text-sm text-textLight">Encuentra tu punto mas cercano</p>
+                    </div>
                   </div>
-                  <div className="text-left">
-                    <p className="font-bold text-lg leading-tight">Reportar fallecimiento</p>
-                    <p className="text-sm font-semibold">ATENCIÓN 24/7</p>
-                  </div>
-                </div>
-                <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </a>
+                  <svg className="w-5 h-5 text-primary group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
+              </div>
             </div>
           </div>
         </div>

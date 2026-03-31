@@ -9,6 +9,9 @@ import PlanFlipCard from '@/components/cards/PlanFlipCard';
 import AlliesMarquee from '@/components/animations/AlliesMarquee';
 import FadeIn from '@/components/animations/FadeIn';
 import { PLANS_CONFIG } from '@/config/plans';
+import { CONTACT_INFO, buildWhatsAppUrl } from '@/config/contact';
+
+const PARQUE_CONMEMORATIVO_URL = 'https://www.parqueconmemorativo.com/';
 
 export default function HomePage() {
   const featuredPlans = Object.values(PLANS_CONFIG).filter(plan => plan.featured);
@@ -183,7 +186,7 @@ export default function HomePage() {
               <div className="glass rounded-2xl overflow-hidden group hover:shadow-glass-lg transition-all duration-300">
                 <div className="relative h-64 overflow-hidden">
                   <Image
-                    src="/images/parque-conmemorativo.jpg"
+                    src="/images/parque-conmemorativo-2026.webp"
                     alt="Parque Conmemorativo"
                     fill
                     className="object-cover group-hover:scale-110 transition-transform duration-500"
@@ -197,11 +200,19 @@ export default function HomePage() {
                   </div>
                 </div>
                 <div className="p-6 text-center">
-                  <Link href="/parque-conmemorativo">
-                    <Button variant="outline" size="md" className="w-full">
+                  <a
+                    href={PARQUE_CONMEMORATIVO_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Button
+                      variant="outline"
+                      size="md"
+                      className="w-full border-primary bg-white/95 text-primary hover:border-primary hover:bg-primary hover:text-white"
+                    >
                       Ver Más
                     </Button>
-                  </Link>
+                  </a>
                 </div>
               </div>
             </FadeIn>
@@ -246,9 +257,9 @@ export default function HomePage() {
               subtitle="Red de confianza al servicio de tu familia"
             />
           </FadeIn>
-
-          <AlliesMarquee />
         </Container>
+
+        <AlliesMarquee />
       </section>
 
       {/* Contacto Final */}
@@ -262,17 +273,44 @@ export default function HomePage() {
               <p className="text-lg text-textLight mb-8">
                 Nuestro equipo está disponible 24/7 para atenderte con profesionalismo y calidez
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link href="/contacto">
-                  <Button variant="primary" size="lg">
-                    Contactar Ahora
-                  </Button>
-                </Link>
-                <Link href="/agendar-visita">
-                  <Button variant="outline" size="lg">
-                    Agendar Visita
-                  </Button>
-                </Link>
+
+              <div className="glass rounded-3xl p-6 md:p-8 border border-primary/15 text-left">
+                <div className="grid grid-cols-1 md:grid-cols-[1.1fr,0.9fr] gap-6 items-center">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.22em] text-primary mb-2">
+                      Contacto inmediato
+                    </p>
+                    <p className="text-2xl font-display text-text mb-2">
+                      {CONTACT_INFO.primaryLine.number}
+                    </p>
+                    <p className="text-textLight">
+                      {CONTACT_INFO.primaryLine.detail}. También puedes escribirnos por WhatsApp o encontrar la sede más cercana.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <a
+                      href={buildWhatsAppUrl()}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded-2xl bg-green-500 text-white px-5 py-4 text-center font-semibold hover:bg-green-600 transition-colors"
+                    >
+                      WhatsApp
+                    </a>
+                    <Link
+                      href={CONTACT_INFO.locationsHref}
+                      className="rounded-2xl glass border border-primary/20 px-5 py-4 text-center font-semibold text-primary hover:bg-primary/5 transition-colors"
+                    >
+                      Ver sedes
+                    </Link>
+                    <Link href="/contacto" className="rounded-2xl glass border border-primary/20 px-5 py-4 text-center font-semibold text-text hover:bg-primary/5 transition-colors">
+                      Formulario
+                    </Link>
+                    <Link href="/agendar-visita" className="rounded-2xl glass border border-primary/20 px-5 py-4 text-center font-semibold text-text hover:bg-primary/5 transition-colors">
+                      Agendar visita
+                    </Link>
+                  </div>
+                </div>
               </div>
             </FadeIn>
           </div>
