@@ -9,7 +9,7 @@ export const PLANS_CONFIG = {
     name: "Excellence",
     tagline: "Lo mejor para tu familia",
     price: "Desde $XXX/mes",
-    image: "/plans/excellence.jpg",
+    image: "/img_1 (21).webp",
     featured: true,
     benefits: [
       "Sala premium",
@@ -27,7 +27,7 @@ export const PLANS_CONFIG = {
     name: "Exequial",
     tagline: "Servicio completo",
     price: "Desde $XXX/mes",
-    image: "/plans/exequial.jpg",
+    image: "/images/white-tulips-sunlight.jpg",
     featured: false,
     benefits: [
       "Sala estándar",
@@ -44,7 +44,7 @@ export const PLANS_CONFIG = {
     name: "Premium",
     tagline: "Elegancia y dignidad",
     price: "Desde $XXX/mes",
-    image: "/plans/premium.jpg",
+    image: "/images/parque-conmemorativo-2026.webp",
     featured: true,
     benefits: [
       "Sala VIP",
@@ -62,7 +62,7 @@ export const PLANS_CONFIG = {
     name: "Familiar",
     tagline: "Protege a los tuyos",
     price: "Desde $XXX/mes",
-    image: "/plans/familiar.jpg",
+    image: "/images/ciudades/caldas/manizales_2026.png",
     featured: false,
     benefits: [
       "Cobertura para toda la familia",
@@ -79,7 +79,7 @@ export const PLANS_CONFIG = {
     name: "Corporativo",
     tagline: "Beneficio empresarial",
     price: "Cotización especial",
-    image: "/plans/corporativo.jpg",
+    image: "/images/ciudades/cundinamarca/bogotadc2026.webp",
     featured: false,
     benefits: [
       "Planes para colaboradores",
@@ -95,7 +95,7 @@ export const PLANS_CONFIG = {
     name: "Mascotas",
     tagline: "También son familia",
     price: "Desde $XXX",
-    image: "/plans/mascotas.jpg",
+    image: "/images/ciudades/antioquia/medellin2026.webp",
     featured: false,
     benefits: [
       "Cremación individual",

@@ -23,11 +23,11 @@ export default function RootLayout({
         <meta name="description" content="Servicios funerarios y de previsión con dignidad, respeto y paz eterna para tus seres queridos. Planes personalizados, recorrido 360° y homenajes digitales." />
         <link rel="icon" href="/logos_jr_favico.png" />
       </head>
-      <body className="antialiased">
+      <body className="antialiased min-h-screen flex flex-col">
         <Preloader />
         {!isDashboard && <MonthlyGiveawayPopup />}
         {!isDashboard && <Navbar />}
-        <main className={!isDashboard ? "pt-16" : ""}>
+        <main className={!isDashboard ? "pt-16 flex-1" : "flex-1"}>
           {children}
         </main>
         {!isDashboard && <Footer />}

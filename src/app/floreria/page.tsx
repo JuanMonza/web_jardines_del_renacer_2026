@@ -26,7 +26,7 @@ const arreglosFlorales: ArregloFloral[] = [
     nombre: 'Rosas Blancas Elegancia',
     descripcion: 'Hermoso arreglo de 24 rosas blancas con follaje verde y lazo de seda',
     precio: 180000,
-    imagen: '/images/flores/rosas-blancas.jpg',
+    imagen: '/images/white-tulips-sunlight.jpg',
     categoria: 'rosas',
     tamano: 'grande',
   },
@@ -35,7 +35,7 @@ const arreglosFlorales: ArregloFloral[] = [
     nombre: 'Corona de Condolencias Premium',
     descripcion: 'Corona circular con rosas, lirios y claveles. Base de trípode incluida',
     precio: 350000,
-    imagen: '/images/flores/corona-premium.jpg',
+    imagen: '/images/white-tulips-sunlight.jpg',
     categoria: 'premium',
     tamano: 'extra grande',
   },
@@ -44,7 +44,7 @@ const arreglosFlorales: ArregloFloral[] = [
     nombre: 'Lirios de Paz',
     descripcion: '12 lirios blancos en arreglo vertical con verdes decorativos',
     precio: 220000,
-    imagen: '/images/flores/lirios-paz.jpg',
+    imagen: '/images/white-tulips-sunlight.jpg',
     categoria: 'lirios',
     tamano: 'grande',
   },
@@ -53,7 +53,7 @@ const arreglosFlorales: ArregloFloral[] = [
     nombre: 'Arreglo Mixto Serenidad',
     descripcion: 'Combinación de rosas, claveles y gerberas en tonos pasteles',
     precio: 150000,
-    imagen: '/images/flores/mixto-serenidad.jpg',
+    imagen: '/images/white-tulips-sunlight.jpg',
     categoria: 'mixto',
     tamano: 'mediano',
   },
@@ -62,7 +62,7 @@ const arreglosFlorales: ArregloFloral[] = [
     nombre: 'Corazón Floral',
     descripcion: 'Arreglo en forma de corazón con rosas rojas y follaje',
     precio: 280000,
-    imagen: '/images/flores/corazon-floral.jpg',
+    imagen: '/images/white-tulips-sunlight.jpg',
     categoria: 'premium',
     tamano: 'grande',
   },
@@ -71,7 +71,7 @@ const arreglosFlorales: ArregloFloral[] = [
     nombre: 'Ramo de Crisantemos',
     descripcion: 'Arreglo tradicional de crisantemos blancos y amarillos',
     precio: 120000,
-    imagen: '/images/flores/crisantemos.jpg',
+    imagen: '/images/white-tulips-sunlight.jpg',
     categoria: 'condolencias',
     tamano: 'mediano',
   },
@@ -80,7 +80,7 @@ const arreglosFlorales: ArregloFloral[] = [
     nombre: 'Cruz de Flores Grande',
     descripcion: 'Cruz floral con base. Rosas blancas, lirios y follaje natural',
     precio: 420000,
-    imagen: '/images/flores/cruz-grande.jpg',
+    imagen: '/images/white-tulips-sunlight.jpg',
     categoria: 'premium',
     tamano: 'extra grande',
   },
@@ -89,7 +89,7 @@ const arreglosFlorales: ArregloFloral[] = [
     nombre: 'Rosas Amarillas Esperanza',
     descripcion: '18 rosas amarillas con eucalipto y flores complementarias',
     precio: 160000,
-    imagen: '/images/flores/rosas-amarillas.jpg',
+    imagen: '/images/white-tulips-sunlight.jpg',
     categoria: 'rosas',
     tamano: 'mediano',
   },
@@ -98,14 +98,29 @@ const arreglosFlorales: ArregloFloral[] = [
     nombre: 'Arreglo de Gerberas',
     descripcion: 'Colorido arreglo de gerberas variadas en canasta',
     precio: 140000,
-    imagen: '/images/flores/gerberas.jpg',
+    imagen: '/images/white-tulips-sunlight.jpg',
     categoria: 'mixto',
     tamano: 'mediano',
   },
 ];
 
+type CategoriaFiltro = ArregloFloral['categoria'] | 'todas';
+
+const categoryIconPaths: Record<ArregloFloral['categoria'], string> = {
+  rosas: 'M12 21s-6.5-4.1-8.8-7.7C1.7 11 1.9 7.8 4.3 6.2c1.7-1.1 4-.7 5.7.9 1.7-1.6 4-2 5.7-.9 2.4 1.6 2.6 4.8 1.1 7.1C18.5 16.9 12 21 12 21z',
+  lirios: 'M12 3c2.4 3.2 3.8 6.3 3.8 8.8 0 2.3-1.7 4.2-3.8 4.2s-3.8-1.9-3.8-4.2C8.2 9.3 9.6 6.2 12 3z M12 16v5 M9 19h6',
+  mixto: 'M12 3v4 M12 17v4 M4 12h4 M16 12h4 M6.3 6.3l2.8 2.8 M14.9 14.9l2.8 2.8 M17.7 6.3l-2.8 2.8 M9.1 14.9l-2.8 2.8',
+  premium: 'M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.1L12 17.2 6.4 20.1l1.1-6.1L3 9.6l6.2-.9L12 3z',
+  condolencias: 'M12 4v16 M5 11h14',
+};
+
+const filterIconPaths: Record<CategoriaFiltro, string> = {
+  todas: 'M4 6h16 M4 12h16 M4 18h16',
+  ...categoryIconPaths,
+};
+
 export default function FloreriaPage() {
-  const [categoriaSeleccionada, setCategoriaSeleccionada] = useState<string>('todas');
+  const [categoriaSeleccionada, setCategoriaSeleccionada] = useState<CategoriaFiltro>('todas');
   const [arregloSeleccionado, setArregloSeleccionado] = useState<ArregloFloral | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [carrito, setCarrito] = useState<ArregloFloral[]>([]);
@@ -120,13 +135,13 @@ export default function FloreriaPage() {
     fechaEntrega: '',
   });
 
-  const categorias = [
-    { id: 'todas', nombre: 'Todos', icon: '' },
-    { id: 'rosas', nombre: 'Rosas', icon: '' },
-    { id: 'lirios', nombre: 'Lirios', icon: '' },
-    { id: 'mixto', nombre: 'Mixtos', icon: '' },
-    { id: 'premium', nombre: 'Premium', icon: '' },
-    { id: 'condolencias', nombre: 'Condolencias', icon: '' },
+  const categorias: Array<{ id: CategoriaFiltro; nombre: string; iconPath: string }> = [
+    { id: 'todas', nombre: 'Todos', iconPath: filterIconPaths.todas },
+    { id: 'rosas', nombre: 'Rosas', iconPath: filterIconPaths.rosas },
+    { id: 'lirios', nombre: 'Lirios', iconPath: filterIconPaths.lirios },
+    { id: 'mixto', nombre: 'Mixtos', iconPath: filterIconPaths.mixto },
+    { id: 'premium', nombre: 'Premium', iconPath: filterIconPaths.premium },
+    { id: 'condolencias', nombre: 'Condolencias', iconPath: filterIconPaths.condolencias },
   ];
 
   const arreglosFiltrados = categoriaSeleccionada === 'todas'
@@ -224,7 +239,9 @@ export default function FloreriaPage() {
                     : 'border-border hover:border-primary/50'
                 }`}
               >
-                <span className="text-2xl mr-2">{cat.icon}</span>
+                <svg className="w-5 h-5 mr-2 inline-block text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d={cat.iconPath} />
+                </svg>
                 <span className="font-medium text-text">{cat.nombre}</span>
               </motion.button>
             ))}
@@ -241,10 +258,14 @@ export default function FloreriaPage() {
                 className="glass rounded-2xl overflow-hidden border border-primary/20 hover:shadow-glass-lg hover:scale-105 transition-all duration-300"
               >
                 {/* Imagen */}
-                <div className="relative h-64 bg-gradient-to-br from-primary/10 to-primary/5">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-8xl opacity-20"></span>
-                  </div>
+                <div className="relative h-64">
+                  <Image
+                    src={arreglo.imagen}
+                    alt={arreglo.nombre}
+                    fill
+                    className="object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/45 to-black/5" />
                   {/* Badge de categoría */}
                   <div className="absolute top-4 left-4 px-3 py-1 glass rounded-full border border-primary/30">
                     <span className="text-xs font-semibold text-primary capitalize">
@@ -256,6 +277,11 @@ export default function FloreriaPage() {
                     <span className="text-xs font-medium text-textLight capitalize">
                       {arreglo.tamano}
                     </span>
+                  </div>
+                  <div className="absolute bottom-4 right-4 w-10 h-10 rounded-full bg-white/90 border border-primary/20 flex items-center justify-center">
+                    <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d={categoryIconPaths[arreglo.categoria]} />
+                    </svg>
                   </div>
                 </div>
 
@@ -402,7 +428,9 @@ export default function FloreriaPage() {
 
             {carrito.length === 0 ? (
               <div className="text-center py-12">
-                <span className="text-6xl mb-4 block"></span>
+                <svg className="w-16 h-16 text-primary/60 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M3 3h2l2.2 10.2a1 1 0 001 .8H18a1 1 0 001-.7l2-7.3H7.3M9 20a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm9 0a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" />
+                </svg>
                 <p className="text-textLight text-lg">Tu carrito está vacío</p>
               </div>
             ) : (
@@ -416,8 +444,13 @@ export default function FloreriaPage() {
                       animate={{ opacity: 1, x: 0 }}
                       className="glass rounded-xl p-4 border border-primary/20 flex items-center gap-4"
                     >
-                      <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center flex-shrink-0">
-                        <span className="text-3xl"></span>
+                      <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
+                        <Image
+                          src={item.imagen}
+                          alt={item.nombre}
+                          fill
+                          className="object-cover"
+                        />
                       </div>
                       <div className="flex-1">
                         <h3 className="font-semibold text-text">{item.nombre}</h3>

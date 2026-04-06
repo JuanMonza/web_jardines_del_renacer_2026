@@ -32,7 +32,7 @@ export default function Footer() {
     recursos: [
       { label: 'Planes', href: '/planes' },
       { label: 'Recorrido 360°', href: '/recorrido-360' },
-      { label: 'Parque Conmemorativo', href: 'https://www.parqueconmemorativo.com/' },
+      { label: 'Parque Conmemorativo', href: '/parque-conmemorativo' },
       { label: 'Repatriaciones', href: '/repatriaciones' },
       { label: 'Florería', href: '/floreria' },
     ],

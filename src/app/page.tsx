@@ -11,8 +11,6 @@ import FadeIn from '@/components/animations/FadeIn';
 import { PLANS_CONFIG } from '@/config/plans';
 import { CONTACT_INFO, buildWhatsAppUrl } from '@/config/contact';
 
-const PARQUE_CONMEMORATIVO_URL = 'https://www.parqueconmemorativo.com/';
-
 export default function HomePage() {
   const featuredPlans = Object.values(PLANS_CONFIG).filter(plan => plan.featured);
 
@@ -22,7 +20,7 @@ export default function HomePage() {
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
           <Image
-            src="/images/hero-parque.jpg"
+            src="/img_1 (21).webp"
             alt="Jardines del Renacer"
             fill
             className="object-cover brightness-100"
@@ -75,26 +73,30 @@ export default function HomePage() {
               {
                 title: 'Servicios Funerarios',
                 description: 'Ceremonias dignas y personalizadas para despedir a tus seres queridos',
-                icon: '',
+                iconPath: 'M12 2C8.134 2 5 5.134 5 9c0 6.5 7 13 7 13s7-6.5 7-13c0-3.866-3.134-7-7-7zm0 9.75A2.75 2.75 0 1112 6.25a2.75 2.75 0 010 5.5z',
                 link: '/servicios#funerarios',
               },
               {
                 title: 'Planes de Previsión',
                 description: 'Protege a tu familia y planifica con tranquilidad',
-                icon: '',
+                iconPath: 'M12 2l8 4v6c0 5.25-3.438 9.969-8 11.5C7.438 21.969 4 17.25 4 12V6l8-4zm0 4.2L8 8v3.75c0 3.363 1.977 6.56 4 7.76 2.023-1.2 4-4.397 4-7.76V8l-4-1.8z',
                 link: '/planes',
               },
               {
                 title: 'Siempre Contigo',
                 description: '"Cerca, Incluso cuando no puedes estar"',
-                icon: '',
+                iconPath: 'M12 21s-7-4.35-9.5-8.25C.89 10.22 1.29 6.5 4.11 4.68c2.02-1.3 4.68-.86 6.38 1.03 1.7-1.89 4.36-2.33 6.38-1.03 2.82 1.82 3.22 5.54 1.61 8.07C19 16.65 12 21 12 21z',
                 link: '/obituarios',
               },
             ].map((service, index) => (
               <FadeIn key={service.title} delay={index * 0.1}>
                 <Link href={service.link}>
                   <div className="glass rounded-2xl p-8 hover:scale-105 transition-all duration-300 h-full">
-                    <div className="text-5xl mb-4">{service.icon}</div>
+                    <div className="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-4">
+                      <svg className="w-7 h-7 text-primary" viewBox="0 0 24 24" fill="currentColor">
+                        <path d={service.iconPath} />
+                      </svg>
+                    </div>
                     <h3 className="text-2xl font-display mb-4 text-text">
                       {service.title}
                     </h3>
@@ -152,7 +154,7 @@ export default function HomePage() {
       <section className="py-20 relative overflow-hidden">
         <div className="absolute inset-0 z-0">
           <Image
-            src="/images/sala-360.jpg"
+            src="/img_1 (21).webp"
             alt="Recorrido 360"
             fill
             className="object-cover"
@@ -200,11 +202,7 @@ export default function HomePage() {
                   </div>
                 </div>
                 <div className="p-6 text-center">
-                  <a
-                    href={PARQUE_CONMEMORATIVO_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
+                  <Link href="/parque-conmemorativo">
                     <Button
                       variant="outline"
                       size="md"
@@ -212,7 +210,7 @@ export default function HomePage() {
                     >
                       Ver Más
                     </Button>
-                  </a>
+                  </Link>
                 </div>
               </div>
             </FadeIn>
@@ -222,7 +220,7 @@ export default function HomePage() {
               <div className="glass rounded-2xl overflow-hidden group hover:shadow-glass-lg transition-all duration-300">
                 <div className="relative h-64 overflow-hidden">
                   <Image
-                    src="/images/repatriaciones.jpg"
+                    src="/images/white-tulips-sunlight.jpg"
                     alt="Servicio de Repatriaciones"
                     fill
                     className="object-cover group-hover:scale-110 transition-transform duration-500"

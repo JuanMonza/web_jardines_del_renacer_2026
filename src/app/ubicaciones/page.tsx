@@ -5,8 +5,15 @@ import Image from 'next/image';
 import Container from '@/components/ui/Container';
 import SectionTitle from '@/components/ui/SectionTitle';
 import FadeIn from '@/components/animations/FadeIn';
-import { SEDES, getAllDepartamentos } from '@/data/sedes';
+import { SEDES, getAllDepartamentos, type Sede } from '@/data/sedes';
 import { getCiudadImagePath } from '@/config/ciudades';
+
+function getSedeMapsQuery(sede: Sede): string {
+  const location = sede.direccion?.trim()
+    ? `${sede.direccion}, ${sede.ciudad}, ${sede.departamento}, Colombia`
+    : `${sede.ciudad}, ${sede.departamento}, Colombia`;
+  return encodeURIComponent(location);
+}
 
 export default function UbicacionesPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -31,8 +38,21 @@ export default function UbicacionesPage() {
   }, [searchQuery, deptFilter]);
 
   const selected = SEDES.find((s) => s.id === selectedId) ?? null;
-  const mapsQuery = selected
-    ? encodeURIComponent(`${selected.direccion}, ${selected.ciudad}, ${selected.departamento}, Colombia`)
+  const mapsQuery = selected ? getSedeMapsQuery(selected) : null;
+  const selectedCityImage = selected
+    ? getCiudadImagePath(selected.departamento, selected.ciudad)
+    : null;
+  const mapsSearchUrl = mapsQuery
+    ? `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`
+    : null;
+  const mapsDirectionsUrl = mapsQuery
+    ? `https://www.google.com/maps/dir/?api=1&destination=${mapsQuery}`
+    : null;
+  const mapsEmbedUrl = mapsQuery
+    ? `https://www.google.com/maps?q=${mapsQuery}&output=embed`
+    : null;
+  const wazeUrl = mapsQuery
+    ? `https://waze.com/ul?q=${mapsQuery}`
     : null;
 
   return (
@@ -114,6 +134,10 @@ export default function UbicacionesPage() {
 
               {filtered.map((sede, index) => {
                 const cityImage = getCiudadImagePath(sede.departamento, sede.ciudad);
+                const sedeMapsQuery = getSedeMapsQuery(sede);
+                const sedeDirectionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${sedeMapsQuery}`;
+                const sedeMapsUrl = `https://www.google.com/maps/search/?api=1&query=${sedeMapsQuery}`;
+                const sedeWazeUrl = `https://waze.com/ul?q=${sedeMapsQuery}`;
 
                 return (
                 <FadeIn key={sede.id} delay={Math.min(index * 0.05, 0.4)}>
@@ -151,7 +175,15 @@ export default function UbicacionesPage() {
                           </span>
                         </div>
 
-                        <p className="text-xs text-textLight mb-2 line-clamp-1">{sede.direccion}</p>
+                        <a
+                          href={sedeDirectionsUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-xs text-primary hover:underline mb-2 line-clamp-1 block"
+                        >
+                          {sede.direccion || 'Dirección por confirmar'}
+                        </a>
 
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-textLight mb-2">
                           <span className="flex items-center gap-1">
@@ -179,7 +211,7 @@ export default function UbicacionesPage() {
                         {selectedId === sede.id && (
                           <div className="flex gap-2 mt-3 pt-3 border-t border-primary/10">
                             <a
-                              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${sede.direccion}, ${sede.ciudad}, Colombia`)}`}
+                              href={sedeMapsUrl}
                               target="_blank"
                               rel="noopener noreferrer"
                               onClick={(e) => e.stopPropagation()}
@@ -192,7 +224,7 @@ export default function UbicacionesPage() {
                               Google Maps
                             </a>
                             <a
-                              href={`https://waze.com/ul?q=${encodeURIComponent(`${sede.direccion}, ${sede.ciudad}, Colombia`)}`}
+                              href={sedeWazeUrl}
                               target="_blank"
                               rel="noopener noreferrer"
                               onClick={(e) => e.stopPropagation()}
@@ -217,72 +249,104 @@ export default function UbicacionesPage() {
             </div>
 
             {/* Panel Mapa */}
-            <div className="lg:sticky lg:top-24 h-[500px] lg:h-[800px]">
+            <div className="lg:sticky lg:top-24 h-[560px] lg:h-[880px]">
               <FadeIn delay={0.3}>
                 <div className="glass p-4 rounded-2xl border border-border h-full">
-                  <div className="relative w-full h-full rounded-xl overflow-hidden bg-gradient-to-br from-primary/10 to-blue-500/5">
-                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8">
-                      <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mb-4">
-                        <svg className="w-10 h-10 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
+                  {!selected || !mapsEmbedUrl || !mapsSearchUrl || !mapsDirectionsUrl || !wazeUrl ? (
+                    <div className="relative w-full h-full rounded-xl overflow-hidden bg-gradient-to-br from-primary/10 to-blue-500/5">
+                      <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8">
+                        <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mb-4">
+                          <svg className="w-10 h-10 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                        </div>
+                        <h3 className="text-xl font-bold text-text mb-2">Mapa Interactivo</h3>
+                        <p className="text-textLight text-sm mb-4 max-w-xs">
+                          Selecciona una sede de la lista para ver foto, dirección y ubicación exacta.
+                        </p>
                       </div>
-                      <h3 className="text-xl font-bold text-text mb-2">Mapa Interactivo</h3>
-                      <p className="text-textLight text-sm mb-4 max-w-xs">
-                        Selecciona una sede de la lista para ver su ubicación exacta.
-                      </p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-rows-[220px_minmax(0,1fr)] gap-4 h-full">
+                      <div className="glass rounded-xl border border-primary/20 overflow-hidden">
+                        <div className="h-full grid grid-cols-[220px_1fr]">
+                          <div className="relative h-full bg-primary/10">
+                            {selectedCityImage ? (
+                              <Image
+                                src={selectedCityImage}
+                                alt={`${selected.ciudad}, ${selected.departamento}`}
+                                fill
+                                className="object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <svg width="34" height="34" fill="none" stroke="#3C60A2" strokeWidth="1.5" viewBox="0 0 24 24" aria-hidden="true">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0H5m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                </svg>
+                              </div>
+                            )}
+                          </div>
+                          <div className="p-4 flex flex-col">
+                            <p className="text-xs font-semibold text-primary mb-1 uppercase tracking-wider">
+                              Sede seleccionada
+                            </p>
+                            <p className="text-text font-bold text-base">Sede {selected.nombre}</p>
+                            <a
+                              href={mapsDirectionsUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-sm text-primary hover:underline mt-1"
+                            >
+                              {selected.direccion || 'Dirección por confirmar'}
+                            </a>
+                            <p className="text-xs text-textLight">{selected.ciudad}, {selected.departamento}</p>
+                            {selected.telefono && (
+                              <a
+                                href={`tel:+57${selected.telefono.replace(/\s/g, '')}`}
+                                className="mt-2 flex items-center gap-1 text-xs text-primary hover:underline"
+                              >
+                                <svg width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 8V5z" />
+                                </svg>
+                                {selected.telefono}
+                              </a>
+                            )}
 
-                      {selected && mapsQuery && (
-                        <div className="glass p-5 rounded-2xl border border-primary/30 max-w-sm w-full text-left">
-                          <p className="text-xs font-semibold text-primary mb-2 uppercase tracking-wider">
-                            Sede seleccionada
-                          </p>
-                          <p className="text-text font-bold">Sede {selected.nombre}</p>
-                          <p className="text-xs text-textLight mt-1">{selected.direccion}</p>
-                          <p className="text-xs text-textLight">{selected.ciudad}, {selected.departamento}</p>
-                          {selected.telefono && (
-                            <a
-                              href={`tel:+57${selected.telefono.replace(/\s/g, '')}`}
-                              className="mt-2 flex items-center gap-1 text-xs text-primary hover:underline"
-                            >
-                              <svg width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 8V5z" />
-                              </svg>
-                              {selected.telefono}
-                            </a>
-                          )}
-                          <div className="flex gap-2 mt-3">
-                            <a
-                              href={`https://www.google.com/maps/search/?api=1&query=${mapsQuery}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex-1 text-center text-xs font-semibold py-2 rounded-lg bg-primary text-white hover:bg-[#2f4d82] transition-colors"
-                            >
-                              Abrir Maps
-                            </a>
-                            <a
-                              href={`https://waze.com/ul?q=${mapsQuery}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex-1 text-center text-xs font-semibold py-2 rounded-lg border border-primary text-primary hover:bg-primary/10 transition-colors"
-                            >
-                              Abrir Waze
-                            </a>
+                            <div className="flex gap-2 mt-auto pt-3">
+                              <a
+                                href={mapsSearchUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex-1 text-center text-xs font-semibold py-2 rounded-lg bg-primary text-white hover:bg-[#2f4d82] transition-colors"
+                              >
+                                Abrir Maps
+                              </a>
+                              <a
+                                href={wazeUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex-1 text-center text-xs font-semibold py-2 rounded-lg border border-primary text-primary hover:bg-primary/10 transition-colors"
+                              >
+                                Abrir Waze
+                              </a>
+                            </div>
                           </div>
                         </div>
-                      )}
-                    </div>
+                      </div>
 
-                    {/* Grid decorativo de fondo */}
-                    <div className="absolute inset-0 opacity-5 pointer-events-none">
-                      <div className="grid grid-cols-8 grid-rows-8 h-full">
-                        {Array.from({ length: 64 }).map((_, i) => (
-                          <div key={i} className="border border-primary/20" />
-                        ))}
+                      <div className="rounded-xl overflow-hidden border border-primary/20 bg-white">
+                        <iframe
+                          title={`Mapa de sede ${selected.nombre}`}
+                          src={mapsEmbedUrl}
+                          className="w-full h-full"
+                          loading="lazy"
+                          referrerPolicy="no-referrer-when-downgrade"
+                          allowFullScreen
+                        />
                       </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </FadeIn>
             </div>
