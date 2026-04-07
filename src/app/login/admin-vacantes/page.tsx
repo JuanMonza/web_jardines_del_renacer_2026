@@ -3,10 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Container from '@/components/ui/Container';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import FadeIn from '@/components/animations/FadeIn';
+import AuthLoginLayout from '@/components/login/AuthLoginLayout';
+import LoginTextField from '@/components/login/LoginTextField';
 
 export default function AdminVacantesLoginPage() {
   const router = useRouter();
@@ -28,7 +26,6 @@ export default function AdminVacantesLoginPage() {
       return;
     }
 
-    // Credenciales de prueba para admin de vacantes.
     if (cleanCedula === '3333333333' && password === 'vacantes123') {
       localStorage.setItem(
         'vacanciesAdminUser',
@@ -47,72 +44,72 @@ export default function AdminVacantesLoginPage() {
   };
 
   return (
-    <div className="min-h-screen pt-24 pb-12 bg-gradient-to-br from-background via-primary/5 to-background">
-      <Container>
-        <FadeIn>
-          <div className="max-w-md mx-auto">
-            <div className="text-center mb-8">
-              <h1 className="text-4xl font-display text-text mb-3">Login Admin Vacantes</h1>
-              <p className="text-textLight">
-                Acceso independiente para gestion de bolsa de empleo.
-              </p>
-            </div>
+    <AuthLoginLayout
+      title="Login"
+      subtitle="Acceso administrativo para gestion de vacantes laborales."
+      sectionLabel="Admin Vacantes"
+    >
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <LoginTextField
+          label="Cedula administrativa"
+          type="text"
+          value={cedula}
+          onChange={(event) => {
+            setCedula(event.target.value);
+            setError('');
+          }}
+          placeholder="Ingresa tu cedula"
+          required
+          icon={
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A13.937 13.937 0 0112 16c2.42 0 4.696.607 6.688 1.68M15 10a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          }
+        />
 
-            <div className="glass border-2 border-primary/20 p-8 rounded-3xl shadow-xl">
-              <form onSubmit={handleSubmit} className="space-y-5">
-                <Input
-                  label="Cedula administrativa"
-                  value={cedula}
-                  onChange={(event) => {
-                    setCedula(event.target.value);
-                    setError('');
-                  }}
-                  placeholder="Ingresa tu cedula"
-                  required
-                />
+        <LoginTextField
+          label="Contrasena"
+          type="password"
+          value={password}
+          onChange={(event) => {
+            setPassword(event.target.value);
+            setError('');
+          }}
+          placeholder="••••••••••"
+          required
+          icon={
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 10-8 0v4h8z" />
+            </svg>
+          }
+        />
 
-                <Input
-                  label="Contrasena"
-                  type="password"
-                  value={password}
-                  onChange={(event) => {
-                    setPassword(event.target.value);
-                    setError('');
-                  }}
-                  placeholder="••••••••••"
-                  required
-                />
+        {error && (
+          <p className="rounded-xl border border-red-400/40 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {error}
+          </p>
+        )}
 
-                {error && (
-                  <p className="text-sm text-primary bg-primary/10 border border-primary/30 rounded-xl px-3 py-2">
-                    {error}
-                  </p>
-                )}
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full rounded-xl bg-black text-white py-3.5 text-lg font-semibold hover:bg-black/85 transition-colors disabled:opacity-60"
+        >
+          {loading ? 'Ingresando...' : 'Login'}
+        </button>
 
-                <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-xs text-textLight">
-                  <p className="font-semibold text-primary mb-1">Credenciales de prueba</p>
-                  <p>
-                    Cedula: <span className="font-mono text-text">3333333333</span>
-                  </p>
-                  <p>
-                    Contrasena: <span className="font-mono text-text">vacantes123</span>
-                  </p>
-                </div>
+        <div className="rounded-xl border border-black/10 bg-black/5 px-4 py-3 text-sm text-black/75">
+          <p className="font-semibold text-black mb-1">Credenciales de prueba</p>
+          <p>Cedula: <span className="font-mono">3333333333</span></p>
+          <p>Contrasena: <span className="font-mono">vacantes123</span></p>
+        </div>
 
-                <Button type="submit" variant="primary" className="w-full" disabled={loading}>
-                  {loading ? 'Ingresando...' : 'Entrar al panel de vacantes'}
-                </Button>
-              </form>
-            </div>
-
-            <div className="text-center mt-6">
-              <Link href="/" className="text-textLight hover:text-primary transition-colors">
-                Volver al inicio
-              </Link>
-            </div>
-          </div>
-        </FadeIn>
-      </Container>
-    </div>
+        <div className="text-center text-sm text-black/75">
+          <Link href="/" className="hover:text-[#2f5bd6] transition-colors">
+            Volver al inicio
+          </Link>
+        </div>
+      </form>
+    </AuthLoginLayout>
   );
 }

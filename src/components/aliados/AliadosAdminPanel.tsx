@@ -184,7 +184,7 @@ export default function AliadosAdminPanel() {
       <SectionTitle
         title="Panel de Aliados Comerciales"
         subtitle="Crea, edita o elimina aliados por categoria, subcategoria y departamento."
-        align="left"
+        align="center"
         className="mb-8"
       />
 

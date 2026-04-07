@@ -17,10 +17,9 @@ export default function RootLayout({
   const isDashboard =
     pathname?.startsWith('/dashboard') ||
     pathname?.startsWith('/dashboard-aliados') ||
-    pathname?.startsWith('/dashboard-vacantes') ||
-    pathname?.startsWith('/login/admin') ||
-    pathname?.startsWith('/login/admin-aliados') ||
-    pathname?.startsWith('/login/admin-vacantes');
+    pathname?.startsWith('/dashboard-vacantes');
+  const isLoginRoute = pathname?.startsWith('/login');
+  const hideLayoutChrome = isDashboard || isLoginRoute;
 
   return (
     <html lang="es">
@@ -31,13 +30,13 @@ export default function RootLayout({
       </head>
       <body className="antialiased min-h-screen flex flex-col">
         <Preloader />
-        {!isDashboard && <MonthlyGiveawayPopup />}
-        {!isDashboard && <Navbar />}
-        <main className={!isDashboard ? "pt-16 flex-1" : "flex-1"}>
+        {!hideLayoutChrome && <MonthlyGiveawayPopup />}
+        {!hideLayoutChrome && <Navbar />}
+        <main className={!hideLayoutChrome ? "pt-16 flex-1" : "flex-1"}>
           {children}
         </main>
-        {!isDashboard && <Footer />}
-        {!isDashboard && <FloatingButtons />}
+        {!hideLayoutChrome && <Footer />}
+        {!hideLayoutChrome && <FloatingButtons />}
       </body>
     </html>
   );
