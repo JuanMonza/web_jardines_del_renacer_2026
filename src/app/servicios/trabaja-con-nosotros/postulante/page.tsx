@@ -51,12 +51,6 @@ function calculateProfileCompletion(profile: CandidateProfile) {
   return Math.round((done / checks.length) * 100);
 }
 
-function generateTrackingCode() {
-  const stamp = Date.now().toString(36).toUpperCase();
-  const suffix = Math.floor(Math.random() * 90 + 10);
-  return `JDR-${stamp}${suffix}`;
-}
-
 export default function PostulantePage() {
   const searchParams = useSearchParams();
   const requestedVacancyId = searchParams.get('vacante') ?? '';
@@ -203,7 +197,6 @@ export default function PostulantePage() {
 
     const newApplication: JobApplication = {
       id: `app-${Date.now().toString(36)}`,
-      trackingCode: generateTrackingCode(),
       vacancyId: selectedVacancy.id,
       vacancyTitle: selectedVacancy.title,
       candidateDocument: normalizedDocument,
@@ -211,9 +204,10 @@ export default function PostulantePage() {
       candidateEmail: profile.email.trim(),
       candidatePhone: profile.phone.trim(),
       resumeFileName: profile.resumeFileName || 'Hoja de vida adjunta',
-      resumeFileData: profile.resumeFileData,
       appliedAt: new Date().toISOString(),
       status: 'Recibida',
+      trackingCode: '',
+      resumeFileData: ''
     };
 
     const nextApplications = [newApplication, ...applications];
