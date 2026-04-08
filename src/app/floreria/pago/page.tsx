@@ -49,6 +49,7 @@ function upsertFlowerOrder(order: FlowerOrderRecord) {
   const index = current.findIndex((record) => record.orderCode === order.orderCode);
 
   if (index === -1) {
+    // Cuando no existe, lo insertamos arriba para que aparezca primero en seguimiento.
     writeFlowerOrders([order, ...current]);
     return order;
   }
@@ -136,6 +137,7 @@ function FlowerPaymentResultContent() {
         const existingOrder = readFlowerOrders().find(
           (record) => record.orderCode === orderCode,
         );
+        // Prioridad: orden ya guardada > orden pendiente en memoria local.
         const baseOrder = existingOrder ?? pendingPayment?.order ?? null;
 
         if (!baseOrder) {

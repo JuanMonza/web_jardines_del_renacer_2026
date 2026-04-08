@@ -35,6 +35,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Este atajo nos sirve para pruebas internas cuando aún no hay credenciales productivas.
     const demoMode =
       transactionId.startsWith('DEMO-') || searchParams.get('demo') === '1';
     if (demoMode) {
@@ -65,6 +66,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Consultamos Wompi en tiempo real para no depender de estados cacheados.
     const wompiResponse = await fetch(
       `${config.apiBaseUrl}/transactions/${encodeURIComponent(transactionId)}`,
       {
@@ -109,6 +111,7 @@ export async function GET(request: NextRequest) {
     const amountMatches = expectedAmountInCents
       ? amountInCents === expectedAmountInCents
       : true;
+    // Solo marcamos aprobado cuando todo coincide: estado, referencia y valor.
     const approved = status === 'APPROVED' && referenceMatches && amountMatches;
 
     return NextResponse.json({

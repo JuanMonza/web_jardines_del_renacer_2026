@@ -7,6 +7,7 @@ export interface PendingFlowerPayment {
   order: FlowerOrderRecord;
 }
 
+// Este storage mantiene pedidos "en tránsito" mientras el cliente termina el pago.
 const FLOWER_PENDING_PAYMENTS_STORAGE_KEY = 'jdr.floreria.pending-payments.v1';
 
 function readRawPendingPayments() {
@@ -25,6 +26,7 @@ function readRawPendingPayments() {
       return [] as PendingFlowerPayment[];
     }
 
+    // Limpiamos registros dañados para no romper el retorno desde la pasarela.
     return parsed.filter(
       (item) =>
         item &&
@@ -61,6 +63,7 @@ export function consumePendingFlowerPayment(orderCode: string) {
   if (!target) {
     return null;
   }
+  // Lo consumimos para que no se vuelva a procesar dos veces la misma orden.
   const next = current.filter((item) => item.orderCode !== orderCode);
   writeRawPendingPayments(next);
   return target;

@@ -353,6 +353,7 @@ export default function FloreriaPage() {
         return;
       }
 
+      // Guardamos el pedido antes de redirigir para recuperarlo al volver desde Wompi.
       savePendingFlowerPayment({
         orderCode: order.orderCode,
         createdAt: new Date().toISOString(),

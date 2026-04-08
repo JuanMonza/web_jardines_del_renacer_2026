@@ -29,6 +29,7 @@ function normalizeProfile(record: Partial<CandidateProfile>): CandidateProfile {
 }
 
 function normalizeApplication(record: Partial<JobApplication>): JobApplication | null {
+  // Soporte de compatibilidad para datos de versiones anteriores del formulario.
   const legacyRecord = record as Partial<JobApplication> & {
     email?: string;
     phone?: string;
@@ -94,6 +95,7 @@ export function writeCandidateProfile(profile: CandidateProfile) {
     return;
   }
   window.localStorage.setItem(CANDIDATE_PROFILE_STORAGE_KEY, JSON.stringify(profile));
+  // Disparamos evento para refrescar paneles que estén abiertos en otras vistas.
   window.dispatchEvent(new Event('candidate-storage-updated'));
 }
 
@@ -123,5 +125,6 @@ export function writeCandidateApplications(applications: JobApplication[]) {
     return;
   }
   window.localStorage.setItem(CANDIDATE_APPLICATIONS_STORAGE_KEY, JSON.stringify(applications));
+  // Mismo evento para mantener sincronizada la consulta del proceso en vivo.
   window.dispatchEvent(new Event('candidate-storage-updated'));
 }

@@ -2,6 +2,7 @@ import { buildWhatsAppUrl } from '@/config/contact';
 import type { FlowerOrderRecord } from '@/lib/flowerOrdersStorage';
 
 function buildItemsSummary(order: FlowerOrderRecord) {
+  // Resumen compacto cuando el pedido trae varios arreglos.
   return order.items
     .map(
       (item, index) =>
@@ -13,6 +14,7 @@ function buildItemsSummary(order: FlowerOrderRecord) {
 }
 
 export function buildFlowerOrderWhatsAppMessage(order: FlowerOrderRecord) {
+  // Para un solo arreglo mostramos texto corto; para carrito mostramos detalle por línea.
   const detail =
     order.items.length === 1
       ? `*Arreglo:* ${order.items[0].nombre}\n`

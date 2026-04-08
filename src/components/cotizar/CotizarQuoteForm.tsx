@@ -108,6 +108,7 @@ export default function CotizarQuoteForm({ selectedPlan }: CotizarQuoteFormProps
     if (!selectedPlanIdFromProp) {
       return;
     }
+    // Si el usuario llega desde una tarjeta de plan, respetamos esa selección.
     const nextCoverage = getCoverageByPlanId(selectedPlanIdFromProp);
     setFormData((prev) => ({
       ...prev,
@@ -133,6 +134,7 @@ export default function CotizarQuoteForm({ selectedPlan }: CotizarQuoteFormProps
     formData.preferredContactTime.trim();
 
   const quoteMessage = useMemo(() => {
+    // Este bloque arma el mensaje final que viaja directo a WhatsApp.
     const countLine =
       formData.coverageType === 'individual'
         ? '*Cobertura:* 1 persona'

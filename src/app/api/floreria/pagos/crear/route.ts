@@ -28,6 +28,7 @@ function asTrimmedText(value: unknown) {
 export async function POST(request: NextRequest) {
   try {
     const payload = (await request.json()) as CreateFlowerCheckoutPayload;
+    // Normalizamos desde el inicio para no guardar ruido (espacios, mayúsculas/minúsculas).
     const reference = asTrimmedText(payload.reference).toUpperCase();
     const amountInCents = Number(payload.amountInCents);
     const customerEmail = asTrimmedText(payload.customerEmail).toLowerCase();
@@ -39,6 +40,7 @@ export async function POST(request: NextRequest) {
       asTrimmedText(payload.shippingAddressPhone) || customerPhone;
     const expirationTime = asTrimmedText(payload.expirationTime) || undefined;
 
+    // Si referencia o monto vienen mal, no vale la pena seguir.
     if (!reference || !Number.isInteger(amountInCents) || amountInCents <= 0) {
       return NextResponse.json(
         { ok: false, message: 'Referencia o monto inválido para crear el pago.' },
@@ -53,11 +55,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Siempre regresamos a esta vista para confirmar pago y continuar el flujo.
     const origin = request.headers.get('origin') ?? new URL(request.url).origin;
     const redirectUrl = `${origin}/floreria/pago?orderCode=${encodeURIComponent(reference)}`;
 
     const config = getWompiConfig();
     if (!isWompiConfigured(config)) {
+      // En local permitimos modo demo para que el equipo pueda probar el front sin llaves reales.
       const allowDemoFallback =
         process.env.NODE_ENV !== 'production' ||
         process.env.WOMPI_ALLOW_DEMO_FALLBACK === 'true';
@@ -88,6 +92,7 @@ export async function POST(request: NextRequest) {
     }
 
     const currency = 'COP';
+    // Firma de integridad obligatoria para que Wompi valide referencia y monto.
     const integritySignature = buildIntegritySignature({
       reference,
       amountInCents,

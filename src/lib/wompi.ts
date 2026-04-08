@@ -39,6 +39,7 @@ function resolveApiBaseUrl(publicKey: string) {
   }
 
   // Puedes sobreescribir este valor por env cuando tu cuenta use otro endpoint.
+  // Si la llave empieza por pub_test_, asumimos sandbox para evitar cobros reales.
   return publicKey.startsWith('pub_test_')
     ? 'https://sandbox.wompi.co/v1'
     : 'https://production.wompi.co/v1';
@@ -71,6 +72,7 @@ export function buildIntegritySignature({
   integritySecret,
   expirationTime,
 }: IntegritySignatureInput) {
+  // Wompi pide este orden exacto para firmar la transacción.
   const base = `${reference}${amountInCents}${currency}${
     expirationTime ? expirationTime : ''
   }${integritySecret}`;
@@ -92,6 +94,7 @@ export function buildWompiCheckoutUrl({
   shippingAddressPhone,
   expirationTime,
 }: CheckoutUrlInput) {
+  // Usamos query params porque el checkout de Wompi se inicializa por URL.
   const params = new URLSearchParams();
   params.set('public-key', publicKey);
   params.set('currency', currency);

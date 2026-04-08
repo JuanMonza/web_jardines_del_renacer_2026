@@ -65,6 +65,7 @@ export default function PostulantePage() {
   const [trackingEmail, setTrackingEmail] = useState('');
 
   useEffect(() => {
+    // Centralizamos la carga inicial para perfil, postulaciones y vacantes.
     const syncData = () => {
       setProfile(readCandidateProfile());
       setApplications(readCandidateApplications());
@@ -115,6 +116,7 @@ export default function PostulantePage() {
 
     const reader = new FileReader();
     reader.onload = () => {
+      // Guardamos el CV en base64 para que el postulante no pierda datos al recargar.
       const data = typeof reader.result === 'string' ? reader.result : '';
       setProfile((prev) => ({
         ...prev,
@@ -189,6 +191,7 @@ export default function PostulantePage() {
         application.candidateDocument === normalizedDocument,
     );
 
+    // Evitamos duplicados por vacante + documento para mantener trazabilidad limpia.
     if (alreadyApplied) {
       setFeedback('Ya registraste una postulacion para esta vacante.');
       setApplying(false);

@@ -1,161 +1,115 @@
-/**
- * GUÍA DE INSTALACIÓN Y EJECUCIÓN
- * Jardines del Renacer - Plataforma Digital
- */
-
 # Jardines del Renacer
 
-Plataforma digital profesional para servicios funerarios con sistema de gestión integral.
+Plataforma digital de Jardines del Renacer para servicios funerarios, cotización de planes, florería, vacantes y paneles administrativos.
+
+## Estado Actual (Abril 2026)
+
+Estos módulos ya están funcionando en esta versión:
+
+- `Cotizar`: formulario rediseñado, más limpio y con mejor estructura.
+- `Cotizar`: selección de plan por tipo de cobertura (`individual`, `familiar`, `mascotas`, `empresarial`).
+- `Cotizar`: opción de traslado (`No aplica`, `Repatriación`, `Expatriación`) y hora preferida de contacto.
+- `Florería`: checkout de pago con Wompi (crear pago + verificar pago).
+- `Florería`: confirmación de pago y continuidad del flujo por WhatsApp.
+- `Florería`: selección por `departamento -> ciudad -> sede` reutilizando las sedes del proyecto.
+- `Trabaja con nosotros`: perfil de postulante, carga de hoja de vida y consulta de postulaciones por documento/correo.
+
+## Requisitos
+
+- Node.js 18 o superior
+- npm 9 o superior
 
 ## Instalación
 
-### 1. Instalar Dependencias
+### 1. Instalar dependencias
 
 ```bash
 npm install
 ```
 
-### 2. Configurar Variables de Entorno
+### 2. Configurar variables de entorno
 
-Crea un archivo `.env.local` en la raíz:
+Usa `.env.example` como base y crea tu `.env.local`.
 
 ```env
-# Base de datos
-DATABASE_URL="tu_conexion_a_base_de_datos"
+# Base plataforma
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=replace_me
 
-# Autenticación
-NEXTAUTH_SECRET="tu_secret_key"
-NEXTAUTH_URL="http://localhost:3000"
+# Wompi - Floreria Jardines del Renacer
+# falta conexion y verificacion de rutas con ednpoints para completar pagos con wompi
+NEXT_PUBLIC_WOMPI_PUBLIC_KEY=pub_test_replace_me
+WOMPI_PRIVATE_KEY=prv_test_replace_me
+WOMPI_INTEGRITY_SECRET=test_integrity_replace_me
 
-# Pasarela de pagos Wompi (Florería)
-NEXT_PUBLIC_WOMPI_PUBLIC_KEY="pub_test_o_pub_prod"
-WOMPI_PRIVATE_KEY="prv_test_o_prv_prod"
-WOMPI_INTEGRITY_SECRET="tu_integrity_secret"
-# Opcional para forzar endpoint
-# WOMPI_API_BASE_URL="https://sandbox.wompi.co/v1"
-
-# Matterport (Recorrido 360)
-MATTERPORT_SDK_KEY="tu_matterport_key"
+# Opcional
+WOMPI_API_BASE_URL=https://sandbox.wompi.co/v1
+# WOMPI_CHECKOUT_BASE_URL=https://checkout.wompi.co/p/
+# WOMPI_ALLOW_DEMO_FALLBACK=false
 ```
 
-### 3. Ejecutar en Desarrollo
+### 3. Ejecutar en desarrollo
 
 ```bash
 npm run dev
 ```
 
-Abre [http://localhost:3000](http://localhost:3000)
+Abrir `http://localhost:3000`.
 
-## Estructura del Proyecto
+## Flujo de Pago Florería (Wompi)
 
-```
+### Endpoints
+
+- `POST /api/floreria/pagos/crear`
+- `GET /api/floreria/pagos/verificar`
+
+### Pantallas relacionadas
+
+- `/floreria`
+- `/floreria/pago`
+
+### Nota de desarrollo
+
+Si faltan credenciales de Wompi y estás en entorno local, el proyecto puede usar modo demo para no bloquear pruebas de interfaz. En producción debe quedar con llaves reales y verificación activa.
+
+## Estructura General
+
+```text
 src/
-├── app/                    # Rutas Next.js
-│   ├── page.tsx           # Home
-│   ├── planes/            # Planes funerarios
-│   ├── obituarios/        # Obituarios públicos
-│   ├── recorrido-360/     # Tour virtual
-│   ├── contacto/          # Formulario contacto
-│   └── dashboard/         # Panel admin
-│
+├── app/
+│   ├── api/floreria/pagos/crear/route.ts
+│   ├── api/floreria/pagos/verificar/route.ts
+│   ├── floreria/page.tsx
+│   ├── floreria/pago/page.tsx
+│   ├── cotizar/page.tsx
+│   └── servicios/trabaja-con-nosotros/
 ├── components/
-│   ├── ui/                # Componentes base
-│   ├── layout/            # Navbar, Footer
-│   ├── cards/             # PlanFlipCard, ObituaryCard
-│   └── animations/        # FadeIn, AlliesMarquee
-│
-├── config/
-│   ├── design-tokens.ts   # Colores, espaciados
-│   ├── allies.ts          # Aliados del ecosistema
-│   └── plans.ts           # Configuración de planes
-│
-├── types/                 # TypeScript types
-├── lib/                   # Utilidades
-└── styles/                # CSS global
+│   ├── cotizar/CotizarQuoteForm.tsx
+│   ├── layout/
+│   └── ui/
+├── lib/
+│   ├── wompi.ts
+│   ├── flowerOrdersStorage.ts
+│   ├── flowerPaymentStorage.ts
+│   ├── flowerOrderWhatsApp.ts
+│   └── candidateStorage.ts
+└── config/
 ```
 
-## Características Principales
-
-**Efecto Glass iOS** - En navbar, cards y componentes  
-**Animaciones Framer Motion** - Transiciones suaves  
-**Tarjetas 3D giratorias** - Planes con flip effect  
-**Recorrido 360°** - Integración Matterport  
-**Sistema de Obituarios** - Completo y emocional  
-**Panel Administrativo** - Gestión centralizada  
-**Responsive Design** - Mobile-first  
-**TypeScript estricto** - Código seguro  
-
-## Próximos Pasos
-
-### Conectar Base de Datos
-
-1. Instala Prisma:
-```bash
-npm install prisma @prisma/client
-npx prisma init
-```
-
-2. Define tu schema en `prisma/schema.prisma`
-3. Ejecuta migraciones:
-```bash
-npx prisma migrate dev
-```
-
-### Configurar Recorrido 360°
-
-1. Obtén tu cuenta en [Matterport](https://matterport.com)
-2. Crea tu tour virtual
-3. Obtén el link de embed
-4. Pégalo en `src/app/recorrido-360/page.tsx`
-
-### Integrar Pasarela de Pagos
-
-- Opciones: Stripe, PayU, Mercado Pago
-- Implementar en `src/app/api/pagos/`
-
-### Sistema de Autenticación
+## Scripts útiles
 
 ```bash
-npm install next-auth
-```
-
-Configurar en `src/app/api/auth/[...nextauth]/`
-
-## Assets Necesarios
-
-Coloca en `public/`:
-
-```
-public/
-├── images/
-│   ├── hero-parque.jpg
-│   ├── sala-360.jpg
-│   └── obituarios/
-│
-├── plans/
-│   ├── excellence.jpg
-│   ├── premium.jpg
-│   └── ...
-│
-└── allies/
-    └── logos/
-```
-
-## Deployment
-
-### Vercel (Recomendado)
-
-```bash
-npm install -g vercel
-vercel
-```
-
-### Build de Producción
-
-```bash
+npm run dev
 npm run build
 npm start
+npx tsc --noEmit
 ```
+
+## Pendientes Recomendados
+
+- Integrar persistencia en base de datos para pedidos y postulaciones (hoy está con `localStorage` para flujo funcional inicial).
+- Implementar notificaciones transaccionales (email/WhatsApp) por estado de pedido y estado de postulaciones.
+- Generar comprobante/voucher de pago (PDF) para florería y anexarlo al proceso de soporte.
 
 ## Desarrollado por
 
@@ -167,11 +121,7 @@ Versión 4.0.0 - 2026
 
 Todos los derechos reservados - Jardines del Renacer 2026
 
----
+## Soporte
 
-## 🆘 Soporte
-
-Para dudas o soporte:
 - Email: desarrollo@jardinesdelrenacer.com
 - WhatsApp: +57 300 123 4567
-# web_jardines_del_renacer_2026
