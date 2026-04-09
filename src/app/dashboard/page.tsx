@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Button from '@/components/ui/Button';
 import Container from '@/components/ui/Container';
 import SectionTitle from '@/components/ui/SectionTitle';
+import { buildAdminGreeting } from '@/lib/adminGreeting';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -41,6 +42,7 @@ export default function DashboardPage() {
     { label: 'Visitas al Sitio', value: '4,567', icon: '', href: '/dashboard/obituarios' },
     { label: 'Este Mes', value: '28', icon: '', href: '/dashboard/obituarios' },
   ];
+  const greeting = buildAdminGreeting(user?.name);
 
   return (
     <div className="min-h-screen pt-24 pb-12">
@@ -48,7 +50,7 @@ export default function DashboardPage() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
           <div>
             <h1 className="text-3xl font-display text-text mb-2">
-              Bienvenido, {user?.name || 'Administrador'}
+              {greeting}
             </h1>
             <p className="text-textLight">
               Panel de administración de Obituarios - Jardines del Renacer

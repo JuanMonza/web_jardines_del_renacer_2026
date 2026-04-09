@@ -18,6 +18,7 @@ import {
   readCandidateApplications,
   writeCandidateApplications,
 } from '@/lib/candidateStorage';
+import { APPLICATION_PROGRESS_STEPS, getApplicationProgress } from '@/lib/applicationProgress';
 import {
   readJobVacancies,
   removeJobVacancy,
@@ -61,6 +62,77 @@ function createInitialDraft(): VacancyDraft {
     requirementsText: '',
     benefitsText: '',
   };
+}
+
+const APPLICATION_PROGRESS_SHORT_LABELS: Record<
+  (typeof APPLICATION_PROGRESS_STEPS)[number],
+  string
+> = {
+  Recibida: 'Recibida',
+  'En revision': 'Revision',
+  Entrevista: 'Entrevista',
+  'Prueba tecnica': 'Prueba',
+  Seleccionado: 'Seleccionado',
+};
+
+function ApplicationProgressTrack({ status }: { status: JobApplication['status'] }) {
+  const progress = getApplicationProgress(status);
+  const barClass = progress.isRejected ? 'bg-red-500' : 'bg-primary';
+  const trailClass = progress.isRejected ? 'bg-red-100' : 'bg-primary/15';
+
+  return (
+    <div className="mt-3 rounded-xl border border-primary/10 bg-white/70 p-3">
+      <div className="flex items-center justify-between gap-3 mb-2">
+        <p className="text-[11px] uppercase tracking-[0.12em] text-textLight">Ruta del proceso</p>
+        <span
+          className={`text-[11px] font-semibold px-2 py-1 rounded-full ${
+            progress.isRejected
+              ? 'text-red-700 bg-red-100 border border-red-200'
+              : progress.isFinished
+                ? 'text-green-700 bg-green-100 border border-green-200'
+                : 'text-primary bg-primary/10 border border-primary/20'
+          }`}
+        >
+          {status}
+        </span>
+      </div>
+
+      <div className={`relative h-1 rounded-full ${trailClass}`}>
+        <span
+          className={`absolute left-0 top-0 h-full rounded-full transition-all duration-500 ${barClass}`}
+          style={{ width: `${progress.percent}%` }}
+        />
+      </div>
+
+      <div className="mt-2 grid grid-cols-5 gap-2">
+        {APPLICATION_PROGRESS_STEPS.map((step, index) => {
+          const reached = !progress.isRejected && index <= progress.activeIndex;
+          const isCurrent = !progress.isRejected && index === progress.activeIndex;
+
+          return (
+            <div key={step} className="flex flex-col items-center gap-1">
+              <span
+                className={`h-3 w-3 rounded-full border transition-colors ${
+                  reached
+                    ? 'bg-primary border-primary'
+                    : 'bg-white border-primary/25'
+                } ${isCurrent ? 'ring-2 ring-primary/30' : ''}`}
+              />
+              <span className="text-[10px] text-textLight text-center leading-tight">
+                {APPLICATION_PROGRESS_SHORT_LABELS[step]}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      {progress.isRejected && (
+        <p className="text-xs text-red-700 mt-2">
+          Proceso finalizado en estado "No continua".
+        </p>
+      )}
+    </div>
+  );
 }
 
 export default function VacantesAdminPanel() {
@@ -516,6 +588,7 @@ export default function VacantesAdminPanel() {
                         ))}
                       </select>
                     </div>
+                    <ApplicationProgressTrack status={application.status} />
                     <p className="text-xs text-textLight mt-1">
                       Fecha: {new Date(application.appliedAt).toLocaleString('es-CO')}
                     </p>

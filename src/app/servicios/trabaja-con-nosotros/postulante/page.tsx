@@ -14,6 +14,7 @@ import {
   type CandidateProfile,
   type JobApplication,
 } from '@/config/candidates';
+import { APPLICATION_PROGRESS_STEPS, getApplicationProgress } from '@/lib/applicationProgress';
 import { VACANCY_DEPARTMENTS, type JobVacancy } from '@/config/vacancies';
 import {
   readCandidateApplications,
@@ -51,9 +52,84 @@ function calculateProfileCompletion(profile: CandidateProfile) {
   return Math.round((done / checks.length) * 100);
 }
 
+const APPLICATION_PROGRESS_SHORT_LABELS: Record<
+  (typeof APPLICATION_PROGRESS_STEPS)[number],
+  string
+> = {
+  Recibida: 'Recibida',
+  'En revision': 'Revision',
+  Entrevista: 'Entrevista',
+  'Prueba tecnica': 'Prueba',
+  Seleccionado: 'Seleccionado',
+};
+
+function ApplicationProgressTrack({ status }: { status: JobApplication['status'] }) {
+  const progress = getApplicationProgress(status);
+  const barClass = progress.isRejected ? 'bg-red-500' : 'bg-primary';
+  const trailClass = progress.isRejected ? 'bg-red-100' : 'bg-primary/15';
+
+  return (
+    <div className="mt-3 rounded-xl border border-primary/10 bg-white/70 p-3">
+      <div className="flex items-center justify-between gap-3 mb-2">
+        <p className="text-[11px] uppercase tracking-[0.12em] text-textLight">Ruta del proceso</p>
+        <span
+          className={`text-[11px] font-semibold px-2 py-1 rounded-full ${
+            progress.isRejected
+              ? 'text-red-700 bg-red-100 border border-red-200'
+              : progress.isFinished
+                ? 'text-green-700 bg-green-100 border border-green-200'
+                : 'text-primary bg-primary/10 border border-primary/20'
+          }`}
+        >
+          {status}
+        </span>
+      </div>
+
+      <div className={`relative h-1 rounded-full ${trailClass}`}>
+        <span
+          className={`absolute left-0 top-0 h-full rounded-full transition-all duration-500 ${barClass}`}
+          style={{ width: `${progress.percent}%` }}
+        />
+      </div>
+
+      <div className="mt-2 grid grid-cols-5 gap-2">
+        {APPLICATION_PROGRESS_STEPS.map((step, index) => {
+          const reached = !progress.isRejected && index <= progress.activeIndex;
+          const isCurrent = !progress.isRejected && index === progress.activeIndex;
+
+          return (
+            <div key={step} className="flex flex-col items-center gap-1">
+              <span
+                className={`h-3 w-3 rounded-full border transition-colors ${
+                  reached
+                    ? 'bg-primary border-primary'
+                    : 'bg-white border-primary/25'
+                } ${isCurrent ? 'ring-2 ring-primary/30' : ''}`}
+              />
+              <span className="text-[10px] text-textLight text-center leading-tight">
+                {APPLICATION_PROGRESS_SHORT_LABELS[step]}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      {progress.isRejected && (
+        <p className="text-xs text-red-700 mt-2">
+          El proceso se cerro en estado "No continua".
+        </p>
+      )}
+    </div>
+  );
+}
+
 export default function PostulantePage() {
   const searchParams = useSearchParams();
   const requestedVacancyId = searchParams.get('vacante') ?? '';
+  const requestedTrackingCedula =
+    searchParams.get('cedula') ?? searchParams.get('documento') ?? '';
+  const requestedTrackingEmail =
+    searchParams.get('correo') ?? searchParams.get('email') ?? '';
 
   const [profile, setProfile] = useState<CandidateProfile>(createEmptyCandidateProfile());
   const [applications, setApplications] = useState<JobApplication[]>([]);
@@ -77,6 +153,15 @@ export default function PostulantePage() {
     return () => window.removeEventListener('candidate-storage-updated', syncData);
   }, []);
 
+  useEffect(() => {
+    if (requestedTrackingCedula) {
+      setTrackingDocument(requestedTrackingCedula.replace(/\D/g, ''));
+    }
+    if (requestedTrackingEmail) {
+      setTrackingEmail(requestedTrackingEmail.trim().toLowerCase());
+    }
+  }, [requestedTrackingCedula, requestedTrackingEmail]);
+
   const selectedVacancy = useMemo(
     () => vacancies.find((vacancy) => vacancy.id === requestedVacancyId) ?? null,
     [vacancies, requestedVacancyId],
@@ -86,14 +171,23 @@ export default function PostulantePage() {
   const trackedApplications = useMemo(() => {
     const normalizedDoc = trackingDocument.replace(/\D/g, '');
     const normalizedEmail = trackingEmail.trim().toLowerCase();
-    if (!normalizedDoc || !normalizedEmail) {
+    if (!normalizedDoc) {
       return [];
     }
 
     return applications.filter(
-      (application) =>
-        application.candidateDocument === normalizedDoc &&
-        application.candidateEmail.trim().toLowerCase() === normalizedEmail,
+      (application) => {
+        const matchesDocument = application.candidateDocument === normalizedDoc;
+        if (!matchesDocument) {
+          return false;
+        }
+
+        if (!normalizedEmail) {
+          return true;
+        }
+
+        return application.candidateEmail.trim().toLowerCase() === normalizedEmail;
+      },
     );
   }, [applications, trackingDocument, trackingEmail]);
 
@@ -430,7 +524,7 @@ export default function PostulantePage() {
 
             <section className="space-y-6">
               <FadeIn delay={0.1}>
-                <article className="glass rounded-3xl border border-primary/15 p-6">
+                <article id="consulta-proceso" className="glass rounded-3xl border border-primary/15 p-6">
                   <h3 className="text-xl font-display text-text mb-3">Estado de tu perfil</h3>
                   <div className="h-3 rounded-full bg-primary/10 overflow-hidden">
                     <div
@@ -520,26 +614,26 @@ export default function PostulantePage() {
               <FadeIn delay={0.25}>
                 <article className="glass rounded-3xl border border-primary/15 p-6">
                   <h3 className="text-xl font-display text-text mb-3">
-                    Consulta tu proceso por documento
+                    Consulta tu proceso por cedula
                   </h3>
 
                   <div className="space-y-3">
                     <Input
-                      label="Numero de documento"
+                      label="Numero de cedula"
                       value={trackingDocument}
                       onChange={(event) => setTrackingDocument(event.target.value)}
-                      placeholder="Ingresa tu documento"
+                      placeholder="Ingresa tu cedula"
                     />
                     <Input
-                      label="Correo electronico"
+                      label="Correo electronico (opcional)"
                       type="email"
                       value={trackingEmail}
                       onChange={(event) => setTrackingEmail(event.target.value)}
-                      placeholder="Ingresa tu correo"
+                      placeholder="Si quieres, filtra tambien por correo"
                     />
                   </div>
 
-                  {trackingDocument && trackingEmail ? (
+                  {trackingDocument ? (
                     trackedApplications.length > 0 ? (
                       <div className="mt-4 space-y-3 max-h-[260px] overflow-y-auto pr-1 custom-scrollbar">
                         {trackedApplications.map((application) => (
@@ -557,17 +651,20 @@ export default function PostulantePage() {
                             <p className="text-xs text-primary mt-1">
                               Estado actual: {application.status}
                             </p>
+                            <ApplicationProgressTrack status={application.status} />
                           </div>
                         ))}
                       </div>
                     ) : (
                       <p className="text-sm text-textLight mt-4">
-                        No encontramos postulaciones con ese documento y correo.
+                        {trackingEmail
+                          ? 'No encontramos postulaciones con esa cedula y correo.'
+                          : 'No encontramos postulaciones con esa cedula.'}
                       </p>
                     )
                   ) : (
                     <p className="text-sm text-textLight mt-4">
-                      Completa documento y correo para consultar tu proceso de seleccion.
+                      Ingresa tu cedula para consultar tu proceso de seleccion.
                     </p>
                   )}
                 </article>

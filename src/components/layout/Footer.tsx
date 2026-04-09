@@ -42,6 +42,7 @@ export default function Footer() {
       { label: 'Preguntas Frecuentes', href: '/faq' },
       { label: 'Términos y Condiciones', href: '/legal/terminos' },
       { label: 'Política de Privacidad', href: '/legal/privacidad' },
+      { label: 'Política de Cookies', href: '/legal/cookies' },
     ],
   };
 

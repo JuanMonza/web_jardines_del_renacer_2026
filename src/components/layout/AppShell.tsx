@@ -7,6 +7,7 @@ import Footer from '@/components/layout/Footer';
 import FloatingButtons from '@/components/ui/FloatingButtons';
 import Preloader from '@/components/layout/Preloader';
 import MonthlyGiveawayPopup from '@/components/layout/MonthlyGiveawayPopup';
+import CookieConsentBanner from '@/components/legal/CookieConsentBanner';
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -106,6 +107,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       <main className={!hideLayoutChrome ? 'pt-16 flex-1' : 'flex-1'}>{children}</main>
       {!hideLayoutChrome && <Footer />}
       {!hideLayoutChrome && <FloatingButtons />}
+      {!hideLayoutChrome && <CookieConsentBanner />}
     </>
   );
 }

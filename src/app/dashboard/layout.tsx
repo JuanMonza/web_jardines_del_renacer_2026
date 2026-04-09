@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { buildAdminGreeting } from '@/lib/adminGreeting';
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [user, setUser] = useState<{ name: string; email: string } | null>(null);
+  const [user, setUser] = useState<{ name?: string; email?: string } | null>(null);
 
   useEffect(() => {
     const userData = localStorage.getItem('adminUser');
@@ -17,10 +18,15 @@ export default function DashboardLayout({
     }
   }, []);
 
+  const greeting = buildAdminGreeting(user?.name);
+
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="relative flex min-h-screen overflow-hidden admin-liquid-bg">
+      <div className="pointer-events-none absolute -top-24 -right-28 h-96 w-96 rounded-full bg-primary/25 blur-3xl" />
+      <div className="pointer-events-none absolute bottom-0 -left-24 h-80 w-80 rounded-full bg-sky-300/30 blur-3xl" />
+
       {/* Sidebar con perfil */}
-      <aside className="fixed left-0 top-0 h-screen w-72 glass border-r border-border shadow-xl">
+      <aside className="fixed left-0 top-0 z-20 h-screen w-72 admin-liquid-sidebar border-r border-border/60">
         {/* Profile Section */}
         <div className="p-6 border-b border-border">
           <div className="flex items-center gap-4">
@@ -34,6 +40,7 @@ export default function DashboardLayout({
               <h3 className="text-text font-semibold text-base leading-tight">
                 {user?.name || 'Admin Obituarios Jardines del Renacer'}
               </h3>
+              <p className="text-xs text-primary/90 mt-1">{greeting}</p>
             </div>
           </div>
         </div>
@@ -88,8 +95,10 @@ export default function DashboardLayout({
       </aside>
 
       {/* Main Content */}
-      <main className="ml-72 flex-1 p-8">
-        {children}
+      <main className="ml-72 flex-1 p-5 relative z-10">
+        <div className="admin-liquid-main-card rounded-[30px] min-h-[calc(100vh-2.5rem)]">
+          {children}
+        </div>
       </main>
     </div>
   );

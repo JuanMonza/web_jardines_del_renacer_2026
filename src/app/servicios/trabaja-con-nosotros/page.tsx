@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import Container from '@/components/ui/Container';
 import FadeIn from '@/components/animations/FadeIn';
 import Button from '@/components/ui/Button';
@@ -22,11 +23,15 @@ function formatPublishedDate(date: string) {
 }
 
 export default function TrabajaConNosotrosPage() {
+  const router = useRouter();
   const [vacancies, setVacancies] = useState<JobVacancy[]>([]);
   const [query, setQuery] = useState('');
   const [selectedArea, setSelectedArea] = useState(ALL_AREAS);
   const [selectedDepartment, setSelectedDepartment] = useState(ALL_DEPARTMENTS);
   const [selectedModality, setSelectedModality] = useState(ALL_MODALITIES);
+  const [trackingCedula, setTrackingCedula] = useState('');
+  const [trackingEmail, setTrackingEmail] = useState('');
+  const [trackingFeedback, setTrackingFeedback] = useState('');
 
   useEffect(() => {
     setVacancies(readJobVacancies());
@@ -75,6 +80,25 @@ export default function TrabajaConNosotrosPage() {
 
   const featuredCount = vacancies.filter((vacancy) => vacancy.featured).length;
   const departmentsCount = departmentOptions.length;
+
+  const handleTrackingRedirect = () => {
+    const cleanCedula = trackingCedula.replace(/\D/g, '');
+    if (cleanCedula.length < 6 || cleanCedula.length > 10) {
+      setTrackingFeedback('Ingresa una cedula valida (6 a 10 digitos).');
+      return;
+    }
+
+    const params = new URLSearchParams({
+      cedula: cleanCedula,
+    });
+    const normalizedEmail = trackingEmail.trim().toLowerCase();
+    if (normalizedEmail) {
+      params.set('correo', normalizedEmail);
+    }
+
+    setTrackingFeedback('');
+    router.push(`/servicios/trabaja-con-nosotros/postulante?${params.toString()}#consulta-proceso`);
+  };
 
   return (
     <>
@@ -203,6 +227,44 @@ export default function TrabajaConNosotrosPage() {
                     <option value="Remoto">Remoto</option>
                   </select>
                 </div>
+              </div>
+
+              <div className="mt-6 pt-5 border-t border-primary/10">
+                <p className="text-xs uppercase tracking-[0.18em] text-primary mb-3">
+                  Consulta de postulacion
+                </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  <Input
+                    label="Cedula para consultar"
+                    value={trackingCedula}
+                    onChange={(event) => {
+                      setTrackingCedula(event.target.value);
+                      if (trackingFeedback) {
+                        setTrackingFeedback('');
+                      }
+                    }}
+                    placeholder="Ingresa tu cedula"
+                  />
+
+                  <Input
+                    label="Correo (opcional)"
+                    type="email"
+                    value={trackingEmail}
+                    onChange={(event) => setTrackingEmail(event.target.value)}
+                    placeholder="Tu correo registrado"
+                  />
+
+                  <div className="flex items-end">
+                    <Button variant="secondary" className="w-full justify-center" onClick={handleTrackingRedirect}>
+                      Consultar proceso
+                    </Button>
+                  </div>
+                </div>
+
+                {trackingFeedback && (
+                  <p className="text-sm text-primary mt-3">{trackingFeedback}</p>
+                )}
               </div>
             </div>
           </FadeIn>

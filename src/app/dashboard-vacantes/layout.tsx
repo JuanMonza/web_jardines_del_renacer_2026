@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { buildAdminGreeting } from '@/lib/adminGreeting';
 
 type VacanciesAdminUser = {
   cedula: string;
@@ -41,6 +42,8 @@ export default function DashboardVacantesLayout({
     router.push('/');
   };
 
+  const greeting = buildAdminGreeting(user?.name);
+
   if (checkingAccess) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -50,8 +53,11 @@ export default function DashboardVacantesLayout({
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <aside className="fixed left-0 top-0 h-screen w-72 glass border-r border-border shadow-xl">
+    <div className="relative flex min-h-screen overflow-hidden admin-liquid-bg">
+      <div className="pointer-events-none absolute -top-28 -right-28 h-96 w-96 rounded-full bg-primary/25 blur-3xl" />
+      <div className="pointer-events-none absolute bottom-0 -left-24 h-80 w-80 rounded-full bg-sky-300/30 blur-3xl" />
+
+      <aside className="fixed left-0 top-0 z-20 h-screen w-72 admin-liquid-sidebar border-r border-border/60">
         <div className="p-6 border-b border-border">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-primary-hover flex items-center justify-center text-white font-bold text-xl shadow-lg">
@@ -64,6 +70,7 @@ export default function DashboardVacantesLayout({
               <h3 className="text-text font-semibold text-base leading-tight">
                 {user?.name || 'Admin Vacantes'}
               </h3>
+              <p className="text-xs text-primary/90 mt-1">{greeting}</p>
             </div>
           </div>
         </div>
@@ -112,7 +119,11 @@ export default function DashboardVacantesLayout({
         </div>
       </aside>
 
-      <main className="ml-72 flex-1 p-8">{children}</main>
+      <main className="ml-72 flex-1 p-5 relative z-10">
+        <div className="admin-liquid-main-card rounded-[30px] min-h-[calc(100vh-2.5rem)]">
+          {children}
+        </div>
+      </main>
     </div>
   );
 }
