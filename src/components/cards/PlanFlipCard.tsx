@@ -35,6 +35,10 @@ export default function PlanFlipCard({
     }
   };
 
+  const handleViewPlans = () => {
+    window.location.href = '/planes';
+  };
+
   return (
     <div 
       className="relative w-full h-[500px] perspective-1000"
@@ -135,13 +139,22 @@ export default function PlanFlipCard({
             <p className="text-xl font-semibold text-primary text-center">
               {price}
             </p>
-            <Button 
-              variant="primary" 
-              className="w-full"
-              onClick={handleQuote}
-            >
-              Cotizar Ahora
-            </Button>
+            <div className="flex flex-col gap-2">
+              <Button
+                variant="secondary"
+                className="w-full"
+                onClick={handleViewPlans}
+              >
+                Ver nuestros planes
+              </Button>
+              <Button
+                variant="primary"
+                className="w-full"
+                onClick={handleQuote}
+              >
+                Cotizar
+              </Button>
+            </div>
           </div>
         </div>
       </motion.div>

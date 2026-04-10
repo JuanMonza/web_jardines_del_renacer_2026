@@ -12,7 +12,13 @@ import { PLANS_CONFIG } from '@/config/plans';
 import { CONTACT_INFO, buildWhatsAppUrl } from '@/config/contact';
 
 export default function HomePage() {
-  const featuredPlans = Object.values(PLANS_CONFIG).filter(plan => plan.featured);
+  const allPlans = Object.values(PLANS_CONFIG);
+  const featuredPlans = allPlans.filter((plan) => plan.featured);
+  const fallbackPlans = allPlans.filter((plan) => !plan.featured);
+  const homePlans =
+    featuredPlans.length >= 3
+      ? featuredPlans.slice(0, 3)
+      : [...featuredPlans, ...fallbackPlans.slice(0, 3 - featuredPlans.length)];
 
   return (
     <>
@@ -84,9 +90,9 @@ export default function HomePage() {
               },
               {
                 title: 'Siempre Contigo',
-                description: '"Cerca, Incluso cuando no puedes estar"',
+                description: 'Transmision en vivo 360 para acompanar la velacion desde cualquier lugar',
                 iconPath: 'M12 21s-7-4.35-9.5-8.25C.89 10.22 1.29 6.5 4.11 4.68c2.02-1.3 4.68-.86 6.38 1.03 1.7-1.89 4.36-2.33 6.38-1.03 2.82 1.82 3.22 5.54 1.61 8.07C19 16.65 12 21 12 21z',
-                link: '/obituarios',
+                link: '/siempre-contigo',
               },
             ].map((service, index) => (
               <FadeIn key={service.title} delay={index * 0.1}>
@@ -116,13 +122,13 @@ export default function HomePage() {
         <Container>
           <FadeIn>
             <SectionTitle
-              title="Planes para tu Familia"
+              title="Nuestros planes"
               subtitle="Elige el plan que mejor se adapte a tus necesidades"
             />
           </FadeIn>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-12">
-            {featuredPlans.map((plan, index) => (
+            {homePlans.map((plan, index) => (
               <FadeIn key={plan.id} delay={index * 0.1}>
                 <PlanFlipCard
                   id={plan.id}
@@ -143,7 +149,7 @@ export default function HomePage() {
           <div className="text-center mt-12">
             <Link href="/planes">
               <Button variant="outline" size="lg">
-                Ver Todos los Planes
+                Ver nuestros planes
               </Button>
             </Link>
           </div>
@@ -235,7 +241,11 @@ export default function HomePage() {
                 </div>
                 <div className="p-6 text-center">
                   <Link href="/repatriaciones">
-                    <Button variant="outline" size="md" className="w-full">
+                    <Button
+                      variant="outline"
+                      size="md"
+                      className="w-full border-primary bg-white/95 text-primary hover:border-primary hover:bg-primary hover:text-white"
+                    >
                       Ver Más
                     </Button>
                   </Link>

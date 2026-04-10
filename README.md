@@ -46,6 +46,14 @@ WOMPI_INTEGRITY_SECRET=test_integrity_replace_me
 WOMPI_API_BASE_URL=https://sandbox.wompi.co/v1
 # WOMPI_CHECKOUT_BASE_URL=https://checkout.wompi.co/p/
 # WOMPI_ALLOW_DEMO_FALLBACK=false
+
+# Correo - Notificaciones de vacantes (Google SMTP)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=465
+SMTP_SECURE=true
+SMTP_USER=tu_correo_google@gmail.com
+SMTP_PASS=tu_app_password_de_google
+SMTP_FROM=Jardines del Renacer <tu_correo_google@gmail.com>
 ```
 
 ### 3. Ejecutar en desarrollo
@@ -71,6 +79,18 @@ Abrir `http://localhost:3000`.
 ### Nota de desarrollo
 
 Si faltan credenciales de Wompi y estás en entorno local, el proyecto puede usar modo demo para no bloquear pruebas de interfaz. En producción debe quedar con llaves reales y verificación activa.
+
+## Notificaciones de estado (Vacantes)
+
+- Endpoint: `POST /api/vacantes/notificar-estado`
+- Se dispara desde el panel de vacantes al cambiar estado de una postulación.
+- Casos clave: `Prueba tecnica` y `No continua` (también soporta otros estados).
+
+Para Gmail:
+
+1. Activa verificación en dos pasos en la cuenta Google.
+2. Genera una **App Password**.
+3. Usa ese valor en `SMTP_PASS`.
 
 ## Estructura General
 

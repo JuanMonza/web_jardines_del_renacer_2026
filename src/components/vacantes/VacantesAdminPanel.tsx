@@ -258,12 +258,51 @@ export default function VacantesAdminPanel() {
     applicationId: string,
     status: JobApplication['status'],
   ) => {
+    const target = applications.find((application) => application.id === applicationId);
     const next = applications.map((application) =>
       application.id === applicationId ? { ...application, status } : application,
     );
     setApplications(next);
     writeCandidateApplications(next);
-    setFeedback('Estado de postulacion actualizado.');
+    setFeedback('Estado de postulacion actualizado. Enviando notificacion por correo...');
+
+    if (!target || !target.candidateEmail) {
+      setFeedback('Estado actualizado. No se envio correo porque la postulacion no tiene email.');
+      return;
+    }
+
+    void (async () => {
+      try {
+        const response = await fetch('/api/vacantes/notificar-estado', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            candidateName: target.candidateName,
+            candidateEmail: target.candidateEmail,
+            candidateDocument: target.candidateDocument,
+            vacancyTitle: target.vacancyTitle,
+            trackingCode: target.trackingCode,
+            status,
+          }),
+        });
+
+        const result = (await response.json()) as { ok: boolean; message?: string };
+        if (!response.ok || !result.ok) {
+          setFeedback(
+            `Estado actualizado, pero no se pudo notificar por correo: ${
+              result.message || 'Error de envio'
+            }`,
+          );
+          return;
+        }
+
+        setFeedback('Estado de postulacion actualizado y notificado por correo.');
+      } catch {
+        setFeedback('Estado actualizado, pero fallo la notificacion por correo.');
+      }
+    })();
   };
 
   return (
