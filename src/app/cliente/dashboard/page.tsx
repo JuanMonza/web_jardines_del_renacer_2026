@@ -102,7 +102,7 @@ export default function ClienteDashboardPage() {
                 </div>
               </div>
               <p className="text-sm text-textLight mb-4">
-                Plan Familiar Premium
+                Plan Proteccion Familiar Esencial
               </p>
               <Link href="/planes">
                 <Button variant="outline" size="sm" className="w-full">

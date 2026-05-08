@@ -6,6 +6,7 @@ import { useState } from 'react';
 import Button from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
 import { ALLY_CATEGORIES } from '@/config/allies';
+import PaymentDropdown from '@/components/ui/PaymentDropdown';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -16,6 +17,8 @@ export default function Navbar() {
     { href: '/servicios/quienes-somos', label: 'Quiénes Somos' },
     { href: '/servicios/resena-historica', label: 'Reseña Histórica' },
     { href: '/servicios/trabaja-con-nosotros', label: 'Trabaja con Nosotros' },
+    { href: '/servicios/condolencias-digitales', label: 'Condolencias Digitales' },
+    { href: '/clausulas', label: 'Cláusulas' },
   ];
 
   const aliadosSubmenu = ALLY_CATEGORIES.map((category) => ({
@@ -53,7 +56,7 @@ export default function Navbar() {
                     onMouseEnter={() => setServiciosOpen(true)}
                     onMouseLeave={() => setServiciosOpen(false)}
                     className={cn(
-                      'absolute top-full left-0 mt-2 w-56 glass rounded-xl overflow-hidden shadow-glass-lg transition-all duration-300',
+                      'absolute top-full left-0 mt-2 w-64 bg-white rounded-xl overflow-hidden shadow-xl transition-all duration-300',
                       serviciosOpen ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-2'
                     )}
                   >
@@ -94,7 +97,7 @@ export default function Navbar() {
                     onMouseEnter={() => setAliadosOpen(true)}
                     onMouseLeave={() => setAliadosOpen(false)}
                     className={cn(
-                      'absolute top-full left-0 mt-2 w-64 max-h-[420px] overflow-y-auto glass rounded-xl shadow-glass-lg transition-all duration-300',
+                      'absolute top-full left-0 mt-2 w-64 max-h-[420px] overflow-y-auto bg-white rounded-xl shadow-xl transition-all duration-300',
                       aliadosOpen ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-2'
                     )}
                   >
@@ -146,12 +149,13 @@ export default function Navbar() {
                 </Link>
 
                 {/* Botones CTA */}
-                <Link href="/pagar-plan">
-                  <Button variant="secondary" size="sm">
-                    Pagar Plan
-                  </Button>
-                </Link>
-                <Link href="/login">
+                <PaymentDropdown 
+                  wompiUrl="https://checkout.wompi.co/l/TU_LINK_DE_WOMPI_AQUI" 
+                  pseUrl="https://checkout.wompi.co/l/TU_LINK_DE_PSE_AQUI"
+                  buttonVariant="secondary"
+                  buttonSize="sm"
+                />
+                <Link href="/proximamente">
                   <Button variant="outline" size="sm">
                     Ingresar
                   </Button>
@@ -272,12 +276,16 @@ export default function Navbar() {
                   Conoce Nuestras Salas
                 </Button>
               </Link>
-              <Link href="/pagar-plan" className="block">
-                <Button variant="secondary" size="sm" className="w-full">
-                  Pagar Plan
-                </Button>
-              </Link>
-              <Link href="/login" className="block">
+              <div className="block w-full">
+                <PaymentDropdown 
+                  wompiUrl="https://checkout.wompi.co/l/TU_LINK_DE_WOMPI_AQUI" 
+                  pseUrl="https://checkout.wompi.co/l/TU_LINK_DE_PSE_AQUI"
+                  buttonVariant="secondary"
+                  buttonSize="sm"
+                  className="w-full"
+                />
+              </div>
+              <Link href="/proximamente" className="block">
                 <Button variant="outline" size="sm" className="w-full">
                   Ingresar
                 </Button>

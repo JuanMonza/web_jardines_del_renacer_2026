@@ -5,8 +5,10 @@ import SectionTitle from '@/components/ui/SectionTitle';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import type { Obituary } from '@/types/obituary';
+import { SEDES, getDireccionLabel } from '@/data/sedes';
 
 const OBITUARIO_BACKGROUND_IMAGE = '/images/white-tulips-sunlight.jpg';
+const DEFAULT_SEDE_ID = SEDES[0]?.id ?? '';
 
 export default function DashboardObituariosPage() {
   const [obituarios, setObituarios] = useState<Obituary[]>([
@@ -22,7 +24,7 @@ export default function DashboardObituariosPage() {
       inicioVelacion: '2026-02-04T14:00',
       cierreVelacion: '2026-02-05T10:00',
       cedula: '1234567890',
-      sede: 'principal',
+      sede: DEFAULT_SEDE_ID,
       createdAt: new Date('2026-02-04T09:30:00'),
     },
     {
@@ -37,7 +39,7 @@ export default function DashboardObituariosPage() {
       inicioVelacion: '2026-02-03T16:00',
       cierreVelacion: '2026-02-04T11:00',
       cedula: '9876543210',
-      sede: 'norte',
+      sede: SEDES[1]?.id ?? DEFAULT_SEDE_ID,
       createdAt: new Date('2026-02-03T10:15:00'),
     },
   ]);
@@ -53,7 +55,7 @@ export default function DashboardObituariosPage() {
     ubicacionSala: '',
     inicioVelacion: '',
     cierreVelacion: '',
-    sede: 'principal',
+    sede: DEFAULT_SEDE_ID,
     direccionServicio: '',
     direccionCementerio: '',
     nombreCementerio: '',
@@ -68,9 +70,13 @@ export default function DashboardObituariosPage() {
   });
   const [searchCedula, setSearchCedula] = useState('');
 
-  const sedes = ['principal', 'norte', 'sur', 'oriente', 'occidente'];
   const salas = ['Sala A - Principal', 'Sala B - VIP', 'Sala C - Familiar', 'Sala D - Capilla', 'Sala Magna 1', 'Sala Magna 2', 'Sala Magna 3', 'Sala Magna 4'];
   const serviciosDisponibles = ['Cafetería', 'Florería', 'Crematorio', 'Estacionamiento', 'Wifi', 'Accesibilidad', 'Nichos', 'Capilla Ecuménica'];
+
+  const getSedeLabel = (sedeId: string) => {
+    const sede = SEDES.find((item) => item.id === sedeId);
+    return sede ? `${sede.nombre} - ${sede.ciudad}` : sedeId;
+  };
 
   const toggleServicio = (servicio: string) => {
     setFormData(prev => ({
@@ -150,7 +156,7 @@ export default function DashboardObituariosPage() {
       ubicacionSala: '',
       inicioVelacion: '',
       cierreVelacion: '',
-      sede: 'principal',
+      sede: DEFAULT_SEDE_ID,
       direccionServicio: '',
       direccionCementerio: '',
       nombreCementerio: '',
@@ -350,9 +356,9 @@ export default function DashboardObituariosPage() {
                   onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, sede: e.target.value })}
                   className="w-full px-4 py-2 rounded-lg glass border border-border text-text"
                 >
-                  {sedes.map(sede => (
-                    <option key={sede} value={sede}>
-                      {sede.charAt(0).toUpperCase() + sede.slice(1)}
+                  {SEDES.map((sede) => (
+                    <option key={sede.id} value={sede.id}>
+                      {sede.nombre} - {getDireccionLabel(sede)}
                     </option>
                   ))}
                 </select>
@@ -629,7 +635,7 @@ export default function DashboardObituariosPage() {
                 <tr key={obituario.id} className="hover:bg-background/50 transition-colors">
                   <td className="px-4 py-3 text-sm text-text">{obituario.nombre}</td>
                   <td className="px-4 py-3 text-sm text-textLight">{obituario.cedula}</td>
-                  <td className="px-4 py-3 text-sm text-textLight capitalize">{obituario.sede}</td>
+                  <td className="px-4 py-3 text-sm text-textLight">{getSedeLabel(obituario.sede)}</td>
                   <td className="px-4 py-3 text-sm text-textLight">{obituario.sala}</td>
                   <td className="px-4 py-3 text-sm text-textLight">
                     {new Date(obituario.inicioVelacion).toLocaleDateString('es-CO', {

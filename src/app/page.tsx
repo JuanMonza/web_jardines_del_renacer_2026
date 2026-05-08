@@ -137,6 +137,11 @@ export default function HomePage() {
                   price={plan.price}
                   image={plan.image}
                   benefits={plan.benefits}
+                  planType={plan.planType}
+                  description={plan.description}
+                  includes={plan.includes}
+                  geographicCoverage={plan.geographicCoverage}
+                  conditions={plan.conditions}
                   featured={plan.featured}
                   onQuote={(planId) => {
                     window.location.href = `/cotizar?plan=${planId}`;
@@ -208,7 +213,7 @@ export default function HomePage() {
                   </div>
                 </div>
                 <div className="p-6 text-center">
-                  <Link href="/parque-conmemorativo">
+                  <a href="https://conmemorativo-jr-2025.vercel.app/" target="_blank" rel="noopener noreferrer">
                     <Button
                       variant="outline"
                       size="md"
@@ -216,7 +221,7 @@ export default function HomePage() {
                     >
                       Ver Más
                     </Button>
-                  </Link>
+                  </a>
                 </div>
               </div>
             </FadeIn>
@@ -226,7 +231,7 @@ export default function HomePage() {
               <div className="glass rounded-2xl overflow-hidden group hover:shadow-glass-lg transition-all duration-300">
                 <div className="relative h-64 overflow-hidden">
                   <Image
-                    src="/images/white-tulips-sunlight.jpg"
+                    src="/images/Repatriaciones.jpg"
                     alt="Servicio de Repatriaciones"
                     fill
                     className="object-cover group-hover:scale-110 transition-transform duration-500"

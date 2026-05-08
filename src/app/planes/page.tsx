@@ -34,6 +34,11 @@ export default function PlanesPage() {
                   price={plan.price}
                   image={plan.image}
                   benefits={plan.benefits}
+                  planType={plan.planType}
+                  description={plan.description}
+                  includes={plan.includes}
+                  geographicCoverage={plan.geographicCoverage}
+                  conditions={plan.conditions}
                   featured={plan.featured}
                   onQuote={(planId) => {
                     window.location.href = `/cotizar?plan=${planId}`;

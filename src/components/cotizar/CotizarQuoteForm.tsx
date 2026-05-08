@@ -17,7 +17,7 @@ type CotizarQuoteFormProps = {
   selectedPlan: SelectedPlan;
 };
 
-type CoverageType = 'individual' | 'familiar' | 'mascotas' | 'empresarial';
+type CoverageType = 'individual' | 'familiar' | 'segmentado' | 'especial' | 'corporativo' | 'independiente';
 
 type FormState = {
   fullName: string;
@@ -27,46 +27,57 @@ type FormState = {
   beneficiaries: string;
   coverageType: CoverageType;
   selectedPlanId: PlanId;
-  transferService: 'No aplica' | 'Repatriacion' | 'Expatriacion';
   preferredContact: 'WhatsApp' | 'Llamada' | 'Correo';
   preferredContactTime: string;
 };
 
 const COVERAGE_LABELS: Record<CoverageType, string> = {
-  individual: 'Plan para 1 persona',
-  familiar: 'Plan familiar (mas de 1 persona)',
-  mascotas: 'Exequial mascotas',
-  empresarial: 'Plan empresarial',
+  individual: 'Plan individual',
+  familiar: 'Plan familiar',
+  segmentado: 'Plan segmentado',
+  especial: 'Plan especial',
+  corporativo: 'Plan corporativo',
+  independiente: 'Plan para independientes',
 };
 
 const COVERAGE_COUNT_LABELS: Record<CoverageType, string> = {
   individual: 'Numero de personas',
   familiar: 'Numero de beneficiarios',
-  mascotas: 'Numero de mascotas',
-  empresarial: 'Numero de colaboradores',
+  segmentado: 'Numero de afiliados',
+  especial: 'Numero de servicios',
+  corporativo: 'Numero de colaboradores',
+  independiente: 'Numero de personas',
 };
 
 const COVERAGE_DEFAULT_COUNTS: Record<CoverageType, string> = {
   individual: '1',
   familiar: '4',
-  mascotas: '1',
-  empresarial: '15',
+  segmentado: '1',
+  especial: '1',
+  corporativo: '15',
+  independiente: '1',
 };
 
 const PLAN_OPTIONS_BY_COVERAGE: Record<CoverageType, PlanId[]> = {
-  individual: ['exequial', 'premium', 'excellence'],
-  familiar: ['familiar'],
-  mascotas: ['mascotas'],
-  empresarial: ['corporativo'],
+  individual: ['tranquilidad-total'],
+  familiar: ['proteccion-familiar-esencial'],
+  segmentado: ['celestial', 'aliado-tendero', 'comunidad-activa', 'vocacion-docente', 'heroes-nacion'],
+  especial: ['prevision-inmediata'],
+  corporativo: ['bienestar-empresarial'],
+  independiente: ['profesional-independiente'],
 };
 
 const COVERAGE_BY_PLAN_ID: Record<PlanId, CoverageType> = {
-  exequial: 'individual',
-  premium: 'individual',
-  excellence: 'individual',
-  familiar: 'familiar',
-  mascotas: 'mascotas',
-  corporativo: 'empresarial',
+  'tranquilidad-total': 'individual',
+  'proteccion-familiar-esencial': 'familiar',
+  celestial: 'segmentado',
+  'aliado-tendero': 'segmentado',
+  'comunidad-activa': 'segmentado',
+  'vocacion-docente': 'segmentado',
+  'heroes-nacion': 'segmentado',
+  'prevision-inmediata': 'especial',
+  'bienestar-empresarial': 'corporativo',
+  'profesional-independiente': 'independiente',
 };
 
 function isPlanId(value: string): value is PlanId {
@@ -94,7 +105,6 @@ export default function CotizarQuoteForm({ selectedPlan }: CotizarQuoteFormProps
     beneficiaries: COVERAGE_DEFAULT_COUNTS[initialCoverage],
     coverageType: initialCoverage,
     selectedPlanId: initialPlanId,
-    transferService: 'No aplica',
     preferredContact: 'WhatsApp',
     preferredContactTime: '',
   });
@@ -145,7 +155,6 @@ export default function CotizarQuoteForm({ selectedPlan }: CotizarQuoteFormProps
       `*Tipo de contratacion:* ${COVERAGE_LABELS[formData.coverageType]}\n` +
       `*Plan deseado:* ${selectedPlanConfig.name} (${selectedPlanConfig.price})\n` +
       `${countLine}\n` +
-      `*Servicio de traslado:* ${formData.transferService}\n` +
       `*Nombre:* ${formData.fullName}\n` +
       `*Telefono:* ${formData.phone}\n` +
       `*Correo:* ${formData.email || 'No registra'}\n` +
@@ -276,26 +285,6 @@ export default function CotizarQuoteForm({ selectedPlan }: CotizarQuoteFormProps
               </select>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-text mb-2">
-                Servicio de traslado
-              </label>
-              <select
-                value={formData.transferService}
-                onChange={(event) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    transferService: event.target.value as FormState['transferService'],
-                  }))
-                }
-                className="w-full px-4 py-3 rounded-xl glass border border-border text-text focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-300"
-              >
-                <option value="No aplica">No aplica</option>
-                <option value="Repatriacion">Repatriacion</option>
-                <option value="Expatriacion">Expatriacion</option>
-              </select>
-            </div>
-
             {formData.coverageType !== 'individual' && (
               <Input
                 label={COVERAGE_COUNT_LABELS[formData.coverageType]}
@@ -312,7 +301,7 @@ export default function CotizarQuoteForm({ selectedPlan }: CotizarQuoteFormProps
               />
             )}
 
-            <div className={formData.coverageType !== 'individual' ? '' : 'md:col-span-2'}>
+            <div className="md:max-w-xs">
               <label htmlFor={contactChannelId} className="block text-sm font-medium text-text mb-2">
                 Canal preferido
               </label>

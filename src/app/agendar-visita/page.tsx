@@ -79,7 +79,7 @@ export default function AgendarVisitaPage() {
                   </a>
 
                   <a href={CONTACT_INFO.primaryLine.href}>
-                    <Button variant="secondary" className="w-full">
+                    <Button variant="secondary" className="w-full bg-rose-400 hover:bg-rose-500 border-none text-white">
                       Llamar para agendar
                     </Button>
                   </a>

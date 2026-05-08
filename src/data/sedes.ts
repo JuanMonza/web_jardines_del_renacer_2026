@@ -247,8 +247,8 @@ export const SEDES: Sede[] = [
   // ── ANTIOQUIA ───────────────────────────────────────────────
   { id: 'an-01', 
     nombre: 'Medellín',
-    direccion: '7C6M+4M Medellín, Antioquia, Colombia', 
-    direccionVisible: 'CRA 51D # 61-88 AV. Juan V del Corral, Medellín',
+    direccion: '7C6M+4M Medellín, Antioquia, Colombia',  // PLUS CODE → máxima precisión para mapas
+    direccionVisible: 'CRA 51D # 61-88 AV. Juan V del Corral, Medellín', // Versión para UI, más amigable
     administradora: 'Ana Maria Betancur - Admon Regional', 
     telefono: '3116262976 servicios', 
     departamento: 'Antioquia', ciudad: 'Medellín'
@@ -256,8 +256,8 @@ export const SEDES: Sede[] = [
 
   { id: 'an-02', 
     nombre: 'Itagüí', 
-    direccion: 'Calle 50A # 48-39 queda a cuadra y media del parque principal', 
-    direccionVisible: 'Calle 50A # 48-39, Itagüí',
+    direccion: 'Calle 50A # 48-39 queda a cuadra y media del parque principal',  // PLUS CODE → máxima precisión para mapas
+    direccionVisible: 'Calle 50A # 48-39, Itagüí', // Versión para UI, más amigable
     administradora: 'DEICY YOHANA ORTIZ', 
     telefono: '(604) 4310645', 
     departamento: 'Antioquia', 
@@ -266,8 +266,8 @@ export const SEDES: Sede[] = [
 
   { id: 'an-03', 
     nombre: 'La Pintada', 
-    direccion: 'Calle 35 # 33-17 Barrio Pueblo Nuevo', 
-    direccionVisible: 'Calle 35 # 33-17, La Pintada',
+    direccion: 'Calle 35 # 33-17 Barrio Pueblo Nuevo',  // PLUS CODE → máxima precisión para mapas
+    direccionVisible: 'Calle 35 # 33-17, La Pintada', // Versión para UI, más amigable
     administradora: 'Angie Vanessa Piedrahita Villada', 
     telefono: '3134649079', 
     departamento: 'Antioquia', 
@@ -276,8 +276,8 @@ export const SEDES: Sede[] = [
 
   { id: 'an-04', 
     nombre: 'Valparaíso', 
-    direccion: 'Carrera 10 Bolivar # 10-19', 
-    direccionVisible: 'Carrera 10 Bolivar # 10-19, Valparaíso',
+    direccion: 'Carrera 10 Bolivar # 10-19',  // PLUS CODE → máxima precisión para mapas
+    direccionVisible: 'Carrera 10 Bolivar # 10-19, Valparaíso', // Versión para UI, más amigable
     administradora: 'Olga Stella Ospina Montoya', 
     telefono: '3228147176', 
     departamento: 'Antioquia', 
@@ -286,8 +286,8 @@ export const SEDES: Sede[] = [
 
   { id: 'an-05', 
     nombre: 'Caramanta', 
-    direccion: 'Cra 20 #20-43 Cordoba', 
-    direccionVisible: 'Cra 20 #20-43, Caramanta',
+    direccion: 'Cra 20 #20-43 Cordoba',  // PLUS CODE → máxima precisión para mapas
+    direccionVisible: 'Cra 20 #20-43, Caramanta', // Versión para UI, más amigable
     administradora: 'Cristina Marcela Guiral Puerta', 
     telefono: '3228147221', 
     departamento: 'Antioquia', 
@@ -298,8 +298,8 @@ export const SEDES: Sede[] = [
 
   { id: 'qu-01', 
     nombre: 'Génova', 
-    direccion: 'CRA 10 NUM 26 -40 ( 24-52)',
-    direccionVisible: 'CRA 10 NUM 26 -40 ( 24-52), Génova', 
+    direccion: 'CRA 10 NUM 26 -40 ( 24-52)',  // PLUS CODE → máxima precisión para mapas
+    direccionVisible: 'CRA 10 NUM 26 -40 ( 24-52), Génova', // Versión para UI, más amigable
     administradora: 'LEIDY CAROLINA SUAREZ', 
     telefono: '606 732931 EXT 214', 
     departamento: 'Quindío', 
@@ -308,8 +308,8 @@ export const SEDES: Sede[] = [
 
   { id: 'qu-02', 
     nombre: 'Quimbaya', 
-    direccion: 'CRA 3 # 15-47 ESQUINA', 
-    direccionVisible: 'CRA 3 # 15-47, Quimbaya',
+    direccion: 'CRA 3 # 15-47 ESQUINA',  // PLUS CODE → máxima precisión para mapas
+    direccionVisible: 'CRA 3 # 15-47, Quimbaya', // Versión para UI, más amigable
     administradora: 'ANGELICA SANCHEZ', 
     telefono: '6067329231', 
     departamento: 'Quindío', 
@@ -318,8 +318,8 @@ export const SEDES: Sede[] = [
 
   { id: 'qu-03', 
     nombre: 'Calarca', 
-    direccion: 'CALLE 38 25-36', 
-    direccionVisible: 'CALLE 38 25-36, Calarca',
+    direccion: 'CALLE 38 25-36', // PLUS CODE → máxima precisión para mapas
+    direccionVisible: 'CALLE 38 25-36, Calarca', // Versión para UI, más amigable
     administradora: 'ANA CAROLINA CASTAÑO', 
     telefono: '6067329131', 
     departamento: 'Quindío', 
@@ -328,8 +328,8 @@ export const SEDES: Sede[] = [
     
   { id: 'qu-04', 
     nombre: 'Barcelona', 
-    direccion: 'CRA 10 # 10-02', 
-    direccionVisible: 'CRA 10 # 10-02, Barcelona',
+    direccion: 'CRA 10 # 10-02',  // PLUS CODE → máxima precisión para mapas
+    direccionVisible: 'CRA 10 # 10-02, Barcelona', // Versión para UI, más amigable
     administradora: 'NICOL SOFIA BUITRAGO VASQUEZ', 
     telefono: '', 
     departamento: 'Quindío', 
@@ -338,9 +338,9 @@ export const SEDES: Sede[] = [
 
   { id: 'qu-05', 
     nombre: 'Pijao', 
-    direccion: 'CRA6 CALLE13 #6-09', 
-    direccionVisible: 'CRA6 CALLE13 #6-09, Pijao',
-    administradora: 'HELEIN YINELA AGUDELO HERRERA', 
+    direccion: 'CRA6 CALLE13 #6-09', // PLUS CODE → máxima precisión para mapas
+    direccionVisible: 'CRA6 CALLE13 #6-09, Pijao',  // Versión para UI, más amigable
+    administradora: 'HELEIN YINELA AGUDELO HERRERA',  
     telefono: '606-7329231', 
     departamento: 'Quindío', 
     ciudad: 'Pijao' 
@@ -348,8 +348,8 @@ export const SEDES: Sede[] = [
 
   { id: 'qu-06', 
     nombre: 'Cordoba', 
-    direccion: 'CALLE 14 # 10 - 35 CENTRO', 
-    direccionVisible: 'CALLE 14 # 10 - 35, Cordoba',
+    direccion: 'CALLE 14 # 10 - 35 CENTRO',  // PLUS CODE → máxima precisión para mapas
+    direccionVisible: 'CALLE 14 # 10 - 35, Cordoba', // Versión para UI, más amigable
     administradora: 'MOISES CORTES', 
     telefono: '6067329231', 
     departamento: 'Quindío', 
@@ -358,8 +358,8 @@ export const SEDES: Sede[] = [
 
   { id: 'qu-07', 
     nombre: 'Circasia', 
-    direccion: 'CARRERA 11#5-55', 
-    direccionVisible: 'CARRERA 11#5-55, Circasia',
+    direccion: 'CARRERA 11#5-55',  // PLUS CODE → máxima precisión para mapas
+    direccionVisible: 'CARRERA 11#5-55, Circasia', // Versión para UI, más amigable
     administradora: 'JOHANA CAROLINA ZAMBRANO', 
     telefono: '6067329231', 
     departamento: 'Quindío', 
@@ -368,8 +368,8 @@ export const SEDES: Sede[] = [
 
   { id: 'qu-08', 
     nombre: 'Tebaida', 
-    direccion: 'CRA 8 NUMERO 10-18', 
-    direccionVisible: 'CRA 8 NUMERO 10-18, Tebaida',
+    direccion: 'CRA 8 NUMERO 10-18',  // PLUS CODE → máxima precisión para mapas
+    direccionVisible: 'CRA 8 NUMERO 10-18, Tebaida', // Versión para UI, más amigable
     administradora: 'KAROL ANGELY VILLEGAS GARCIA', 
     telefono: '6067329231', 
     departamento: 'Quindío', 
@@ -378,8 +378,8 @@ export const SEDES: Sede[] = [
 
   { id: 'qu-09', 
     nombre: 'Montenegro', 
-    direccion: 'calle 15# 5-37 piso 1', 
-    direccionVisible: 'calle 15# 5-37 piso 1, Montenegro',
+    direccion: 'calle 15# 5-37 piso 1',  // PLUS CODE → máxima precisión para mapas
+    direccionVisible: 'calle 15# 5-37 piso 1, Montenegro', // Versión para UI, más amigable
     administradora: 'NATHALY PIEDRAHITA PACHON', 
     telefono: '317 4358467', 
     departamento: 'Quindío', 
@@ -388,8 +388,8 @@ export const SEDES: Sede[] = [
 
   { id: 'qu-10', 
     nombre: 'Armenia', 
-    direccion: 'CRA 13 # 23 - 55 CENTRO - CRA 13 # 23-52 Y CRA 13 # 23-49', 
-    direccionVisible: 'CRA 13 # 23 - 55 CENTRO - CRA 13 # 23-52 Y CRA 13 # 23-49, Armenia',
+    direccion: 'CRA 13 # 23 - 55',  // PLUS CODE → máxima precisión para mapas
+    direccionVisible: 'CRA 13 # 23 - 55, Armenia', // Versión para UI, más amigable
     administradora: 'PAOLA ANDREA CRUZ CAMPOS', 
     telefono: '3105563221', 
     departamento: 'Quindío', 
@@ -400,8 +400,8 @@ export const SEDES: Sede[] = [
 
     { id: 'vc-01', 
       nombre: 'Tuluá', 
-      direccion: 'calle 26 # 38-25', 
-      direccionVisible: 'calle 26 # 38-25, Tuluá',
+      direccion: 'calle 26 # 38-25',  
+      direccionVisible: 'calle 26 # 38-25, Tuluá', 
       administradora: 'katheriner Santa', 
       telefono: '3115343146', 
       departamento: 'Valle del Cauca', 
@@ -411,7 +411,7 @@ export const SEDES: Sede[] = [
     { id: 'vc-05', 
       nombre: 'Riofrío', 
       direccion: 'calle 5 #10-28', 
-      direccionVisible: 'calle 5 #10-28, Riofrío',
+      direccionVisible: 'calle 5 #10-28, Riofrío', 
       administradora: 'YESSENIA JARAMILLO-NICOLLE', 
       telefono: '6023800914', 
       departamento: 'Valle del Cauca', 
@@ -427,7 +427,7 @@ export const SEDES: Sede[] = [
       departamento: 'Valle del Cauca', 
       ciudad: 'Trujillo' 
     },
-    
+
     { id: 'vc-07', 
       nombre: 'Andalucía', 
       direccion: 'carrera 4 # 17-02', 
@@ -456,7 +456,7 @@ export const SEDES: Sede[] = [
       telefono: '3112062478', 
       departamento: 'Valle del Cauca', 
       ciudad: 'Bugalagrande' 
-    }, 
+    },
 
     { id: 'vc-10', 
       nombre: 'Sevilla', 
@@ -478,20 +478,20 @@ export const SEDES: Sede[] = [
       ciudad: 'Caicedonia' 
     },
 
-    { id: 'vc-12', 
+    { id: 'vc-12',
       nombre: 'Bolívar', 
-      direccion: 'Calle 4 # 3-22', 
-      direccionVisible: 'Calle 4 # 3-22, Bolívar', 
+      direccion: 'Calle 4 #3-22,', 
+      direccionVisible: 'Calle 4 #3-22, Bolívar',
       administradora: 'VANESA TAPASCO MONDRAGON', 
       telefono: '', 
-      departamento: 'Valle del Cauca',
+      departamento: 'Valle del Cauca', 
       ciudad: 'Bolívar' 
-    },
+      },
 
     { id: 'vc-13', 
       nombre: 'Palmira', 
       direccion: 'Calle 32 # 31-81', 
-      direccionVisible: 'Calle 32 # 31-81, Palmira', 
+      direccionVisible: 'Calle 32 # 31-81, Palmira',
       administradora: 'jessica maria dominguez', 
       telefono: '3232216871, 6023896438', 
       departamento: 'Valle del Cauca', 
@@ -501,7 +501,7 @@ export const SEDES: Sede[] = [
     { id: 'vc-18', 
       nombre: 'Florida', 
       direccion: 'Carrera 17 # 8-54', 
-      direccionVisible: 'Carrera 17 # 8-54, Florida', 
+      direccionVisible: 'Carrera 17 # 8-54, Florida',
       administradora: 'Leidy Marcela Gonzalez Pedroza', 
       telefono: '6023896438', 
       departamento: 'Valle del Cauca', 
@@ -511,7 +511,7 @@ export const SEDES: Sede[] = [
     { id: 'vc-19', 
       nombre: 'Pradera', 
       direccion: 'Carrera 10 9-23', 
-      direccionVisible: 'Carrera 10 9-23, Pradera', 
+      direccionVisible: 'Carrera 10 9-23, Pradera',
       administradora: 'Alba Rivera Rivera', 
       telefono: '6023896438', 
       departamento: 'Valle del Cauca', 
@@ -520,8 +520,8 @@ export const SEDES: Sede[] = [
 
     { id: 'vc-20', 
       nombre: 'Cali', 
-      direccion: 'Av 3 Bis Norte #24-85', 
-      direccionVisible: 'Av 3 Bis Norte #24-85, Cali', 
+      direccion: 'Av 3Bis Norte # 24-85', 
+      direccionVisible: 'Av 3Bis Norte # 24-85, Cali',
       administradora: 'Karen Lorena Arango Riascos', 
       telefono: '3229446453', 
       departamento: 'Valle del Cauca', 
@@ -530,12 +530,12 @@ export const SEDES: Sede[] = [
 
     { id: 'vc-24', 
       nombre: 'Yumbo', 
-      direccion: "Carrera 4#3-59", 
-      direccionVisible: "Carrera 4#3-59, Yumbo", 
-      administradora: "yuri ocampo", 
-      telefono: "", 
-      departamento: "Valle del Cauca", 
-      ciudad: "Yumbo" 
+      direccion: 'Carrera 4#3-59', 
+      direccionVisible: 'Carrera 4#3-59, Yumbo',
+      administradora: 'yuri ocampo', 
+      telefono: '', 
+      departamento: 'Valle del Cauca', 
+      ciudad: 'Yumbo' 
     },
 
     { id: 'vc-25', 
@@ -547,7 +547,7 @@ export const SEDES: Sede[] = [
       departamento: 'Valle del Cauca', 
       ciudad: 'Argelia' 
     },
-
+    
     { id: 'vc-26', 
       nombre: 'La Unión', 
       direccion: 'CALLE 14 # 10-81', 
@@ -559,28 +559,104 @@ export const SEDES: Sede[] = [
     },
 
     { id: 'vc-27', 
-      nombre: 'Zarzal', 
+      nombre: 'Zarzal',
       direccion: 'CRA 9 # 9-94', 
-      direccionVisible: 'CRA 9 # 9-94, Zarzal',
+      direccionVisible: 'CRA 9 # 9-94, Zarzal', 
+      
       administradora: 'MARTHA LUCIA GIRALDO', 
       telefono: '3136628996, 6023800913', 
       departamento: 'Valle del Cauca', 
-      ciudad:'Zarzal' 
+      ciudad: 'Zarzal' },
+
+    { id: 'vc-28', 
+      nombre: 'Anserma Nuevo', 
+      direccion: 'CALLE 6 # 6-22', 
+      direccionVisible: 'CALLE 6 # 6-22, Anserma Nuevo', 
+      administradora: 'GOMEZ PARRA LUZ AIDA', 
+      telefono: '6023800913', 
+      departamento: 'Valle del Cauca',
+      ciudad: 'Anserma Nuevo' 
+      },
+
+    { id: 'vc-29', 
+      nombre: 'Cartago', 
+      direccion: 'Calle 11 #2-54 y calle 11#2-60 piso 01', 
+      direccionVisible: 'Calle 11 #2-54 y calle 11#2-60 piso 01, Cartago', 
+      administradora: 'CLAUDIA PATRICIA CHAVARRIAGA', 
+      telefono: '3216061919 SERVICIOS CORPORATIVO ADMON 3117050357, 6023800913', 
+      departamento: 'Valle del Cauca', 
+      ciudad: 'Cartago' 
     },
 
-    { id: 'vc-37', 
-      nombre: 'Zaragoza', 
-      direccion: 'KILOMETRO 2.5 CARTAGO- ZARAGOZA', 
-      direccionVisible: 'KILOMETRO 2.5 CARTAGO- ZARAGOZA, Zaragoza',
-      administradora: 'JENIFER YULIETH RUIZ RAMIREZ', 
-      telefono: '3224133959', 
+    { id: 'vc-30', 
+      nombre: 'El Águila', 
+      direccion: 'CALLE 6 # 6-08', 
+      direccionVisible: 'CALLE 6 # 6-08, El Águila',
+      administradora: 'NOREÑA ROLDAN HERNAN DARIO', 
+      telefono: '3136628987', 
       departamento: 'Valle del Cauca', 
-      ciudad: 'Zaragoza' 
+      ciudad: 'El Águila' 
+    },
+
+    { id: 'vc-31', 
+      nombre: 'El Dovio', 
+      direccion: 'CRA 7 N 5-22', 
+      direccionVisible: 'CRA 7 N 5-22, El Dovio',
+      administradora: 'URDINOLA PINILLOS CLAUDIA PATRICIA', 
+      telefono: '3136628941', 
+      departamento: 'Valle del Cauca', 
+      ciudad: 'El Dovio' 
+    },
+
+    { id: 'vc-32', 
+      nombre: 'La Victoria', 
+      direccion: 'CALLE 9 N 7-12', 
+      direccionVisible: 'CALLE 9 N 7-12, La Victoria',
+      administradora: 'LEIDY OSORIO', 
+      telefono: '3116681902, 6023800913', 
+      departamento: 'Valle del Cauca', 
+      ciudad: 'La Victoria' 
+    },
+    { id: 'vc-33', 
+      nombre: 'Obando', 
+      direccion: 'CALLE 4 N 2-05', 
+      direccionVisible: 'CALLE 4 N 2-05, Obando',
+      administradora: 'PULIDO SABOGAL GLORIA CECILIA', 
+      telefono: '3103334276, 6023800913', 
+      departamento: 'Valle del Cauca', 
+      ciudad: 'Obando' 
+    },
+    { id: 'vc-34', 
+      nombre: 'Roldanillo', 
+      direccion: 'CRA 7 N 9-58', 
+      direccionVisible: 'CRA 7 N 9-58, Roldanillo',
+      administradora: 'CARDONA MARLYN DANIELA', 
+      telefono: '6023800913', 
+      departamento: 'Valle del Cauca', 
+      ciudad: 'Roldanillo' 
+    },
+    { id: 'vc-35', 
+      nombre: 'Toro', 
+      direccion: 'CALLE 11 N 2-58CCC', 
+      direccionVisible: 'CALLE 11 N 2-58CCC, Toro',
+      administradora: 'MYRIAN ALEJANDRA VASQUEZ', 
+      telefono: '3113769908, 6023800913', 
+      departamento: 'Valle del Cauca', 
+      ciudad: 'Toro' 
+    },
+    { id: 'vc-36', 
+      nombre: 'Versalles', 
+      direccion: 'CALLE 8 # 4-13 BARRIO GUAYABITO', 
+      direccionVisible: 'CALLE 8 # 4-13 BARRIO GUAYABITO, Versalles',
+      administradora: 'GEICY YURANY TRUJILLO', 
+      telefono: '3219141777', 
+      departamento: 'Valle del Cauca', 
+      ciudad: 'Versalles'
     },
 
     { id: 'vc-38', 
       nombre: 'Alcalá', 
-      direccion: 'CRA 9 # 4-15', 
+      direccion: 'CRA 9 # 4-15',
       direccionVisible: 'CRA 9 # 4-15, Alcalá',
       administradora: 'YORLEN MARITZA VILLA MATUTE', 
       telefono: '6067329231', 
@@ -590,110 +666,19 @@ export const SEDES: Sede[] = [
 
     { id: 'vc-39', 
       nombre: 'Ulloa', 
-      direccion: 'CALLE 5 # 2-43', 
-      direccionVisible: 'CALLE 5 # 2-43, Ulloa',
-      administradora: 'LINA USUGA PINO', 
+      direccion: 'CALLE 5 # 2-43 PARQUE PRINCIPAL', 
+      direccionVisible: 'CALLE 5 # 2-43 PARQUE PRINCIPAL, Ulloa',
+      administradora: 'LINA USUGA PINO',
       telefono: '6067329231', 
       departamento: 'Valle del Cauca', 
-      ciudad: 'Ulloa' 
-    },
-
-    { id: 'vc-40', 
-      nombre: 'Roldanillo', 
-      direccion: 'CALLE 4 # 3-22', 
-      direccionVisible: 'CALLE 4 # 3-22, Roldanillo',
-      administradora: 'MARIA FERNANDA', 
-      telefono: '6023896438', 
-      departamento: 'Valle del Cauca', 
-      ciudad: 'Roldanillo' 
-    },
-
-    { id: 'vc-41', 
-      nombre: 'Versalles', 
-      direccion: 'CALLE 4 # 3-22', 
-      direccionVisible: 'CALLE 4 # 3-22, Versalles',
-      administradora: 'MARIA FERNANDA', 
-      telefono: '6023896438', 
-      departamento: 'Valle del Cauca', 
-      ciudad: 'Versalles' 
-    },
-
-    { id: 'vc-42', 
-      nombre: 'Toro', 
-      direccion: 'CALLE 4 # 3-22', 
-      direccionVisible: 'CALLE 4 # 3-22, Toro',
-      administradora: 'MARIA FERNANDA', 
-      telefono: '6023896438', 
-      departamento: 'Valle del Cauca', 
-      ciudad: 'Toro' 
-    },
-
-    { id: 'vc-43', 
-      nombre: 'Obando', 
-      direccion: 'CALLE 4 # 3-22', 
-      direccionVisible: 'CALLE 4 # 3-22, Obando',
-      administradora: 'MARIA FERNANDA', 
-      telefono: '6023896438', 
-      departamento: 'Valle del Cauca', 
-      ciudad: 'Obando' 
-    },
-
-    { id: 'vc-44', 
-      nombre: 'Victoria', 
-      direccion: 'CALLE 4 # 3-22', 
-      direccionVisible: 'CALLE 4 # 3-22, Victoria',
-      administradora: 'MARIA FERNANDA', 
-      telefono: '6023896438', 
-      departamento: 'Valle del Cauca', 
-      ciudad: 'Victoria' 
-    },
-
-    { id: 'vc-45', 
-      nombre: 'El Aguila', 
-      direccion: 'CALLE 4 # 3-22', 
-      direccionVisible: 'CALLE 4 # 3-22, El Aguila',
-      administradora: 'MARIA FERNANDA', 
-      telefono: '6023896438', 
-      departamento: 'Valle del Cauca', 
-      ciudad: 'El Aguila' 
-    },
-
-    { id: 'vc-46', 
-      nombre: 'El Dovio', 
-      direccion: 'CALLE 4 # 3-22', 
-      direccionVisible: 'CALLE 4 # 3-22, El Dovio',
-      administradora: 'MARIA FERNANDA', 
-      telefono: '6023896438', 
-      departamento: 'Valle del Cauca', 
-      ciudad: 'El Dovio' 
-    },
-
-    { id: 'vc-47', 
-      nombre: 'Ansermanuevo', 
-      direccion: 'CALLE 4 # 3-22', 
-      direccionVisible: 'CALLE 4 # 3-22, Ansermanuevo',
-      administradora: 'MARIA FERNANDA', 
-      telefono: '6023896438', 
-      departamento: 'Valle del Cauca', 
-      ciudad: 'Ansermanuevo' 
-    },
-
-    { id: 'vc-48', 
-      nombre: 'Cartago', 
-      direccion: 'CALLE 4 # 3-22', 
-      direccionVisible: 'CALLE 4 # 3-22, Cartago',
-      administradora: 'MARIA FERNANDA', 
-      telefono: '6023896438', 
-      departamento: 'Valle del Cauca', 
-      ciudad: 'Cartago' 
-    },
+      ciudad: 'Ulloa' },
 
   // ── CUNDINAMARCA ─────────────────────────────────────────────
   
     { id: 'cu-01', 
       nombre: 'Cachipay', 
-      direccion: 'CALLE 3 # 2-56 CENTRO', 
-      direccionVisible: 'CALLE 3 # 2-56 CENTRO, Cachipay',
+      direccion: 'CALLE 3 # 2-56 CENTRO',  // PLUS CODE → máxima precisión para mapas
+      direccionVisible: 'CALLE 3 # 2-56 CENTRO, Cachipay', // Versión para UI, más amigable
       administradora: 'HUSMARY VALENTINA FONSECA TORRES', 
       telefono: '601 - 7948497', 
       departamento: 'Cundinamarca', 
@@ -702,8 +687,8 @@ export const SEDES: Sede[] = [
 
     { id: 'cu-02', 
       nombre: 'Facatativá', 
-      direccion: 'CARRERA 3 #4-14 CENTRO', 
-      direccionVisible: 'CARRERA 3 #4-14 CENTRO, Facatativá',
+      direccion: 'CARRERA 3 #4-14 CENTRO',  // PLUS CODE → máxima precisión para mapas
+      direccionVisible: 'CARRERA 3 #4-14 CENTRO, Facatativá', // Versión para UI, más amigable
       administradora: 'ANGIE LICETH NUÑEZ NIETO', 
       telefono: '3228147818, 601- 794 8497', 
       departamento: 'Cundinamarca', 
@@ -712,8 +697,8 @@ export const SEDES: Sede[] = [
 
     { id: 'cu-03', 
       nombre: 'Fusagasugá', 
-      direccion: 'CARRERA 7 # 4-26 CENTRO', 
-      direccionVisible: 'CARRERA 7 # 4-26 CENTRO, Fusagasugá',
+      direccion: 'CARRERA 7 # 4-26 CENTRO',  // PLUS CODE → máxima precisión para mapas
+      direccionVisible: 'CARRERA 7 # 4-26 CENTRO, Fusagasugá', // Versión para UI, más amigable
       administradora: 'WLEYDY STHEFANY GONZALEZ GONZALEZ', 
       telefono: '3229449886, 601- 794 8497', 
       departamento: 'Cundinamarca', 
@@ -721,8 +706,8 @@ export const SEDES: Sede[] = [
     },
     { id: 'cu-04', 
       nombre: 'Bogotá Teusaquillo', 
-      direccion: 'Calle 34 # 16-09 Teusaquillo', 
-      direccionVisible: 'Calle 34 # 16-09 Teusaquillo, Bogotá',
+      direccion: 'Calle 34 # 16-09 Teusaquillo',  // PLUS CODE → máxima precisión para mapas  
+      direccionVisible: 'Calle 34 # 16-09 Teusaquillo, Bogotá', // Versión para UI, más amigable
       administradora: 'Lina Marcela Caviedes Calderón', 
       telefono: '3145881602, 4874893', 
       departamento: 'Cundinamarca', 
@@ -730,8 +715,8 @@ export const SEDES: Sede[] = [
     },
     { id: 'cu-05', 
       nombre: 'Bogotá Kennedy', 
-      direccion: 'Carrera 73 D # 26-37', 
-      direccionVisible: 'Carrera 73 D # 26-37, Bogotá',
+      direccion: 'Carrera 73 D # 26-37', // PLUS CODE → máxima precisión para mapas
+      direccionVisible: 'Carrera 73 D # 26-37, Bogotá', // Versión para UI, más amigable
       administradora: 'Yessenia Maria Gutierrez Zuluaga', 
       telefono: '', 
       departamento: 'Cundinamarca', 
@@ -741,8 +726,8 @@ export const SEDES: Sede[] = [
   // ── TOLIMA ───────────────────────────────────────────────────
     { id: 'to-01', 
       nombre: 'Girardot', 
-      direccion: 'CALLE 19 # 11-80 SUCRE', 
-      direccionVisible: 'CALLE 19 # 11-80 SUCRE, Girardot',
+      direccion: 'CALLE 19 # 11-80 SUCRE', // PLUS CODE → máxima precisión para mapas
+      direccionVisible: 'CALLE 19 # 11-80 SUCRE, Girardot', // Versión para UI, más amigable
       administradora: 'LUISA FERNANDA CASTRO MENDEZ', 
       telefono: '3229449895', 
       departamento: 'Tolima', 
@@ -751,8 +736,8 @@ export const SEDES: Sede[] = [
 
     { id: 'to-02', 
       nombre: 'Anapoima', 
-      direccion: 'CALLE 5 # 1-39 BARRIO CENTRO', 
-      direccionVisible: 'CALLE 5 # 1-39 BARRIO CENTRO, Anapoima',
+      direccion: 'CALLE 5 # 1-39', // PLUS CODE → máxima precisión para mapas
+      direccionVisible: 'CALLE 5 # 1-39, Anapoima', // Versión para UI, más amigable
       administradora: 'MARIANA ACOSTA ALFONSO', 
       telefono: '601-7948497', 
       departamento: 'Tolima', 
@@ -760,8 +745,8 @@ export const SEDES: Sede[] = [
     },
     { id: 'to-03', 
       nombre: 'Tocaima', 
-      direccion: 'CALLE 2  8-98   BARRIO CONSOLATA', 
-      direccionVisible: 'CALLE 2  8-98   BARRIO CONSOLATA, Tocaima',
+      direccion: 'CALLE 2 # 8-98', // PLUS CODE → máxima precisión para mapas
+      direccionVisible: 'CALLE 2 # 8-98, Tocaima', // Versión para UI, más amigable
       administradora: 'MARGARITA BERRIO SERENO', 
       telefono: '3112062575', 
       departamento: 'Tolima', 
@@ -769,8 +754,8 @@ export const SEDES: Sede[] = [
     },
     { id: 'to-04', 
       nombre: 'Melgar', 
-      direccion: 'CALLE 10 N 21-07 BARRIO YAJAIRA', 
-      direccionVisible: 'CALLE 10 N 21-07 BARRIO YAJAIRA, Melgar',
+      direccion: 'CALLE 10 # 21-07 BARRIO YAJAIRA', // PLUS CODE → máxima precisión para mapas
+      direccionVisible: 'CALLE 10 # 21-07 BARRIO YAJAIRA, Melgar', // Versión para UI, más amigable
       administradora: 'MAYRA ALEJANDRA SANCHEZ CASTAÑO', 
       telefono: '601- 794 8497', 
       departamento: 'Tolima', 
@@ -778,8 +763,8 @@ export const SEDES: Sede[] = [
     },
     { id: 'to-05', 
       nombre: 'Espinal', 
-      direccion: 'CALLE 9 N° 8 -92 CENTRO', 
-      direccionVisible: 'CALLE 9 N° 8 -92 CENTRO, Espinal',
+      direccion: 'CALLE 9 # 8 -92 CENTRO', // PLUS CODE → máxima precisión para mapas
+      direccionVisible: 'CALLE 9 # 8 -92 CENTRO, Espinal', // Versión para UI, más amigable
       administradora: 'LEIDY PAOLA ORTIZ SANCHEZ', 
       telefono: '601- 794 8497', 
       departamento: 'Tolima', 
@@ -788,8 +773,8 @@ export const SEDES: Sede[] = [
 
     { id: 'to-06', 
       nombre: 'Villarrica', 
-      direccion: 'CALLE 5 # 3-17 CENTRO', 
-      direccionVisible: 'CALLE 5 # 3-17 CENTRO, Villarrica',
+      direccion: 'CALLE 5 # 3-17 CENTRO', // PLUS CODE → máxima precisión para mapas
+      direccionVisible: 'CALLE 5 # 3-17 CENTRO, Villarrica', // Versión para UI, más amigable
       administradora: 'MICHAEL STIVEN AVILA LONDOÑO', 
       telefono: '3112062652', 
       departamento: 'Tolima', 
@@ -798,8 +783,8 @@ export const SEDES: Sede[] = [
 
     { id: 'to-08', 
       nombre: 'Ibagué', 
-      direccion: 'CRA 4 B No 31 - 04 CADIZ',
-      direccionVisible: 'CRA 4 B No 31 - 04 CADIZ, Ibagué',
+      direccion: 'CRA 4B # 31 - 04 CADIZ', // PLUS CODE → máxima precisión para mapas
+      direccionVisible: 'CRA 4B # 31 - 04 CADIZ, Ibagué', // Versión para UI, más amigable
       administradora: 'Yesenia beltran', 
       telefono: '3214958867', 
       departamento: 'Tolima', 
@@ -808,8 +793,8 @@ export const SEDES: Sede[] = [
 
     { id: 'to-09', 
       nombre: 'Anzoategui', 
-      direccion: 'CRA 2 #6 67 SECTOR HOSPITAL', 
-      direccionVisible: 'CRA 2 #6 67 SECTOR HOSPITAL, Anzoategui',
+      direccion: 'CRA 2 # 6 67 SECTOR HOSPITAL', // PLUS CODE → máxima precisión para mapas
+      direccionVisible: 'CRA 2 # 6 67 SECTOR HOSPITAL, Anzoategui', // Versión para UI, más amigable
       administradora: 'Lucy Bibiana Cespedes Rodríguez', 
       telefono: '3143651736', 
       departamento: 'Tolima', 
@@ -819,8 +804,8 @@ export const SEDES: Sede[] = [
 
     { id: 'to-10', 
       nombre: 'Venadillo', 
-      direccion: 'CRA 5 # 4-57 SANTA BARBARA', 
-      direccionVisible: 'CRA 5 # 4-57 SANTA BARBARA, Venadillo',
+      direccion: 'CRA 5 # 4-57 SANTA BARBARA', // PLUS CODE → máxima precisión para mapas
+      direccionVisible: 'CRA 5 # 4-57 SANTA BARBARA, Venadillo', // Versión para UI, más amigable
       administradora: 'Yeimi Paola Lozano Rodríguez', 
       telefono: '3229482923', 
       departamento: 'Tolima', 
@@ -829,8 +814,8 @@ export const SEDES: Sede[] = [
 
     { id: 'to-11', 
       nombre: 'Lerida', 
-      direccion: 'CRA 12 #2A - 46 AV PALMAS', 
-      direccionVisible: 'CRA 12 #2A - 46 AV PALMAS, Lerida', 
+      direccion: 'CRA 12 # 2A - 46 AV PALMAS', // PLUS CODE → máxima precisión para mapas
+      direccionVisible: 'CRA 12 # 2A - 46 AV PALMAS, Lerida', // Versión para UI, más amigable
       administradora: 'Gisela Del Pilar Mahecha Acosta', 
       telefono: '3245717546', 
       departamento: 'Tolima', 
@@ -839,8 +824,8 @@ export const SEDES: Sede[] = [
     
     { id: 'to-12', 
       nombre: 'Líbano', 
-      direccion: 'CALLE 4 # 3-100 B/EL CARMEN', 
-      direccionVisible: 'CALLE 4 # 3-100 B/EL CARMEN, Líbano', 
+      direccion: 'CALLE 4 # 3-100 B/EL CARMEN', // PLUS CODE → máxima precisión para mapas
+      direccionVisible: 'CALLE 4 # 3-100 B/EL CARMEN, Líbano', // Versión para UI, más amigable
       administradora: 'Russ Belly Pineda Sánchez', 
       telefono: '3214279398', 
       departamento: 'Tolima', 
@@ -849,8 +834,8 @@ export const SEDES: Sede[] = [
 
     { id: 'to-13', 
       nombre: 'Villahermosa', 
-      direccion: 'CLL 8 LOCAL 3 PARROQUIA NUESTRA SEÑORA DE LAS MERCEDES', 
-      direccionVisible: 'CLL 8 LOCAL 3 PARROQUIA NUESTRA SEÑORA DE LAS MERCEDES, Villahermosa', 
+      direccion: 'CLL 8 LOCAL 3 PARROQUIA NUESTRA SEÑORA DE LAS MERCEDES', // PLUS CODE → máxima precisión para mapas
+      direccionVisible: 'CLL 8 LOCAL 3 PARROQUIA NUESTRA SEÑORA DE LAS MERCEDES, Villahermosa', // Versión para UI, más amigable
       administradora: 'Luz Nidia Orrego', 
       telefono: '3106676261', 
       departamento: 'Tolima', 
@@ -859,8 +844,8 @@ export const SEDES: Sede[] = [
 
     { id: 'to-14', 
       nombre: 'Santaisabel', 
-      direccion: 'CALLE PRINCIPAL CR 2 #  4-20', 
-      direccionVisible: 'CALLE PRINCIPAL CR 2 #  4-20, Santaisabel', 
+      direccion: 'CALLE PRINCIPAL CR 2 # 4-20',   // PLUS CODE → máxima precisión para mapas
+      direccionVisible: 'CALLE PRINCIPAL CR 2 # 4-20, Santaisabel', // Versión para UI, más amigable
       administradora: 'Ana Sofia Guzman Vela', 
       telefono: '3133447254', 
       departamento: 'Tolima', 
@@ -869,8 +854,8 @@ export const SEDES: Sede[] = [
 
     { id: 'to-15', 
       nombre: 'Fresno', 
-      direccion: 'carrera 9 con cll 5 esquina sector la variante', 
-      direccionVisible: 'carrera 9 con cll 5 esquina sector la variante, Fresno', 
+      direccion: 'carrera 9 con cll 5 esquina sector la variante',  // PLUS CODE → máxima precisión para mapas
+      direccionVisible: 'carrera 9 con cll 5 esquina sector la variante, Fresno', // Versión para UI, más amigable
       administradora: 'Leidy Jhoana Hincapie Hincapie', 
       telefono: '3114369645', 
       departamento: 'Tolima', 
@@ -879,8 +864,8 @@ export const SEDES: Sede[] = [
 
     { id: 'to-16', 
       nombre: 'Mariquita',
-      direccion: 'CRA 4 # 8-39 EL CARMEN',
-      direccionVisible: 'CRA 4 # 8-39 EL CARMEN, Mariquita',
+      direccion: 'CRA 4 # 8-39', // PLUS CODE → máxima precisión para mapas
+      direccionVisible: 'CRA 4 # 8-39 EL CARMEN, Mariquita', // Versión para UI, más amigable
       administradora: 'Nini Jhoana Lopez',
       telefono:'3223813279',
       departamento:'Tolima',
@@ -889,8 +874,8 @@ export const SEDES: Sede[] = [
 
     { id: 'to-17', 
       nombre: 'Rovira', 
-      direccion: 'CRA 3 #4-61 CENTRO', 
-      direccionVisible: 'CRA 3 #4-61 CENTRO, Rovira', 
+      direccion: 'CRA 3 #4-61', // PLUS CODE → máxima precisión para mapas
+      direccionVisible: 'CRA 3 #4-61, Rovira', // Versión para UI, más amigable
       administradora: 'Maria Juanita Sanchez', 
       telefono: '3103677915', 
       departamento: 'Tolima', 
@@ -898,7 +883,7 @@ export const SEDES: Sede[] = [
 
     { id: 'to-18', 
       nombre: 'Honda', 
-      direccion: 'CRA 12 # 16a-01 EL CARMEN', 
+      direccion: 'CRA 12 # 16a-01', // PLUS CODE → máxima precisión para mapas
       direccionVisible: 'CRA 12 # 16a-01 EL CARMEN, Honda', 
       administradora: 'rosemberg sepulveda', 
       telefono:'3208568338', 
@@ -1028,8 +1013,8 @@ export const SEDES: Sede[] = [
     },
     { id: 'sa-02', 
       nombre: 'San Gil', 
-      direccion: 'Calle 19 n° 7-17 Barrio Cristo Resucitado', 
-      direccionVisible: 'Calle 19 n° 7-17 Barrio Cristo Resucitado, San Gil', 
+      direccion: 'Calle 19 # 7-17 Barrio Cristo Resucitado', 
+      direccionVisible: 'Calle 19 # 7-17 Barrio Cristo Resucitado, San Gil', 
       administradora: 'Kendry Dayana Delgado', 
       telefono: '314 3292099', 
       departamento: 'Santander', 
@@ -1049,8 +1034,8 @@ export const SEDES: Sede[] = [
 
     { id: 'cal-02', 
       nombre: 'Arauca', 
-      direccion: 'Cra 3n°6a-18/ Piso 1 arauca caldas colombia ',
-      direccionVisible: 'Cra 3n°6a-18/ Piso 1 arauca caldas colombia ', 
+      direccion: 'Cra 3 #6a-18/ Piso 1 arauca caldas colombia ',
+      direccionVisible: 'Cra 3 #6a-18/ Piso 1 arauca caldas colombia ', 
       administradora: 'Valencia Castro', 
       telefono: '', 
       departamento: 'Caldas', 
@@ -1089,8 +1074,8 @@ export const SEDES: Sede[] = [
 
     { id: 'cal-06', 
       nombre: 'Marmato', 
-      direccion: 'Salida a Marmato 23 (Antigua Inspeccion De Policia El Llano Marmato)', 
-      direccionVisible: 'Salida a Marmato 23 (Antigua Inspeccion De Policia El Llano Marmato), Marmato',
+      direccion: 'Salida a Marmato 23', 
+      direccionVisible: 'Salida a Marmato 23, Marmato',
       administradora: 'Luz Idalba Moreno Bolaños', 
       telefono: '3228147207', 
       departamento: 'Caldas', 
@@ -1109,8 +1094,8 @@ export const SEDES: Sede[] = [
 
     { id: 'cal-08', 
       nombre: 'Pacora', 
-      direccion: 'Carrera 4 # 4-36 sector malpaso (enseguida de la oficina de efecty y/o al frente del hotel Paucura)', 
-      direccionVisible: 'Carrera 4 # 4-36 sector malpaso (enseguida de la oficina de efecty y/o al frente del hotel Paucura), Pacora',
+      direccion: 'Carrera 4 # 4-36', 
+      direccionVisible: 'Carrera 4 # 4-36 sector malpaso Pacora',
       administradora: 'Diana María González García', 
       telefono: '3228147221', 
       departamento: 'Caldas', 
@@ -1220,7 +1205,7 @@ export const SEDES: Sede[] = [
   // ── BOYACÁ ────────────────────────────────────────────────────
     { id: 'boy-01', 
       nombre: 'Puerto Boyacá', 
-      direccion: 'CARRERA 4 # 11-60 BARRIO CENTRO', 
+      direccion: 'CARRERA 4 # 11-60', 
       direccionVisible: 'CARRERA 4 # 11-60 BARRIO CENTRO, Puerto Boyacá',
       administradora: 'Laura Julieth Rubiano Campos', 
       telefono: '3147947963', 

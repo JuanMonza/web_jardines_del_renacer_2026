@@ -235,11 +235,11 @@ export default function PagarPlanPage() {
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                     {[
-                      { cedula: '1234567890', nombre: 'Juan Pérez', plan: 'Excellence' },
-                      { cedula: '9876543210', nombre: 'María González', plan: 'Premium' },
-                      { cedula: '5555555555', nombre: 'Carlos Rodríguez', plan: 'Familiar' },
-                      { cedula: '1111111111', nombre: 'Ana Ramírez', plan: 'Exequial' },
-                      { cedula: '7777777777', nombre: 'Pedro Sánchez', plan: 'Premium' },
+                      { cedula: '1234567890', nombre: 'Juan Pérez', plan: 'Plan Tranquilidad Total' },
+                      { cedula: '9876543210', nombre: 'María González', plan: 'Plan Proteccion Familiar Esencial' },
+                      { cedula: '5555555555', nombre: 'Carlos Rodríguez', plan: 'Plan Celestial' },
+                      { cedula: '1111111111', nombre: 'Ana Ramírez', plan: 'Plan Bienestar Empresarial' },
+                      { cedula: '7777777777', nombre: 'Pedro Sánchez', plan: 'Plan Profesional Independiente' },
                     ].map((demo) => (
                       <button
                         key={demo.cedula}

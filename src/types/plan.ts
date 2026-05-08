@@ -3,12 +3,12 @@
  */
 
 export type PlanCategory = 
-  | 'excellence' 
-  | 'exequial' 
-  | 'premium' 
-  | 'familiar' 
-  | 'corporativo' 
-  | 'mascotas';
+  | 'individual'
+  | 'familiar'
+  | 'segmentado'
+  | 'especial'
+  | 'corporativo'
+  | 'independientes';
 
 export interface Plan {
   id: string;

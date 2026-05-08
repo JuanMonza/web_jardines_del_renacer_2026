@@ -74,10 +74,10 @@ export default function FloatingButtons() {
         >
           <span
             aria-hidden="true"
-            className="absolute left-2 top-1/2 h-16 w-16 -translate-y-1/2 rounded-full bg-primary/12 blur-sm"
+            className="absolute left-2 top-1/2 h-16 w-16 -translate-y-1/2 rounded-full bg-rose-400/20 blur-sm"
           />
 
-          <div className="relative z-10 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-[#3C60A2] to-[#27497E] text-white shadow-lg shadow-primary/25">
+          <div className="relative z-10 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-rose-400 to-rose-500 text-white shadow-lg shadow-rose-500/25">
             <svg
               className="w-6 h-6"
               fill="currentColor"
@@ -86,17 +86,17 @@ export default function FloatingButtons() {
               <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
             </svg>
 
-            <span className="absolute -top-1 -right-1 rounded-full bg-white px-1.5 py-0.5 text-[9px] font-bold text-primary shadow-md">
+            <span className="absolute -top-1 -right-1 rounded-full bg-white px-1.5 py-0.5 text-[9px] font-bold text-rose-500 shadow-md">
               24/7
             </span>
           </div>
 
           <span className="relative z-10 hidden overflow-hidden transition-all duration-500 ease-out sm:block sm:max-w-0 sm:translate-x-[-6px] sm:opacity-0 sm:group-hover:max-w-[260px] sm:group-hover:translate-x-0 sm:group-hover:opacity-100">
             <span className="block pl-3 pr-4 text-left whitespace-nowrap">
-              <span className="block text-[11px] font-semibold uppercase tracking-[0.24em] text-primary/70">
+              <span className="block text-[11px] font-semibold uppercase tracking-[0.24em] text-rose-500/70">
                 Servicio 24/7
               </span>
-              <span className="block text-sm font-bold uppercase tracking-[0.08em] text-primary">
+              <span className="block text-sm font-bold uppercase tracking-[0.08em] text-rose-500">
                 Reportar fallecimiento
               </span>
             </span>
@@ -107,7 +107,7 @@ export default function FloatingButtons() {
       <div className="fixed bottom-5 right-4 z-50 sm:bottom-6 sm:right-6">
         <button
           onClick={openWhatsApp}
-          className="group relative flex items-center rounded-full bg-white/85 backdrop-blur-xl border border-white/70 shadow-[0_20px_45px_rgba(18,60,33,0.16)] hover:shadow-[0_24px_55px_rgba(18,60,33,0.22)] transition-all duration-500 ease-out active:scale-[0.98] p-2"
+          className="group relative flex items-center rounded-full bg-white/85 backdrop-blur-xl border border-white/70 shadow-[0_20px_45px_rgba(18,60,33,0.16)] hover:shadow-[0_24px_55px_rgba(18,60,33,0.25)] hover:-translate-y-2 hover:scale-105 transition-all duration-500 ease-out active:scale-[0.98] p-2"
           aria-label="Contactar por WhatsApp"
         >
           <span

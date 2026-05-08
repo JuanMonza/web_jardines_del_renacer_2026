@@ -74,9 +74,16 @@ export default function CotizarPage({ searchParams }: CotizarPageProps) {
                   {selectedPlan ? (
                     <div className="rounded-3xl border border-primary/15 bg-white/50 p-6 md:p-7">
                       <p className="text-xs sm:text-sm uppercase tracking-[0.18em] text-primary mb-2">
-                        {selectedPlan.tagline}
+                        {selectedPlan.planType} / {selectedPlan.geographicCoverage}
                       </p>
                       <p className="text-3xl font-semibold text-text mb-5">{selectedPlan.price}</p>
+                      <p className="text-sm text-textLight leading-relaxed mb-5">
+                        {selectedPlan.description}
+                      </p>
+                      <div className="rounded-2xl border border-primary/15 bg-white/60 p-4 mb-5">
+                        <p className="text-xs uppercase tracking-[0.14em] text-primary mb-1">Incluye</p>
+                        <p className="text-sm text-textLight leading-relaxed">{selectedPlan.includes}</p>
+                      </div>
                       <ul className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
                         {selectedPlan.benefits.slice(0, 6).map((benefit) => (
                           <li key={benefit} className="flex items-start gap-2 text-sm text-textLight">
@@ -85,6 +92,9 @@ export default function CotizarPage({ searchParams }: CotizarPageProps) {
                           </li>
                         ))}
                       </ul>
+                      <p className="text-xs text-textLight mt-5">
+                        Condiciones: {selectedPlan.conditions}
+                      </p>
                     </div>
                   ) : (
                     <div className="rounded-3xl border border-primary/15 bg-white/50 p-6 md:p-7">

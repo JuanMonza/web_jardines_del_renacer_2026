@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import Container from '@/components/ui/Container';
@@ -125,7 +125,7 @@ function ApplicationProgressTrack({ status }: { status: JobApplication['status']
   );
 }
 
-export default function PostulantePage() {
+function PostulanteContent() {
   const searchParams = useSearchParams();
   const requestedVacancyId = searchParams.get('vacante') ?? '';
   const requestedTrackingCedula =
@@ -741,5 +741,13 @@ export default function PostulantePage() {
         </Container>
       </section>
     </>
+  );
+}
+
+export default function PostulantePage() {
+  return (
+    <Suspense fallback={null}>
+      <PostulanteContent />
+    </Suspense>
   );
 }

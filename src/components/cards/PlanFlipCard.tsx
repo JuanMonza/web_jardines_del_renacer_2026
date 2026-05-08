@@ -13,6 +13,11 @@ interface PlanFlipCardProps {
   price: string;
   image: string;
   benefits: readonly string[];
+  planType?: string;
+  description?: string;
+  includes?: string;
+  geographicCoverage?: string;
+  conditions?: string;
   featured?: boolean;
   onQuote?: (planId: string) => void;
 }
@@ -24,6 +29,11 @@ export default function PlanFlipCard({
   price, 
   image, 
   benefits,
+  planType,
+  description,
+  includes,
+  geographicCoverage,
+  conditions,
   featured = false,
   onQuote 
 }: PlanFlipCardProps) {
@@ -82,6 +92,11 @@ export default function PlanFlipCard({
           
           <div className="p-6 flex-1 flex flex-col justify-between">
             <div>
+              {planType && (
+                <p className="text-xs uppercase tracking-[0.14em] text-primary mb-2">
+                  {planType}
+                </p>
+              )}
               <h3 className="text-2xl font-display text-text mb-2">{name}</h3>
               <p className="text-textLight mb-4">{tagline}</p>
             </div>
@@ -109,10 +124,25 @@ export default function PlanFlipCard({
           }}
         >
           <h4 className="text-xl font-display text-text mb-4">
-            Beneficios de {name}
+            {name}
           </h4>
           
           <div className="flex-1 overflow-y-auto">
+            {description && (
+              <p className="text-sm text-textLight leading-relaxed mb-4">
+                {description}
+              </p>
+            )}
+
+            {includes && (
+              <div className="mb-4 rounded-2xl border border-primary/15 bg-white/50 p-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-primary mb-1">
+                  Incluye
+                </p>
+                <p className="text-sm text-textLight leading-relaxed">{includes}</p>
+              </div>
+            )}
+
             <ul className="space-y-3">
               {benefits.map((benefit, index) => (
                 <li key={index} className="flex items-start">
@@ -133,6 +163,21 @@ export default function PlanFlipCard({
                 </li>
               ))}
             </ul>
+
+            {(geographicCoverage || conditions) && (
+              <div className="mt-4 grid grid-cols-1 gap-2 text-xs text-textLight">
+                {geographicCoverage && (
+                  <p>
+                    <span className="font-semibold text-text">Cobertura:</span> {geographicCoverage}
+                  </p>
+                )}
+                {conditions && (
+                  <p>
+                    <span className="font-semibold text-text">Condiciones:</span> {conditions}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
           
           <div className="mt-6 space-y-3">
@@ -152,7 +197,7 @@ export default function PlanFlipCard({
                 className="w-full"
                 onClick={handleQuote}
               >
-                Cotizar
+                Cotizar ahora
               </Button>
             </div>
           </div>
