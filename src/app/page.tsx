@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import Button from '@/components/ui/Button';
@@ -12,6 +13,22 @@ import { PLANS_CONFIG } from '@/config/plans';
 import { CONTACT_INFO, buildWhatsAppUrl } from '@/config/contact';
 
 export default function HomePage() {
+  const [currentImage, setCurrentImage] = useState(0);
+  
+  // Array con las imágenes del carrusel (asegúrate de subir hero_2.jpg y hero_3.jpg a public/images/)
+  const heroImages = [
+    '/img_1 (21).webp',
+    '/images/hero_2.jpg',
+    '/images/hero_3.jpg',
+  ];
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentImage((prev) => (prev + 1) % heroImages.length);
+    }, 5000); // Cambia la imagen cada 5 segundos
+    return () => clearInterval(timer);
+  }, []);
+
   const allPlans = Object.values(PLANS_CONFIG);
   const featuredPlans = allPlans.filter((plan) => plan.featured);
   const fallbackPlans = allPlans.filter((plan) => !plan.featured);
@@ -24,37 +41,42 @@ export default function HomePage() {
     <>
       {/* Hero Section */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 z-0">
-          <Image
-            src="/img_1 (21).webp"
-            alt="Jardines del Renacer"
-            fill
-            className="object-cover brightness-100"
-            priority
-          />
-          {/* Overlay sutil solo en la parte del texto para legibilidad */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/30" />
+        <div className="absolute inset-0 z-0 bg-black">
+          {heroImages.map((src, index) => (
+            <Image
+              key={src}
+              src={src}
+              alt={`Jardines del Renacer ${index + 1}`}
+              fill
+              className={`object-cover transition-opacity duration-1000 ${
+                index === currentImage ? 'opacity-100' : 'opacity-0'
+              }`}
+              priority={index === 0}
+            />
+          ))}
+          {/* Overlay oscuro mejorado para garantizar legibilidad y alto contraste */}
+          <div className="absolute inset-0 bg-black/40" />
         </div>
 
         <Container className="relative z-10 text-center text-white">
           <FadeIn>
-            <h1 className="text-5xl md:text-7xl font-display mb-6 text-balance drop-shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-1000">
+            <h1 className="text-5xl md:text-7xl font-display mb-6 text-balance drop-shadow-[0_4px_8px_rgba(0,0,0,0.9)] animate-in fade-in slide-in-from-bottom-8 duration-1000">
               Un lugar para recordar, un espacio para renacer
             </h1>
           </FadeIn>
           <FadeIn delay={0.3}>
-            <p className="text-xl md:text-2xl mb-8 max-w-2xl mx-auto text-balance drop-shadow-lg animate-in fade-in slide-in-from-bottom-6 duration-1000 delay-300">
+            <p className="text-xl md:text-2xl mb-8 max-w-2xl mx-auto text-balance drop-shadow-[0_4px_8px_rgba(0,0,0,0.9)] animate-in fade-in slide-in-from-bottom-6 duration-1000 delay-300">
               Cuidando de cada detalle para una despedida con amor
             </p>
           </FadeIn>
           <FadeIn delay={0.6}>
             <div className="flex flex-col sm:flex-row gap-4 justify-center animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-500">
-              <Link href="#conoce-mas">
+              <a href={buildWhatsAppUrl('Hola jardines, quisiera mas informacion sobre planes')} target="_blank" rel="noopener noreferrer">
                 <Button variant="primary" size="lg">
-                  Conoce Más
+                  ¡ Cotiza Ya !
                 </Button>
-              </Link>
-              <Link href="/recorrido-360">
+              </a>
+              <Link href="/proximamente">
                 <Button variant="secondary" size="lg">
                   Recorre Nuestras Salas
                 </Button>
@@ -194,7 +216,7 @@ export default function HomePage() {
             <p className="text-xl mb-8 max-w-2xl mx-auto">
               Recorre virtualmente nuestras salas y jardines con tecnología 360°
             </p>
-            <Link href="/recorrido-360">
+            <Link href="/proximamente">
               <Button variant="primary" size="lg">
                 Iniciar Recorrido Virtual
               </Button>

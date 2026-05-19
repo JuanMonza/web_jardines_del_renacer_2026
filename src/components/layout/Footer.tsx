@@ -40,7 +40,7 @@ export default function Footer() {
     atencion: [
       { label: "Obituarios", href: "/obituarios" },
       { label: "Agendar Visita", href: "/agendar-visita" },
-      { label: "Pagar Plan", href: "/pagar-plan" },
+      { label: "Pagar Plan", href: "https://checkout.wompi.co/method" },
       { label: "Contacto", href: "/contacto" },
     ],
     recursos: [
@@ -48,8 +48,8 @@ export default function Footer() {
       { label: "Recorrido 360°", href: "/recorrido-360" },
       { label: "Parque Conmemorativo", href: "/parque-conmemorativo" },
       { label: "Repatriaciones", href: "/repatriaciones" },
-      { label: "Florería", href: "/floreria" },
-      { label: "Aliados Comerciales", href: "/aliados-comerciales" },
+      { label: "Florería", href: "/proximamente" },
+      { label: "Club de Aliados", href: "/aliados-comerciales" },
     ],
     soporte: [
       { label: "Portal Cliente", href: "/proximamente" },

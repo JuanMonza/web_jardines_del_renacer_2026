@@ -7,13 +7,14 @@ import Button from '@/components/ui/Button';
 import { CONTACT_INFO, buildWhatsAppUrl } from '@/config/contact';
 
 const REPATRIATION_MESSAGE =
-  'Hola, necesito informacion sobre el servicio de repatriaciones de Jardines del Renacer.';
+  'Hola, necesito informacion sobre los servicios de repatriacion y expatriacion de Jardines del Renacer.';
 
 const services = [
-  'Traslado nacional e internacional',
+  'Repatriacion (traslado hacia Colombia) y Expatriacion (traslado desde Colombia al exterior)',
   'Gestion documental y permisos',
-  'Coordinacion con consulados y aerolineas',
-  'Acompanamiento integral a la familia',
+  'Coordinacion directa con embajadas, consulados y aerolineas',
+  'Tramites aduaneros y sanitarios internacionales',
+  'Acompanamiento integral bilingue a la familia en todo el proceso',
 ];
 
 export default function RepatriacionesPage() {
@@ -25,8 +26,8 @@ export default function RepatriacionesPage() {
             <div className="relative z-10">
               <FadeIn>
                 <SectionTitle
-                  title="Repatriaciones"
-                  subtitle="Coordinacion segura y respetuosa para traslados nacionales e internacionales."
+                  title="Repatriaciones & Expatriaciones"
+                  subtitle="Coordinacion segura, agil y respetuosa para traslados internacionales de tus seres queridos."
                 />
               </FadeIn>
             </div>
@@ -49,10 +50,11 @@ export default function RepatriacionesPage() {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
                 </div>
                 <div className="p-8">
-                  <h3 className="text-2xl font-display text-text mb-4">Cobertura y gestion completa</h3>
+                  <h3 className="text-2xl font-display text-text mb-4">Cobertura internacional sin fronteras</h3>
                   <p className="text-textLight leading-relaxed mb-5">
-                    Nuestro equipo coordina cada detalle logistico y administrativo para que la familia
-                    pueda enfocarse en el acompanamiento emocional.
+                    Entendemos la complejidad y la urgencia de trasladar a un ser querido entre diferentes paises. 
+                    Nuestro equipo experto se encarga de coordinar cada detalle legal, logistico, sanitario y consular, 
+                    garantizando un proceso transparente y eficiente para que la familia pueda enfocarse en su proceso de duelo.
                   </p>
 
                   <ul className="space-y-2">
@@ -69,9 +71,10 @@ export default function RepatriacionesPage() {
 
             <FadeIn delay={0.1}>
               <article className="glass rounded-3xl p-8 md:p-10 border border-primary/15 h-full">
-                <h3 className="text-2xl font-display text-text mb-4">Atencion 24/7</h3>
+                <h3 className="text-2xl font-display text-text mb-4">Atencion Especializada 24/7</h3>
                 <p className="text-textLight mb-6">
-                  Actuamos con rapidez y precision en situaciones de urgencia, tanto dentro como fuera del pais.
+                  Actuamos con inmediatez y precision en situaciones de urgencia. Debido a las diferencias horarias globales, 
+                  nuestro equipo de gestion internacional esta disponible en todo momento para brindar asesoria y soluciones oportunas.
                 </p>
 
                 <div className="space-y-3">

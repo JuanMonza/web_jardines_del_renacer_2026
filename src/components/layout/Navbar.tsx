@@ -87,7 +87,7 @@ export default function Navbar() {
                     onMouseLeave={() => setAliadosOpen(false)}
                     className="text-white hover:text-white/80 transition-colors duration-300 flex items-center gap-1 text-sm uppercase tracking-wide font-medium"
                   >
-                    Aliados Comerciales
+                    Club de Aliados
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
@@ -105,7 +105,7 @@ export default function Navbar() {
                       href="/aliados-comerciales"
                       className="block px-4 py-3 text-primary font-semibold border-b border-primary/10 hover:bg-primary/10 transition-colors"
                     >
-                      Ver todos los aliados
+                      Ver todo el club
                     </Link>
                     {aliadosSubmenu.map((item) => (
                       <Link
@@ -144,7 +144,7 @@ export default function Navbar() {
                   Contacto
                 </Link>
                 
-                <Link href="/recorrido-360" className="text-white hover:text-white/80 transition-colors duration-300 text-sm uppercase tracking-wide font-medium">
+                <Link href="/proximamente" className="text-white hover:text-white/80 transition-colors duration-300 text-sm uppercase tracking-wide font-medium">
                   Recorrido 360
                 </Link>
 
@@ -197,11 +197,11 @@ export default function Navbar() {
         {/* Mobile Menu */}
         <div
           className={cn(
-            'lg:hidden overflow-hidden transition-all duration-300 bg-[#3C60A2]',
-            isOpen ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0'
+            'lg:hidden overflow-y-auto transition-all duration-300 bg-[#3C60A2]',
+            isOpen ? 'max-h-[85vh] opacity-100' : 'max-h-0 opacity-0'
           )}
         >
-          <div className="py-4 space-y-3">
+          <div className="py-4 space-y-3 pb-20">
               {/* Servicios Mobile */}
               <div className="space-y-2">
               <p className="font-semibold text-white px-2">Servicios</p>
@@ -242,7 +242,7 @@ export default function Navbar() {
             </Link>
 
             <div className="space-y-2">
-              <p className="font-semibold text-white px-2">Aliados Comerciales</p>
+              <p className="font-semibold text-white px-2">Club de Aliados</p>
               <Link
                 href="/aliados-comerciales"
                 className="block pl-6 pr-2 py-2 text-white/90 hover:text-white transition-colors"
@@ -271,7 +271,7 @@ export default function Navbar() {
             </Link>
 
             <div className="pt-4 space-y-2 border-t border-border">
-              <Link href="/recorrido-360" className="block">
+              <Link href="/proximamente" className="block">
                 <Button variant="primary" size="sm" className="w-full">
                   Conoce Nuestras Salas
                 </Button>

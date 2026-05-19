@@ -8,15 +8,21 @@ import { CONTACT_INFO, buildWhatsAppUrl } from '@/config/contact';
 export default function FloatingButtons() {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [showTooltip, setShowTooltip] = useState(true);
 
   useEffect(() => {
     const handleScroll = () => {
-      // Mostrar botón cuando el usuario haya bajado 300px
       setShowScrollTop(window.scrollY > 300);
     };
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    // Ocultar el mensaje "¡Cotiza Ya!" después de 7 segundos
+    const timer = setTimeout(() => setShowTooltip(false), 7000);
+    return () => clearTimeout(timer);
   }, []);
 
   const scrollToTop = () => {
@@ -112,6 +118,18 @@ export default function FloatingButtons() {
       </div>
 
       <div className="fixed bottom-5 right-4 z-50 sm:bottom-6 sm:right-6">
+        {/* Tooltip de 7 segundos */}
+        <div 
+          className={cn(
+            "absolute bottom-full right-2 mb-4 bg-gradient-to-r from-primary to-primary-hover text-white px-5 py-2.5 rounded-2xl text-[15px] font-bold shadow-2xl whitespace-nowrap transition-all duration-1000 pointer-events-none origin-bottom-right",
+            showTooltip ? "opacity-100 scale-100 translate-y-0 animate-bounce" : "opacity-0 scale-50 translate-y-6"
+          )}
+        >
+          ¡ Cotiza Ya !
+          {/* Triangulito inferior del globo de diálogo */}
+          <div className="absolute -bottom-1.5 right-5 w-3.5 h-3.5 bg-primary transform rotate-45"></div>
+        </div>
+
         <button
           onClick={openWhatsApp}
           className="group relative flex items-center rounded-full bg-white/85 backdrop-blur-xl border border-white/70 shadow-[0_20px_45px_rgba(18,60,33,0.16)] hover:shadow-[0_24px_55px_rgba(18,60,33,0.25)] hover:-translate-y-2 hover:scale-105 transition-all duration-500 ease-out active:scale-[0.98] p-2"

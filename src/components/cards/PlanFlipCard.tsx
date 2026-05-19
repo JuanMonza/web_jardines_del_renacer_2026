@@ -80,7 +80,8 @@ export default function PlanFlipCard({
             </div>
           )}
           
-          <div className="relative h-64 w-full">
+          {/* Se agrega shrink-0 para evitar que el flexbox aplaste la imagen si hay mucho texto abajo */}
+          <div className="relative h-64 w-full shrink-0">
             <Image
               src={image}
               alt={name}
