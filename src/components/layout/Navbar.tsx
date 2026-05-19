@@ -12,6 +12,8 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [serviciosOpen, setServiciosOpen] = useState(false);
   const [aliadosOpen, setAliadosOpen] = useState(false);
+  const [mobileServiciosOpen, setMobileServiciosOpen] = useState(false);
+  const [mobileAliadosOpen, setMobileAliadosOpen] = useState(false);
 
   const serviciosSubmenu = [
     { href: '/servicios/quienes-somos', label: 'Quiénes Somos' },
@@ -203,19 +205,32 @@ export default function Navbar() {
         >
           <div className="py-4 space-y-3 pb-20">
               {/* Servicios Mobile */}
-              <div className="space-y-2">
-              <p className="font-semibold text-white px-2">Servicios</p>
-              {serviciosSubmenu.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="block pl-6 pr-2 py-2 text-white/90 hover:text-white transition-colors"
-                  onClick={() => setIsOpen(false)}
+              <div className="space-y-1">
+                <button
+                  onClick={() => setMobileServiciosOpen(!mobileServiciosOpen)}
+                  className="flex items-center justify-between w-full px-2 py-2 text-white font-semibold hover:bg-white/10 rounded-lg transition-colors"
                 >
-                  {item.label}
-                </Link>
-              ))}
-            </div>
+                  Servicios
+                  <svg
+                    className={cn("w-4 h-4 transition-transform duration-300", mobileServiciosOpen ? "rotate-180" : "")}
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                <div className={cn("overflow-hidden transition-all duration-300 space-y-1", mobileServiciosOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0")}>
+                  {serviciosSubmenu.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className="block pl-6 pr-2 py-2 text-white/80 hover:text-white transition-colors text-sm"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
 
             <Link
               href="/obituarios"
@@ -241,25 +256,38 @@ export default function Navbar() {
               Cotizar Plan
             </Link>
 
-            <div className="space-y-2">
-              <p className="font-semibold text-white px-2">Club de Aliados</p>
-              <Link
-                href="/aliados-comerciales"
-                className="block pl-6 pr-2 py-2 text-white/90 hover:text-white transition-colors"
-                onClick={() => setIsOpen(false)}
+            <div className="space-y-1">
+              <button
+                onClick={() => setMobileAliadosOpen(!mobileAliadosOpen)}
+                className="flex items-center justify-between w-full px-2 py-2 text-white font-semibold hover:bg-white/10 rounded-lg transition-colors"
               >
-                Ver todos
-              </Link>
-              {aliadosSubmenu.map((item) => (
+                Club de Aliados
+                <svg
+                  className={cn("w-4 h-4 transition-transform duration-300", mobileAliadosOpen ? "rotate-180" : "")}
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              <div className={cn("overflow-hidden transition-all duration-300 space-y-1", mobileAliadosOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0")}>
                 <Link
-                  key={item.href}
-                  href={item.href}
-                  className="block pl-6 pr-2 py-1.5 text-white/80 hover:text-white transition-colors text-sm"
+                  href="/aliados-comerciales"
+                  className="block pl-6 pr-2 py-2 text-white hover:text-white transition-colors text-sm font-medium"
                   onClick={() => setIsOpen(false)}
                 >
-                  {item.label}
+                  Ver todos
                 </Link>
-              ))}
+                {aliadosSubmenu.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="block pl-6 pr-2 py-2 text-white/80 hover:text-white transition-colors text-sm"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
             </div>
             
             <Link
@@ -270,23 +298,20 @@ export default function Navbar() {
               Contacto
             </Link>
 
-            <div className="pt-4 space-y-2 border-t border-border">
-              <Link href="/proximamente" className="block">
-                <Button variant="primary" size="sm" className="w-full">
+            <div className="pt-5 px-2 flex flex-col items-start gap-3 border-t border-white/10">
+              <Link href="/proximamente">
+                <Button variant="primary" size="sm">
                   Conoce Nuestras Salas
                 </Button>
               </Link>
-              <div className="block w-full">
-                <PaymentDropdown 
-                  wompiUrl="https://checkout.wompi.co/l/TU_LINK_DE_WOMPI_AQUI" 
-                  pseUrl="https://checkout.wompi.co/l/TU_LINK_DE_PSE_AQUI"
-                  buttonVariant="secondary"
-                  buttonSize="sm"
-                  className="w-full"
-                />
-              </div>
-              <Link href="/proximamente" className="block">
-                <Button variant="outline" size="sm" className="w-full">
+              <PaymentDropdown 
+                wompiUrl="https://checkout.wompi.co/method" 
+                pseUrl="https://checkout.wompi.co/l/TU_LINK_DE_PSE_AQUI"
+                buttonVariant="secondary"
+                buttonSize="sm"
+              />
+              <Link href="/proximamente">
+                <Button variant="outline" size="sm">
                   Ingresar
                 </Button>
               </Link>

@@ -52,6 +52,7 @@ export default function Footer() {
       { label: "Club de Aliados", href: "/aliados-comerciales" },
     ],
     soporte: [
+      { label: "Radicar PQR", href: "/pqr" },
       { label: "Portal Cliente", href: "/proximamente" },
       { label: "Preguntas Frecuentes", href: "/faq" },
       { label: "Términos y Condiciones", href: "/legal/terminos" },

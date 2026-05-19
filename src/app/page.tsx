@@ -12,15 +12,15 @@ import FadeIn from '@/components/animations/FadeIn';
 import { PLANS_CONFIG } from '@/config/plans';
 import { CONTACT_INFO, buildWhatsAppUrl } from '@/config/contact';
 
+// Array con las imágenes del carrusel (asegúrate de subir hero_2.jpg y hero_3.jpg a public/images/)
+const heroImages = [
+  '/img_1 (21).webp',
+  '/images/carrusel_1.jpg',
+  '/images/carrusel_2.jpg',
+];
+
 export default function HomePage() {
   const [currentImage, setCurrentImage] = useState(0);
-  
-  // Array con las imágenes del carrusel (asegúrate de subir hero_2.jpg y hero_3.jpg a public/images/)
-  const heroImages = [
-    '/img_1 (21).webp',
-    '/images/hero_2.jpg',
-    '/images/hero_3.jpg',
-  ];
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -40,7 +40,7 @@ export default function HomePage() {
   return (
     <>
       {/* Hero Section */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden">
+      <section className="relative h-[80vh] lg:h-screen flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0 bg-black">
           {heroImages.map((src, index) => (
             <Image
@@ -58,14 +58,14 @@ export default function HomePage() {
           <div className="absolute inset-0 bg-black/40" />
         </div>
 
-        <Container className="relative z-10 text-center text-white">
+        <Container className="relative z-10 text-center text-white pt-16 lg:pt-0">
           <FadeIn>
-            <h1 className="text-5xl md:text-7xl font-display mb-6 text-balance drop-shadow-[0_4px_8px_rgba(0,0,0,0.9)] animate-in fade-in slide-in-from-bottom-8 duration-1000">
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-display mb-6 text-balance drop-shadow-[0_4px_8px_rgba(0,0,0,0.9)] animate-in fade-in slide-in-from-bottom-8 duration-1000">
               Un lugar para recordar, un espacio para renacer
             </h1>
           </FadeIn>
           <FadeIn delay={0.3}>
-            <p className="text-xl md:text-2xl mb-8 max-w-2xl mx-auto text-balance drop-shadow-[0_4px_8px_rgba(0,0,0,0.9)] animate-in fade-in slide-in-from-bottom-6 duration-1000 delay-300">
+            <p className="text-lg md:text-2xl mb-8 max-w-2xl mx-auto text-balance drop-shadow-[0_4px_8px_rgba(0,0,0,0.9)] animate-in fade-in slide-in-from-bottom-6 duration-1000 delay-300">
               Cuidando de cada detalle para una despedida con amor
             </p>
           </FadeIn>

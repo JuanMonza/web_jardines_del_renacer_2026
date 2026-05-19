@@ -6,36 +6,40 @@ import Button from '@/components/ui/Button';
 
 const serviceHighlights = [
   {
-    title: 'Atencion Exequial Integral',
+    title: 'Atención Exequial Integral',
     description:
-      'Acompanamiento humano y logistico 24/7 para cada etapa del servicio funerario.',
-    bullets: ['Traslado y preparacion', 'Salas de velacion', 'Ceremonia y destino final'],
+      'Acompañamiento humano y logístico 24/7 para cada etapa del servicio funerario.',
+    bullets: ['Traslado y preparación', 'Salas de velación', 'Ceremonia y destino final'],
   },
   {
-    title: 'Planes de Prevision',
+    title: 'Planes de Previsión',
     description:
-      'Proteccion anticipada para tu familia con opciones flexibles de cobertura.',
-    bullets: ['Cobertura familiar', 'Facilidad de pago', 'Asesoria permanente'],
+      'Protección anticipada para tu familia con opciones flexibles de cobertura.',
+    bullets: ['Cobertura familiar', 'Facilidad de pago', 'Asesoría permanente'],
   },
   {
     title: 'Servicios Complementarios',
     description:
       'Soluciones adicionales para un homenaje completo y respetuoso.',
-    bullets: ['Floreria', 'Repatriaciones', 'Acompaniamiento legal'],
+    bullets: ['Florería', 'Repatriaciones', 'Acompañamiento legal'],
   },
 ];
 
 export default function ServiciosPage() {
   return (
     <>
-      <section className="py-20 bg-gradient-to-b from-background to-white/60">
+      <section className="pt-10 pb-10">
         <Container>
-          <FadeIn>
-            <SectionTitle
-              title="Servicios"
-              subtitle="Acompanamos a las familias con respeto, calidez y respaldo profesional."
-            />
-          </FadeIn>
+          <div className="relative py-20 mb-8 rounded-3xl overflow-hidden bg-[url('/images/banner_servicios.jpg')] bg-cover bg-center bg-no-repeat shadow-sm border border-primary/10">
+            <div className="relative z-10">
+              <FadeIn>
+                <SectionTitle
+                  title="Servicios"
+                  subtitle="Acompañamos a las familias con respeto, calidez y respaldo profesional."
+                />
+              </FadeIn>
+            </div>
+          </div>
         </Container>
       </section>
 
