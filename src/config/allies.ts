@@ -12,8 +12,10 @@ export interface CommercialAlly {
   id: string;
   name: string;
   departamento: string;
+  municipio: string;
   categorySlug: string;
   subcategory: string;
+  discountLabel: string;
   url?: string;
   logo: string;
   address: string;
@@ -21,6 +23,8 @@ export interface CommercialAlly {
   whatsappTemplate: string;
   actionLabel: string;
   featured: boolean;
+  loginId?: string;
+  loginPassword?: string;
   description?: string;
   containerStyle?: CSSProperties;
   innerStyle?: CSSProperties;
@@ -181,6 +185,16 @@ export const ALLY_CATEGORIES: AllyCategoryConfig[] = [
     label: 'Papelerias',
     subcategories: ['Papelerias'],
   },
+  {
+    slug: 'parqueaderos',
+    label: 'Parqueaderos',
+    subcategories: ['Parqueaderos'],
+  },
+  {
+    slug: 'farmaceutico',
+    label: 'Farmaceutico',
+    subcategories: ['Farmaceutico'],
+  },
 ];
 
 const ISO_NOW = new Date().toISOString();
@@ -191,8 +205,10 @@ export const DEFAULT_COMMERCIAL_ALLIES: CommercialAlly[] = [
     id: 'renacer-mascotas',
     name: 'Renacer Mascotas',
     departamento: 'Risaralda',
+    municipio: 'Pereira',
     categorySlug: 'mascotas',
     subcategory: 'Clinica veterinaria',
+    discountLabel: '10% de descuento',
     logo: '/images/logos_aliados_jr/renacer_mascotas.png',
     url: '',
     address: 'Cobertura nacional',
@@ -200,6 +216,8 @@ export const DEFAULT_COMMERCIAL_ALLIES: CommercialAlly[] = [
     whatsappTemplate: 'Hola, quiero mas informacion de "{{nombre}}" para mascotas.',
     actionLabel: 'Mas informacion',
     featured: true,
+    loginId: 'RM1001',
+    loginPassword: 'JR1001',
     description: 'Servicios para mascotas y acompanamiento especializado.',
     createdAt: ISO_NOW,
     updatedAt: ISO_NOW,
@@ -208,8 +226,10 @@ export const DEFAULT_COMMERCIAL_ALLIES: CommercialAlly[] = [
     id: 'parque-conmemorativo',
     name: 'Parque Conmemorativo',
     departamento: 'Valle del Cauca',
+    municipio: 'Tulua',
     categorySlug: 'turismo',
     subcategory: 'Parques',
+    discountLabel: 'Beneficio preferencial',
     logo: '/images/logos_aliados_jr/conmemorativo.png',
     url: '',
     address: 'Parque Conmemorativo Jardines del Renacer',
@@ -217,6 +237,8 @@ export const DEFAULT_COMMERCIAL_ALLIES: CommercialAlly[] = [
     whatsappTemplate: 'Hola, quiero mas informacion de "{{nombre}}".',
     actionLabel: 'Contactar aliado',
     featured: true,
+    loginId: 'PC1002',
+    loginPassword: 'JR1002',
     description: 'Espacios conmemorativos y acompanamiento familiar.',
     createdAt: ISO_NOW,
     updatedAt: ISO_NOW,
@@ -225,8 +247,10 @@ export const DEFAULT_COMMERCIAL_ALLIES: CommercialAlly[] = [
     id: 'renacer-seguros',
     name: 'Renacer Seguros',
     departamento: 'Cundinamarca',
+    municipio: 'Bogota',
     categorySlug: 'finanzas',
     subcategory: 'Financieras',
+    discountLabel: 'Beneficio preferencial',
     logo: '/images/logos_aliados_jr/renacer_seguros.png',
     url: '',
     address: 'Atencion nacional en linea',
@@ -234,6 +258,8 @@ export const DEFAULT_COMMERCIAL_ALLIES: CommercialAlly[] = [
     whatsappTemplate: 'Hola, quiero mas informacion de "{{nombre}}" en servicios financieros.',
     actionLabel: 'Asesoria',
     featured: true,
+    loginId: 'RS1003',
+    loginPassword: 'JR1003',
     description: 'Soluciones de proteccion y respaldo financiero.',
     createdAt: ISO_NOW,
     updatedAt: ISO_NOW,
@@ -242,8 +268,10 @@ export const DEFAULT_COMMERCIAL_ALLIES: CommercialAlly[] = [
     id: 'renacer-abogados',
     name: 'Renacer Abogados',
     departamento: 'Caldas',
+    municipio: 'Manizales',
     categorySlug: 'social-cultura',
     subcategory: 'Fundaciones',
+    discountLabel: 'Beneficio preferencial',
     logo: '/images/logos_aliados_jr/renacer_abogados.png',
     url: '',
     address: 'Atencion juridica especializada',
@@ -251,6 +279,8 @@ export const DEFAULT_COMMERCIAL_ALLIES: CommercialAlly[] = [
     whatsappTemplate: 'Hola, quiero mas informacion de "{{nombre}}".',
     actionLabel: 'Solicitar orientacion',
     featured: true,
+    loginId: 'RA1004',
+    loginPassword: 'JR1004',
     description: 'Orientacion legal y acompanamiento profesional.',
     containerStyle: {
       backgroundColor: '#141412',
@@ -271,8 +301,10 @@ export const DEFAULT_COMMERCIAL_ALLIES: CommercialAlly[] = [
     id: 'vive-mas',
     name: 'Vive Mas',
     departamento: 'Antioquia',
+    municipio: 'Medellin',
     categorySlug: 'salud',
     subcategory: 'Especialistas',
+    discountLabel: 'Beneficio preferencial',
     logo: '/images/logos_aliados_jr/vive+.png',
     url: '',
     address: 'Atencion nacional',
@@ -280,6 +312,8 @@ export const DEFAULT_COMMERCIAL_ALLIES: CommercialAlly[] = [
     whatsappTemplate: 'Hola, necesito mas informacion de "{{nombre}}" este especialista.',
     actionLabel: 'Pedir informacion',
     featured: true,
+    loginId: 'VM1005',
+    loginPassword: 'JR1005',
     description: 'Red de bienestar y servicios de salud.',
     createdAt: ISO_NOW,
     updatedAt: ISO_NOW,
@@ -302,7 +336,7 @@ export function getSubcategoriesByCategory(slug: string) {
 
 export function resolveAllyDepartment(value: string | undefined) {
   const normalized = value?.trim() ?? '';
-  if (normalized && ALLY_DEPARTMENTS.includes(normalized)) {
+  if (normalized) {
     return normalized;
   }
   return DEFAULT_ALLY_DEPARTMENT;
@@ -353,8 +387,10 @@ export function createEmptyAlly(): CommercialAlly {
     id: '',
     name: '',
     departamento: DEFAULT_ALLY_DEPARTMENT,
+    municipio: '',
     categorySlug: defaultCategory.slug,
     subcategory: defaultCategory.subcategories[0] ?? '',
+    discountLabel: '',
     logo: '',
     url: '',
     address: '',
@@ -362,6 +398,8 @@ export function createEmptyAlly(): CommercialAlly {
     whatsappTemplate: DEFAULT_TEMPLATE,
     actionLabel: 'Mas informacion',
     featured: true,
+    loginId: '',
+    loginPassword: '',
     description: '',
     createdAt: '',
     updatedAt: '',

@@ -32,7 +32,7 @@ export default function AdminAliadosLoginPage() {
     if (step === 'credentials') {
       const validCedula = cleanCedula.length >= 6 && cleanCedula.length <= 10;
       if (!validCedula) {
-        setError('Ingresa una cedula valida.');
+        setError('Ingresa una cedula administrativa valida.');
         setLoading(false);
         return;
       }
@@ -77,7 +77,7 @@ export default function AdminAliadosLoginPage() {
       <form onSubmit={handleSubmit} className="space-y-6">
         {step === 'credentials' ? (
           <>
-            <LoginTextField
+                <LoginTextField
               label="Cedula administrativa"
               type="text"
               value={cedula}
@@ -85,7 +85,7 @@ export default function AdminAliadosLoginPage() {
                 setCedula(event.target.value);
                 setError('');
               }}
-              placeholder="Ingresa tu cedula"
+              placeholder="Ej: 2222222222"
               required
               icon={
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -169,6 +169,9 @@ export default function AdminAliadosLoginPage() {
           <p className="font-semibold text-black mb-1">Credenciales de prueba</p>
           <p>Cedula: <span className="font-mono">2222222222</span></p>
           <p>Contrasena: <span className="font-mono">aliados123</span></p>
+          <p className="mt-2">
+            El acceso de aliados esta separado en <Link href="/login/aliado" className="font-semibold text-[#2f5bd6]">/login/aliado</Link>.
+          </p>
           {step === 'otp' && (
             <p className="mt-2 text-blue-700">
               Codigo 2FA (demo): <span className="font-mono font-semibold">{otpCode}</span>

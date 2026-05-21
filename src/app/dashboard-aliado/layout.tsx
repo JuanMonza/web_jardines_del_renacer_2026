@@ -5,46 +5,48 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { buildAdminGreeting } from '@/lib/adminGreeting';
 
-type AlliesAdminUser = {
+type AllyPortalUser = {
   cedula: string;
   role: string;
   name: string;
+  allyId: string;
+  loginId: string;
 };
 
-export default function DashboardAliadosLayout({
+export default function DashboardAliadoLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const router = useRouter();
   const [checkingAccess, setCheckingAccess] = useState(true);
-  const [user, setUser] = useState<AlliesAdminUser | null>(null);
+  const [user, setUser] = useState<AllyPortalUser | null>(null);
 
   useEffect(() => {
-    const raw = localStorage.getItem('alliesAdminUser');
+    const raw = localStorage.getItem('allyPortalUser');
     if (!raw) {
-      router.replace('/login/admin-aliados');
+      router.replace('/login/aliado');
       return;
     }
 
     try {
-      const parsed = JSON.parse(raw) as AlliesAdminUser;
-      if (parsed.role !== 'admin_aliados') {
-        localStorage.removeItem('alliesAdminUser');
-        router.replace('/login/admin-aliados');
+      const parsed = JSON.parse(raw) as AllyPortalUser;
+      if (parsed.role !== 'ally_user' || !parsed.allyId) {
+        localStorage.removeItem('allyPortalUser');
+        router.replace('/login/aliado');
         return;
       }
 
       setUser(parsed);
       setCheckingAccess(false);
     } catch {
-      localStorage.removeItem('alliesAdminUser');
-      router.replace('/login/admin-aliados');
+      localStorage.removeItem('allyPortalUser');
+      router.replace('/login/aliado');
     }
   }, [router]);
 
   const handleLogout = () => {
-    localStorage.removeItem('alliesAdminUser');
+    localStorage.removeItem('allyPortalUser');
     router.push('/');
   };
 
@@ -71,12 +73,15 @@ export default function DashboardAliadosLayout({
             </div>
             <div className="flex-1">
               <p className="text-xs uppercase tracking-wider text-textLight font-medium mb-1">
-                Administrador
+                Aliado
               </p>
               <h3 className="text-text font-semibold text-base leading-tight">
-                {user?.name || 'Admin Aliados Comerciales'}
+                {user?.name || 'Aliado Comercial'}
               </h3>
               <p className="text-xs text-primary/90 mt-1">{greeting}</p>
+              <p className="text-[11px] text-textLight mt-1">
+                ID: <span className="font-mono">{user?.loginId}</span>
+              </p>
             </div>
           </div>
         </div>
@@ -84,27 +89,17 @@ export default function DashboardAliadosLayout({
         <nav className="p-6 space-y-8">
           <div>
             <p className="text-xs uppercase tracking-wider text-textLight font-semibold mb-4 px-3">
-              Aliados
+              Validacion
             </p>
             <div className="space-y-1">
               <Link
-                href="/dashboard-aliados"
+                href="/dashboard-aliado"
                 className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-primary/10 text-text hover:text-primary transition-all group"
               >
                 <svg className="w-5 h-5 text-primary group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5V4H2v16h5m10 0v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6m10 0H7m2-10h6m-6-4h6" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span className="font-medium">Panel de Aliados</span>
-              </Link>
-
-              <Link
-                href="/aliados-comerciales"
-                className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-primary/10 text-text hover:text-primary transition-all group"
-              >
-                <svg className="w-5 h-5 text-primary group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7h18M3 12h18M3 17h18" />
-                </svg>
-                <span className="font-medium">Vista publica</span>
+                <span className="font-medium">Verificar codigos</span>
               </Link>
             </div>
           </div>
@@ -120,7 +115,7 @@ export default function DashboardAliadosLayout({
           </button>
           <div className="glass rounded-xl p-4 border border-primary/20">
             <p className="text-xs text-primary font-medium mb-1">Jardines del Renacer</p>
-            <p className="text-[10px] text-textLight">Panel Aliados Comerciales</p>
+            <p className="text-[10px] text-textLight">Portal de Aliados</p>
           </div>
         </div>
       </aside>
@@ -133,3 +128,4 @@ export default function DashboardAliadosLayout({
     </div>
   );
 }
+

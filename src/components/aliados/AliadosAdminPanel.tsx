@@ -23,6 +23,41 @@ import {
   upsertCommercialAlly,
   writeCommercialAllies,
 } from '@/lib/alliesStorage';
+import { ensureExcelAlliesSeeded } from '@/lib/allyExcelImport';
+import {
+  deleteDiscountRequest,
+  findRequestForVerification,
+  formatCurrency,
+  getClientConsumptionSummary,
+  getConsumptionComparatives,
+  getDiscountStats,
+  readDiscountRequests,
+  redeemDiscountRequest,
+  type AllyDiscountRequest,
+  type DiscountRequestStatus,
+} from '@/lib/allyMembershipStorage';
+
+type AlliesSession = {
+  cedula: string;
+  role: 'admin_aliados' | 'ally_user';
+  name: string;
+  allyId?: string;
+  loginId?: string;
+};
+
+const STATUS_LABELS: Record<DiscountRequestStatus, string> = {
+  active: 'Activo',
+  redeemed: 'Usado',
+  expired: 'Vencido',
+  deleted: 'Eliminado',
+};
+
+const STATUS_STYLES: Record<DiscountRequestStatus, string> = {
+  active: 'bg-sky-500/10 text-sky-700 border border-sky-500/20',
+  redeemed: 'bg-green-500/10 text-green-700 border border-green-500/20',
+  expired: 'bg-amber-500/10 text-amber-700 border border-amber-500/20',
+  deleted: 'bg-red-500/10 text-red-700 border border-red-500/20',
+};
 
 function slugify(value: string) {
   return value
@@ -40,9 +75,11 @@ function createTemporaryAllyFromDraft(draft: CommercialAlly): CommercialAlly {
     id: draft.id || `preview-${Date.now()}`,
     name: draft.name || 'Aliado Comercial',
     departamento: draft.departamento || DEFAULT_ALLY_DEPARTMENT,
+    municipio: draft.municipio || 'Ciudad por confirmar',
     categorySlug: draft.categorySlug || ALLY_CATEGORIES[0].slug,
     subcategory:
       draft.subcategory || getSubcategoriesByCategory(draft.categorySlug)[0] || '',
+    discountLabel: draft.discountLabel || 'Descuento sujeto a condiciones',
     whatsappTemplate:
       draft.whatsappTemplate ||
       getDefaultAllyTemplate(draft.categorySlug, draft.subcategory),
@@ -56,15 +93,75 @@ export default function AliadosAdminPanel() {
   const [draft, setDraft] = useState<CommercialAlly>(createEmptyAlly());
   const [editingId, setEditingId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState('');
+  const [session, setSession] = useState<AlliesSession | null>(null);
+  const [requests, setRequests] = useState<AllyDiscountRequest[]>([]);
+  const [verifyCedula, setVerifyCedula] = useState('');
+  const [verifyCode, setVerifyCode] = useState('');
+  const [consumedValue, setConsumedValue] = useState('');
+  const [verificationFeedback, setVerificationFeedback] = useState('');
+  const [activeRequest, setActiveRequest] = useState<AllyDiscountRequest | null>(null);
 
   useEffect(() => {
-    setAllies(readCommercialAllies());
+    let mounted = true;
+    const rawSession = localStorage.getItem('allyPortalUser') ?? localStorage.getItem('alliesAdminUser');
+    if (rawSession) {
+      try {
+        setSession(JSON.parse(rawSession) as AlliesSession);
+      } catch {
+        setSession(null);
+      }
+    }
+    setRequests(readDiscountRequests());
+    ensureExcelAlliesSeeded()
+      .then((seededAllies) => {
+        if (mounted) {
+          setAllies(seededAllies);
+        }
+      })
+      .catch(() => {
+        if (mounted) {
+          setAllies(readCommercialAllies());
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
   }, []);
+
+  const sessionAlly = useMemo(
+    () => allies.find((ally) => ally.id === session?.allyId) ?? null,
+    [allies, session?.allyId],
+  );
+
+  const visibleRequests = useMemo(() => {
+    if (session?.role === 'ally_user' && sessionAlly) {
+      return requests.filter((request) => request.allyId === sessionAlly.id);
+    }
+    return requests;
+  }, [requests, session?.role, sessionAlly]);
+
+  const stats = useMemo(() => getDiscountStats(visibleRequests), [visibleRequests]);
+  const comparatives = useMemo(
+    () => getConsumptionComparatives(visibleRequests),
+    [visibleRequests],
+  );
+  const queriedClientSummary = useMemo(
+    () => (verifyCedula ? getClientConsumptionSummary(verifyCedula, visibleRequests) : null),
+    [verifyCedula, visibleRequests],
+  );
 
   const availableSubcategories = useMemo(
     () => getSubcategoriesByCategory(draft.categorySlug),
     [draft.categorySlug],
   );
+
+  const availableDepartments = useMemo(() => {
+    const departments = allies.map((ally) => ally.departamento).filter(Boolean);
+    return Array.from(new Set([...ALLY_DEPARTMENTS, ...departments])).sort((a, b) =>
+      a.localeCompare(b, 'es'),
+    );
+  }, [allies]);
 
   useEffect(() => {
     if (availableSubcategories.length === 0) {
@@ -98,6 +195,11 @@ export default function AliadosAdminPanel() {
       return;
     }
 
+    if (!draft.municipio.trim()) {
+      setFeedback('Debes ingresar el municipio o ciudad.');
+      return;
+    }
+
     if (!draft.logo.trim()) {
       setFeedback('Agrega el logo del aliado (URL o archivo).');
       return;
@@ -118,13 +220,17 @@ export default function AliadosAdminPanel() {
       id: editingId || `${baseId}-${Date.now().toString(36).slice(-4)}`,
       name: draft.name.trim(),
       departamento: draft.departamento.trim(),
+      municipio: draft.municipio.trim(),
       subcategory: draft.subcategory.trim(),
+      discountLabel: draft.discountLabel.trim() || 'Descuento sujeto a condiciones',
       logo: draft.logo.trim(),
       address: draft.address.trim(),
       description: draft.description?.trim() || '',
       whatsappNumber: sanitizeWhatsAppNumber(draft.whatsappNumber),
       whatsappTemplate: template,
       actionLabel: draft.actionLabel.trim() || 'Mas informacion',
+      loginId: draft.loginId?.trim() || `${slugify(draft.name).slice(0, 3).toUpperCase()}${Date.now().toString().slice(-4)}`,
+      loginPassword: draft.loginPassword?.trim() || `JR${Date.now().toString().slice(-4)}`,
       createdAt: existing?.createdAt || now,
       updatedAt: now,
     };
@@ -177,16 +283,353 @@ export default function AliadosAdminPanel() {
     reader.readAsDataURL(file);
   };
 
+  const refreshRequests = () => setRequests(readDiscountRequests());
+
+  const handleFindDiscount = (event: React.FormEvent) => {
+    event.preventDefault();
+    setVerificationFeedback('');
+    setActiveRequest(null);
+
+    const request = findRequestForVerification({
+      cedula: verifyCedula,
+      code: verifyCode,
+      allyId: session?.role === 'ally_user' ? sessionAlly?.id : undefined,
+    });
+
+    if (!request) {
+      setVerificationFeedback('No encontramos un codigo para esa cedula y aliado.');
+      return;
+    }
+
+    if (request.status !== 'active') {
+      setVerificationFeedback(
+        `Codigo ${STATUS_LABELS[request.status].toLowerCase()}. No se puede aplicar este descuento.`,
+      );
+      return;
+    }
+
+    setActiveRequest(request);
+    setVerificationFeedback('Codigo activo. Ingresa el valor consumido para aplicar el descuento.');
+  };
+
+  const handleRedeemDiscount = () => {
+    if (!activeRequest) {
+      return;
+    }
+
+    const value = Number(consumedValue);
+    if (!Number.isFinite(value) || value <= 0) {
+      setVerificationFeedback('Ingresa un valor consumido valido mayor a cero.');
+      return;
+    }
+
+    const redeemed = redeemDiscountRequest({
+      requestId: activeRequest.id,
+      consumedValue: value,
+      redeemedBy: session?.loginId || session?.cedula || 'admin',
+    });
+
+    refreshRequests();
+    setActiveRequest(null);
+    setConsumedValue('');
+    setVerifyCode('');
+    setVerificationFeedback(
+      redeemed
+        ? `Descuento aplicado. Consumo ${formatCurrency(value)}, descuento ${formatCurrency(redeemed.discountValue ?? 0)}, total a pagar ${formatCurrency(redeemed.totalAfterDiscount ?? value)}.`
+        : 'No se pudo actualizar el codigo.',
+    );
+  };
+
+  const handleDeleteDiscount = (request: AllyDiscountRequest) => {
+    const confirmed = window.confirm(`¿Deseas eliminar el codigo ${request.code}?`);
+    if (!confirmed) {
+      return;
+    }
+
+    deleteDiscountRequest(request.id);
+    refreshRequests();
+    setVerificationFeedback('Codigo eliminado correctamente.');
+  };
+
   const previewAlly = createTemporaryAllyFromDraft(draft);
+  const isAllyUser = session?.role === 'ally_user';
 
   return (
     <div className="min-h-screen pt-2 pb-10">
       <SectionTitle
         title="Panel de Aliados Comerciales"
-        subtitle="Crea, edita o elimina aliados por categoria, subcategoria y departamento."
+        subtitle={
+          isAllyUser
+            ? 'Valida codigos activos y registra el valor consumido por cada cliente.'
+            : 'Administra aliados, credenciales, codigos de descuento y consumos.'
+        }
         align="center"
         className="mb-8"
       />
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        {[
+          ['Codigos generados', stats.generated.toString()],
+          ['Codigos activos', stats.active.toString()],
+          ['Codigos usados', stats.redeemed.toString()],
+          ['Codigos vencidos', stats.expired.toString()],
+          ['Codigos eliminados', stats.deleted.toString()],
+          ['Consumo total', formatCurrency(stats.totalConsumed)],
+          ['Descuento total', formatCurrency(stats.totalDiscount)],
+          ['Total despues desc.', formatCurrency(stats.totalAfterDiscount)],
+        ].map(([label, value]) => (
+          <article key={label} className="rounded-2xl border border-primary/15 bg-white/55 p-4">
+            <p className="text-xs uppercase tracking-[0.16em] text-textLight">{label}</p>
+            <p className="mt-2 text-2xl font-semibold text-text">{value}</p>
+          </article>
+        ))}
+      </div>
+
+      {isAllyUser && sessionAlly && (
+        <div className="mb-6 rounded-2xl border border-primary/15 bg-primary/10 p-4 text-sm text-text">
+          Sesion de aliado activa: <span className="font-semibold">{sessionAlly.name}</span> -
+          {' '}ID <span className="font-mono">{sessionAlly.loginId}</span>
+        </div>
+      )}
+
+      <section className="mb-8 grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {[
+          ['Hoy', comparatives.today],
+          ['Esta semana', comparatives.week],
+          ['Este mes', comparatives.month],
+        ].map(([label, item]) => {
+          const summary = item as { count: number; consumed: number; discount: number };
+          return (
+            <article key={label as string} className="rounded-3xl border border-primary/15 bg-white/65 p-5 shadow-sm">
+              <p className="text-xs uppercase tracking-[0.18em] text-primary">{label as string}</p>
+              <div className="mt-4 grid grid-cols-3 gap-3 text-sm">
+                <div>
+                  <p className="text-textLight">Usos</p>
+                  <p className="text-xl font-semibold text-text">{summary.count}</p>
+                </div>
+                <div>
+                  <p className="text-textLight">Consumo</p>
+                  <p className="font-semibold text-text">{formatCurrency(summary.consumed)}</p>
+                </div>
+                <div>
+                  <p className="text-textLight">Descuento</p>
+                  <p className="font-semibold text-green-700">{formatCurrency(summary.discount)}</p>
+                </div>
+              </div>
+            </article>
+          );
+        })}
+      </section>
+
+      <section className="glass rounded-3xl border border-primary/15 p-6 md:p-8 mb-8">
+        <div className="grid grid-cols-1 xl:grid-cols-[0.95fr_1.05fr] gap-8">
+          <div>
+            <h3 className="text-2xl font-display text-text mb-2">Verificar descuento</h3>
+            <p className="text-sm text-textLight mb-5">
+              Consulta la cedula y el codigo generado por el cliente. Al aplicar el descuento se registra el consumo.
+            </p>
+
+            <form onSubmit={handleFindDiscount} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Input
+                  label="Cedula del cliente"
+                  value={verifyCedula}
+                  onChange={(event) => setVerifyCedula(event.target.value)}
+                  placeholder="Ej: 1234567890"
+                  required
+                />
+                <Input
+                  label="Codigo de descuento"
+                  value={verifyCode}
+                  onChange={(event) => setVerifyCode(event.target.value.toUpperCase())}
+                  placeholder="JR-ABC123"
+                />
+              </div>
+
+              <Button type="submit" variant="primary">
+                Consultar codigo activo
+              </Button>
+            </form>
+
+            {activeRequest && (
+              <div className="mt-5 rounded-2xl border border-green-500/25 bg-green-50 p-4">
+                <p className="font-semibold text-green-800">{activeRequest.clientName}</p>
+                <p className="text-sm text-green-700">
+                  {activeRequest.allyName} - {activeRequest.discountLabel}
+                </p>
+                <p className="text-xs text-green-700 mt-1">
+                  Codigo: <span className="font-mono">{activeRequest.code}</span>
+                </p>
+                <p className="text-xs text-green-700 mt-1">
+                  Vence: {new Date(activeRequest.expiresAt).toLocaleString('es-CO')}
+                </p>
+                <p className="text-xs text-green-700 mt-1">
+                  Descuento calculado: {activeRequest.discountPercent}% sobre el valor consumido.
+                </p>
+
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-end">
+                  <Input
+                    label="Valor consumido"
+                    type="number"
+                    min="0"
+                    value={consumedValue}
+                    onChange={(event) => setConsumedValue(event.target.value)}
+                    placeholder="Ej: 85000"
+                  />
+                  <Button type="button" variant="primary" onClick={handleRedeemDiscount}>
+                    Aplicar descuento
+                  </Button>
+                </div>
+                {Number(consumedValue) > 0 && (
+                  <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                    <div className="rounded-xl bg-white/70 p-3">
+                      <p className="text-textLight">Consumo</p>
+                      <p className="font-semibold text-text">{formatCurrency(Number(consumedValue))}</p>
+                    </div>
+                    <div className="rounded-xl bg-white/70 p-3">
+                      <p className="text-textLight">Descuento</p>
+                      <p className="font-semibold text-green-700">
+                        {formatCurrency(Math.round((Number(consumedValue) * activeRequest.discountPercent) / 100))}
+                      </p>
+                    </div>
+                    <div className="rounded-xl bg-white/70 p-3">
+                      <p className="text-textLight">Total a pagar</p>
+                      <p className="font-semibold text-text">
+                        {formatCurrency(Number(consumedValue) - Math.round((Number(consumedValue) * activeRequest.discountPercent) / 100))}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {verificationFeedback && (
+              <p className="mt-4 text-sm font-medium text-primary">{verificationFeedback}</p>
+            )}
+
+            {queriedClientSummary && queriedClientSummary.requests.length > 0 && (
+              <div className="mt-6 rounded-2xl border border-primary/15 bg-white/60 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.16em] text-primary">
+                      Historial del usuario consultado
+                    </p>
+                    <p className="font-semibold text-text">
+                      Cedula {queriedClientSummary.requests[0]?.clientCedula}
+                    </p>
+                  </div>
+                  <div className="text-right text-sm">
+                    <p className="text-textLight">Mes actual</p>
+                    <p className="font-semibold text-text">
+                      {formatCurrency(queriedClientSummary.comparatives.month.consumed)} consumo /
+                      {' '}{formatCurrency(queriedClientSummary.comparatives.month.discount)} descuento
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                  <div className="rounded-xl bg-primary/10 p-3">
+                    <p className="text-textLight">Hoy</p>
+                    <p className="font-semibold text-text">
+                      {formatCurrency(queriedClientSummary.comparatives.today.consumed)}
+                    </p>
+                  </div>
+                  <div className="rounded-xl bg-primary/10 p-3">
+                    <p className="text-textLight">Semana</p>
+                    <p className="font-semibold text-text">
+                      {formatCurrency(queriedClientSummary.comparatives.week.consumed)}
+                    </p>
+                  </div>
+                  <div className="rounded-xl bg-primary/10 p-3">
+                    <p className="text-textLight">Descuento total</p>
+                    <p className="font-semibold text-green-700">
+                      {formatCurrency(queriedClientSummary.stats.totalDiscount)}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4 max-h-48 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                  {queriedClientSummary.requests.map((request) => (
+                    <div key={request.id} className="rounded-xl border border-primary/10 bg-white/70 p-3 text-sm">
+                      <div className="flex flex-wrap justify-between gap-2">
+                        <p className="font-semibold text-text">{request.allyName}</p>
+                        <span className={`text-xs font-semibold px-2 py-1 rounded-full ${STATUS_STYLES[request.status]}`}>
+                          {STATUS_LABELS[request.status]}
+                        </span>
+                      </div>
+                      <p className="text-xs text-textLight">
+                        {request.code} - {request.discountLabel}
+                      </p>
+                      {request.status === 'redeemed' && (
+                        <p className="mt-1 text-xs text-text">
+                          Consumio {formatCurrency(request.consumedValue ?? 0)} /
+                          descuento {formatCurrency(request.discountValue ?? 0)} /
+                          pago {formatCurrency(request.totalAfterDiscount ?? 0)}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div>
+            <h3 className="text-lg font-semibold text-text mb-4">Trazabilidad reciente</h3>
+            <div className="max-h-80 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
+              {visibleRequests.length === 0 ? (
+                <div className="rounded-2xl border border-primary/10 bg-white/50 p-4 text-sm text-textLight">
+                  Aun no hay codigos generados.
+                </div>
+              ) : (
+                visibleRequests.slice(0, 8).map((request) => (
+                  <article key={request.id} className="rounded-2xl border border-primary/10 bg-white/50 p-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <p className="font-semibold text-text">{request.clientName}</p>
+                        <p className="text-xs text-textLight">
+                          {request.allyName} - {request.municipio}, {request.departamento}
+                        </p>
+                      </div>
+                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${STATUS_STYLES[request.status]}`}>
+                        {STATUS_LABELS[request.status]}
+                      </span>
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                      <span className="font-mono px-2 py-1 rounded-lg bg-primary/10 text-primary">{request.code}</span>
+                      <span className="px-2 py-1 rounded-lg bg-black/5 text-textLight">{request.discountLabel}</span>
+                      <span className="px-2 py-1 rounded-lg bg-amber-500/10 text-amber-700">
+                        Vence {new Date(request.expiresAt).toLocaleDateString('es-CO')}
+                      </span>
+                      {request.consumedValue !== undefined && (
+                        <span className="px-2 py-1 rounded-lg bg-green-500/10 text-green-700">
+                          Consumo {formatCurrency(request.consumedValue)}
+                        </span>
+                      )}
+                      {request.discountValue !== undefined && request.discountValue > 0 && (
+                        <span className="px-2 py-1 rounded-lg bg-emerald-500/10 text-emerald-700">
+                          Desc. {formatCurrency(request.discountValue)}
+                        </span>
+                      )}
+                    </div>
+                    {!isAllyUser && request.status === 'active' && (
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteDiscount(request)}
+                        className="mt-3 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-red-300 text-red-600 hover:bg-red-50 transition-colors"
+                      >
+                        Eliminar codigo
+                      </button>
+                    )}
+                  </article>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {isAllyUser ? null : (
 
       <div className="grid grid-cols-1 xl:grid-cols-[1.05fr_0.95fr] gap-8">
         <section className="glass rounded-3xl border border-primary/15 p-6 md:p-8">
@@ -236,13 +679,23 @@ export default function AliadosAdminPanel() {
                   }
                   className="w-full px-4 py-3 rounded-xl glass border border-border text-text focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-300"
                 >
-                  {ALLY_DEPARTMENTS.map((departamento) => (
+                  {availableDepartments.map((departamento) => (
                     <option key={departamento} value={departamento}>
                       {departamento}
                     </option>
                   ))}
                 </select>
               </div>
+
+              <Input
+                label="Municipio / ciudad"
+                value={draft.municipio}
+                onChange={(event) =>
+                  setDraft((prev) => ({ ...prev, municipio: event.target.value }))
+                }
+                placeholder="Ej: Pereira"
+                required
+              />
 
               <div>
                 <label className="block text-sm font-medium text-text mb-2">Subcategoria</label>
@@ -261,6 +714,15 @@ export default function AliadosAdminPanel() {
                 </select>
               </div>
             </div>
+
+            <Input
+              label="Descuento registrado"
+              value={draft.discountLabel}
+              onChange={(event) =>
+                setDraft((prev) => ({ ...prev, discountLabel: event.target.value }))
+              }
+              placeholder="Ej: 10% de descuento"
+            />
 
             <Input
               label="Direccion"
@@ -290,6 +752,26 @@ export default function AliadosAdminPanel() {
                   setDraft((prev) => ({ ...prev, actionLabel: event.target.value }))
                 }
                 placeholder="Mas informacion"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Input
+                label="ID login aliado"
+                value={draft.loginId ?? ''}
+                onChange={(event) =>
+                  setDraft((prev) => ({ ...prev, loginId: event.target.value.toUpperCase() }))
+                }
+                placeholder="Ej: AMM1234"
+              />
+
+              <Input
+                label="Contrasena aliado"
+                value={draft.loginPassword ?? ''}
+                onChange={(event) =>
+                  setDraft((prev) => ({ ...prev, loginPassword: event.target.value }))
+                }
+                placeholder="Ej: JR1234"
               />
             </div>
 
@@ -371,7 +853,12 @@ export default function AliadosAdminPanel() {
               <p className="text-xs uppercase tracking-[0.18em] text-primary mb-1">
                 {getCategoryLabel(previewAlly.categorySlug)} - {previewAlly.subcategory}
               </p>
-              <p className="text-xs text-textLight mb-1">Departamento: {previewAlly.departamento}</p>
+              <p className="text-xs text-textLight mb-1">
+                Ubicacion: {previewAlly.municipio}, {previewAlly.departamento}
+              </p>
+              <p className="inline-flex mb-2 text-xs font-semibold px-2.5 py-1 rounded-full border border-green-500/20 bg-green-500/10 text-green-700">
+                {previewAlly.discountLabel}
+              </p>
               <p className="font-semibold text-text mb-1">{previewAlly.name}</p>
               <p className="text-sm text-textLight mb-3">
                 Mensaje: {previewAlly.whatsappTemplate || getDefaultAllyTemplate(previewAlly.categorySlug, previewAlly.subcategory)}
@@ -415,8 +902,13 @@ export default function AliadosAdminPanel() {
                       <p className="text-xs text-primary uppercase tracking-[0.16em]">
                         {getCategoryLabel(ally.categorySlug)} - {ally.subcategory}
                       </p>
-                      <p className="text-xs text-textLight mt-1">{ally.departamento}</p>
+                      <p className="text-xs text-textLight mt-1">{ally.municipio}, {ally.departamento}</p>
                       <p className="text-xs text-textLight line-clamp-1 mt-1">{ally.address}</p>
+                      <p className="text-xs font-semibold text-green-700 mt-1">{ally.discountLabel}</p>
+                      <p className="text-[11px] text-textLight mt-1">
+                        Login: <span className="font-mono">{ally.loginId || 'Sin ID'}</span> /
+                        {' '}<span className="font-mono">{ally.loginPassword || 'Sin clave'}</span>
+                      </p>
                       <div className="flex gap-2 mt-3">
                         <button
                           type="button"
@@ -441,6 +933,7 @@ export default function AliadosAdminPanel() {
           </article>
         </section>
       </div>
+      )}
     </div>
   );
 }

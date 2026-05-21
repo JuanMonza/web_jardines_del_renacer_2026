@@ -9,12 +9,19 @@ import Button from '@/components/ui/Button';
 import {
   ALLY_DEPARTMENTS,
   ALLY_CATEGORIES,
-  buildAllyWhatsAppUrl,
   getCategoryBySlug,
   getCategoryLabel,
   type CommercialAlly,
 } from '@/config/allies';
 import { readCommercialAllies } from '@/lib/alliesStorage';
+import { ensureExcelAlliesSeeded } from '@/lib/allyExcelImport';
+import {
+  createDiscountRequest,
+  findActiveClientByCedula,
+  findRequestForVerification,
+  type AllyDiscountRequest,
+} from '@/lib/allyMembershipStorage';
+import type { ClientData } from '@/data/mockClients';
 
 const ALL_CATEGORIES = 'todos';
 const ALL_SUBCATEGORIES = 'todas';
@@ -28,25 +35,45 @@ function AliadosComercialesPageContent() {
   const [selectedCategory, setSelectedCategory] = useState<string>(ALL_CATEGORIES);
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>(ALL_SUBCATEGORIES);
   const [selectedDepartment, setSelectedDepartment] = useState<string>(ALL_DEPARTMENTS);
+  const [selectedCity, setSelectedCity] = useState<string>('todas');
+  const [cedula, setCedula] = useState('');
+  const [verifiedClient, setVerifiedClient] = useState<ClientData | null>(null);
+  const [memberFeedback, setMemberFeedback] = useState('');
+  const [generatedCode, setGeneratedCode] = useState<AllyDiscountRequest | null>(null);
 
   useEffect(() => {
     const initialCategory = searchParams.get('categoria') || ALL_CATEGORIES;
     const initialSubcategory = searchParams.get('subcategoria') || ALL_SUBCATEGORIES;
     const rawDepartment = searchParams.get('departamento') || ALL_DEPARTMENTS;
-    const initialDepartment =
-      rawDepartment === ALL_DEPARTMENTS || ALLY_DEPARTMENTS.includes(rawDepartment)
-        ? rawDepartment
-        : ALL_DEPARTMENTS;
+    const initialDepartment = rawDepartment || ALL_DEPARTMENTS;
 
     setSelectedCategory(initialCategory);
     setSelectedSubcategory(initialSubcategory);
     setSelectedDepartment(initialDepartment);
     setAllies(readCommercialAllies());
+    ensureExcelAlliesSeeded()
+      .then(setAllies)
+      .catch(() => setAllies(readCommercialAllies()));
 
     const syncFromStorage = () => setAllies(readCommercialAllies());
     window.addEventListener('storage', syncFromStorage);
     return () => window.removeEventListener('storage', syncFromStorage);
   }, [searchParams]);
+
+  const availableCities = useMemo(() => {
+    const cities = allies
+      .filter((ally) => selectedDepartment === ALL_DEPARTMENTS || ally.departamento === selectedDepartment)
+      .map((ally) => ally.municipio)
+      .filter(Boolean);
+    return Array.from(new Set(cities)).sort((a, b) => a.localeCompare(b, 'es'));
+  }, [allies, selectedDepartment]);
+
+  const availableDepartments = useMemo(() => {
+    const departments = allies.map((ally) => ally.departamento).filter(Boolean);
+    return Array.from(new Set([...ALLY_DEPARTMENTS, ...departments])).sort((a, b) =>
+      a.localeCompare(b, 'es'),
+    );
+  }, [allies]);
 
   const availableSubcategories = useMemo(() => {
     if (selectedCategory === ALL_CATEGORIES) {
@@ -65,18 +92,57 @@ function AliadosComercialesPageContent() {
         selectedSubcategory === ALL_SUBCATEGORIES || ally.subcategory === selectedSubcategory;
       const matchesDepartment =
         selectedDepartment === ALL_DEPARTMENTS || ally.departamento === selectedDepartment;
+      const matchesCity = selectedCity === 'todas' || ally.municipio === selectedCity;
 
       const matchesSearch =
         !query ||
         ally.name.toLowerCase().includes(query) ||
         ally.address.toLowerCase().includes(query) ||
         ally.subcategory.toLowerCase().includes(query) ||
+        ally.municipio.toLowerCase().includes(query) ||
         ally.departamento.toLowerCase().includes(query) ||
         getCategoryLabel(ally.categorySlug).toLowerCase().includes(query);
 
-      return matchesCategory && matchesSubcategory && matchesDepartment && matchesSearch;
+      return matchesCategory && matchesSubcategory && matchesDepartment && matchesCity && matchesSearch;
     });
-  }, [allies, search, selectedCategory, selectedSubcategory, selectedDepartment]);
+  }, [allies, search, selectedCategory, selectedSubcategory, selectedDepartment, selectedCity]);
+
+  const handleClientVerification = (event: React.FormEvent) => {
+    event.preventDefault();
+    setGeneratedCode(null);
+    const client = findActiveClientByCedula(cedula);
+    if (!client) {
+      setVerifiedClient(null);
+      setMemberFeedback('No encontramos una membresia activa con esa cedula.');
+      return;
+    }
+
+    setVerifiedClient(client);
+    setMemberFeedback(`Membresia activa para ${client.nombre} ${client.apellido}. Ya puedes generar un codigo.`);
+  };
+
+  const handleGenerateCode = (ally: CommercialAlly) => {
+    if (!verifiedClient) {
+      setMemberFeedback('Primero valida una cedula activa.');
+      return;
+    }
+
+    const existingActiveCode = findRequestForVerification({
+      cedula: verifiedClient.cedula,
+      allyId: ally.id,
+    });
+    const request =
+      existingActiveCode?.status === 'active'
+        ? existingActiveCode
+        : createDiscountRequest(verifiedClient, ally);
+
+    setGeneratedCode(request);
+    setMemberFeedback(
+      existingActiveCode?.status === 'active'
+        ? 'Ya tienes un codigo activo para este aliado. Te mostramos el mismo codigo vigente.'
+        : 'Codigo generado correctamente. Presentalo en el establecimiento aliado.',
+    );
+  };
 
   const updateQueryParams = (category: string, subcategory: string, department: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -116,6 +182,7 @@ function AliadosComercialesPageContent() {
 
   const handleDepartmentChange = (department: string) => {
     setSelectedDepartment(department);
+    setSelectedCity('todas');
     updateQueryParams(selectedCategory, selectedSubcategory, department);
   };
 
@@ -126,12 +193,80 @@ function AliadosComercialesPageContent() {
           <FadeIn>
             <SectionTitle
               title="Aliados Comerciales"
-              subtitle="Encuentra aliados por categoria y subcategoria, con contacto directo."
+              subtitle="Valida tu membresia activa, elige un aliado y genera tu codigo de descuento."
             />
           </FadeIn>
 
           <FadeIn delay={0.1}>
             <div className="mt-8 max-w-5xl mx-auto space-y-4">
+              <form
+                onSubmit={handleClientVerification}
+                className="glass rounded-2xl border border-primary/15 p-4 md:p-5"
+              >
+                <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-end">
+                  <div>
+                    <label className="block text-sm font-medium text-text mb-2">
+                      Consulta tu membresia con cedula
+                    </label>
+                    <input
+                      value={cedula}
+                      onChange={(event) => setCedula(event.target.value)}
+                      placeholder="Ej: 1234567890"
+                      className="w-full rounded-xl border border-border bg-white/70 px-4 py-3 text-text placeholder:text-textLight focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    />
+                  </div>
+                  <Button type="submit" variant="primary" className="w-full md:w-auto">
+                    Validar membresia
+                  </Button>
+                </div>
+
+                {memberFeedback && (
+                  <p className={`mt-3 text-sm font-medium ${verifiedClient ? 'text-green-700' : 'text-red-600'}`}>
+                    {memberFeedback}
+                  </p>
+                )}
+
+                {generatedCode && (
+                  <div className="mt-5 overflow-hidden rounded-[28px] border border-primary/20 bg-white shadow-xl shadow-primary/10">
+                    <div className="bg-gradient-to-br from-[#1f4f46] via-[#2f5f54] to-[#d8b45f] px-5 py-4 text-white">
+                      <p className="text-xs uppercase tracking-[0.18em] text-white/75">
+                        Codigo de descuento
+                      </p>
+                      <p className="mt-2 font-mono text-4xl font-bold tracking-[0.12em]">
+                        {generatedCode.code}
+                      </p>
+                    </div>
+                    <div className="grid gap-4 p-5 md:grid-cols-2">
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.16em] text-textLight">Cliente</p>
+                        <p className="font-semibold text-text">{generatedCode.clientName}</p>
+                        <p className="text-sm text-textLight">Cedula {generatedCode.clientCedula}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.16em] text-textLight">Aliado</p>
+                        <p className="font-semibold text-text">{generatedCode.allyName}</p>
+                        <p className="text-sm text-primary">{generatedCode.discountLabel}</p>
+                      </div>
+                      <div className="rounded-2xl bg-primary/10 p-3">
+                        <p className="text-xs uppercase tracking-[0.14em] text-textLight">Creado</p>
+                        <p className="text-sm font-semibold text-text">
+                          {new Date(generatedCode.createdAt).toLocaleString('es-CO')}
+                        </p>
+                      </div>
+                      <div className="rounded-2xl bg-amber-500/10 p-3">
+                        <p className="text-xs uppercase tracking-[0.14em] text-textLight">Vence</p>
+                        <p className="text-sm font-semibold text-text">
+                          {new Date(generatedCode.expiresAt).toLocaleString('es-CO')}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="border-t border-primary/10 px-5 py-3 text-xs text-textLight">
+                      Maximo un codigo activo por persona y aliado. (* Aplica Terminos & Condiciones *)
+                    </div>
+                  </div>
+                )}
+              </form>
+
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-primary pointer-events-none">
                   <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">
@@ -161,7 +296,7 @@ function AliadosComercialesPageContent() {
                   >
                     Todos
                   </button>
-                  {ALLY_DEPARTMENTS.map((department) => (
+                  {availableDepartments.map((department) => (
                     <button
                       key={department}
                       onClick={() => handleDepartmentChange(department)}
@@ -176,6 +311,37 @@ function AliadosComercialesPageContent() {
                   ))}
                 </div>
               </div>
+
+              {selectedDepartment !== ALL_DEPARTMENTS && availableCities.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-textLight">Ciudad</p>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => setSelectedCity('todas')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border ${
+                        selectedCity === 'todas'
+                          ? 'border-primary text-primary bg-primary/10'
+                          : 'border-border text-textLight hover:border-primary/40'
+                      }`}
+                    >
+                      Todas las ciudades
+                    </button>
+                    {availableCities.map((city) => (
+                      <button
+                        key={city}
+                        onClick={() => setSelectedCity(city)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border ${
+                          selectedCity === city
+                            ? 'border-primary text-primary bg-primary/10'
+                            : 'border-border text-textLight hover:border-primary/40'
+                        }`}
+                      >
+                        {city}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <p className="text-[11px] uppercase tracking-[0.18em] text-textLight">Categoria</p>
@@ -251,6 +417,9 @@ function AliadosComercialesPageContent() {
                 <FadeIn key={ally.id} delay={Math.min(index * 0.05, 0.35)}>
                   <article className="glass rounded-3xl border border-primary/15 overflow-hidden h-full">
                     <div className="p-6 border-b border-primary/10 bg-gradient-to-br from-primary/10 to-white/40">
+                      <div className="mb-4 inline-flex rounded-full border border-green-500/25 bg-green-500/10 px-3 py-1 text-sm font-semibold text-green-700">
+                        {ally.discountLabel || 'Descuento sujeto a condiciones'}
+                      </div>
                       <div className="flex items-center gap-4">
                         <div className="w-16 h-16 rounded-2xl bg-white/90 border border-primary/20 p-2 flex items-center justify-center overflow-hidden">
                           {ally.logo ? (
@@ -277,7 +446,7 @@ function AliadosComercialesPageContent() {
                     <div className="p-6 space-y-4">
                       <div className="flex flex-wrap gap-2">
                         <span className="text-xs font-semibold px-2.5 py-1 rounded-full border border-sky-500/20 bg-sky-500/10 text-sky-700">
-                          {ally.departamento}
+                          {ally.municipio}, {ally.departamento}
                         </span>
                         <span className="text-xs font-semibold px-2.5 py-1 rounded-full border border-primary/20 bg-primary/10 text-primary">
                           {ally.subcategory}
@@ -298,16 +467,19 @@ function AliadosComercialesPageContent() {
                         <p className="text-textLight">{ally.address || 'Direccion por confirmar'}</p>
                       </div>
 
-                      <a
-                        href={buildAllyWhatsAppUrl(ally)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block"
+                      <p className="text-xs text-textLight italic">
+                        (* Aplica Terminos & Condiciones *)
+                      </p>
+
+                      <Button
+                        type="button"
+                        variant="primary"
+                        className="w-full"
+                        onClick={() => handleGenerateCode(ally)}
+                        disabled={!verifiedClient}
                       >
-                        <Button variant="primary" className="w-full">
-                          {ally.actionLabel || 'Mas informacion'}
-                        </Button>
-                      </a>
+                        {verifiedClient ? 'Generar codigo de descuento' : 'Valida tu cedula primero'}
+                      </Button>
                     </div>
                   </article>
                 </FadeIn>
