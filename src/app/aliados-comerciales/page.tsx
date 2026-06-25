@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Container from '@/components/ui/Container';
 import SectionTitle from '@/components/ui/SectionTitle';
@@ -14,6 +14,7 @@ import {
   type CommercialAlly,
 } from '@/config/allies';
 import { readCommercialAllies } from '@/lib/alliesStorage';
+import MembershipCard from './MembershipCard';
 import { ensureExcelAlliesSeeded } from '@/lib/allyExcelImport';
 import {
   createDiscountRequest,
@@ -40,6 +41,8 @@ function AliadosComercialesPageContent() {
   const [verifiedClient, setVerifiedClient] = useState<ClientData | null>(null);
   const [memberFeedback, setMemberFeedback] = useState('');
   const [generatedCode, setGeneratedCode] = useState<AllyDiscountRequest | null>(null);
+  const [fixedCode, setFixedCode] = useState<string | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const initialCategory = searchParams.get('categoria') || ALL_CATEGORIES;
@@ -110,6 +113,7 @@ function AliadosComercialesPageContent() {
   const handleClientVerification = (event: React.FormEvent) => {
     event.preventDefault();
     setGeneratedCode(null);
+    setFixedCode(null);
     const client = findActiveClientByCedula(cedula);
     if (!client) {
       setVerifiedClient(null);
@@ -137,11 +141,16 @@ function AliadosComercialesPageContent() {
         : createDiscountRequest(verifiedClient, ally);
 
     setGeneratedCode(request);
+    setFixedCode(request.code);
     setMemberFeedback(
       existingActiveCode?.status === 'active'
         ? 'Ya tienes un codigo activo para este aliado. Te mostramos el mismo codigo vigente.'
         : 'Codigo generado correctamente. Presentalo en el establecimiento aliado.',
     );
+
+    setTimeout(() => {
+      cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
   };
 
   const updateQueryParams = (category: string, subcategory: string, department: string) => {
@@ -226,43 +235,29 @@ function AliadosComercialesPageContent() {
                   </p>
                 )}
 
+                {/* Muestra la tarjeta de membresía después de la verificación o al generar un código */}
+                {verifiedClient && (
+                  <div className="mt-5" ref={cardRef}>
+                    <MembershipCard
+                      nombre={`${verifiedClient.nombre} ${verifiedClient.apellido}`}
+                      cedula={verifiedClient.cedula} 
+                      membresiaId={verifiedClient.id}
+                      discountLabel={
+                      generatedCode
+                          ? getCategoryBySlug(generatedCode.allyCategorySlug)?.discountLabel
+                          : undefined
+                      }
+                      codigoUnico={fixedCode ?? generatedCode?.code}
+                    />
+                  </div>
+                )}
+
+                {/* Muestra detalles adicionales del código generado si no se usa la tarjeta */}
                 {generatedCode && (
-                  <div className="mt-5 overflow-hidden rounded-[28px] border border-primary/20 bg-white shadow-xl shadow-primary/10">
-                    <div className="bg-gradient-to-br from-[#1f4f46] via-[#2f5f54] to-[#d8b45f] px-5 py-4 text-white">
-                      <p className="text-xs uppercase tracking-[0.18em] text-white/75">
-                        Codigo de descuento
-                      </p>
-                      <p className="mt-2 font-mono text-4xl font-bold tracking-[0.12em]">
-                        {generatedCode.code}
-                      </p>
-                    </div>
-                    <div className="grid gap-4 p-5 md:grid-cols-2">
-                      <div>
-                        <p className="text-xs uppercase tracking-[0.16em] text-textLight">Cliente</p>
-                        <p className="font-semibold text-text">{generatedCode.clientName}</p>
-                        <p className="text-sm text-textLight">Cedula {generatedCode.clientCedula}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs uppercase tracking-[0.16em] text-textLight">Aliado</p>
-                        <p className="font-semibold text-text">{generatedCode.allyName}</p>
-                        <p className="text-sm text-primary">{generatedCode.discountLabel}</p>
-                      </div>
-                      <div className="rounded-2xl bg-primary/10 p-3">
-                        <p className="text-xs uppercase tracking-[0.14em] text-textLight">Creado</p>
-                        <p className="text-sm font-semibold text-text">
-                          {new Date(generatedCode.createdAt).toLocaleString('es-CO')}
-                        </p>
-                      </div>
-                      <div className="rounded-2xl bg-amber-500/10 p-3">
-                        <p className="text-xs uppercase tracking-[0.14em] text-textLight">Vence</p>
-                        <p className="text-sm font-semibold text-text">
-                          {new Date(generatedCode.expiresAt).toLocaleString('es-CO')}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="border-t border-primary/10 px-5 py-3 text-xs text-textLight">
-                      Maximo un codigo activo por persona y aliado. (* Aplica Terminos & Condiciones *)
-                    </div>
+                  <div className="mt-4 border-t border-primary/10 pt-4 text-center text-xs text-textLight">
+                    <p>
+                      Código para <span className="font-semibold text-text">{generatedCode.allyName}</span>. Válido hasta: {new Date(generatedCode.expiresAt).toLocaleDateString('es-CO')}
+                    </p>
                   </div>
                 )}
               </form>
