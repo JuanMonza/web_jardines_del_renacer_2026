@@ -35,38 +35,13 @@ export default function MembershipCard({
   const [isFlipped, setIsFlipped] = useState(false);
   const savedCode = useRef<string | undefined>(undefined);
 
-useEffect(() => {
-  if (codigoUnico) {
-    savedCode.current = codigoUnico;
-  }
-}, [codigoUnico]);
+  useEffect(() => {
+    if (codigoUnico) {
+      savedCode.current = codigoUnico;
+    }
+  }, [codigoUnico]);
 
   const currentCode = savedCode.current ?? codigoUnico;
-  console.log("=================================");
-console.log("MembershipCard Render");
-console.log("codigoUnico:", codigoUnico);
-console.log("membresiaId:", membresiaId);
-console.log("isFlipped:", isFlipped);
-console.log("=================================");
-
-useEffect(() => {
-  console.log("🔄 Cambio detectado");
-  console.log({
-    codigoUnico,
-    membresiaId,
-    isFlipped,
-    nombre,
-    cedula,
-    discountLabel,
-  });
-}, [
-  codigoUnico,
-  membresiaId,
-  isFlipped,
-  nombre,
-  cedula,
-  discountLabel,
-]);
 
   const qrUrl = `${SITE_URL}/aliados-comerciales?cedula=${cedula}`;
 
@@ -152,16 +127,7 @@ useEffect(() => {
                 </div>
 
                 <button
-                  onClick={() => {
-                  console.log("🟢 CLICK EN GIRAR");
-                  console.log("Antes:", isFlipped);
-                  console.log("Código:", currentCode);
-
-                  setIsFlipped((prev) => {
-                  console.log("Después:", !prev);
-                  return !prev;
-                  });
-                  }}
+                  onClick={() => setIsFlipped(!isFlipped)}
                   className="absolute bottom-2 right-3 text-white/50 hover:text-white transition-colors"
                   aria-label="Voltear tarjeta"
                 >
