@@ -76,9 +76,24 @@ export const historyTimeline = [
  * de trabajo en la compañía.
  */
 export const corporateValues = [
-  'Honestidad',
-  'Respeto',
-  'Calidad Humana',
-  'Cumplimiento',
-  'Responsabilidad social',
+  {
+    name: 'Honestidad',
+    description: 'Actuamos con transparencia, integridad y rectitud en todas nuestras interacciones.',
+  },
+  {
+    name: 'Respeto',
+    description: 'Valoramos la dignidad de cada persona, tratando a familias y colaboradores con empatía y consideración.',
+  },
+  {
+    name: 'Calidad Humana',
+    description: 'Brindamos un servicio cercano y compasivo, entendiendo las necesidades emocionales de quienes confían en nosotros.',
+  },
+  {
+    name: 'Cumplimiento',
+    description: 'Nos comprometemos a cumplir nuestras promesas y a operar con los más altos estándares de calidad y profesionalismo.',
+  },
+  {
+    name: 'Responsabilidad social',
+    description: 'Contribuimos activamente al bienestar de la comunidad y al cuidado del medio ambiente en todas nuestras operaciones.',
+  },
 ];

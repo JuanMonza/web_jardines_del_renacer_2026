@@ -1,6 +1,6 @@
 import Container from '@/components/ui/Container';
-import SectionTitle from '@/components/ui/SectionTitle';
 import FadeIn from '@/components/animations/FadeIn';
+import SectionTitle from '@/components/ui/SectionTitle';
 import Link from 'next/link';
 
 type PolicySection = {
@@ -113,18 +113,19 @@ const privacySections: PolicySection[] = [
 export default function PrivacidadPage() {
   return (
     <>
-      <section className="py-20 bg-gradient-to-b from-background to-white/60">
-        <Container>
+      <section className="relative h-[50vh] min-h-[400px] flex items-center justify-center text-center overflow-hidden">
+        <div className="absolute inset-0">
+          <img src="/images/legal.jpg" alt="Fondo Legal" className="object-cover w-full h-full opacity-30" />
+          <div className="absolute inset-0 bg-black/50" />
+        </div>
+        <Container className="relative z-10 text-white">
           <FadeIn>
-            <SectionTitle
-              title="Politica de Privacidad"
-              subtitle="Tratamiento responsable de datos personales conforme a la normativa colombiana."
-            />
+            <SectionTitle title="Politica de Privacidad" subtitle="Tratamiento responsable de datos personales conforme a la normativa colombiana." />
           </FadeIn>
         </Container>
       </section>
 
-      <section className="pb-20">
+      <section className="py-16">
         <Container maxWidth="lg">
           <FadeIn>
             <article className="glass rounded-2xl p-6 border border-primary/15 mb-5">
