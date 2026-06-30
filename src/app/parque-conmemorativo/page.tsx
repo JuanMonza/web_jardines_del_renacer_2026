@@ -1,10 +1,11 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import Container from '@/components/ui/Container';
+import PageHero from '@/components/ui/PageHero';
 import FadeIn from '@/components/animations/FadeIn';
 import Button from '@/components/ui/Button';
 
-const PARQUE_CONMEMORATIVO_URL = 'https://conmemorativo-jr-2025-git-main-pcojmemorativos-projects.vercel.app/';
+const PARQUE_CONMEMORATIVO_URL = 'https://conmemorativo-jr-2025.vercel.app/';
 const PARQUE_CONMEMORATIVO_IMAGE = '/images/commemorativo.jpeg';
 
 const highlights = [
@@ -16,30 +17,20 @@ const highlights = [
 export default function ParqueConmemorativoPage() {
   return (
     <>
-      <section className="relative overflow-hidden py-24 md:py-32 text-white">
-        <Image
-          src={PARQUE_CONMEMORATIVO_IMAGE}
-          alt="Parque Conmemorativo Jardines del Renacer"
-          fill
-          className="object-cover"
-          priority
-        />
-        <div className="absolute inset-0 bg-black/45" />
-        <Container className="relative z-10">
-          <FadeIn>
-            <div className="max-w-3xl">
-              <h1 className="text-4xl md:text-6xl font-display mb-5 drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)]">
-                Parque Conmemorativo
-              </h1>
-              <p className="text-lg md:text-2xl text-white/95 leading-relaxed drop-shadow-[0_3px_6px_rgba(0,0,0,0.75)]">
-                Un entorno natural de paz para honrar la memoria de quienes amamos.
-              </p>
-            </div>
-          </FadeIn>
-        </Container>
-      </section>
+      <PageHero
+        title="Parque Conmemorativo"
+        subtitle="Un entorno natural de paz para honrar la memoria de quienes amamos."
+        image={PARQUE_CONMEMORATIVO_IMAGE}
+        imageAlt="Parque Conmemorativo Jardines del Renacer"
+      >
+        <a href={PARQUE_CONMEMORATIVO_URL} target="_blank" rel="noopener noreferrer">
+          <Button variant="primary" size="lg">
+            Ir al sitio del Parque Conmemorativo
+          </Button>
+        </a>
+      </PageHero>
 
-      <section className="pb-20">
+      <section className="py-20">
         <Container maxWidth="lg">
           <div className="grid grid-cols-1 lg:grid-cols-[1.05fr_0.95fr] gap-8">
             <FadeIn>

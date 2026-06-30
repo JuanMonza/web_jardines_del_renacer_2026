@@ -9,6 +9,7 @@ export default function FloatingButtons() {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [showTooltip, setShowTooltip] = useState(true);
+  const [showDeathLabel, setShowDeathLabel] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -22,6 +23,15 @@ export default function FloatingButtons() {
   useEffect(() => {
     // Ocultar el mensaje "¡Cotiza Ya!" después de 7 segundos
     const timer = setTimeout(() => setShowTooltip(false), 7000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    setShowDeathLabel(true);
+    const timer = setTimeout(() => {
+      setShowDeathLabel(false);
+    }, 15000);
+
     return () => clearTimeout(timer);
   }, []);
 
@@ -40,6 +50,8 @@ export default function FloatingButtons() {
     // Al hacer clic de nuevo, alterna entre abrir y cerrar
     setShowModal(!showModal);
   };
+
+  const deathButtonExpanded = showDeathLabel || showModal;
 
   return (
     <>
@@ -104,7 +116,14 @@ export default function FloatingButtons() {
             </span>
           </div>
 
-          <span className="relative z-10 hidden overflow-hidden transition-all duration-500 ease-out sm:block sm:max-w-0 sm:translate-x-[-6px] sm:opacity-0 sm:group-hover:max-w-[260px] sm:group-hover:translate-x-0 sm:group-hover:opacity-100">
+          <span
+            className={cn(
+              "relative z-10 hidden overflow-hidden transition-all duration-500 ease-out sm:block sm:group-hover:max-w-[260px] sm:group-hover:translate-x-0 sm:group-hover:opacity-100",
+              deathButtonExpanded
+                ? "sm:max-w-[260px] sm:translate-x-0 sm:opacity-100"
+                : "sm:max-w-0 sm:translate-x-[-6px] sm:opacity-0"
+            )}
+          >
             <span className="block pl-3 pr-4 text-left whitespace-nowrap">
               <span className="block text-[11px] font-semibold uppercase tracking-[0.24em] text-rose-500/70">
                 Servicio 24/7

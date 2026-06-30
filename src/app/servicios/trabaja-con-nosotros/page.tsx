@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Container from '@/components/ui/Container';
+import PageHero from '@/components/ui/PageHero';
+import TitleBand from '@/components/ui/TitleBand';
 import FadeIn from '@/components/animations/FadeIn';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -80,6 +82,18 @@ export default function TrabajaConNosotrosPage() {
 
   const featuredCount = vacancies.filter((vacancy) => vacancy.featured).length;
   const departmentsCount = departmentOptions.length;
+  const hasActiveFilters =
+    Boolean(query.trim()) ||
+    selectedArea !== ALL_AREAS ||
+    selectedDepartment !== ALL_DEPARTMENTS ||
+    selectedModality !== ALL_MODALITIES;
+
+  const clearFilters = () => {
+    setQuery('');
+    setSelectedArea(ALL_AREAS);
+    setSelectedDepartment(ALL_DEPARTMENTS);
+    setSelectedModality(ALL_MODALITIES);
+  };
 
   const handleTrackingRedirect = () => {
     const cleanCedula = trackingCedula.replace(/\D/g, '');
@@ -102,75 +116,68 @@ export default function TrabajaConNosotrosPage() {
 
   return (
     <>
-      <section className="pt-10 pb-10">
+      <PageHero
+        title="Trabaja con Nosotros"
+        subtitle="Encuentra oportunidades en diferentes áreas y departamentos. Buscamos personas con vocación de servicio, humanidad y compromiso con la excelencia."
+        image="/images/trabaja_con_nosotros.jpg"
+        imageAlt="Trabaja con nosotros Jardines del Renacer"
+      >
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <a href="#vacantes-disponibles">
+            <Button variant="primary" size="lg" className="w-full sm:w-auto">
+              Ver vacantes disponibles
+            </Button>
+          </a>
+          <Link href="/servicios/trabaja-con-nosotros/postulante">
+            <Button variant="secondary" size="lg" className="w-full bg-white/90 sm:w-auto">
+              Enviar hoja de vida
+            </Button>
+          </Link>
+        </div>
+      </PageHero>
+
+      <section className="py-16">
         <Container maxWidth="2xl">
-          <div className="relative py-16 px-6 md:px-12 rounded-3xl overflow-hidden bg-[url('/images/trabaja_con_nosotros.jpg')] bg-cover bg-center bg-no-repeat border border-primary/10 shadow-glass-lg">
-            {/* Capa superpuesta clara para que el texto sea legible y no pierda la esencia de la imagen */}
-            <div className="absolute inset-0 bg-white/70 backdrop-blur-[2px]"></div>
-            
-            <div className="relative z-10 grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-8 items-center">
-            <FadeIn>
-              <div>
-                <p className="text-xs uppercase tracking-[0.25em] text-primary mb-4">
-                  Talento Jardines del Renacer
-                </p>
-                <h1 className="text-4xl md:text-6xl font-display text-text leading-tight text-balance">
-                  Bolsa de empleo
-                  <span className="block text-primary mt-2">Trabaja con nosotros</span>
-                </h1>
-                <p className="text-lg text-textLight mt-6 max-w-2xl">
-                  Encuentra oportunidades en diferentes areas y departamentos. Queremos sumar
-                  personas con vocacion de servicio, humanidad y compromiso con la excelencia.
-                </p>
-
-                <div className="mt-8 flex flex-wrap gap-3">
-                  <a href="#vacantes-disponibles">
-                    <Button variant="primary">Ver vacantes disponibles</Button>
-                  </a>
-                  <Link href="/servicios/trabaja-con-nosotros/postulante">
-                    <Button variant="secondary">Enviar hoja de vida</Button>
-                  </Link>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            {[
+              ['Vacantes', vacancies.length],
+              ['Destacadas', featuredCount],
+              ['Departamentos', departmentsCount],
+            ].map(([label, value]) => (
+              <FadeIn key={label}>
+                <div className="glass rounded-2xl border border-primary/15 p-6 text-center">
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-textLight">{label}</p>
+                  <p className="mt-2 text-4xl font-display text-primary">{value}</p>
                 </div>
-              </div>
-            </FadeIn>
+              </FadeIn>
+            ))}
+          </div>
 
-            <FadeIn delay={0.1}>
-              {/* Caja de estadísticas de la derecha más sólida para resaltar sobre el fondo */}
-              <div className="bg-white/80 backdrop-blur-md rounded-3xl border border-primary/20 p-6 md:p-8 shadow-xl">
-                <h2 className="text-2xl font-display text-text mb-6">Hoy en la bolsa</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div className="rounded-2xl border border-primary/15 bg-white p-4 shadow-sm">
-                    <p className="text-xs uppercase tracking-[0.18em] text-textLight mb-1">Vacantes</p>
-                    <p className="text-3xl font-display text-primary">{vacancies.length}</p>
-                  </div>
-                  <div className="rounded-2xl border border-primary/15 bg-white p-4 shadow-sm">
-                    <p className="text-xs uppercase tracking-[0.18em] text-textLight mb-1">
-                      Destacadas
-                    </p>
-                    <p className="text-3xl font-display text-primary">{featuredCount}</p>
-                  </div>
-                  <div className="rounded-2xl border border-primary/15 bg-white p-4 shadow-sm">
-                    <p className="text-xs uppercase tracking-[0.18em] text-textLight mb-1">
-                      Departamentos
-                    </p>
-                    <p className="text-3xl font-display text-primary">{departmentsCount}</p>
-                  </div>
+          <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+            {[
+              ['1', 'Explora vacantes', 'Filtra por área, departamento o modalidad.'],
+              ['2', 'Postúlate fácil', 'Crea o actualiza tu perfil desde el formulario.'],
+              ['3', 'Consulta tu proceso', 'Revisa el estado con cédula y correo registrado.'],
+            ].map(([step, title, description]) => (
+              <FadeIn key={step}>
+                <div className="h-full rounded-2xl border border-primary/15 bg-white p-6 shadow-sm">
+                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary text-sm font-bold text-white">
+                    {step}
+                  </span>
+                  <h3 className="mt-4 text-xl font-display text-text">{title}</h3>
+                  <p className="mt-2 text-sm text-textLight">{description}</p>
                 </div>
-
-                <div className="mt-5 rounded-2xl border border-primary/15 bg-primary/5 p-4">
-                  <p className="text-sm text-text">
-                    Publicamos vacantes por temporada. Si no encuentras una posicion exacta, puedes
-                    enviarnos tu perfil para futuras convocatorias.
-                  </p>
-                </div>
-              </div>
-            </FadeIn>
-            </div>
+              </FadeIn>
+            ))}
           </div>
         </Container>
       </section>
 
       <section id="vacantes-disponibles" className="pb-20">
+        <TitleBand
+          title="Vacantes Disponibles"
+          subtitle="Busca, filtra y aplica a las oportunidades activas."
+        />
         <Container maxWidth="2xl">
           <FadeIn>
             <div className="glass rounded-3xl border border-primary/15 p-6 md:p-8">
@@ -274,9 +281,16 @@ export default function TrabajaConNosotrosPage() {
               Mostrando <span className="font-semibold text-text">{filteredVacancies.length}</span>{' '}
               vacantes disponibles
             </p>
-            <Link href="/servicios/trabaja-con-nosotros/postulante">
-              <Button variant="ghost">Enviar hoja de vida</Button>
-            </Link>
+            <div className="flex flex-wrap gap-2">
+              {hasActiveFilters && (
+                <Button type="button" variant="secondary" onClick={clearFilters}>
+                  Limpiar filtros
+                </Button>
+              )}
+              <Link href="/servicios/trabaja-con-nosotros/postulante">
+                <Button variant="ghost">Enviar hoja de vida</Button>
+              </Link>
+            </div>
           </div>
 
           {filteredVacancies.length === 0 ? (
@@ -293,7 +307,7 @@ export default function TrabajaConNosotrosPage() {
             <div className="mt-8 grid grid-cols-1 xl:grid-cols-2 gap-6">
               {filteredVacancies.map((vacancy, index) => (
                 <FadeIn key={vacancy.id} delay={Math.min(index * 0.06, 0.35)}>
-                  <article className="h-full glass rounded-3xl border border-primary/15 p-6 md:p-7 hover:shadow-glass-lg transition-all">
+                  <article className="h-full glass rounded-3xl border border-primary/15 p-6 md:p-7 transition-all hover:-translate-y-1 hover:border-primary/30 hover:shadow-glass-lg">
                     <div className="flex items-start justify-between gap-4 mb-4">
                       <div>
                         <h3 className="text-2xl font-display text-text leading-snug">{vacancy.title}</h3>

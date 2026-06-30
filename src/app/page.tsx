@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import Button from '@/components/ui/Button';
 import Container from '@/components/ui/Container';
-import SectionTitle from '@/components/ui/SectionTitle';
+import TitleBand from '@/components/ui/TitleBand';
 import PlanFlipCard from '@/components/cards/PlanFlipCard';
 import AlliesMarquee from '@/components/animations/AlliesMarquee';
 import FadeIn from '@/components/animations/FadeIn';
@@ -70,7 +70,7 @@ export default function HomePage() {
             </p>
           </FadeIn>
           <FadeIn>
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-display mb-6 text-balance drop-shadow-[0_4px_8px_rgba(0,0,0,0.9)] animate-in fade-in slide-in-from-bottom-8 duration-1000 mt-2">
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-display font-extrabold mb-6 text-balance drop-shadow-[0_4px_8px_rgba(0,0,0,0.9)] animate-in fade-in slide-in-from-bottom-8 duration-1000 mt-2">
               Un lugar para recordar, un espacio para renacer
             </h1>
           </FadeIn>
@@ -99,17 +99,10 @@ export default function HomePage() {
       {/* Servicios Principales */}
       <section className="pb-20" id="conoce-mas">
         <FadeIn>
-          <div className="relative w-full mb-12 py-10 md:py-12 overflow-hidden">
-            <div className="absolute inset-0 w-full bg-gradient-to-r from-transparent via-primary/70 to-transparent z-0"></div>
-            <div className="relative z-10 text-center">
-              <h2 className="text-4xl md:text-5xl font-display text-white drop-shadow-lg">
-                Servicios Funerarios y Planes
-              </h2>
-              <p className="text-white/90 text-lg mt-4 max-w-2xl mx-auto">
-                Acompañamiento integral en los momentos más importantes
-              </p>
-            </div>
-          </div>
+          <TitleBand
+            title="Servicios Funerarios y Planes"
+            subtitle="Acompañamiento integral en los momentos más importantes"
+          />
         </FadeIn>
         <Container>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
@@ -171,17 +164,10 @@ export default function HomePage() {
       {/* Planes Destacados */}
       <section className="py-20 bg-white/50">
         <FadeIn>
-          <div className="relative w-full mb-12 py-10 md:py-12 overflow-hidden">
-            <div className="absolute inset-0 w-full bg-gradient-to-r from-transparent via-primary/70 to-transparent z-0"></div>
-            <div className="relative z-10 text-center">
-              <h2 className="text-4xl md:text-5xl font-display text-white drop-shadow-lg">
-                Nuestros Planes
-              </h2>
-              <p className="text-white/90 text-lg mt-4 max-w-2xl mx-auto">
-                Elige el plan que mejor se adapte a tus necesidades
-              </p>
-            </div>
-          </div>
+          <TitleBand
+            title="Nuestros Planes"
+            subtitle="Elige el plan que mejor se adapte a tus necesidades"
+          />
         </FadeIn>
         <Container>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-12">
@@ -320,17 +306,10 @@ export default function HomePage() {
 
       {/* Aliados */}
       <section className="py-20">
-        <div className="relative w-full mb-12 py-10 md:py-12 overflow-hidden">
-          <div className="absolute inset-0 w-full bg-gradient-to-r from-transparent via-primary/70 to-transparent z-0"></div>
-          <div className="relative z-10 text-center">
-            <h2 className="text-4xl md:text-5xl font-display text-white drop-shadow-lg">
-              Nuestros Aliados
-            </h2>
-            <p className="text-white/90 text-lg mt-4 max-w-2xl mx-auto">
-              Red de confianza al servicio de tu familia
-            </p>
-          </div>
-        </div>
+        <TitleBand
+          title="Nuestros Aliados"
+          subtitle="Red de confianza al servicio de tu familia"
+        />
 
         <AlliesMarquee />
       </section>

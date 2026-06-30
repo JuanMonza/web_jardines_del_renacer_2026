@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Container from '@/components/ui/Container';
-import SectionTitle from '@/components/ui/SectionTitle';
+import PageHero from '@/components/ui/PageHero';
 import FadeIn from '@/components/animations/FadeIn';
 import Button from '@/components/ui/Button';
 import CotizarQuoteForm from '@/components/cotizar/CotizarQuoteForm';
@@ -28,32 +28,27 @@ export default function CotizarPage({ searchParams }: CotizarPageProps) {
 
   return (
     <>
-      <section className="relative overflow-hidden py-20 md:py-24 bg-gradient-to-b from-transparent to-black/90 w-full">
-        <Container>
-          <FadeIn className="[&_h1]:text-white [&_h2]:text-white [&_p]:text-white/90">
-            <SectionTitle
-              title="Cotizar Plan"
-              subtitle="Te ayudamos a elegir la opcion ideal para tu familia."
-            />
-            <div className="mx-auto max-w-3xl grid grid-cols-1 sm:grid-cols-3 gap-3 -mt-5">
-              <div className="rounded-2xl border border-primary/15 bg-white/70 px-4 py-3 text-center">
-                <p className="text-xs uppercase tracking-[0.15em] text-primary mb-1">Respuesta</p>
-                <p className="text-sm font-medium text-text">Asesoria prioritaria</p>
-              </div>
-              <div className="rounded-2xl border border-primary/15 bg-white/70 px-4 py-3 text-center">
-                <p className="text-xs uppercase tracking-[0.15em] text-primary mb-1">Cobertura</p>
-                <p className="text-sm font-medium text-text">Opciones para tu familia</p>
-              </div>
-              <div className="rounded-2xl border border-primary/15 bg-white/70 px-4 py-3 text-center">
-                <p className="text-xs uppercase tracking-[0.15em] text-primary mb-1">Canales</p>
-            <p className="text-sm font-medium text-text">WhatsApp o llamada</p>
-              </div>
+      <PageHero
+        title="Afíliate Ya"
+        subtitle="Te ayudamos a elegir la opción ideal para proteger a tu familia con asesoría clara y acompañamiento humano."
+        image="/images/planes_funerarios.jpg"
+        imageAlt="Afiliación a planes Jardines del Renacer"
+      >
+        <div className="grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-3">
+          {[
+            ['Respuesta', 'Asesoría prioritaria'],
+            ['Cobertura', 'Opciones para tu familia'],
+            ['Canales', 'WhatsApp o llamada'],
+          ].map(([label, value]) => (
+            <div key={label} className="rounded-2xl border border-white/25 bg-white/90 px-4 py-3 text-center shadow-xl">
+              <p className="mb-1 text-xs font-bold uppercase tracking-[0.15em] text-primary">{label}</p>
+              <p className="text-sm font-semibold text-text">{value}</p>
             </div>
-          </FadeIn>
-        </Container>
-      </section>
+          ))}
+        </div>
+      </PageHero>
 
-      <section className="pb-20 md:pb-24">
+      <section className="py-20 md:py-24">
         <Container maxWidth="2xl">
           <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.9fr)] gap-8 xl:gap-10">
             <FadeIn>

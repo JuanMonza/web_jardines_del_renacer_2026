@@ -3,12 +3,16 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
+import { usePathname } from 'next/navigation';
 import Button from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
 import { ALLY_CATEGORIES } from '@/config/allies';
 import PaymentDropdown from '@/components/ui/PaymentDropdown';
 
+const PARQUE_CONMEMORATIVO_URL = 'https://conmemorativo-jr-2025.vercel.app/';
+
 export default function Navbar() {
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [conocenosOpen, setConocenosOpen] = useState(false);
   const [aliadosOpen, setAliadosOpen] = useState(false);
@@ -21,7 +25,7 @@ export default function Navbar() {
     { href: '/servicios/quienes-somos', label: 'Quiénes Somos' },
     { href: '/servicios/resena-historica', label: 'Reseña Histórica' },
     { href: '/servicios/condolencias-digitales', label: 'Condolencias Digitales' },
-    { href: '/parque-conmemorativo', label: 'Parque Conmemorativo' },
+    { href: PARQUE_CONMEMORATIVO_URL, label: 'Parque Conmemorativo', external: true },
     { href: '/repatriaciones', label: 'Repatriaciones' },
     { href: '/acompanamiento-en-duelo', label: 'Acompañamiento en Duelo' },
   ];
@@ -36,6 +40,16 @@ export default function Navbar() {
     { href: '/servicios/trabaja-con-nosotros', label: 'Emplearte' },
   ];
 
+  const isActive = (href: string) => href.startsWith('/') && pathname === href;
+  const dropdownItemClass = (href: string, featured = false) =>
+    cn(
+      'relative block px-4 py-3 transition-colors after:absolute after:bottom-1 after:left-4 after:right-4 after:h-[3px] after:origin-left after:scale-x-0 after:rounded-full after:bg-primary after:transition-transform after:duration-300 hover:after:scale-x-100',
+      featured
+        ? 'text-primary font-semibold border-b border-primary/10 hover:bg-primary/10'
+        : 'text-text hover:bg-primary/10 hover:text-primary',
+      isActive(href) && 'bg-primary/10 text-primary after:scale-x-100'
+    );
+
   return (
     <nav className="fixed w-full z-50 top-0 left-0">
       <div className="relative">
@@ -49,10 +63,12 @@ export default function Navbar() {
               {/* Desktop Navigation - Izquierda */}
               <div className="hidden lg:flex items-center space-x-8 flex-1 justify-end pr-32">
                 {/* Conócenos Dropdown */}
-                <div className="relative group">
+                <div
+                  className="relative group"
+                  onMouseEnter={() => setConocenosOpen(true)}
+                  onMouseLeave={() => setConocenosOpen(false)}
+                >
                   <button
-                    onMouseEnter={() => setConocenosOpen(true)}
-                    onMouseLeave={() => setConocenosOpen(false)}
                     className="text-white hover:text-white/80 transition-colors duration-300 flex items-center gap-1 text-sm uppercase tracking-wide font-medium"
                   >
                     Conócenos
@@ -63,21 +79,31 @@ export default function Navbar() {
                   
                   {/* Dropdown Menu */}
                   <div
-                    onMouseEnter={() => setConocenosOpen(true)}
-                    onMouseLeave={() => setConocenosOpen(false)}
                     className={cn(
                       'absolute top-full left-0 mt-2 w-64 bg-white rounded-xl overflow-hidden shadow-xl transition-all duration-300',
                       conocenosOpen ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-2'
                     )}
                   >
                     {conocenosSubmenu.map((item) => (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        className="block px-4 py-3 text-text hover:bg-primary/10 hover:text-primary transition-colors"
-                      >
-                        {item.label}
-                      </Link>
+                      item.external ? (
+                        <a
+                          key={item.href}
+                          href={item.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={dropdownItemClass(item.href)}
+                        >
+                          {item.label}
+                        </a>
+                      ) : (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          className={dropdownItemClass(item.href)}
+                        >
+                          {item.label}
+                        </Link>
+                      )
                     ))}
                   </div>
                 </div>
@@ -116,10 +142,12 @@ export default function Navbar() {
                 </Link>
                 
                 {/* Aliados Dropdown */}
-                <div className="relative group">
+                <div
+                  className="relative group"
+                  onMouseEnter={() => setAliadosOpen(true)}
+                  onMouseLeave={() => setAliadosOpen(false)}
+                >
                   <button
-                    onMouseEnter={() => setAliadosOpen(true)}
-                    onMouseLeave={() => setAliadosOpen(false)}
                     className="text-white hover:text-white/80 transition-colors duration-300 flex items-center gap-1 text-sm uppercase tracking-wide font-medium"
                   >
                     Club de Aliados
@@ -129,8 +157,6 @@ export default function Navbar() {
                   </button>
 
                   <div
-                    onMouseEnter={() => setAliadosOpen(true)}
-                    onMouseLeave={() => setAliadosOpen(false)}
                     className={cn(
                       'absolute top-full left-0 mt-2 w-64 max-h-[420px] overflow-y-auto bg-white rounded-xl shadow-xl transition-all duration-300',
                       aliadosOpen ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-2'
@@ -138,7 +164,7 @@ export default function Navbar() {
                   >
                     <Link
                       href="/aliados-comerciales"
-                      className="block px-4 py-3 text-primary font-semibold border-b border-primary/10 hover:bg-primary/10 transition-colors"
+                      className={dropdownItemClass('/aliados-comerciales', true)}
                     >
                       Ver todo el club
                     </Link>
@@ -146,7 +172,7 @@ export default function Navbar() {
                       <Link
                         key={item.href}
                         href={item.href}
-                        className="block px-4 py-2.5 text-text hover:bg-primary/10 hover:text-primary transition-colors"
+                        className={cn(dropdownItemClass(item.href), 'py-2.5')}
                       >
                         {item.label}
                       </Link>
@@ -155,10 +181,12 @@ export default function Navbar() {
                 </div>
                 
                 {/* Contacto Dropdown */}
-                <div className="relative group">
+                <div
+                  className="relative group"
+                  onMouseEnter={() => setContactoOpen(true)}
+                  onMouseLeave={() => setContactoOpen(false)}
+                >
                   <button
-                    onMouseEnter={() => setContactoOpen(true)}
-                    onMouseLeave={() => setContactoOpen(false)}
                     className="text-white hover:text-white/80 transition-colors duration-300 flex items-center gap-1 text-sm uppercase tracking-wide font-medium"
                   >
                     Contacto
@@ -167,8 +195,6 @@ export default function Navbar() {
                     </svg>
                   </button>
                   <div
-                    onMouseEnter={() => setContactoOpen(true)}
-                    onMouseLeave={() => setContactoOpen(false)}
                     className={cn(
                       'absolute top-full right-0 mt-2 w-64 bg-white rounded-xl overflow-hidden shadow-xl transition-all duration-300',
                       contactoOpen ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-2'
@@ -178,7 +204,7 @@ export default function Navbar() {
                       <Link
                         key={item.href}
                         href={item.href}
-                        className="block px-4 py-3 text-text hover:bg-primary/10 hover:text-primary transition-colors"
+                        className={dropdownItemClass(item.href)}
                       >
                         {item.label}
                       </Link>
@@ -256,14 +282,30 @@ export default function Navbar() {
                 </button>
                 <div className={cn("overflow-hidden transition-all duration-300 space-y-1", mobileConocenosOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0")}>
                   {conocenosSubmenu.map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className="block pl-6 pr-2 py-2 text-white/80 hover:text-white transition-colors text-sm"
-                      onClick={() => setIsOpen(false)}
-                    >
-                      {item.label}
-                    </Link>
+                    item.external ? (
+                      <a
+                        key={item.href}
+                        href={item.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block border-l-2 border-transparent pl-6 pr-2 py-2 text-white/80 hover:border-white hover:text-white transition-colors text-sm"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        {item.label}
+                      </a>
+                    ) : (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={cn(
+                          'block border-l-2 pl-6 pr-2 py-2 text-white/80 hover:border-white hover:text-white transition-colors text-sm',
+                          isActive(item.href) ? 'border-white text-white' : 'border-transparent'
+                        )}
+                        onClick={() => setIsOpen(false)}
+                      >
+                        {item.label}
+                      </Link>
+                    )
                   ))}
                 </div>
               </div>

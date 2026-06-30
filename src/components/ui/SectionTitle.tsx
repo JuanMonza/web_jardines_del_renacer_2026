@@ -22,11 +22,11 @@ export default function SectionTitle({
 
   return (
     <div className={cn('mb-12', alignClasses[align], className)}>
-      <h2 className="text-4xl md:text-5xl font-light text-text mb-4 font-display">
+      <h2 className="text-4xl md:text-5xl font-display font-extrabold text-text mb-4">
         {title}
       </h2>
       {subtitle && (
-        <p className="text-lg text-textLight max-w-2xl mx-auto">
+        <p className="text-lg font-medium text-textLight max-w-2xl mx-auto">
           {subtitle}
         </p>
       )}

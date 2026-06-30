@@ -3,7 +3,8 @@
 import { useState, useMemo } from 'react';
 import Image from 'next/image';
 import Container from '@/components/ui/Container';
-import SectionTitle from '@/components/ui/SectionTitle';
+import PageHero from '@/components/ui/PageHero';
+import AnimatedCounter from '@/components/ui/AnimatedCounter';
 import FadeIn from '@/components/animations/FadeIn';
 import { SEDES, getAllDepartamentos, type Sede } from '@/data/sedes';
 import { getCiudadImagePath } from '@/config/ciudades';
@@ -21,6 +22,7 @@ export default function UbicacionesPage() {
   const [selectedId, setSelectedId]   = useState<string | null>(null);
 
   const departamentos = getAllDepartamentos();
+  const totalSedes = SEDES.length;
 
   const filtered = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -57,19 +59,36 @@ export default function UbicacionesPage() {
 
   return (
     <>
-      {/* ── HERO ───────────────────────────────────────────────── */}
-      <section className="py-20 bg-gradient-to-b from-background to-white/50">
-        <Container>
-          <FadeIn>
-            <SectionTitle
-              title="Nuestras Ubicaciones"
-              subtitle={`${SEDES.length} sedes en ${departamentos.length} departamentos de Colombia`}
-            />
-          </FadeIn>
+      <PageHero
+        title="Nuestras Ubicaciones"
+        subtitle={`Presentes en ${departamentos.length} departamentos con ${totalSedes} puntos de atención en todo el país`}
+        image="/images/pereira_plbo.jpg"
+        imageAlt="Ubicaciones Jardines del Renacer"
+      >
+        <div className="flex flex-wrap gap-4">
+          {[
+            { label: 'Departamentos', value: departamentos.length },
+            { label: 'Sedes', value: totalSedes },
+            { label: 'Años de experiencia', value: '25+' },
+          ].map((stat) => (
+            <div
+              key={stat.label}
+              className="min-w-[140px] rounded-2xl border border-white/25 bg-white/90 px-6 py-4 text-center shadow-xl"
+            >
+              <p className="text-3xl font-bold text-primary">
+                <AnimatedCounter value={stat.value} />
+              </p>
+              <p className="mt-1 text-sm font-semibold text-textLight">{stat.label}</p>
+            </div>
+          ))}
+        </div>
+      </PageHero>
 
-          {/* Filtros */}
+      {/* ── FILTROS ─────────────────────────────────────────────── */}
+      <section className="py-10 bg-gradient-to-b from-background to-white/50">
+        <Container>
           <FadeIn delay={0.2}>
-            <div className="max-w-5xl mx-auto mt-8 space-y-4">
+            <div className="max-w-5xl mx-auto space-y-4">
               {/* Buscador */}
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-primary pointer-events-none">

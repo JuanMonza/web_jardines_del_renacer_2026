@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Container from '@/components/ui/Container';
-import SectionTitle from '@/components/ui/SectionTitle';
+import PageHero from '@/components/ui/PageHero';
 import FadeIn from '@/components/animations/FadeIn';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -110,28 +110,17 @@ export default function ContactoPage() {
 
   return (
     <>
-      {/* ----------------------------------------------------------------------
-          HEADER / BANNER PRINCIPAL
-      ---------------------------------------------------------------------- */}
-      <section className="pt-10 pb-10">
-        <Container>
-          <div className="relative py-20 mb-8 rounded-3xl overflow-hidden bg-[url('/images/contactanos.jpg')] bg-cover bg-center bg-no-repeat shadow-sm border border-primary/10">
-            <div className="relative z-10">
-              <FadeIn>
-                <SectionTitle
-                  title="Contáctanos"
-                  subtitle="Estamos aquí para escucharte y resolver todas tus inquietudes con la calidez que nos caracteriza."
-                />
-              </FadeIn>
-            </div>
-          </div>
-        </Container>
-      </section>
+      <PageHero
+        title="Contáctanos"
+        subtitle="Estamos aquí para escucharte y resolver tus inquietudes con la calidez que nos caracteriza."
+        image="/images/contactanos.jpg"
+        imageAlt="Contacto Jardines del Renacer"
+      />
 
       {/* ----------------------------------------------------------------------
           CUERPO: TARJETAS INFORMATIVAS Y FORMULARIO (GRILLA DIVIDIDA)
       ---------------------------------------------------------------------- */}
-      <section className="pb-24">
+      <section className="py-24">
         <Container maxWidth="2xl">
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.5fr] gap-10 items-start">
             

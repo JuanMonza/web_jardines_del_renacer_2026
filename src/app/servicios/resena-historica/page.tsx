@@ -1,5 +1,5 @@
 import Container from '@/components/ui/Container';
-import SectionTitle from '@/components/ui/SectionTitle';
+import PageHero from '@/components/ui/PageHero';
 import FadeIn from '@/components/animations/FadeIn';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -44,21 +44,16 @@ export default function ResenaHistoricaPage() {
 
   return (
     <main className="min-h-screen">
-      {/* BANNER PRINCIPAL INTERNO (Fondo corporativo degradado) */}
-      <section className="relative overflow-hidden py-20 md:py-24 bg-gradient-to-b from-transparent to-black/90 w-full">
-        <Container>
-          <FadeIn className="[&_h1]:text-white [&_h2]:text-white [&_p]:text-white/90">
-            <SectionTitle
-              title="Reseña Histórica"
-              subtitle="Una evolución constante basada en el respeto, la dignidad y el servicio a las familias colombianas."
-            />
-          </FadeIn>
-        </Container>
-      </section>
+      <PageHero
+        title="Reseña Histórica"
+        subtitle="Una evolución constante basada en el respeto, la dignidad y el servicio a las familias colombianas."
+        image="/images/carrusel_1.jpg"
+        imageAlt="Reseña histórica Jardines del Renacer"
+      />
 
       {/* LÍNEA DEL TIEMPO INTERACTIVA */}
       <section className="py-24 relative overflow-hidden">
-        <Container maxWidth="5xl">
+        <Container maxWidth="2xl">
           <div className="relative">
             {/* Línea vertical central (adaptativa a móvil/desktop) */}
             <div className="absolute left-6 md:left-1/2 top-4 bottom-4 w-1 bg-gradient-to-b from-primary/5 via-primary/30 to-primary/5 -translate-x-1/2 rounded-full"></div>
@@ -70,51 +65,53 @@ export default function ResenaHistoricaPage() {
                 const isEven = index % 2 === 0;
 
                 return (
-                  <FadeIn as="li" key={item.id} delay={index * 0.1}>
-                    <div className={`group/timeline relative flex flex-col md:flex-row items-center ${isEven ? '' : 'md:flex-row-reverse'}`} aria-label={`Año ${item.year}`}>
+                  <li key={item.id}>
+                    <FadeIn delay={index * 0.1}>
+                      <div className={`group/timeline relative flex flex-col md:flex-row items-center ${isEven ? '' : 'md:flex-row-reverse'}`} aria-label={`Año ${item.year}`}>
                       
-                      {/* Efecto de "Latido" (Heartbeat) constante de fondo */}
-                      <div className="absolute left-6 md:left-1/2 top-8 md:top-1/2 w-12 h-12 md:w-16 md:h-16 bg-primary/20 rounded-full animate-ping -translate-x-1/2 md:-translate-y-1/2 z-10" style={{ animationDuration: '3s' }}></div>
+                        {/* Efecto de "Latido" (Heartbeat) constante de fondo */}
+                        <div className="absolute left-6 md:left-1/2 top-8 md:top-1/2 w-12 h-12 md:w-16 md:h-16 bg-primary/20 rounded-full animate-ping -translate-x-1/2 md:-translate-y-1/2 z-10" style={{ animationDuration: '3s' }}></div>
 
-                      {/* Ícono circular flotante */}
-                      <div className="absolute left-6 md:left-1/2 top-8 md:top-1/2 w-12 h-12 md:w-16 md:h-16 bg-white border-4 border-primary/20 rounded-full flex items-center justify-center text-primary shadow-xl -translate-x-1/2 md:-translate-y-1/2 z-20 transition-all duration-500 group-hover/timeline:scale-110 group-hover/timeline:border-primary group-hover/timeline:bg-primary/5 group-hover/timeline:shadow-primary/20">
-                        {renderIcon(item.iconType)}
-                      </div>
-
-                      {/* Conector horizontal magnético (Crece suavemente al hacer hover) */}
-                      <div className={`hidden md:block absolute top-1/2 h-[2px] bg-primary/20 group-hover/timeline:bg-primary transition-all duration-700 ease-out -translate-y-1/2 z-10 ${isEven ? 'right-1/2 mr-8 w-4 group-hover/timeline:w-12 lg:group-hover/timeline:w-20' : 'left-1/2 ml-8 w-4 group-hover/timeline:w-12 lg:group-hover/timeline:w-20'}`}></div>
-
-                      {/* Contenedor del Texto (Tarjeta Glassmorphism) */}
-                      <div className={`w-full pl-16 md:pl-0 md:w-1/2 ${isEven ? 'md:pr-12 lg:pr-16 md:text-right' : 'md:pl-12 lg:pl-16 md:text-left'} mb-8 md:mb-0`}>
-                        <div className="glass rounded-[2rem] p-6 md:p-10 border border-primary/10 shadow-glass transition-all duration-700 ease-out bg-white/60 group group-hover/timeline:-translate-y-2 group-hover/timeline:shadow-2xl group-hover/timeline:bg-white/80">
-                          <span className="block text-4xl md:text-5xl font-extrabold mb-3 opacity-90 group-hover:opacity-100 transition-all duration-500 bg-gradient-to-r from-primary to-[#5a7ec0] group-hover:to-primary bg-clip-text text-transparent transform group-hover:scale-105 origin-left">
-                            {item.year}
-                          </span>
-                          <h3 className="text-2xl font-bold text-text mb-4">
-                            {item.title}
-                          </h3>
-                          <p className="text-textLight leading-relaxed md:text-lg">
-                            {item.description}
-                          </p>
+                        {/* Ícono circular flotante */}
+                        <div className="absolute left-6 md:left-1/2 top-8 md:top-1/2 w-12 h-12 md:w-16 md:h-16 bg-white border-4 border-primary/20 rounded-full flex items-center justify-center text-primary shadow-xl -translate-x-1/2 md:-translate-y-1/2 z-20 transition-all duration-500 group-hover/timeline:scale-110 group-hover/timeline:border-primary group-hover/timeline:bg-primary/5 group-hover/timeline:shadow-primary/20">
+                          {renderIcon(item.iconType)}
                         </div>
-                      </div>
 
-                      {/* Contenedor de la Imagen */}
-                      <div className={`w-full pl-16 md:pl-0 md:w-1/2 ${isEven ? 'md:pl-12 lg:pl-16' : 'md:pr-12 lg:pr-16'}`}>
-                        <div className="w-full relative aspect-video md:aspect-[4/3] rounded-[2rem] overflow-hidden shadow-xl border border-white/20 group transition-all duration-700 ease-out group-hover/timeline:shadow-2xl group-hover/timeline:-translate-y-2">
-                          {/* Filtro sutil superpuesto */}
-                          <div className="absolute inset-0 bg-primary/20 mix-blend-multiply group-hover/timeline:bg-transparent transition-all duration-700 z-10"></div>
-                          <Image 
-                            src={item.image} 
-                            alt={item.title} 
-                            fill 
-                            className="object-cover scale-110 group-hover/timeline:scale-100 transition-transform duration-700 ease-out" 
-                          />
+                        {/* Conector horizontal magnético (Crece suavemente al hacer hover) */}
+                        <div className={`hidden md:block absolute top-1/2 h-[2px] bg-primary/20 group-hover/timeline:bg-primary transition-all duration-700 ease-out -translate-y-1/2 z-10 ${isEven ? 'right-1/2 mr-8 w-4 group-hover/timeline:w-12 lg:group-hover/timeline:w-20' : 'left-1/2 ml-8 w-4 group-hover/timeline:w-12 lg:group-hover/timeline:w-20'}`}></div>
+
+                        {/* Contenedor del Texto (Tarjeta Glassmorphism) */}
+                        <div className={`w-full pl-16 md:pl-0 md:w-1/2 ${isEven ? 'md:pr-12 lg:pr-16 md:text-right' : 'md:pl-12 lg:pl-16 md:text-left'} mb-8 md:mb-0`}>
+                          <div className="glass rounded-[2rem] p-6 md:p-10 border border-primary/10 shadow-glass transition-all duration-700 ease-out bg-white/60 group group-hover/timeline:-translate-y-2 group-hover/timeline:shadow-2xl group-hover/timeline:bg-white/80">
+                            <span className="block text-4xl md:text-5xl font-extrabold mb-3 opacity-90 group-hover:opacity-100 transition-all duration-500 bg-gradient-to-r from-primary to-[#5a7ec0] group-hover:to-primary bg-clip-text text-transparent transform group-hover:scale-105 origin-left">
+                              {item.year}
+                            </span>
+                            <h3 className="text-2xl font-bold text-text mb-4">
+                              {item.title}
+                            </h3>
+                            <p className="text-textLight leading-relaxed md:text-lg">
+                              {item.description}
+                            </p>
+                          </div>
                         </div>
-                      </div>
 
-                    </div>
-                  </FadeIn>
+                        {/* Contenedor de la Imagen */}
+                        <div className={`w-full pl-16 md:pl-0 md:w-1/2 ${isEven ? 'md:pl-12 lg:pl-16' : 'md:pr-12 lg:pr-16'}`}>
+                          <div className="w-full relative aspect-video md:aspect-[4/3] rounded-[2rem] overflow-hidden shadow-xl border border-white/20 group transition-all duration-700 ease-out group-hover/timeline:shadow-2xl group-hover/timeline:-translate-y-2">
+                            {/* Filtro sutil superpuesto */}
+                            <div className="absolute inset-0 bg-primary/20 mix-blend-multiply group-hover/timeline:bg-transparent transition-all duration-700 z-10"></div>
+                            <Image
+                              src={item.image}
+                              alt={item.title}
+                              fill
+                              className="object-cover scale-110 group-hover/timeline:scale-100 transition-transform duration-700 ease-out"
+                            />
+                          </div>
+                        </div>
+
+                      </div>
+                    </FadeIn>
+                  </li>
                 );
               })}
             </ol>

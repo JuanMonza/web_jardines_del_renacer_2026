@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import Container from '@/components/ui/Container';
+import PageHero from '@/components/ui/PageHero';
 import SectionTitle from '@/components/ui/SectionTitle';
 import FadeIn from '@/components/animations/FadeIn';
 import Button from '@/components/ui/Button';
@@ -30,57 +31,14 @@ const steps = [
 export default function SiempreContigoPage() {
   return (
     <>
-      <section className="pt-10 pb-10">
-        <Container maxWidth="2xl">
-          <div className="relative py-16 px-6 md:px-12 rounded-3xl overflow-hidden bg-[url('/images/siempre_contigo.jpg')] bg-cover bg-center bg-no-repeat border border-primary/10 shadow-glass-lg">
-            {/* Capa superpuesta clara para que el texto sea legible y no pierda la esencia de la imagen */}
-            <div className="absolute inset-0 bg-white/70 backdrop-blur-[2px]"></div>
-            
-            <div className="relative z-10 grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-8 items-center">
-            <FadeIn>
-              <div>
-                <p className="text-xs uppercase tracking-[0.22em] text-primary mb-4">
-                  Acompanamiento digital
-                </p>
-                <h1 className="text-4xl md:text-6xl font-display text-text leading-tight text-balance">
-                  Siempre Contigo
-                </h1>
-                <p className="text-lg text-textLight mt-6 max-w-2xl">
-                  Transmision en vivo 360 del servicio de velacion para que la familia pueda
-                  acompanar el homenaje desde cualquier lugar.
-                </p>
-              </div>
-            </FadeIn>
+      <PageHero
+        title="Siempre Contigo"
+        subtitle="Transmisión en vivo 360 del servicio de velación para que la familia pueda acompañar el homenaje desde cualquier lugar."
+        image="/images/siempre_contigo.jpg"
+        imageAlt="Servicio Siempre Contigo Jardines del Renacer"
+      />
 
-            <FadeIn delay={0.1}>
-              <div className="bg-white/80 backdrop-blur-md rounded-3xl border border-primary/20 p-6 md:p-7 shadow-xl">
-                <h2 className="text-2xl font-display text-text mb-3">De que trata</h2>
-                <p className="text-textLight leading-relaxed mb-4">
-                  Este modulo permite conectar una camara 360 al servicio de velacion para emitir
-                  una transmision privada en tiempo real, con acceso controlado.
-                </p>
-                <ul className="space-y-2 text-sm text-textLight">
-                  <li className="flex items-start gap-2">
-                    <span className="mt-1 h-1.5 w-1.5 rounded-full bg-primary" />
-                    <span>Acceso remoto para familiares dentro y fuera del pais.</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="mt-1 h-1.5 w-1.5 rounded-full bg-primary" />
-                    <span>Vista inmersiva 360 para acompanar la ceremonia.</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="mt-1 h-1.5 w-1.5 rounded-full bg-primary" />
-                    <span>Enlaces privados gestionados por nuestro equipo.</span>
-                  </li>
-                </ul>
-              </div>
-            </FadeIn>
-            </div>
-          </div>
-        </Container>
-      </section>
-
-      <section className="pb-20">
+      <section className="py-20">
         <Container maxWidth="2xl">
           <FadeIn>
             <SectionTitle

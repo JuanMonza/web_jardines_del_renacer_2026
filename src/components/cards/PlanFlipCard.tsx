@@ -51,7 +51,7 @@ export default function PlanFlipCard({
 
   return (
     <div 
-      className="relative w-full h-[500px] perspective-1000"
+      className="relative w-full h-[520px] perspective-1000"
       onMouseEnter={() => setIsFlipped(true)}
       onMouseLeave={() => setIsFlipped(false)}
     >
@@ -105,8 +105,16 @@ export default function PlanFlipCard({
             <div>
               <p className="text-3xl font-semibold text-primary mb-4">{price}</p>
               <p className="text-sm text-textLight">
-                Pasa el cursor para ver beneficios
+                Toca o pasa el cursor para ver beneficios
               </p>
+              <Button
+                type="button"
+                variant="ghost"
+                className="mt-4 w-full border border-primary/20 bg-white/55"
+                onClick={() => setIsFlipped(true)}
+              >
+                Ver beneficios
+              </Button>
             </div>
           </div>
         </div>
@@ -124,9 +132,18 @@ export default function PlanFlipCard({
             transform: 'rotateY(180deg)'
           }}
         >
-          <h4 className="text-xl font-display text-text mb-4">
-            {name}
-          </h4>
+          <div className="mb-4 flex items-start justify-between gap-3">
+            <h4 className="text-xl font-display text-text">
+              {name}
+            </h4>
+            <button
+              type="button"
+              onClick={() => setIsFlipped(false)}
+              className="rounded-full border border-primary/20 px-3 py-1 text-xs font-bold text-primary transition-colors hover:bg-primary hover:text-white"
+            >
+              Volver
+            </button>
+          </div>
           
           <div className="flex-1 overflow-y-auto">
             {description && (
@@ -184,6 +201,7 @@ export default function PlanFlipCard({
           <div className="mt-6">
             <div className="flex flex-col gap-2">
               <Button
+                type="button"
                 variant="secondary"
                 className="w-full"
                 onClick={handleViewPlans}
@@ -191,6 +209,7 @@ export default function PlanFlipCard({
                 Ver nuestros planes
               </Button>
               <Button
+                type="button"
                 variant="primary"
                 className="w-full group"
                 onClick={handleQuote}

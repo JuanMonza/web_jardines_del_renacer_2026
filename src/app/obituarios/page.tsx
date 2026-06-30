@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import Container from '@/components/ui/Container';
-import SectionTitle from '@/components/ui/SectionTitle';
+import PageHero from '@/components/ui/PageHero';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import ObituaryCard from '@/components/cards/ObituaryCard';
@@ -38,19 +38,16 @@ export default function ObituariosPage() {
     <main className="relative min-h-screen overflow-hidden bg-[url('/images/obituariios.jpg')] bg-cover bg-center bg-fixed bg-no-repeat">
       <div className="absolute inset-0 bg-background/85 backdrop-blur-[2px]" />
 
-      <section className="relative z-10 pt-10 pb-10">
-        <Container>
-          <div className="relative py-20 mb-8 rounded-3xl overflow-hidden bg-gradient-to-b from-transparent to-black/90 shadow-sm border border-primary/10 w-full">
-            <div className="relative z-10 [&_h1]:text-white [&_h2]:text-white [&_p]:text-white/90">
-              <FadeIn>
-                <SectionTitle
-                  title="Obituarios"
-                  subtitle="Honrando la memoria de nuestros seres queridos"
-                />
-              </FadeIn>
-            </div>
-          </div>
+      <PageHero
+        title="Obituarios"
+        subtitle="Honrando la memoria de nuestros seres queridos"
+        image="/images/obituariios.jpg"
+        imageAlt="Obituarios Jardines del Renacer"
+        className="relative z-10"
+      />
 
+      <section className="relative z-10 py-10">
+        <Container>
           {/* Buscador */}
           <FadeIn delay={0.2}>
             <div className="max-w-4xl mx-auto">

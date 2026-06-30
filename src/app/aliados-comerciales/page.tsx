@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Container from '@/components/ui/Container';
-import SectionTitle from '@/components/ui/SectionTitle';
+import PageHero from '@/components/ui/PageHero';
 import FadeIn from '@/components/animations/FadeIn';
 import Button from '@/components/ui/Button';
 import {
@@ -197,70 +197,57 @@ function AliadosComercialesPageContent() {
 
   return (
     <>
-      <section className="py-20 bg-gradient-to-b from-background to-white/50">
-        <Container>
-          <FadeIn>
-            <SectionTitle
-              title="Aliados Comerciales"
-              subtitle="Valida tu membresia activa, elige un aliado y genera tu codigo de descuento."
+      <PageHero
+        title="Club de Aliados"
+        subtitle="Valida tu membresía activa, elige un aliado y genera tu código de descuento."
+        image="/images/sorteo_ejemplo.jpeg"
+        imageAlt="Club de aliados Jardines del Renacer"
+      >
+        <form
+          onSubmit={handleClientVerification}
+          className="max-w-3xl rounded-3xl border border-white/25 bg-white/95 p-4 text-left shadow-2xl md:p-5"
+        >
+          <label className="block text-xs font-bold uppercase tracking-[0.18em] text-primary">
+            Consulta tu membresía con cédula
+          </label>
+          <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-[1fr_auto]">
+            <input
+              value={cedula}
+              onChange={(event) => setCedula(event.target.value)}
+              placeholder="Ej: 1234567890"
+              className="w-full rounded-2xl border border-primary/15 bg-white px-4 py-4 text-sm font-semibold text-text placeholder:text-textLight focus:outline-none focus:ring-4 focus:ring-primary/20"
             />
-          </FadeIn>
-
+            <Button type="submit" variant="primary" className="w-full md:w-auto">
+              Validar membresía
+            </Button>
+          </div>
+          {memberFeedback && (
+            <p className={`mt-3 text-sm font-semibold ${verifiedClient ? 'text-green-700' : 'text-red-600'}`}>
+              {memberFeedback}
+            </p>
+          )}
+        </form>
+      </PageHero>
+      <section className="py-16">
+        <Container>
           <FadeIn delay={0.1}>
-            <div className="mt-8 max-w-5xl mx-auto space-y-4">
-              <form
-                onSubmit={handleClientVerification}
-                className="glass rounded-2xl border border-primary/15 p-4 md:p-5"
-              >
-                <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-end">
-                  <div>
-                    <label className="block text-sm font-medium text-text mb-2">
-                      Consulta tu membresia con cedula
-                    </label>
-                    <input
-                      value={cedula}
-                      onChange={(event) => setCedula(event.target.value)}
-                      placeholder="Ej: 1234567890"
-                      className="w-full rounded-xl border border-border bg-white/70 px-4 py-3 text-text placeholder:text-textLight focus:outline-none focus:ring-2 focus:ring-primary/30"
-                    />
-                  </div>
-                  <Button type="submit" variant="primary" className="w-full md:w-auto">
-                    Validar membresia
-                  </Button>
-                </div>
-
-                {memberFeedback && (
-                  <p className={`mt-3 text-sm font-medium ${verifiedClient ? 'text-green-700' : 'text-red-600'}`}>
-                    {memberFeedback}
-                  </p>
-                )}
-
-                {/* Muestra la tarjeta de membresía después de la verificación o al generar un código */}
-                {verifiedClient && (
-                  <div className="mt-5" ref={cardRef}>
-                    <MembershipCard
-                      nombre={`${verifiedClient.nombre} ${verifiedClient.apellido}`}
-                      cedula={verifiedClient.cedula} 
-                      membresiaId={verifiedClient.id}
-                      discountLabel={
-                      generatedCode
-                          ? getCategoryBySlug(generatedCode.allyCategorySlug)?.discountLabel
-                          : undefined
-                      }
-                      codigoUnico={fixedCode ?? generatedCode?.code}
-                    />
-                  </div>
-                )}
-
-                {/* Muestra detalles adicionales del código generado si no se usa la tarjeta */}
-                {generatedCode && (
-                  <div className="mt-4 border-t border-primary/10 pt-4 text-center text-xs text-textLight">
-                    <p>
+            <div className="max-w-5xl mx-auto space-y-4">
+              {verifiedClient && (
+                <div className="glass rounded-3xl border border-primary/15 p-5" ref={cardRef}>
+                  <MembershipCard
+                    nombre={`${verifiedClient.nombre} ${verifiedClient.apellido}`}
+                    cedula={verifiedClient.cedula}
+                    membresiaId={verifiedClient.cedula}
+                    discountLabel={generatedCode ? generatedCode.discountLabel : undefined}
+                    codigoUnico={fixedCode ?? generatedCode?.code}
+                  />
+                  {generatedCode && (
+                    <div className="mt-4 border-t border-primary/10 pt-4 text-center text-xs text-textLight">
                       Código para <span className="font-semibold text-text">{generatedCode.allyName}</span>. Válido hasta: {new Date(generatedCode.expiresAt).toLocaleDateString('es-CO')}
-                    </p>
-                  </div>
-                )}
-              </form>
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-primary pointer-events-none">
@@ -273,7 +260,7 @@ function AliadosComercialesPageContent() {
                   type="search"
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Buscar aliado, subcategoria, departamento o direccion..."
+                  placeholder="Buscar aliado, categoría, ciudad o dirección..."
                   className="w-full glass rounded-2xl pl-11 pr-4 py-3 text-text placeholder:text-textLight text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 transition-shadow"
                 />
               </div>

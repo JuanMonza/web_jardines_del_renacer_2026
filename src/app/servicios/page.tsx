@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Container from '@/components/ui/Container';
-import SectionTitle from '@/components/ui/SectionTitle';
+import PageHero from '@/components/ui/PageHero';
 import FadeIn from '@/components/animations/FadeIn';
 import Button from '@/components/ui/Button';
 
@@ -28,22 +28,14 @@ const serviceHighlights = [
 export default function ServiciosPage() {
   return (
     <>
-      <section className="pt-10 pb-10">
-        <Container>
-          <div className="relative py-20 mb-8 rounded-3xl overflow-hidden bg-[url('/images/banner_servicios.jpg')] bg-cover bg-center bg-no-repeat shadow-sm border border-primary/10">
-            <div className="relative z-10">
-              <FadeIn>
-                <SectionTitle
-                  title="Servicios"
-                  subtitle="Acompañamos a las familias con respeto, calidez y respaldo profesional."
-                />
-              </FadeIn>
-            </div>
-          </div>
-        </Container>
-      </section>
+      <PageHero
+        title="Servicios"
+        subtitle="Acompañamos a las familias con respeto, calidez y respaldo profesional."
+        image="/images/servicios_funerarios.jpg"
+        imageAlt="Servicios funerarios Jardines del Renacer"
+      />
 
-      <section id="funerarios" className="pb-20">
+      <section id="funerarios" className="py-20">
         <Container>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {serviceHighlights.map((item, index) => (

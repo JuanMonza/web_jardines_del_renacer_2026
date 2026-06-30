@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import Container from '@/components/ui/Container';
-import SectionTitle from '@/components/ui/SectionTitle';
+import PageHero from '@/components/ui/PageHero';
+import TitleBand from '@/components/ui/TitleBand';
 import FadeIn from '@/components/animations/FadeIn';
 import Button from '@/components/ui/Button';
 import { buildWhatsAppUrl } from '@/config/contact';
@@ -60,29 +61,73 @@ export default function AcompanamientoDueloPage() {
   const [selectedTallerIndex, setSelectedTallerIndex] = useState(0);
   const selectedTaller = proximosTalleres[selectedTallerIndex];
 
+  const handleWorkshopSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const nombre = String(formData.get('nombre') || '').trim();
+    const telefono = String(formData.get('telefono') || '').trim();
+    const correo = String(formData.get('correo') || '').trim();
+    const message = [
+      'Hola, deseo inscribirme o recibir informacion sobre acompanamiento en duelo.',
+      `Taller: ${selectedTaller.titulo}`,
+      `Fecha: ${selectedTaller.fecha}`,
+      `Lugar: ${selectedTaller.lugar}`,
+      nombre && `Nombre: ${nombre}`,
+      telefono && `Telefono: ${telefono}`,
+      correo && `Correo: ${correo}`,
+    ].filter(Boolean).join('\n');
+
+    window.open(buildWhatsAppUrl(message), '_blank', 'noopener,noreferrer');
+    event.currentTarget.reset();
+  };
+
   return (
     <main className="min-h-screen">
-      {/* BANNER PRINCIPAL INTERNO (Fondo degradado corporativo y limpio) */}
-      <section className="relative overflow-hidden py-20 md:py-24 bg-gradient-to-b from-transparent to-black/90 w-full">
-        <Container>
-          <FadeIn className="[&_h1]:text-white [&_h2]:text-white [&_p]:text-white/90">
-            <SectionTitle
-              title="Acompañamiento en Duelo"
-              subtitle="Un espacio de apoyo, comprensión y guía integral en los momentos más difíciles."
-            />
-          </FadeIn>
-        </Container>
-      </section>
+      <PageHero
+        title="Acompañamiento en Duelo"
+        subtitle="Un espacio de apoyo, comprensión y guía integral para transitar la pérdida con dignidad, calma y compañía."
+        image="/images/white-tulips-sunlight.jpg"
+        imageAlt="Acompañamiento en duelo Jardines del Renacer"
+      >
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <a href={buildWhatsAppUrl("Hola, deseo recibir atención directa de la línea de psicología y duelo.")} target="_blank" rel="noopener noreferrer">
+            <Button variant="primary" size="lg" className="w-full sm:w-auto">
+              Línea directa
+            </Button>
+          </a>
+          <a href="#talleres">
+            <Button variant="secondary" size="lg" className="w-full bg-white/90 sm:w-auto">
+              Ver talleres
+            </Button>
+          </a>
+        </div>
+      </PageHero>
 
       {/* INTRODUCCIÓN E INFORMACIÓN DEL SERVICIO */}
       <section className="py-20">
         <Container maxWidth="lg">
           <FadeIn>
-            <div className="glass rounded-3xl p-8 md:p-12 border border-primary/15 shadow-xl text-center">
-              <h2 className="text-3xl font-display text-primary mb-6">No estás solo en este proceso</h2>
-              <p className="text-textLight leading-relaxed mb-8 text-lg">
-                Nuestro programa de Acompañamiento en Duelo está diseñado para brindar apoyo emocional y psicológico a las familias. A través de profesionales capacitados, ofrecemos herramientas para transitar la pérdida de un ser querido con respeto, sensibilidad y dignidad.
-              </p>
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-[1.15fr_0.85fr]">
+              <div className="glass rounded-3xl border border-primary/15 p-8 shadow-xl md:p-12">
+                <p className="mb-3 text-sm font-bold uppercase tracking-[0.22em] text-primary">
+                  Apoyo emocional
+                </p>
+                <h2 className="mb-6 text-3xl font-display font-extrabold text-primary">No estás solo en este proceso</h2>
+                <p className="text-lg leading-relaxed text-textLight">
+                  Nuestro programa brinda apoyo emocional y psicológico a las familias. A través de profesionales capacitados, ofrecemos herramientas para transitar la pérdida de un ser querido con respeto, sensibilidad y dignidad.
+                </p>
+              </div>
+              <div className="rounded-3xl bg-primary p-8 text-white shadow-xl">
+                <h3 className="text-2xl font-display font-extrabold">Atención cercana</h3>
+                <p className="mt-4 text-white/90">
+                  Puedes solicitar orientación directa, unirte a grupos de apoyo o reservar cupo en los talleres programados.
+                </p>
+                <a href={buildWhatsAppUrl("Hola, deseo orientación sobre acompañamiento en duelo.")} target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex w-full">
+                  <Button variant="secondary" className="w-full bg-white/95">
+                    Hablar por WhatsApp
+                  </Button>
+                </a>
+              </div>
             </div>
           </FadeIn>
         </Container>
@@ -90,6 +135,10 @@ export default function AcompanamientoDueloPage() {
 
       {/* SERVICIOS DE ACOMPAÑAMIENTO */}
       <section className="pb-20">
+        <TitleBand
+          title="Formas de acompañarte"
+          subtitle="Opciones de apoyo pensadas para escuchar, orientar y sanar paso a paso."
+        />
         <Container maxWidth="xl">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
             {serviciosDuelo.map((servicio, index) => (
@@ -110,18 +159,13 @@ export default function AcompanamientoDueloPage() {
       </section>
 
       {/* CALENDARIO DE TALLERES (Administrable) */}
-      <section className="pb-20">
+      <section id="talleres" className="pb-20">
         <Container maxWidth="lg">
           <FadeIn>
-            <div className="text-center mb-12">
-              <div className="inline-block relative mb-6">
-                <div className="absolute inset-x-[-2rem] md:inset-x-[-4rem] top-1/2 -translate-y-1/2 h-10 md:h-12 bg-gradient-to-r from-primary/80 via-primary/70 to-transparent transform -skew-x-12 z-0"></div>
-                <h2 className="relative z-10 text-4xl md:text-5xl font-display text-white drop-shadow-lg px-4">Próximos Talleres</h2>
-              </div>
-              <p className="text-textLight text-lg max-w-2xl mx-auto">
-                Conoce nuestra programación. Estos espacios podrán ser administrados desde el panel por el área de psicología.
-              </p>
-            </div>
+            <TitleBand
+              title="Próximos Talleres"
+              subtitle="Conoce nuestra programación y reserva tu espacio de acompañamiento."
+            />
             
             <div className="max-w-3xl mx-auto glass rounded-3xl p-6 md:p-8 border border-primary/15 shadow-xl bg-white/40">
               <div className="flex flex-col md:flex-row gap-4 items-center justify-between mb-8">
@@ -172,9 +216,11 @@ export default function AcompanamientoDueloPage() {
                         </p>
                       </div>
                     </div>
-                    <Button variant="primary" size="lg" className="whitespace-nowrap w-full md:w-auto justify-center shadow-lg hover:shadow-primary/30">
-                      Inscribirme
-                    </Button>
+                    <a href="#inscripcion" className="w-full md:w-auto">
+                      <Button variant="primary" size="lg" className="w-full justify-center whitespace-nowrap shadow-lg hover:shadow-primary/30 md:w-auto">
+                        Inscribirme
+                      </Button>
+                    </a>
                   </div>
                 </div>
               </div>
@@ -184,31 +230,28 @@ export default function AcompanamientoDueloPage() {
       </section>
 
       {/* INSCRIPCIÓN / FORMULARIO */}
-      <section className="py-20 bg-primary/5">
+      <section id="inscripcion" className="py-20 bg-primary/5">
         <Container maxWidth="lg">
           <FadeIn>
-          <div className="text-center mb-12">
-              <div className="inline-block relative mb-6">
-                <div className="absolute inset-x-[-2rem] md:inset-x-[-4rem] top-1/2 -translate-y-1/2 h-10 md:h-12 bg-gradient-to-r from-primary/80 via-primary/70 to-transparent transform -skew-x-12 z-0"></div>
-                <h2 className="relative z-10 text-4xl md:text-5xl font-display text-white drop-shadow-lg px-4">Inscripción a Talleres</h2>
-              </div>
-              <p className="text-textLight text-lg max-w-2xl mx-auto">Diligencia el formulario a continuación para reservar tu lugar en la próxima actividad o solicitar contacto directo con un profesional.</p>
-            </div>
+            <TitleBand
+              title="Inscripción a Talleres"
+              subtitle="Diligencia tus datos y te llevamos directo a WhatsApp para confirmar la solicitud."
+            />
             
-            <form className="glass rounded-3xl p-8 md:p-12 border border-primary/15 shadow-xl max-w-2xl mx-auto">
+            <form onSubmit={handleWorkshopSubmit} className="glass rounded-3xl p-8 md:p-12 border border-primary/15 shadow-xl max-w-2xl mx-auto">
               <div className="space-y-6">
                 <div>
                   <label className="block text-sm font-medium text-text mb-2">Nombre Completo</label>
-                  <input type="text" className="w-full px-4 py-3 rounded-xl glass border border-border text-text focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 focus:bg-white/80 transition-all" placeholder="Ej. María Gómez" required />
+                  <input name="nombre" type="text" className="w-full px-4 py-3 rounded-xl glass border border-border text-text focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 focus:bg-white/80 transition-all" placeholder="Ej. María Gómez" required />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-text mb-2">Teléfono</label>
-                    <input type="tel" className="w-full px-4 py-3 rounded-xl glass border border-border text-text focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 focus:bg-white/80 transition-all" placeholder="Número de contacto" required />
+                    <input name="telefono" type="tel" className="w-full px-4 py-3 rounded-xl glass border border-border text-text focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 focus:bg-white/80 transition-all" placeholder="Número de contacto" required />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-text mb-2">Correo Electrónico</label>
-                    <input type="email" className="w-full px-4 py-3 rounded-xl glass border border-border text-text focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 focus:bg-white/80 transition-all" placeholder="tu@correo.com" required />
+                    <input name="correo" type="email" className="w-full px-4 py-3 rounded-xl glass border border-border text-text focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 focus:bg-white/80 transition-all" placeholder="tu@correo.com" required />
                   </div>
                 </div>
                 <Button type="submit" variant="primary" className="w-full justify-center mt-4 group/btn" size="lg">

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Container from '@/components/ui/Container';
-import SectionTitle from '@/components/ui/SectionTitle';
+import PageHero from '@/components/ui/PageHero';
 import AnimatedCounter from '@/components/ui/AnimatedCounter';
 import SedesExplorer from '@/components/sedes/SedesExplorer';
 import { getAllDepartamentos, SEDES } from '@/data/sedes';
@@ -20,47 +20,33 @@ export default function SedesPage() {
 
   return (
     <>
-      {/* Hero section */}
-      <section className="relative py-24 overflow-hidden bg-gradient-to-b from-[#f6f4f2] via-white/70 to-[#f6f4f2]">
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 opacity-[0.03]"
-          style={{
-            backgroundImage:
-              'radial-gradient(circle at 1px 1px, #3C60A2 1px, transparent 0)',
-            backgroundSize: '40px 40px',
-          }}
-        />
-
-        <Container>
-          <SectionTitle
-            title="Nuestras Sedes"
-            subtitle={`Presentes en ${departamentos.length} departamentos con ${totalSedes} puntos de atención en todo el país`}
-          />
-
-          {/* Stats */}
-          <div className="flex flex-wrap justify-center gap-6 mt-8">
-            {[
-              { label: 'Departamentos', value: departamentos.length },
-              { label: 'Sedes', value: totalSedes },
-              { label: 'Años de experiencia', value: '25+' },
-            ].map((stat) => (
-              <div
-                key={stat.label}
-                className="glass rounded-2xl px-8 py-4 text-center min-w-[140px]"
-              >
-                <p className="text-3xl font-bold text-primary">
-                  <AnimatedCounter value={stat.value} />
-                </p>
-                <p className="text-sm text-textLight mt-1">{stat.label}</p>
-              </div>
-            ))}
-          </div>
-        </Container>
-      </section>
+      <PageHero
+        title="Nuestras Sedes"
+        subtitle={`Presentes en ${departamentos.length} departamentos con ${totalSedes} puntos de atención en todo el país`}
+        image="/images/pereira_plbo.jpg"
+        imageAlt="Sedes Jardines del Renacer"
+      >
+        <div className="flex flex-wrap gap-4">
+          {[
+            { label: 'Departamentos', value: departamentos.length },
+            { label: 'Sedes', value: totalSedes },
+            { label: 'Años de experiencia', value: '25+' },
+          ].map((stat) => (
+            <div
+              key={stat.label}
+              className="min-w-[140px] rounded-2xl border border-white/25 bg-white/90 px-6 py-4 text-center shadow-xl"
+            >
+              <p className="text-3xl font-bold text-primary">
+                <AnimatedCounter value={stat.value} />
+              </p>
+              <p className="mt-1 text-sm font-semibold text-textLight">{stat.label}</p>
+            </div>
+          ))}
+        </div>
+      </PageHero>
 
       {/* Buscador + grid de departamentos / sedes */}
-      <div className="pb-28">
+      <div className="py-20 pb-28">
         <SedesExplorer departamentos={departamentos} sedes={SEDES} />
       </div>
     </>
