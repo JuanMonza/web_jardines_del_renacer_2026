@@ -119,7 +119,7 @@ export default function TrabajaConNosotrosPage() {
       <PageHero
         title="Trabaja con Nosotros"
         subtitle="Encuentra oportunidades en diferentes áreas y departamentos. Buscamos personas con vocación de servicio, humanidad y compromiso con la excelencia."
-        image="/images/trabaja_con_nosotros.jpg"
+        image="/images/images-baners/Trabaja_con_nosotros.webp"
         imageAlt="Trabaja con nosotros Jardines del Renacer"
       >
         <div className="flex flex-col gap-3 sm:flex-row">

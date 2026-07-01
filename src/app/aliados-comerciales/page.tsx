@@ -200,7 +200,7 @@ function AliadosComercialesPageContent() {
       <PageHero
         title="Club de Aliados"
         subtitle="Valida tu membresía activa, elige un aliado y genera tu código de descuento."
-        image="/images/sorteo_ejemplo.jpeg"
+        image="/images/images-baners/Clubdealiados.webp"
         imageAlt="Club de aliados Jardines del Renacer"
       >
         <form

@@ -30,7 +30,7 @@ export default function RepatriacionesPage() {
       <PageHero
         title="Repatriaciones & Expatriaciones"
         subtitle="Coordinación segura, ágil y respetuosa para traslados internacionales de tus seres queridos."
-        image="/images/repatriaciones_banner.jpg"
+        image="/images/images-baners/repatriacion.webp"
         imageAlt="Servicio de repatriaciones Jardines del Renacer"
       >
         <div className="flex flex-col gap-3 sm:flex-row">

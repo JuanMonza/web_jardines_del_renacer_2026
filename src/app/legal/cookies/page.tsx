@@ -1,7 +1,7 @@
 import Container from '@/components/ui/Container';
-import SectionTitle from '@/components/ui/SectionTitle';
 import Link from 'next/link';
 import FadeIn from '@/components/animations/FadeIn';
+import PageHero from '@/components/ui/PageHero';
 
 const cookieSections = [
   {
@@ -29,20 +29,12 @@ const cookieSections = [
 export default function CookiesPage() {
   return (
     <>
-      <section className="relative h-[50vh] min-h-[400px] flex items-center justify-center text-center overflow-hidden">
-        <div className="absolute inset-0">
-          <img src="/images/legal.jpg" alt="Fondo Legal" className="object-cover w-full h-full opacity-30" />
-          <div className="absolute inset-0 bg-black/50" />
-        </div>
-        <Container className="relative z-10 text-white">
-          <FadeIn>
-            <SectionTitle
-              title="Política de Cookies"
-              subtitle="Información sobre el uso de cookies en nuestro sitio web."
-            />
-          </FadeIn>
-        </Container>
-      </section>
+      <PageHero
+        title="Política de Cookies"
+        subtitle="Información sobre el uso de cookies en nuestro sitio web."
+        image="/images/images-baners/legal.jpg"
+        imageAlt="Política de Cookies - Jardines del Renacer"
+      />
 
       <section className="py-16">
         <Container maxWidth="lg">

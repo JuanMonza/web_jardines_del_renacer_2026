@@ -86,7 +86,7 @@ export default function AcompanamientoDueloPage() {
       <PageHero
         title="Acompañamiento en Duelo"
         subtitle="Un espacio de apoyo, comprensión y guía integral para transitar la pérdida con dignidad, calma y compañía."
-        image="/images/white-tulips-sunlight.jpg"
+        image="/images/images-baners/acompañamientoenduelo.webp"
         imageAlt="Acompañamiento en duelo Jardines del Renacer"
       >
         <div className="flex flex-col gap-3 sm:flex-row">

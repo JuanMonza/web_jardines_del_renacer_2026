@@ -1,7 +1,8 @@
 import Container from '@/components/ui/Container';
 import FadeIn from '@/components/animations/FadeIn';
-import SectionTitle from '@/components/ui/SectionTitle';
+import Image from 'next/image';
 import Link from 'next/link';
+import PageHero from '@/components/ui/PageHero';
 
 type PolicySection = {
   title: string;
@@ -113,17 +114,12 @@ const privacySections: PolicySection[] = [
 export default function PrivacidadPage() {
   return (
     <>
-      <section className="relative h-[50vh] min-h-[400px] flex items-center justify-center text-center overflow-hidden">
-        <div className="absolute inset-0">
-          <img src="/images/legal.jpg" alt="Fondo Legal" className="object-cover w-full h-full opacity-30" />
-          <div className="absolute inset-0 bg-black/50" />
-        </div>
-        <Container className="relative z-10 text-white">
-          <FadeIn>
-            <SectionTitle title="Politica de Privacidad" subtitle="Tratamiento responsable de datos personales conforme a la normativa colombiana." />
-          </FadeIn>
-        </Container>
-      </section>
+      <PageHero
+        title="Política de Privacidad"
+        subtitle="Tratamiento responsable de datos personales conforme a la normativa colombiana."
+        image="/images/images-baners/legal.jpg"
+        imageAlt="Política de Privacidad - Jardines del Renacer"
+      />
 
       <section className="py-16">
         <Container maxWidth="lg">

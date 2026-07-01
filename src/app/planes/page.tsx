@@ -31,7 +31,7 @@ export default function PlanesPage() {
       <PageHero
         title="Nuestros Planes"
         subtitle="Soluciones de previsión diseñadas para cuidar a tu familia con respaldo, claridad y acompañamiento humano."
-        image="/images/planes.jpg"
+        image="/images/images-baners/planes_jr.webp"
         imageAlt="Planes funerarios Jardines del Renacer"
       >
         <div className="flex flex-col gap-3 sm:flex-row">

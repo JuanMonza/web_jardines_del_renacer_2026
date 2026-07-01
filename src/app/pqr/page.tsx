@@ -2,12 +2,12 @@
 
 import { useState } from 'react';
 import Container from '@/components/ui/Container';
-import SectionTitle from '@/components/ui/SectionTitle';
 import FadeIn from '@/components/animations/FadeIn';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Textarea from '@/components/ui/Textarea';
 import { cn } from '@/lib/utils';
+import PageHero from '@/components/ui/PageHero';
 
 export default function PQRPage() {
     // Estado de React para manejar los datos del formulario de manera controlada y reactiva
@@ -98,20 +98,12 @@ export default function PQRPage() {
 
     return (
         <>
-            <section className="pt-10 pb-10">
-                <Container>
-                    <div className="relative py-20 mb-8 rounded-3xl overflow-hidden bg-gradient-to-b from-transparent to-black/90 shadow-sm border border-primary/10 w-full">
-                        <div className="relative z-10 [&_h1]:text-white [&_h2]:text-white [&_p]:text-white/90">
-                            <FadeIn>
-                                <SectionTitle
-                                    title="Peticiones, Quejas y Reclamos"
-                                    subtitle="Tu opinión es fundamental.Déjanos tus inquietudes y te daremos respuesta a la mayor brevedad posible."
-                                />
-                            </FadeIn>
-                        </div>
-                    </div>
-                </Container>
-            </section>
+            <PageHero
+                title="Peticiones, Quejas y Reclamos"
+                subtitle="Tu opinión es fundamental. Déjanos tus inquietudes y te daremos respuesta a la mayor brevedad posible."
+                image="/images/images-baners/contacto.webp"
+                imageAlt="PQR - Jardines del Renacer"
+            />
 
             <section className="pb-24">
                 <Container maxWidth="md">

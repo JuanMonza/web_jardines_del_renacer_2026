@@ -62,7 +62,7 @@ export default function UbicacionesPage() {
       <PageHero
         title="Nuestras Ubicaciones"
         subtitle={`Presentes en ${departamentos.length} departamentos con ${totalSedes} puntos de atención en todo el país`}
-        image="/images/pereira_plbo.jpg"
+        image="/images/images-baners/nuetrassedes.webp"
         imageAlt="Ubicaciones Jardines del Renacer"
       >
         <div className="flex flex-wrap gap-4">

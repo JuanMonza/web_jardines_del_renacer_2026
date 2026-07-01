@@ -113,7 +113,7 @@ export default function ContactoPage() {
       <PageHero
         title="Contáctanos"
         subtitle="Estamos aquí para escucharte y resolver tus inquietudes con la calidez que nos caracteriza."
-        image="/images/contactanos.jpg"
+        image="/images/images-baners/contacto.webp"
         imageAlt="Contacto Jardines del Renacer"
       />
 

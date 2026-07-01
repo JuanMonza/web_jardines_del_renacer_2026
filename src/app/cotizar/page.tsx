@@ -31,7 +31,7 @@ export default function CotizarPage({ searchParams }: CotizarPageProps) {
       <PageHero
         title="Afíliate Ya"
         subtitle="Te ayudamos a elegir la opción ideal para proteger a tu familia con asesoría clara y acompañamiento humano."
-        image="/images/planes_funerarios.jpg"
+        image="/images/images-baners/afiliateya.webp"
         imageAlt="Afiliación a planes Jardines del Renacer"
       >
         <div className="grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-3">

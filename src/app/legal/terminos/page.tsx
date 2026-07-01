@@ -1,7 +1,7 @@
 import Container from '@/components/ui/Container';
 import FadeIn from '@/components/animations/FadeIn';
-import SectionTitle from '@/components/ui/SectionTitle';
 import Link from 'next/link';
+import PageHero from '@/components/ui/PageHero';
 
 /**
  * Arreglo de objetos con el contenido de cada una de las secciones legales
@@ -68,17 +68,12 @@ const sections = [
 export default function TerminosPage() {
   return (
     <>
-      <section className="relative h-[50vh] min-h-[400px] flex items-center justify-center text-center overflow-hidden">
-        <div className="absolute inset-0">
-          <img src="/images/legal.jpg" alt="Fondo Legal" className="object-cover w-full h-full opacity-30" />
-          <div className="absolute inset-0 bg-black/50" />
-        </div>
-        <Container className="relative z-10 text-white">
-          <FadeIn>
-            <SectionTitle title="Terminos y Condiciones" subtitle="Condiciones de uso del sitio y de los servicios de atencion digital." />
-          </FadeIn>
-        </Container>
-      </section>
+      <PageHero
+        title="Términos y Condiciones"
+        subtitle="Condiciones de uso del sitio y de los servicios de atención digital."
+        image="/images/images-baners/terminos&condiciones.webp"
+        imageAlt="Términos y Condiciones - Jardines del Renacer"
+      />
 
       <section className="py-16">
         <Container maxWidth="lg">

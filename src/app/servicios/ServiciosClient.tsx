@@ -24,7 +24,7 @@ import {
 
 const services = [
   {
-    title: '🕊️ Atención Exequial Integral',
+    title: 'Atención Exequial Integral',
     description:
       "Brindamos acompañamiento completo durante cada etapa del servicio funerario, ofreciendo respaldo humano, logístico y operativo las 24 horas del día.",
     bullets: [
@@ -37,7 +37,7 @@ const services = [
     image: "/images/services/atencion.jpg",
   },
   {
-    title: '🏛️ Salas de Velación',
+    title: 'Salas de Velación',
     description:
       "Más de 200 salas de velación distribuidas a nivel nacional, diseñadas para ofrecer un ambiente tranquilo, digno y acogedor para familiares y amigos.",
     bullets: [
@@ -49,7 +49,7 @@ const services = [
     image: "/images/services/salas.jpg",
   },
   {
-    title: '🏛️ Salas VIP',
+    title: 'Salas VIP',
     description:
       "Disponemos de salas VIP ubicadas estratégicamente en Cali, Palmira, Zarzal y Cartago, ofreciendo privacidad, comodidad y exclusividad.",
     bullets: [
@@ -61,7 +61,7 @@ const services = [
     image: "/images/services/vip.jpg",
   },
   {
-    title: '🌿 Parque Conmemorativo Espiritual',
+    title: 'Parque Conmemorativo Espiritual',
     description:
       "Un entorno diseñado para rendir homenaje a la vida, rodeado de naturaleza y espacios que invitan al recuerdo y la tranquilidad.",
     bullets: [
@@ -70,10 +70,10 @@ const services = [
       "Crematorio",
       "Ambiente espiritual",
     ],
-    image: "/images/services/parque.jpg",
+    image: "/images/parque-conmemorativo-2026.webp",
   },
   {
-    title: '🔥 Cremación',
+    title: 'Cremación',
     description:
       "Contamos con horno crematorio de tecnología avanzada, amigable con el medio ambiente y diseñado para garantizar procesos seguros y ágiles.",
     bullets: [
@@ -85,7 +85,7 @@ const services = [
     image: "/images/services/cremacion.jpg",
   },
   {
-    title: '🚗 Parque Automotor',
+    title: 'Parque Automotor',
     description:
       "Más de 70 vehículos especializados distribuidos estratégicamente para brindar atención rápida y segura en diferentes regiones del país.",
     bullets: [
@@ -97,7 +97,7 @@ const services = [
     image: "/images/services/flota.jpg",
   },
   {
-    title: '🌎 Repatriación y Expatriación',
+    title: 'Repatriación y Expatriación',
     description:
       "Coordinamos todos los trámites y la logística necesaria para el traslado nacional e internacional del ser querido.",
     bullets: [
@@ -106,7 +106,7 @@ const services = [
       "Traslado seguro",
       "Acompañamiento permanente",
     ],
-    image: "/images/services/repatriacion.jpg",
+    image: "/images/images-baners/repatriacion.webp",
   },
   {
     title: "Planes de Previsión",
@@ -118,7 +118,7 @@ const services = [
       "Asesoría personalizada",
       "Protección inmediata",
     ],
-    image: "/images/services/prevision.jpg",
+    image: "/images/images-baners/planes_jr.webp",
   },
 ];
 
@@ -293,7 +293,7 @@ export default function ServiciosClient() {
       <PageHero
         title="Servicios"
         subtitle="Acompañamos a las familias con respeto, calidez y respaldo profesional."
-        image="/images/servicios_funerarios.jpg"
+        image="/images/images-baners/servicios_funerarios.webp"
         imageAlt="Servicios funerarios Jardines del Renacer"
       />
 
@@ -469,7 +469,7 @@ export default function ServiciosClient() {
               <FadeIn>
                 <div className="relative rounded-[40px] overflow-hidden h-[620px] group">
                   <Image
-                    src="/images/services/parque-conmemorativo.jpg"
+                    src="/images/commemorativo.jpeg"
                     alt="Parque Conmemorativo Espiritual"
                     fill
                     className="object-cover group-hover:scale-105 transition duration-700"
@@ -495,7 +495,7 @@ export default function ServiciosClient() {
             <div className="lg:col-span-5 flex flex-col gap-8">
               <FadeIn>
                 <div className="glass rounded-[34px] p-8">
-                  <h3 className="text-3xl font-display mb-4">🏛️ Salas VIP</h3>
+                  <h3 className="text-3xl font-display mb-4">Salas VIP</h3>
                   <p className="text-textLight leading-relaxed">
                     Disponemos de salas VIP en Cali, Palmira,
                     Cartago y Zarzal, diseñadas para brindar
@@ -505,7 +505,7 @@ export default function ServiciosClient() {
               </FadeIn>
               <FadeIn delay={0.1}>
                 <div className="glass rounded-[34px] p-8">
-                  <h3 className="text-3xl font-display mb-4">🚗 Parque Automotor</h3>
+                  <h3 className="text-3xl font-display mb-4">Parque Automotor</h3>
                   <p className="text-textLight leading-relaxed">
                     Más de 70 vehículos especializados entre
                     carrozas, HH alargadas, unidades Peugeot
@@ -516,7 +516,7 @@ export default function ServiciosClient() {
               </FadeIn>
               <FadeIn delay={0.2}>
                 <div className="glass rounded-[34px] p-8">
-                  <h3 className="text-3xl font-display mb-4">🔥 Tecnología Ambiental</h3>
+                  <h3 className="text-3xl font-display mb-4">Tecnología Ambiental</h3>
                   <p className="text-textLight leading-relaxed">
                     Nuestro horno crematorio utiliza tecnología
                     avanzada que garantiza procesos eficientes,

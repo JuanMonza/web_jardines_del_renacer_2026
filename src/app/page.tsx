@@ -14,15 +14,16 @@ import { CONTACT_INFO, buildWhatsAppUrl } from '@/config/contact';
 
 // NOTA: Preparado para utilizar una única imagen corporativa y limpia (Suministrada por Hugo).
 const heroImages = [
-  '/images/banner_corporativo_nuevo.jpg',
+  '/images/commemorativo.jpeg',
   '/images/carrusel_1.jpg',
   '/images/carrusel_2.jpg',
+  '/images/parque-conmemorativo-2026.webp',
 ];
 
 // Agrega más imágenes según sea necesario
 // Variable preparada para actualizar el texto de años de experiencia fácilmente, sin buscar en el HTML
 
-const YEARS_OF_EXPERIENCE = "Más de 25 años"; // Cambiar a "26 años" según confirmación definitiva
+const YEARS_OF_EXPERIENCE = "Más de +25 años"; // Cambiar a "26 años" según confirmación definitiva
 
 export default function HomePage() {
   const [currentImage, setCurrentImage] = useState(0);

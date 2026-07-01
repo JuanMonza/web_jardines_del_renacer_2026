@@ -34,7 +34,7 @@ export default function SiempreContigoPage() {
       <PageHero
         title="Siempre Contigo"
         subtitle="Transmisión en vivo 360 del servicio de velación para que la familia pueda acompañar el homenaje desde cualquier lugar."
-        image="/images/siempre_contigo.jpg"
+        image="/images/images-baners/condolecias_digitales.webp"
         imageAlt="Servicio Siempre Contigo Jardines del Renacer"
       />
 

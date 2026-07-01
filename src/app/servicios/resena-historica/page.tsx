@@ -47,7 +47,7 @@ export default function ResenaHistoricaPage() {
       <PageHero
         title="Reseña Histórica"
         subtitle="Una evolución constante basada en el respeto, la dignidad y el servicio a las familias colombianas."
-        image="/images/carrusel_1.jpg"
+        image="/images/images-baners/reseñahistorica.webp"
         imageAlt="Reseña histórica Jardines del Renacer"
       />
 

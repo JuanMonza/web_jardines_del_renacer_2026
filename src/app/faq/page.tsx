@@ -1,6 +1,10 @@
+'use client';
+
+import { useState } from 'react';
 import Container from '@/components/ui/Container';
-import SectionTitle from '@/components/ui/SectionTitle';
 import FadeIn from '@/components/animations/FadeIn';
+import PageHero from '@/components/ui/PageHero';
+import { ChevronDown } from 'lucide-react';
 
 const faqs = [
   {
@@ -31,27 +35,43 @@ const faqs = [
 ];
 
 export default function FaqPage() {
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
+
+  const handleToggle = (index: number) => {
+    setOpenIndex(openIndex === index ? null : index);
+  };
+
   return (
     <>
-      <section className="py-20 bg-gradient-to-b from-background to-white/60">
-        <Container>
-          <FadeIn>
-            <SectionTitle
-              title="Preguntas Frecuentes"
-              subtitle="Respuestas rápidas para ayudarte a tomar decisiones con tranquilidad."
-            />
-          </FadeIn>
-        </Container>
-      </section>
+      <PageHero
+        title="Preguntas Frecuentes"
+        subtitle="Respuestas rápidas para ayudarte a tomar decisiones con tranquilidad."
+        image="/images/images-baners/contacto.webp"
+        imageAlt="Preguntas Frecuentes - Jardines del Renacer"
+      />
 
-      <section className="pb-20">
+      <section className="py-20">
         <Container maxWidth="lg">
           <div className="space-y-4">
             {faqs.map((item, index) => (
               <FadeIn key={item.question} delay={index * 0.05}>
-                <article className="glass rounded-2xl p-6 border border-primary/15">
-                  <h3 className="text-lg font-semibold text-text mb-2">{item.question}</h3>
-                  <p className="text-textLight leading-relaxed">{item.answer}</p>
+                <article
+                  className="glass rounded-2xl p-6 border border-primary/15 cursor-pointer transition-all hover:border-primary/30"
+                  onClick={() => handleToggle(index)}
+                >
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-semibold text-text">{item.question}</h3>
+                    <ChevronDown
+                      className={`w-5 h-5 text-primary transition-transform duration-300 ${
+                        openIndex === index ? 'transform rotate-180' : ''
+                      }`}
+                    />
+                  </div>
+                  {openIndex === index && (
+                    <p className="text-textLight leading-relaxed mt-4 animate-in fade-in duration-500">
+                      {item.answer}
+                    </p>
+                  )}
                 </article>
               </FadeIn>
             ))}

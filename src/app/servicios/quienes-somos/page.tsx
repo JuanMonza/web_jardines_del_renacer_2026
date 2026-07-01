@@ -69,7 +69,7 @@ export default function QuienesSomosPage() {
               <div className="flex flex-col gap-4 h-[500px]">
                 <div className="group/item1 relative w-full h-1/2 rounded-3xl overflow-hidden shadow-lg transition-all duration-500 ease-out hover:h-2/3">
                   <Image
-                    src="/images/quiene_somos.jpg"
+                    src="/images/images-baners/QuienesSomos.webp"
                     alt="Equipo de Jardines del Renacer"
                     fill
                     className="object-cover transition-transform duration-500 group-hover/item1:scale-105"

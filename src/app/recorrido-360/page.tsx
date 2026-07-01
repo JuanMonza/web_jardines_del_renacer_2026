@@ -10,7 +10,7 @@ export default function Recorrido360Page() {
       <PageHero
         title="Recorrido Virtual 360°"
         subtitle="Conoce nuestras instalaciones desde la comodidad de tu hogar y agenda una visita cuando quieras vivir la experiencia presencial."
-        image="/images/360.jpg"
+        image="/images/images-baners/recorrido360.webp"
         imageAlt="Recorrido virtual 360 Jardines del Renacer"
       >
         <div className="flex flex-col gap-3 sm:flex-row">
