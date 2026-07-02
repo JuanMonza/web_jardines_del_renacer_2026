@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { MapPin, Building2, Landmark, CheckCircle2 } from "lucide-react";
+import { MapPin, Building2, MapPinned, CheckCircle2 } from "lucide-react";
 
 import { Department } from "./coverageData";
 
@@ -92,11 +92,11 @@ export default function DepartmentTooltip({ department }: Props) {
                             text-center
                         "
             >
-              <Landmark className="mx-auto mb-2 text-primary" />
+              <MapPinned className="mx-auto mb-2 text-primary" />
 
-              <h4 className="text-3xl font-display">{department.salas}</h4>
+              <h4 className="text-3xl font-display">{department.ciudades.length}</h4>
 
-              <p className="text-sm text-textLight">Salas</p>
+              <p className="text-sm text-textLight">Ciudades</p>
             </div>
           </div>
 

@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import {
     MapPin,
     Building2,
-    Building,
+    MapPinned,
     Clock3,
     ShieldCheck,
     ArrowRight,
@@ -148,11 +148,11 @@ export default function DepartmentCard({ department, selectedSedeId }: Departmen
                 text-center
               "
                         >
-                            <Building className="mx-auto h-8 w-8 text-primary mb-3" />
+                            <MapPinned className="mx-auto h-8 w-8 text-primary mb-3" />
 
-                            <div className="text-4xl font-display">{department.salas}</div>
+                            <div className="text-4xl font-display">{department.ciudades.length}</div>
 
-                            <p className="text-textLight mt-1">Salas</p>
+                            <p className="text-textLight mt-1">Ciudades</p>
                         </div>
                     </div>
 
@@ -235,16 +235,22 @@ export default function DepartmentCard({ department, selectedSedeId }: Departmen
 
                             {expanded && (
                                 <div className="divide-y divide-primary/10 bg-slate-950/5">
-                                    {getSedesByDepartamento(getDepartamentoSlug(department.name)).map((sede) => (
-                                        <Link
-                                            key={sede.id}
-                                            href={`/sedes/${getDepartamentoSlug(department.name)}`}
-                                            className={`flex items-center justify-between px-4 py-3 text-sm ${selectedSedeId === sede.id ? 'bg-primary/10' : 'bg-transparent'} hover:bg-primary/5`}
-                                        >
-                                            <span>{sede.nombre}</span>
-                                            <ArrowRight className="h-4 w-4 text-primary" />
-                                        </Link>
-                                    ))}
+                                    {getSedesByDepartamento(getDepartamentoSlug(department.name)).map((sede) => {
+                                        const departmentSlug = getDepartamentoSlug(department.name);
+                                        const cityMarkerId = `${departmentSlug}-${getDepartamentoSlug(sede.ciudad)}`;
+                                        const isSelected = selectedSedeId === sede.id || selectedSedeId === cityMarkerId;
+
+                                        return (
+                                            <Link
+                                                key={sede.id}
+                                                href={`/sedes/${departmentSlug}`}
+                                                className={`flex items-center justify-between px-4 py-3 text-sm ${isSelected ? 'bg-primary/10' : 'bg-transparent'} hover:bg-primary/5`}
+                                            >
+                                                <span>{sede.nombre}</span>
+                                                <ArrowRight className="h-4 w-4 text-primary" />
+                                            </Link>
+                                        );
+                                    })}
                                 </div>
                             )}
                         </div>
@@ -253,7 +259,7 @@ export default function DepartmentCard({ department, selectedSedeId }: Departmen
                     {/* Botones generales */}
 
                     <div className="space-y-3">
-                        <Link href="/sedes">
+                        <Link href={`/sedes/${getDepartamentoSlug(department.name)}`}>
                             <Button className="w-full">Ver sedes</Button>
                         </Link>
                         <Link href="/sedes">

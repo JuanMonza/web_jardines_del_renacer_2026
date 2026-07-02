@@ -11,6 +11,7 @@ import TitleBand from '@/components/ui/TitleBand';
 import FadeIn from '@/components/animations/FadeIn';
 import Button from '@/components/ui/Button';
 import CoverageMap from '@/components/coverage/CoverageMap';
+import { SEDES, getAllDepartamentos } from '@/data/sedes';
 import {
   Building2,
   HeartHandshake,
@@ -123,11 +124,14 @@ const services = [
   },
 ];
 
+const totalSedes = SEDES.length;
+const totalDepartamentos = getAllDepartamentos().length;
+
 const stats = [
   {
     icon: Building2,
-    number: 110,
-    suffix: '+',
+    number: totalSedes,
+    suffix: '',
     label: "Sedes Propias",
     description: "Presencia nacional con atención cercana y oportuna.",
   },
@@ -147,7 +151,7 @@ const stats = [
   },
   {
     icon: MapPinned,
-    number: 14,
+    number: totalDepartamentos,
     suffix: '',
     label: "Departamentos",
     description: "Cobertura nacional para brindar atención inmediata.",
@@ -282,6 +286,42 @@ const AnimatedStat = ({ number, suffix, duration = 2 }: AnimatedStatProps) => {
   );
 };
 
+interface FullBleedBandProps {
+  eyebrow?: string;
+  title: string;
+  subtitle?: string;
+  className?: string;
+  maxWidth?: string;
+}
+
+const FullBleedBand = ({
+  eyebrow,
+  title,
+  subtitle,
+  className = '',
+  maxWidth = 'max-w-4xl',
+}: FullBleedBandProps) => (
+  <div className={`relative left-1/2 w-screen -translate-x-1/2 py-10 overflow-hidden bg-primary/5 ${className}`}>
+    <div className="absolute inset-0 w-full bg-gradient-to-r from-transparent via-primary/85 to-transparent" />
+    <div className="absolute inset-y-0 left-1/2 w-[72%] -translate-x-1/2 bg-primary/35 blur-2xl" />
+    <div className={`relative z-10 mx-auto ${maxWidth} text-center px-6 lg:px-8`}>
+      {eyebrow && (
+        <span className="inline-flex rounded-full bg-white/15 px-4 py-2 text-sm font-medium text-white shadow-sm backdrop-blur">
+          {eyebrow}
+        </span>
+      )}
+      <h2 className="mt-5 text-4xl md:text-5xl font-display font-extrabold text-white mb-6 leading-tight">
+        {title}
+      </h2>
+      {subtitle && (
+        <p className="text-xl text-white/90 leading-relaxed">
+          {subtitle}
+        </p>
+      )}
+    </div>
+  </div>
+);
+
 export default function ServiciosClient() {
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
 
@@ -298,26 +338,15 @@ export default function ServiciosClient() {
         imageAlt="Servicios funerarios Jardines del Renacer"
       />
 
-      <section className="py-28">
+      <section className="py-28 overflow-hidden">
         <Container>
           <FadeIn>
-            <div className="relative w-full max-w-4xl mx-auto mb-16 py-10 overflow-hidden rounded-[30px]">
-              <div className="absolute inset-0 w-full bg-gradient-to-r from-transparent via-primary/85 to-transparent" />
-              <div className="absolute inset-y-0 left-1/2 w-[72%] -translate-x-1/2 bg-primary/35 blur-2xl" />
-              <div className="relative z-10 text-center px-4">
-                <span className="inline-flex rounded-full bg-primary/10 text-primary px-4 py-2 text-sm font-medium mb-5">
-                  Jardines del Renacer
-                </span>
-                <h2 className="text-5xl font-display font-extrabold text-white mb-6 leading-tight">
-                  Más de 25 años acompañando a las familias colombianas
-                </h2>
-                <p className="text-xl text-white/90 leading-relaxed">
-                  Brindamos servicios exequiales con cobertura nacional,
-                  infraestructura propia y atención humana permanente,
-                  ofreciendo tranquilidad, confianza y respaldo cuando más se necesita.
-                </p>
-              </div>
-            </div>
+            <FullBleedBand
+              eyebrow="Jardines del Renacer"
+              title="Más de 25 años acompañando a las familias colombianas"
+              subtitle="Brindamos servicios exequiales con cobertura nacional, infraestructura propia y atención humana permanente, ofreciendo tranquilidad, confianza y respaldo cuando más se necesita."
+              className="mb-16"
+            />
           </FadeIn>
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
@@ -443,12 +472,13 @@ export default function ServiciosClient() {
         </Container>
       </section>
 
-      <section className="py-28 bg-gradient-to-b from-background to-primary/5">
+      <section className="py-28 bg-gradient-to-b from-background to-primary/5 overflow-hidden">
         <Container maxWidth="2xl">
           <FadeIn>
             <TitleBand
               title="Infraestructura diseñada para brindar tranquilidad"
               subtitle="Jardines del Renacer cuenta con una infraestructura propia que permite ofrecer una atención integral, cercana y oportuna, respaldando cada servicio con calidad, tecnología y experiencia."
+              className="left-1/2 w-screen -translate-x-1/2 bg-primary/5"
             />
           </FadeIn>
 
@@ -521,25 +551,16 @@ export default function ServiciosClient() {
 
         <CoverageMap />
 
-      <section className="py-28 bg-primary/5">
+      <section className="py-28 bg-primary/5 overflow-hidden">
         <Container>
           <FadeIn>
-            <div className="relative w-full max-w-3xl mx-auto mb-20 py-10 overflow-hidden">
-              <div className="absolute inset-0 w-full bg-gradient-to-r from-transparent via-primary/85 to-transparent" />
-              <div className="absolute inset-y-0 left-1/2 w-[72%] -translate-x-1/2 bg-primary/35 blur-2xl" />
-              <div className="relative z-10 text-center px-4">
-                <span className="uppercase tracking-[0.25em] text-primary text-sm">
-                  NUESTRO PROCESO
-                </span>
-                <h2 className="text-5xl font-display font-extrabold text-white mt-4 mb-6">
-                  Te acompañamos paso a paso
-                </h2>
-                <p className="text-xl text-white/90">
-                  Cada servicio es coordinado por un equipo humano especializado,
-                  garantizando tranquilidad y acompañamiento durante todo el proceso.
-                </p>
-              </div>
-            </div>
+            <FullBleedBand
+              eyebrow="Nuestro proceso"
+              title="Te acompañamos paso a paso"
+              subtitle="Cada servicio es coordinado por un equipo humano especializado, garantizando tranquilidad y acompañamiento durante todo el proceso."
+              className="mb-20"
+              maxWidth="max-w-3xl"
+            />
           </FadeIn>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {timeline.map((item) => (
@@ -559,12 +580,13 @@ export default function ServiciosClient() {
         </Container>
       </section>
 
-      <section className="py-28">
+      <section className="py-28 overflow-hidden">
         <Container>
           <FadeIn>
             <TitleBand
               title="Estamos para resolver tus dudas"
               subtitle="Nuestro compromiso es brindar información clara, acompañamiento y tranquilidad en todo momento."
+              className="left-1/2 w-screen -translate-x-1/2 bg-primary/5"
             />
           </FadeIn>
           <div className="grid gap-6">

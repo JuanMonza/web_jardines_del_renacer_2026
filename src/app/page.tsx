@@ -46,17 +46,27 @@ export default function HomePage() {
   return (
     <>
       {/* Hero Section */}
-      <section className="relative h-[80vh] lg:h-screen flex items-center justify-center overflow-hidden">
+      <section className="relative min-h-[620px] lg:h-screen flex items-center justify-center overflow-hidden py-24 lg:py-0">
         <div className="absolute inset-0 z-0 bg-black">
+          <Image
+            key={`hero-blur-${currentImage}`}
+            src={heroImages[currentImage]}
+            alt=""
+            fill
+            aria-hidden="true"
+            className="scale-110 object-cover blur-2xl md:hidden"
+            sizes="100vw"
+          />
           {heroImages.map((src, index) => (
             <Image
               key={src}
               src={src}
               alt={`Jardines del Renacer ${index + 1}`}
               fill
-              className={`object-cover transition-opacity duration-1000 ${
+              className={`object-contain object-center transition-opacity duration-1000 md:object-cover ${
                 index === currentImage ? 'opacity-100' : 'opacity-0'
               }`}
+              sizes="100vw"
               priority={index === 0}
             />
           ))}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import ColombiaMap from '@/assets/maps/colombia.svg';
 import { coverageData, Department } from './coverageData';
@@ -29,7 +29,7 @@ export default function ColombiaSVG({
 
   const clamp = (v: number) => Math.max(2, Math.min(98, v));
 
-  const copyCoords = () => {
+  const copyCoords = useCallback(() => {
     if (!coords) return;
     const value = `{
   id: 'nuevo-id',
@@ -42,7 +42,7 @@ export default function ColombiaSVG({
     navigator.clipboard?.writeText(value);
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1500);
-  };
+  }, [coords]);
 
   // Hover + Click
   useEffect(() => {
@@ -133,22 +133,6 @@ export default function ColombiaSVG({
       'drop-shadow(0 0 20px rgba(151,118,96,.65))';
   }, [selected]);
 
-  // Click fuera del mapa limpia selección
-  useEffect(() => {
-    const onDocClick = (e: MouseEvent) => {
-      if (!svgRef.current) return;
-      if (svgRef.current.contains(e.target as Node)) return;
-
-      // click fuera
-      onHover(null);
-      onSelect && onSelect(null as any);
-    };
-
-    document.addEventListener('click', onDocClick);
-
-    return () => document.removeEventListener('click', onDocClick);
-  }, [onHover, onSelect]);
-
   // Mouse move inspector para obtener coordenadas relativas (porcentaje)
   useEffect(() => {
     const container = svgRef.current;
@@ -165,7 +149,7 @@ export default function ColombiaSVG({
 
     const onClick = (e: MouseEvent) => {
       // Si presionas Shift al click, copia la entrada para coverageData.ts
-      if (e.shiftKey && coords) {
+      if (e.shiftKey) {
         copyCoords();
       }
     };
@@ -177,7 +161,7 @@ export default function ColombiaSVG({
       container.removeEventListener('mousemove', onMove);
       container.removeEventListener('click', onClick);
     };
-  }, [svgRef, coords]);
+  }, [copyCoords]);
 
   return (
     <motion.div
@@ -286,9 +270,8 @@ export default function ColombiaSVG({
           );
         })}
 
-        {/* Sedes individuales */}
-        {coverageData.map((dept) =>
-          dept.sedeList?.map((sede) => (
+        {/* Sedes por ciudad del departamento seleccionado */}
+        {selected?.sedeList.map((sede) => (
             <MapMarker
               key={sede.id}
               x={clamp(sede.x)}
@@ -297,18 +280,17 @@ export default function ColombiaSVG({
               label={sede.name}
               onClick={() => {
                 // seleccionar departamento y sede, pero NO navegar automáticamente
-                onSelect && onSelect(dept);
+                onSelect(selected);
                 const event = new CustomEvent('coverage:sedeSelected', {
-                  detail: { departmentId: dept.id, sedeId: sede.id },
+                  detail: { departmentId: selected.id, sedeId: sede.id },
                 });
 
                 document.dispatchEvent(event);
                 // Llamar callback opcional
-                onSelectSede && onSelectSede(dept.id, sede.id);
+                onSelectSede && onSelectSede(selected.id, sede.id);
               }}
             />
-          ))
-        )}
+          ))}
       </motion.div>
 
       {/* Inspector de coordenadas (útil para calibrar x,y de sedes) */}
