@@ -53,7 +53,7 @@ export default function QuienesSomosPage() {
       <PageHero
         title="Quiénes Somos"
         subtitle="Más de 26 años acompañando a las familias colombianas con respeto, dignidad y sentido humano."
-        image="/images/quiene_somos.jpg"
+        image="/images/images-baners/QuienesSomos.webp"
         imageAlt="Quiénes somos Jardines del Renacer"
       />
 
@@ -69,7 +69,7 @@ export default function QuienesSomosPage() {
               <div className="flex flex-col gap-4 h-[500px]">
                 <div className="group/item1 relative w-full h-1/2 rounded-3xl overflow-hidden shadow-lg transition-all duration-500 ease-out hover:h-2/3">
                   <Image
-                    src="/images/images-baners/QuienesSomos.webp"
+                    src="/images/images-baners/"
                     alt="Equipo de Jardines del Renacer"
                     fill
                     className="object-cover transition-transform duration-500 group-hover/item1:scale-105"

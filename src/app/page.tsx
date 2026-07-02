@@ -106,7 +106,7 @@ export default function HomePage() {
           />
         </FadeIn>
         <Container>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
+          <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-3">
             {[
               {
                 title: 'Servicios Funerarios',
@@ -122,34 +122,39 @@ export default function HomePage() {
               },
               {
                 title: 'Siempre Contigo',
-                description: 'Transmisión en vivo 360 para acompanar la velacion desde cualquier lugar',
+                description: 'Transmisión en vivo 360 para acompañar la velación desde cualquier lugar',
                 imagePath: '/images/siempre_contigo.jpg',
                 link: '/siempre-contigo',
               },
             ].map((service, index) => (
               <FadeIn key={service.title} delay={index * 0.1}>
                 <Link href={service.link} className="group block h-full">
-                  <div className="glass rounded-3xl hover:scale-105 hover:shadow-xl transition-all duration-300 h-full border border-primary/10 overflow-hidden flex flex-col">
-                    {/* Imagen superior a todo lo ancho */}
-                    <div className="relative w-full h-48 sm:h-56">
-                      <Image 
-                        src={service.imagePath} 
-                        alt={service.title} 
+                  <div className="relative flex h-full flex-col overflow-hidden rounded-[28px] border border-primary/20 bg-white/90 shadow-[0_20px_45px_rgba(25,52,91,0.1)] transition-all duration-500 hover:-translate-y-2 hover:scale-[1.01] hover:border-primary/50 hover:shadow-[0_30px_70px_rgba(25,52,91,0.22)] active:scale-[0.99] active:border-primary/70 sm:hover:shadow-[0_35px_80px_rgba(25,52,91,0.24)]">
+                    <div className="absolute inset-0 rounded-[28px] bg-gradient-to-br from-primary/20 via-primary/10 to-[#5a7ec0]/25 opacity-100" />
+                    <div className="absolute inset-x-3 top-3 h-[2px] rounded-full bg-gradient-to-r from-transparent via-primary to-transparent opacity-100" />
+                    <div className="relative h-52 overflow-hidden sm:h-56">
+                      <Image
+                        src={service.imagePath}
+                        alt={service.title}
                         fill
-                        className="object-cover group-hover:scale-110 transition-transform duration-500"
+                        className="object-cover transition-transform duration-700 group-hover:scale-110"
                       />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
+                      <div className="absolute left-5 top-5 rounded-full bg-white/95 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-primary shadow-sm">
+                        Servicio
+                      </div>
                     </div>
-                    {/* Contenedor del texto inferior */}
-                    <div className="p-8 flex flex-col flex-1">
-                      <h3 className="text-2xl font-display mb-4 text-text">
+
+                    <div className="relative z-10 flex flex-1 flex-col p-7">
+                      <h3 className="mb-3 text-2xl font-display text-text transition-colors duration-300 group-hover:text-primary">
                         {service.title}
                       </h3>
-                      <p className="text-textLight mb-6">
+                      <p className="mb-6 flex-1 text-sm leading-7 text-textLight">
                         {service.description}
                       </p>
-                      <div className="mt-auto inline-flex items-center text-primary font-medium group-hover:translate-x-1 transition-transform duration-300">
+                      <div className="mt-auto inline-flex items-center font-semibold text-primary transition-all duration-300 group-hover:translate-x-1 group-hover:text-primary/90">
                         Ver más
-                        <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="ml-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                         </svg>
                       </div>

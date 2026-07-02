@@ -90,10 +90,11 @@ export default function PlanesPage() {
             ))}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
             {visiblePlans.map((plan, index) => (
-              <FadeIn key={plan.id} delay={index * 0.1}>
-                <PlanFlipCard
+              <FadeIn key={plan.id} delay={index * 0.1} className="h-full">
+                <div className="h-full">
+                  <PlanFlipCard
                   id={plan.id}
                   name={plan.name}
                   tagline={plan.tagline}
@@ -110,6 +111,7 @@ export default function PlanesPage() {
                     window.location.href = `/cotizar?plan=${planId}`;
                   }}
                 />
+                </div>
               </FadeIn>
             ))}
           </div>
@@ -130,3 +132,4 @@ export default function PlanesPage() {
     </>
   );
 }
+
