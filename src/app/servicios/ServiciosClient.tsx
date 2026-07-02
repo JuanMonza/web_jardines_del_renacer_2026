@@ -338,7 +338,7 @@ export default function ServiciosClient() {
         imageAlt="Servicios funerarios Jardines del Renacer"
       />
 
-      <section className="py-28 overflow-hidden">
+      <section className="pb-20 overflow-hidden">
         <Container>
           <FadeIn>
             <FullBleedBand

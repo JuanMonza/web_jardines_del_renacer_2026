@@ -41,7 +41,7 @@
 - src/components/layout/Footer.tsx
 
 ## Componentes Cards
-- src/components/cards/PlanFlipCard.tsx
+- src/components/cards/FlipCard.tsx
 - src/components/cards/ObituaryCard.tsx
 
 ## Componentes Animación

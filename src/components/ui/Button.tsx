@@ -1,23 +1,34 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 
-export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+type BaseButtonProps = {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
   children: React.ReactNode;
-}
+  className?: string;
+};
 
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = 'primary', size = 'md', children, ...props }, ref) => {
+type ButtonAsButton = BaseButtonProps &
+  Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, keyof BaseButtonProps> & {
+    as?: 'button';
+  };
+
+type ButtonAsLink = BaseButtonProps &
+  Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, keyof BaseButtonProps> & {
+    as: 'a';
+  };
+
+type ButtonProps = ButtonAsButton | ButtonAsLink;
+
+const Button = React.forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonProps>(
+  ({ className, variant = 'primary', size = 'md', children, as = 'button', ...props }, ref) => {
     const baseStyles = 'inline-flex items-center justify-center rounded-xl font-medium transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed';
-    
     const variants = {
       primary: 'bg-primary text-white hover:bg-primary-hover hover:scale-105 active:scale-95',
       secondary: 'glass text-primary hover:bg-white/80',
       outline: 'border-2 border-white text-white hover:bg-white hover:text-primary',
       ghost: 'text-primary hover:bg-primary/10',
     };
-
     const sizes = {
       sm: 'px-4 py-2 text-sm',
       md: 'px-6 py-3 text-base',

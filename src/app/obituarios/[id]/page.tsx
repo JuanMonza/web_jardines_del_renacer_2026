@@ -11,7 +11,7 @@ import { buildObituaryMapQuery, getObituaryById } from '@/data/obituaries';
 
 const OBITUARIO_BACKGROUND_IMAGE = '/images/fondo_obituarios.png';
 const OBITUARIOS_PAGE_BACKGROUND_CLASS =
-  "bg-[url('/images/obituariios.jpg')] bg-cover bg-center bg-fixed bg-no-repeat";
+  "bg-[url('/images/fondo_obituarios.png')] bg-cover bg-center bg-fixed bg-no-repeat";
 
 type SharePlatform = 'facebook' | 'x' | 'whatsapp' | 'telegram' | 'copiar';
 

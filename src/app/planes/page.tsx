@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { Globe, Users, Zap } from 'lucide-react';
 import Container from '@/components/ui/Container';
 import PageHero from '@/components/ui/PageHero';
 import TitleBand from '@/components/ui/TitleBand';
@@ -11,20 +12,40 @@ import Button from '@/components/ui/Button';
 import { PLANS_CONFIG } from '@/config/plans';
 import { buildWhatsAppUrl } from '@/config/contact';
 
+const features = [
+  {
+    title: 'Cobertura nacional',
+    description: 'Respaldo para familias en diferentes ciudades del país.',
+    icon: Globe,
+  },
+  {
+    title: 'Asesoría personalizada',
+    description: 'Te ayudamos a elegir según tu núcleo familiar y necesidad.',
+    icon: Users,
+  },
+  {
+    title: 'Atención ágil',
+    description: 'Cotiza por WhatsApp o formulario sin pasos innecesarios.',
+    icon: Zap,
+  },
+];
+
 export default function PlanesPage() {
   const allPlans = Object.values(PLANS_CONFIG);
   const [activeCategory, setActiveCategory] = useState('Todos');
+
   const categories = [
     'Todos',
     'Destacados',
     ...Array.from(new Set(allPlans.map((plan) => plan.planType).filter(Boolean))),
   ];
+
   const visiblePlans =
     activeCategory === 'Todos'
       ? allPlans
       : activeCategory === 'Destacados'
-        ? allPlans.filter((plan) => plan.featured)
-        : allPlans.filter((plan) => plan.planType === activeCategory);
+      ? allPlans.filter((plan) => plan.featured)
+      : allPlans.filter((plan) => plan.planType === activeCategory);
 
   return (
     <>
@@ -35,12 +56,14 @@ export default function PlanesPage() {
         imageAlt="Planes funerarios Jardines del Renacer"
       >
         <div className="flex flex-col gap-3 sm:flex-row">
-          <Link href="/cotizar">
-            <Button variant="primary" size="lg" className="w-full sm:w-auto">
-              Cotizar plan
-            </Button>
-          </Link>
-          <a href={buildWhatsAppUrl('Hola Jardines del Renacer, quiero asesoria para elegir un plan.')} target="_blank" rel="noopener noreferrer">
+          <Button as="a" href="/cotizar" variant="primary" size="lg" className="w-full sm:w-auto">
+            Cotizar plan
+          </Button>
+          <a
+            href={buildWhatsAppUrl('Hola Jardines del Renacer, quiero asesoría para elegir un plan.')}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             <Button variant="secondary" size="lg" className="w-full sm:w-auto bg-white/90">
               Hablar con un asesor
             </Button>
@@ -50,16 +73,17 @@ export default function PlanesPage() {
 
       <section className="py-12">
         <Container>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            {[
-              ['Cobertura nacional', 'Respaldo para familias en diferentes ciudades del país.'],
-              ['Asesoría personalizada', 'Te ayudamos a elegir según tu núcleo familiar y necesidad.'],
-              ['Atención ágil', 'Cotiza por WhatsApp o formulario sin pasos innecesarios.'],
-            ].map(([title, description]) => (
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+            {features.map(({ title, description, icon: Icon }) => (
               <FadeIn key={title}>
-                <div className="glass h-full rounded-2xl border border-primary/15 p-6">
-                  <p className="text-lg font-bold text-primary">{title}</p>
-                  <p className="mt-2 text-sm text-textLight">{description}</p>
+                <div className="group glass h-full rounded-2xl border border-primary/15 p-6 transition-all duration-300 hover:border-primary/30 hover:shadow-lg hover:-translate-y-1">
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary transition-all duration-300 group-hover:scale-110 group-hover:bg-primary group-hover:text-white">
+                      <Icon className="h-6 w-6" />
+                    </div>
+                    <p className="text-lg font-bold text-primary">{title}</p>
+                  </div>
+                  <p className="mt-3 text-sm text-textLight">{description}</p>
                 </div>
               </FadeIn>
             ))}
@@ -90,28 +114,15 @@ export default function PlanesPage() {
             ))}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 auto-rows-fr">
             {visiblePlans.map((plan, index) => (
               <FadeIn key={plan.id} delay={index * 0.1} className="h-full">
-                <div className="h-full">
-                  <PlanFlipCard
-                  id={plan.id}
-                  name={plan.name}
-                  tagline={plan.tagline}
-                  price={plan.price}
-                  image={plan.image}
-                  benefits={plan.benefits}
-                  planType={plan.planType}
-                  description={plan.description}
-                  includes={plan.includes}
-                  geographicCoverage={plan.geographicCoverage}
-                  conditions={plan.conditions}
-                  featured={plan.featured}
+                <PlanFlipCard
+                  {...plan}
                   onQuote={(planId) => {
                     window.location.href = `/cotizar?plan=${planId}`;
                   }}
                 />
-                </div>
               </FadeIn>
             ))}
           </div>
@@ -121,7 +132,12 @@ export default function PlanesPage() {
             <p className="mx-auto mt-3 max-w-2xl text-white/90">
               Un asesor puede ayudarte a comparar cobertura, condiciones y beneficios antes de cotizar.
             </p>
-            <a href={buildWhatsAppUrl('Hola Jardines del Renacer, necesito ayuda para elegir el plan ideal.')} target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex">
+            <a
+              href={buildWhatsAppUrl('Hola Jardines del Renacer, necesito ayuda para elegir el plan ideal.')}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-6 inline-flex"
+            >
               <Button variant="secondary" size="lg" className="bg-white/95">
                 Recibir asesoría
               </Button>
@@ -132,4 +148,3 @@ export default function PlanesPage() {
     </>
   );
 }
-

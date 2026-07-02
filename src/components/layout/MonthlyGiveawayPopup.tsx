@@ -3,13 +3,24 @@
 import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { buildWhatsAppUrl } from '@/config/contact';
+import { giveawaysData } from '@/content/giveaways';
+import CountdownUnit from '@/components/ui/CountdownUnit';
 
 const PRELOADER_DURATION_MS = 2000;
 const POPUP_DELAY_MS = 500;
 const AUTO_CLOSE_MS = 20000;
-const POPUP_IMAGE_SRC = '/images/sorteo_ejemplo.jpeg';
-const NEXT_GIVEAWAY_ISO = '2026-04-16T19:00:00-05:00';
-const NEXT_GIVEAWAY_LABEL = '16/04/2026 - 7:00 p. m.';
+
+/**
+ * Encuentra el próximo sorteo disponible basándose en la fecha actual.
+ * @returns El objeto del próximo sorteo o null si no hay futuros.
+ */
+function getNextGiveaway() {
+  const now = Date.now();
+  return (
+    giveawaysData.find((giveaway) => new Date(giveaway.date).getTime() > now) ||
+    null
+  );
+}
 
 function getTimeRemaining(targetDateIso: string) {
   const difference = new Date(targetDateIso).getTime() - Date.now();
@@ -26,24 +37,22 @@ function getTimeRemaining(targetDateIso: string) {
   };
 }
 
-function CountdownUnit({ value, label }: { value: number; label: string }) {
-  return (
-    <div className="flex min-w-[4.25rem] flex-col items-center rounded-2xl border border-primary/10 bg-primary/5 px-3 py-2">
-      <span className="text-2xl font-black leading-none text-primary sm:text-[1.75rem]">
-        {value.toString().padStart(2, '0')}
-      </span>
-      <span className="mt-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-textLight">
-        {label}
-      </span>
-    </div>
-  );
-}
-
 export default function MonthlyGiveawayPopup() {
   const [isVisible, setIsVisible] = useState(false);
   const [progress, setProgress] = useState(100);
-  const [timeRemaining, setTimeRemaining] = useState(() => getTimeRemaining(NEXT_GIVEAWAY_ISO));
 
+  // Obtiene dinámicamente el próximo sorteo
+  const nextGiveaway = useMemo(() => getNextGiveaway(), []);
+
+  const [timeRemaining, setTimeRemaining] = useState(() =>
+    nextGiveaway ? getTimeRemaining(nextGiveaway.date) : null
+  );
+
+  // Formatea la fecha para mostrarla en el popup
+  const nextGiveawayLabel = useMemo(() => {
+    if (!nextGiveaway) return 'Próximamente';
+    return new Date(nextGiveaway.date).toLocaleString('es-CO', { dateStyle: 'long', timeStyle: 'short' });
+  }, [nextGiveaway]);
   const actionUrl = useMemo(
     () =>
       buildWhatsAppUrl(
@@ -51,6 +60,11 @@ export default function MonthlyGiveawayPopup() {
       ),
     []
   );
+
+  // Si no hay próximos sorteos, no se muestra el popup
+  if (!nextGiveaway) {
+    return null;
+  }
 
   useEffect(() => {
     const openTimer = window.setTimeout(() => {
@@ -87,10 +101,10 @@ export default function MonthlyGiveawayPopup() {
       return;
     }
 
-    setTimeRemaining(getTimeRemaining(NEXT_GIVEAWAY_ISO));
+    setTimeRemaining(getTimeRemaining(nextGiveaway.date));
 
     const countdownTimer = window.setInterval(() => {
-      setTimeRemaining(getTimeRemaining(NEXT_GIVEAWAY_ISO));
+      setTimeRemaining(getTimeRemaining(nextGiveaway.date));
     }, 1000);
 
     return () => window.clearInterval(countdownTimer);
@@ -118,13 +132,16 @@ export default function MonthlyGiveawayPopup() {
           <div className="mx-auto w-full max-w-[16.5rem] sm:max-w-[18.5rem] md:max-w-[20.5rem]">
             <div className="relative aspect-[4/5] w-full overflow-hidden rounded-[1.25rem] bg-slate-100 shadow-[0_20px_45px_rgba(15,23,42,0.18)]">
               <Image
-                src={POPUP_IMAGE_SRC}
+                src={nextGiveaway.image}
                 alt="Sorteos mensuales de Jardines del Renacer"
                 fill
                 sizes="(max-width: 640px) 72vw, (max-width: 768px) 18.5rem, 20.5rem"
                 className="object-contain object-center"
                 priority
               />
+              <div className="absolute bottom-0 w-full bg-primary/80 p-1.5 text-center text-[10px] font-semibold text-white backdrop-blur-sm">
+                *Imagen de referencia. Aplican T&C.
+              </div>
             </div>
           </div>
         </div>
@@ -135,15 +152,15 @@ export default function MonthlyGiveawayPopup() {
               Proximo sorteo
             </p>
             <p className="mt-2 text-center text-sm font-semibold text-slate-700">
-              {NEXT_GIVEAWAY_LABEL}
+              {nextGiveawayLabel}
             </p>
 
             {timeRemaining ? (
               <div className="mt-4 grid grid-cols-4 gap-2 sm:gap-3">
-                <CountdownUnit value={timeRemaining.days} label="Dias" />
-                <CountdownUnit value={timeRemaining.hours} label="Horas" />
-                <CountdownUnit value={timeRemaining.minutes} label="Min" />
-                <CountdownUnit value={timeRemaining.seconds} label="Seg" />
+                <CountdownUnit value={timeRemaining.days} label="Dias" className="min-w-[4.25rem] !text-2xl sm:!text-[1.75rem]" />
+                <CountdownUnit value={timeRemaining.hours} label="Horas" className="min-w-[4.25rem] !text-2xl sm:!text-[1.75rem]" />
+                <CountdownUnit value={timeRemaining.minutes} label="Min" className="min-w-[4.25rem] !text-2xl sm:!text-[1.75rem]" />
+                <CountdownUnit value={timeRemaining.seconds} label="Seg" className="min-w-[4.25rem] !text-2xl sm:!text-[1.75rem]" />
               </div>
             ) : (
               <p className="mt-4 rounded-2xl bg-primary px-4 py-3 text-center text-sm font-semibold text-white">

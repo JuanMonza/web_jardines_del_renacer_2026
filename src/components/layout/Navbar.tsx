@@ -28,6 +28,7 @@ export default function Navbar() {
     { href: PARQUE_CONMEMORATIVO_URL, label: 'Parque Conmemorativo', external: true },
     { href: '/repatriaciones', label: 'Repatriaciones' },
     { href: '/acompanamiento-en-duelo', label: 'Acompañamiento en Duelo' },
+    { href: '/sorteos', label: 'Sorteos' },
   ];
 
   const aliadosSubmenu = ALLY_CATEGORIES.map((category) => ({

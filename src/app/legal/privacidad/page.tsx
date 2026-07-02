@@ -117,7 +117,7 @@ export default function PrivacidadPage() {
       <PageHero
         title="Política de Privacidad"
         subtitle="Tratamiento responsable de datos personales conforme a la normativa colombiana."
-        image="/images/images-baners/legal.jpg"
+        image="/images/images-baners/Politicasdeprivacidad.webp"
         imageAlt="Política de Privacidad - Jardines del Renacer"
       />
 

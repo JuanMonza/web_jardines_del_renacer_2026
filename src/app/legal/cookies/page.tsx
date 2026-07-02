@@ -32,7 +32,7 @@ export default function CookiesPage() {
       <PageHero
         title="Política de Cookies"
         subtitle="Información sobre el uso de cookies en nuestro sitio web."
-        image="/images/images-baners/legal.jpg"
+        image="/images/images-baners/cookies.webp"
         imageAlt="Política de Cookies - Jardines del Renacer"
       />
 
