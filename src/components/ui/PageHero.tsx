@@ -51,7 +51,7 @@ export default function PageHero({
 
       {/* Capas oscuras para mejorar legibilidad */}
       <div className="absolute inset-0 bg-black/50" />
-      <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-primary/25 to-black/65" />
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-blue-400" />
 
       <Container className="relative z-10 flex min-h-[380px] items-center md:min-h-[420px]">
         <div className="max-w-4xl">

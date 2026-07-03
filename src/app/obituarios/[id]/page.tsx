@@ -161,11 +161,19 @@ export default function ObituarioDetallePage() {
 
   return (
     <main className={`relative min-h-screen overflow-hidden pt-24 pb-12 ${OBITUARIOS_PAGE_BACKGROUND_CLASS}`}>
-      <div className="absolute inset-0 bg-background/85 backdrop-blur-[2px]" />
+      <div className="absolute inset-0 bg-transparent z-10 backdrop-blur-[2px]" />
       <div className="relative z-10">
         <Container>
           <FadeIn>
-          <div className="relative h-[22rem] md:h-[28rem] rounded-3xl overflow-hidden mb-8 bg-gradient-to-b from-transparent to-black/90 w-full">
+          <div className="relative h-[22rem] md:h-[28rem] rounded-3xl overflow-hidden mb-8 bg-blue-100 w-full">
+            <Image
+              src={OBITUARIO_BACKGROUND_IMAGE}
+              alt={`En memoria de ${obituario.nombre}`}
+              fill
+              className="object-cover opacity-40"
+              priority
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-blue-300/60 via-black/20 to-transparent" />
             <div className="absolute inset-0 z-30 flex items-center justify-center px-6">
               <div className="max-w-4xl text-center text-white drop-shadow-[0_3px_10px_rgba(0,0,0,0.45)]">
                 <p className="text-lg md:text-xl mb-2">En memoria de</p>
@@ -279,7 +287,7 @@ export default function ObituarioDetallePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
               <Button
                 onClick={() => {
-                  window.location.href = '/floreria';
+                  window.location.href = '/proximamente';
                 }}
                 variant="primary"
                 className="w-full h-14 text-lg bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600"

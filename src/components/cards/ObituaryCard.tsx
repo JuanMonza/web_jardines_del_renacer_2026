@@ -11,7 +11,7 @@ interface ObituaryCardProps {
   index?: number;
 }
 
-const OBITUARIO_BACKGROUND_IMAGE = '/images/obituarios_opcion_2.jpeg';
+const OBITUARIO_BACKGROUND_IMAGE = '/images/fondo_obituarios.png';
 
 
 export default function ObituaryCard({ obituary, index = 0 }: ObituaryCardProps) {
@@ -30,13 +30,8 @@ export default function ObituaryCard({ obituary, index = 0 }: ObituaryCardProps)
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: index * 0.1 }}
-      className="glass rounded-2xl overflow-hidden hover:shadow-glass-lg transition-all duration-300 flex flex-col h-full"
-    >
-      <Link href={`/obituarios/${obituary.id}`} className="flex flex-col h-full group">
+    <Link href={`/obituarios/${obituary.id}`} className="group block h-full">
+      <div className="flex h-full flex-col overflow-hidden rounded-2xl glass transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_10px_40px_rgba(60,96,162,0.2)]">
         <div className="relative h-56 sm:h-64 w-full shrink-0 overflow-hidden">
           <Image
             src={OBITUARIO_BACKGROUND_IMAGE}
@@ -44,7 +39,7 @@ export default function ObituaryCard({ obituary, index = 0 }: ObituaryCardProps)
             fill
             className="object-cover object-center group-hover:scale-110 transition-transform duration-700"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-primary/70 via-primary/20 to-transparent" />
           
           {/* Info Overlay */}
           <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6 text-white">
@@ -98,7 +93,7 @@ export default function ObituaryCard({ obituary, index = 0 }: ObituaryCardProps)
             </span>
           </div>
         </div>
-      </Link>
-    </motion.div>
+      </div>
+    </Link>
   );
 }

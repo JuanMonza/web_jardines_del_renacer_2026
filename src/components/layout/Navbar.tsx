@@ -58,7 +58,7 @@ export default function Navbar() {
         <div className="bg-[#3C60A2]/95 backdrop-blur-md shadow-lg h-16 relative">
           {/* Recorte circular en el centro */}
           <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-36 h-36 lg:w-40 lg:h-40 rounded-full bg-transparent border-8 border-background z-20"></div>
-          
+
           <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
             <div className="relative flex items-center justify-between h-full">
               {/* Desktop Navigation - Izquierda */}
@@ -77,7 +77,7 @@ export default function Navbar() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </button>
-                  
+
                   {/* Dropdown Menu */}
                   <div
                     className={cn(
@@ -112,7 +112,7 @@ export default function Navbar() {
                 <Link href="/recorrido-360" className="text-white hover:text-white/80 transition-colors duration-300 text-sm uppercase tracking-wide font-medium">
                   Recorrido 360
                 </Link>
-                
+
                 <Link href="/ubicaciones" className="text-white hover:text-white/80 transition-colors duration-300 text-sm uppercase tracking-wide font-medium">
                   Nuestras Sedes
                 </Link>
@@ -123,8 +123,44 @@ export default function Navbar() {
               </div>
 
               {/* Logo CIRCULAR - MÁS GRANDE y CENTRADO */}
-              <Link href="/" className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-30">
-                <div className="w-32 h-32 lg:w-36 lg:h-36 relative bg-[#3C60A2] rounded-full shadow-2xl border-4 border-white flex items-center justify-center hover:scale-105 transition-transform duration-300">
+              <Link
+                href="/"
+                className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-30"
+              >
+                {/* Halo azul */}
+                <div className="absolute inset-0 scale-[1.18] rounded-full bg-[#4F7BFF]/30 blur-2xl"></div>
+
+                {/* Glow secundario */}
+                <div className="absolute inset-0 scale-[1.35] rounded-full bg-[#3C60A2]/20 blur-[45px]"></div>
+
+                {/* Logo */}
+                <div
+                  className="
+      relative
+      w-32
+      h-32
+      lg:w-36
+      lg:h-36
+      rounded-full
+      border-4
+      border-white
+      bg-[#3C60A2]
+      flex
+      items-center
+      justify-center
+      transition-all
+      duration-500
+      hover:scale-105
+    "
+                  style={{
+                    boxShadow: `
+        0 0 0 8px rgba(255,255,255,.18),
+        0 0 35px rgba(79,123,255,.45),
+        0 0 80px rgba(79,123,255,.28),
+        0 20px 45px rgba(0,0,0,.25)
+      `,
+                  }}
+                >
                   <Image
                     src="/logo-oficial.webp"
                     alt="Jardines del Renacer"
@@ -136,12 +172,13 @@ export default function Navbar() {
                 </div>
               </Link>
 
+
               {/* Desktop Navigation - Derecha */}
               <div className="hidden lg:flex items-center space-x-6 flex-1 pl-32">
                 <Link href="/cotizar" className="text-white hover:text-white/80 transition-colors duration-300 text-sm uppercase tracking-wide font-medium">
                   Afíliate Ya
                 </Link>
-                
+
                 {/* Aliados Dropdown */}
                 <div
                   className="relative group"
@@ -180,7 +217,7 @@ export default function Navbar() {
                     ))}
                   </div>
                 </div>
-                
+
                 {/* Contacto Dropdown */}
                 <div
                   className="relative group"
@@ -212,10 +249,10 @@ export default function Navbar() {
                     ))}
                   </div>
                 </div>
-                
+
                 {/* Botones CTA */}
-                <PaymentDropdown 
-                  wompiUrl="https://checkout.wompi.co/method" 
+                <PaymentDropdown
+                  wompiUrl="https://checkout.wompi.co/method"
                   pseUrl="https://checkout.wompi.co/l/TU_LINK_DE_PSE_AQUI"
                   buttonVariant="secondary"
                   buttonSize="sm"
@@ -267,49 +304,49 @@ export default function Navbar() {
           )}
         >
           <div className="py-4 space-y-3 pb-20">
-              {/* Conócenos Mobile */}
-              <div className="space-y-1">
-                <button
-                  onClick={() => setMobileConocenosOpen(!mobileConocenosOpen)}
-                  className="flex items-center justify-between w-full px-2 py-2 text-white font-semibold hover:bg-white/10 rounded-lg transition-colors"
+            {/* Conócenos Mobile */}
+            <div className="space-y-1">
+              <button
+                onClick={() => setMobileConocenosOpen(!mobileConocenosOpen)}
+                className="flex items-center justify-between w-full px-2 py-2 text-white font-semibold hover:bg-white/10 rounded-lg transition-colors"
+              >
+                Conócenos
+                <svg
+                  className={cn("w-4 h-4 transition-transform duration-300", mobileConocenosOpen ? "rotate-180" : "")}
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24"
                 >
-                  Conócenos
-                  <svg
-                    className={cn("w-4 h-4 transition-transform duration-300", mobileConocenosOpen ? "rotate-180" : "")}
-                    fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                <div className={cn("overflow-hidden transition-all duration-300 space-y-1", mobileConocenosOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0")}>
-                  {conocenosSubmenu.map((item) => (
-                    item.external ? (
-                      <a
-                        key={item.href}
-                        href={item.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block border-l-2 border-transparent pl-6 pr-2 py-2 text-white/80 hover:border-white hover:text-white transition-colors text-sm"
-                        onClick={() => setIsOpen(false)}
-                      >
-                        {item.label}
-                      </a>
-                    ) : (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        className={cn(
-                          'block border-l-2 pl-6 pr-2 py-2 text-white/80 hover:border-white hover:text-white transition-colors text-sm',
-                          isActive(item.href) ? 'border-white text-white' : 'border-transparent'
-                        )}
-                        onClick={() => setIsOpen(false)}
-                      >
-                        {item.label}
-                      </Link>
-                    )
-                  ))}
-                </div>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              <div className={cn("overflow-hidden transition-all duration-300 space-y-1", mobileConocenosOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0")}>
+                {conocenosSubmenu.map((item) => (
+                  item.external ? (
+                    <a
+                      key={item.href}
+                      href={item.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block border-l-2 border-transparent pl-6 pr-2 py-2 text-white/80 hover:border-white hover:text-white transition-colors text-sm"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      {item.label}
+                    </a>
+                  ) : (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={cn(
+                        'block border-l-2 pl-6 pr-2 py-2 text-white/80 hover:border-white hover:text-white transition-colors text-sm',
+                        isActive(item.href) ? 'border-white text-white' : 'border-transparent'
+                      )}
+                      onClick={() => setIsOpen(false)}
+                    >
+                      {item.label}
+                    </Link>
+                  )
+                ))}
               </div>
+            </div>
 
             <Link
               href="/recorrido-360"
@@ -334,7 +371,7 @@ export default function Navbar() {
             >
               Obituarios
             </Link>
-            
+
             <Link
               href="/cotizar"
               className="block px-2 py-2 text-white/90 hover:text-white transition-colors"
@@ -376,7 +413,7 @@ export default function Navbar() {
                 ))}
               </div>
             </div>
-            
+
             {/* Contacto Mobile */}
             <div className="space-y-1">
               <button
@@ -410,8 +447,8 @@ export default function Navbar() {
                   Conoce Nuestras Salas
                 </Button>
               </Link>
-              <PaymentDropdown 
-                wompiUrl="https://checkout.wompi.co/method" 
+              <PaymentDropdown
+                wompiUrl="https://checkout.wompi.co/method"
                 pseUrl="https://checkout.wompi.co/l/TU_LINK_DE_PSE_AQUI"
                 buttonVariant="secondary"
                 buttonSize="sm"
