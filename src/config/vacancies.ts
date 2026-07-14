@@ -27,6 +27,8 @@ export interface JobVacancy {
   postedAt: string;
   createdAt: string;
   updatedAt: string;
+  createdByCedula?: string;
+  createdByName?: string;
 }
 
 /** Clave utilizada para persistir las vacantes en el almacenamiento local (localStorage). */
@@ -284,5 +286,7 @@ export function createEmptyVacancy(): JobVacancy {
     postedAt: new Date().toISOString().slice(0, 10),
     createdAt: '',
     updatedAt: '',
+    createdByCedula: '',
+    createdByName: '',
   };
 }

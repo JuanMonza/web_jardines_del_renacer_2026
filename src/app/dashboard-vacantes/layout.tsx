@@ -29,6 +29,12 @@ export default function DashboardVacantesLayout({
 
     try {
       const parsed = JSON.parse(raw) as VacanciesAdminUser;
+      if (parsed.role !== 'admin_vacantes') {
+        localStorage.removeItem('vacanciesAdminUser');
+        router.replace('/login/admin-vacantes');
+        return;
+      }
+
       setUser(parsed);
       setCheckingAccess(false);
     } catch {

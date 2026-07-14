@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import AuthLoginLayout from '@/components/login/AuthLoginLayout';
 import LoginTextField from '@/components/login/LoginTextField';
+import { findAdminUserByCredentials, type ManagedAdminUser } from '@/lib/adminUsersStorage';
 
 type LoginStep = 'credentials' | 'otp';
 
@@ -21,6 +22,7 @@ export default function AdminLoginPage() {
   const [step, setStep] = useState<LoginStep>('credentials');
   const [otpCode, setOtpCode] = useState('');
   const [otpInput, setOtpInput] = useState('');
+  const [pendingUser, setPendingUser] = useState<ManagedAdminUser | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -48,8 +50,11 @@ export default function AdminLoginPage() {
           return;
         }
 
-        if (formData.cedula === '1234567890' && formData.password === 'admin123') {
+        const adminUser = findAdminUserByCredentials(formData.cedula, formData.password, ['admin']);
+
+        if (adminUser) {
           const code = generateOtpCode();
+          setPendingUser(adminUser);
           setOtpCode(code);
           setOtpInput('');
           setStep('otp');
@@ -68,14 +73,23 @@ export default function AdminLoginPage() {
         return;
       }
 
+      if (!pendingUser) {
+        setError('Vuelve a ingresar tus credenciales.');
+        setStep('credentials');
+        setLoading(false);
+        return;
+      }
+
       localStorage.setItem(
         'adminUser',
         JSON.stringify({
-          cedula: formData.cedula,
-          role: 'admin',
-          name: 'Administrador de Obituarios',
+          cedula: pendingUser.cedula,
+          role: pendingUser.rol,
+          name: pendingUser.nombre,
         }),
       );
+      localStorage.removeItem('alliesAdminUser');
+      localStorage.removeItem('vacanciesAdminUser');
       router.push('/dashboard');
     } catch {
       setError('Error al iniciar sesion. Por favor intenta nuevamente.');
@@ -178,6 +192,7 @@ export default function AdminLoginPage() {
               setStep('credentials');
               setOtpInput('');
               setOtpCode('');
+              setPendingUser(null);
               setError('');
             }}
             className="w-full rounded-xl border border-black/15 bg-white/80 py-3 text-sm font-medium text-black/75 hover:bg-white"
@@ -188,6 +203,7 @@ export default function AdminLoginPage() {
 
         <div className="rounded-xl border border-black/10 bg-black/5 px-4 py-3 text-sm text-black/75">
           <p className="font-semibold text-black mb-1">Credenciales de prueba</p>
+          <p>Usuario inicial del master:</p>
           <p>Cedula: <span className="font-mono">1234567890</span></p>
           <p>Contrasena: <span className="font-mono">admin123</span></p>
           {step === 'otp' && (

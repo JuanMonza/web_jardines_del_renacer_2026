@@ -25,26 +25,16 @@ export default function PageHero({
   return (
     <section
       className={cn(
-        'relative min-h-[500px] overflow-hidden bg-primary pt-24 pb-10 text-white sm:pt-28 md:min-h-[520px] md:pb-0',
+        'relative min-h-[390px] overflow-hidden bg-primary pt-24 pb-10 text-white sm:min-h-[430px] sm:pt-28 md:min-h-[520px] md:pb-0',
         className
       )}
     >
-      {/* Fondo para móviles */}
-      <Image
-        src={image}
-        alt=""
-        fill
-        aria-hidden="true"
-        className="scale-110 object-cover blur-2xl md:hidden"
-        sizes="100vw"
-      />
-
       {/* Imagen principal */}
       <Image
         src={image}
         alt={imageAlt ?? title}
         fill
-        className="object-contain object-center md:object-cover"
+        className="object-cover object-center"
         sizes="100vw"
         priority
       />
@@ -52,7 +42,7 @@ export default function PageHero({
       {/* Capa oscura para legibilidad del texto */}
       <div className="absolute inset-0 bg-black/50" />
 
-      <Container className="relative z-10 flex min-h-[380px] items-center md:min-h-[420px]">
+      <Container className="relative z-10 flex min-h-[250px] items-center sm:min-h-[290px] md:min-h-[420px]">
         <div className="max-w-4xl">
 
           <p className="mb-4 text-sm font-bold uppercase tracking-[0.22em] text-white/85">

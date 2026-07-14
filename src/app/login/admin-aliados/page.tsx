@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import AuthLoginLayout from '@/components/login/AuthLoginLayout';
 import LoginTextField from '@/components/login/LoginTextField';
+import { findAdminUserByCredentials, type ManagedAdminUser } from '@/lib/adminUsersStorage';
 
 type LoginStep = 'credentials' | 'otp';
 
@@ -19,6 +20,7 @@ export default function AdminAliadosLoginPage() {
   const [step, setStep] = useState<LoginStep>('credentials');
   const [otpCode, setOtpCode] = useState('');
   const [otpInput, setOtpInput] = useState('');
+  const [pendingUser, setPendingUser] = useState<ManagedAdminUser | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -37,8 +39,11 @@ export default function AdminAliadosLoginPage() {
         return;
       }
 
-      if (cleanCedula === '2222222222' && password === 'aliados123') {
+      const adminUser = findAdminUserByCredentials(cleanCedula, password, ['admin_aliados']);
+
+      if (adminUser) {
         const code = generateOtpCode();
+        setPendingUser(adminUser);
         setOtpCode(code);
         setOtpInput('');
         setStep('otp');
@@ -57,14 +62,23 @@ export default function AdminAliadosLoginPage() {
       return;
     }
 
+    if (!pendingUser) {
+      setError('Vuelve a ingresar tus credenciales.');
+      setStep('credentials');
+      setLoading(false);
+      return;
+    }
+
     localStorage.setItem(
       'alliesAdminUser',
       JSON.stringify({
-        cedula: cleanCedula,
-        role: 'admin_aliados',
-        name: 'Administrador Aliados Comerciales',
+        cedula: pendingUser.cedula,
+        role: pendingUser.rol,
+        name: pendingUser.nombre,
       }),
     );
+    localStorage.removeItem('adminUser');
+    localStorage.removeItem('vacanciesAdminUser');
     router.push('/dashboard-aliados');
   };
 
@@ -156,6 +170,7 @@ export default function AdminAliadosLoginPage() {
               setStep('credentials');
               setOtpInput('');
               setOtpCode('');
+              setPendingUser(null);
               setError('');
               setLoading(false);
             }}
@@ -167,6 +182,7 @@ export default function AdminAliadosLoginPage() {
 
         <div className="rounded-xl border border-black/10 bg-black/5 px-4 py-3 text-sm text-black/75">
           <p className="font-semibold text-black mb-1">Credenciales de prueba</p>
+          <p>Usuario inicial del master:</p>
           <p>Cedula: <span className="font-mono">2222222222</span></p>
           <p>Contrasena: <span className="font-mono">aliados123</span></p>
           <p className="mt-2">

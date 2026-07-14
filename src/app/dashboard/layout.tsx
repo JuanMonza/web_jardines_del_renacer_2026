@@ -13,15 +13,39 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [user, setUser] = useState<{ name?: string; email?: string } | null>(null);
+  const [checkingAccess, setCheckingAccess] = useState(true);
 
   useEffect(() => {
     const userData = localStorage.getItem(ADMIN_STORAGE_KEY);
     if (userData) {
-      setUser(JSON.parse(userData));
+      try {
+        const parsed = JSON.parse(userData) as { role?: string; name?: string; email?: string };
+        if (parsed.role !== 'admin') {
+          localStorage.removeItem(ADMIN_STORAGE_KEY);
+          window.location.href = '/login/admin';
+          return;
+        }
+        setUser(parsed);
+        setCheckingAccess(false);
+      } catch {
+        localStorage.removeItem(ADMIN_STORAGE_KEY);
+        window.location.href = '/login/admin';
+      }
+      return;
     }
+
+    window.location.href = '/login/admin';
   }, []);
 
   const greeting = buildAdminGreeting(user?.name);
+
+  if (checkingAccess) {
+    return (
+      <div className="flex min-h-screen items-center justify-center admin-liquid-bg">
+        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="relative flex min-h-screen admin-liquid-bg">
@@ -50,6 +74,9 @@ export default function DashboardLayout({
             </Link>
             <Link href="/dashboard/talleres" className="rounded-full border border-border/70 bg-white px-3 py-1.5 text-xs font-medium text-text whitespace-nowrap">
               Talleres
+            </Link>
+            <Link href="/dashboard/usuarios" className="rounded-full border border-border/70 bg-white px-3 py-1.5 text-xs font-medium text-text whitespace-nowrap">
+              Usuarios
             </Link>
           </nav>
         </div>

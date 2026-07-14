@@ -55,6 +55,12 @@ type VacancyDraft = JobVacancy & {
   benefitsText: string;
 };
 
+type VacanciesSession = {
+  cedula: string;
+  role: string;
+  name: string;
+};
+
 function createInitialDraft(): VacancyDraft {
   const base = createEmptyVacancy();
   return {
@@ -138,12 +144,22 @@ function ApplicationProgressTrack({ status }: { status: JobApplication['status']
 export default function VacantesAdminPanel() {
   const [vacancies, setVacancies] = useState<JobVacancy[]>([]);
   const [applications, setApplications] = useState<JobApplication[]>([]);
+  const [session, setSession] = useState<VacanciesSession | null>(null);
   const [draft, setDraft] = useState<VacancyDraft>(createInitialDraft());
   const [editingId, setEditingId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState('');
   const [search, setSearch] = useState('');
 
   useEffect(() => {
+    const rawSession = localStorage.getItem('vacanciesAdminUser');
+    if (rawSession) {
+      try {
+        setSession(JSON.parse(rawSession) as VacanciesSession);
+      } catch {
+        setSession(null);
+      }
+    }
+
     setVacancies(readJobVacancies());
     setApplications(readCandidateApplications());
 
@@ -160,12 +176,27 @@ export default function VacantesAdminPanel() {
     };
   }, []);
 
+  const ownedVacancies = useMemo(() => {
+    if (!session?.cedula) {
+      return vacancies;
+    }
+
+    return vacancies.filter((vacancy) => {
+      return !vacancy.createdByCedula || vacancy.createdByCedula === session.cedula;
+    });
+  }, [session?.cedula, vacancies]);
+
+  const ownedApplications = useMemo(() => {
+    const visibleVacancyIds = new Set(ownedVacancies.map((vacancy) => vacancy.id));
+    return applications.filter((application) => visibleVacancyIds.has(application.vacancyId));
+  }, [applications, ownedVacancies]);
+
   const filteredVacancies = useMemo(() => {
     const query = search.trim().toLowerCase();
     if (!query) {
-      return vacancies;
+      return ownedVacancies;
     }
-    return vacancies.filter((vacancy) => {
+    return ownedVacancies.filter((vacancy) => {
       return (
         vacancy.title.toLowerCase().includes(query) ||
         vacancy.area.toLowerCase().includes(query) ||
@@ -173,7 +204,7 @@ export default function VacantesAdminPanel() {
         vacancy.department.toLowerCase().includes(query)
       );
     });
-  }, [vacancies, search]);
+  }, [ownedVacancies, search]);
 
   const resetDraft = () => {
     setDraft(createInitialDraft());
@@ -224,6 +255,8 @@ export default function VacantesAdminPanel() {
       postedAt: draft.postedAt || now.slice(0, 10),
       createdAt: current?.createdAt || now,
       updatedAt: now,
+      createdByCedula: current?.createdByCedula || session?.cedula || '',
+      createdByName: current?.createdByName || session?.name || '',
     };
 
     const next = upsertJobVacancy(vacancies, record);
@@ -309,7 +342,7 @@ export default function VacantesAdminPanel() {
     <div className="min-h-screen pt-2 pb-10">
       <SectionTitle
         title="Panel de Vacantes"
-        subtitle="Administra vacantes de Trabaja con Nosotros en un panel exclusivo."
+        subtitle={session?.name ? `Administra las vacantes creadas por ${session.name}.` : 'Administra vacantes de Trabaja con Nosotros en un panel exclusivo.'}
         align="left"
         className="mb-8"
       />
@@ -489,10 +522,10 @@ export default function VacantesAdminPanel() {
             <h3 className="text-xl font-display text-text">Vacantes cargadas</h3>
             <div className="flex items-center gap-2">
               <span className="text-xs font-semibold px-2.5 py-1 rounded-full border border-primary/20 bg-primary/10 text-primary">
-                {vacancies.length} vacantes
+                {ownedVacancies.length} vacantes
               </span>
               <span className="text-xs font-semibold px-2.5 py-1 rounded-full border border-green-500/25 bg-green-500/10 text-green-700">
-                {applications.length} postulaciones
+                {ownedApplications.length} postulaciones
               </span>
             </div>
           </div>
@@ -552,13 +585,13 @@ export default function VacantesAdminPanel() {
 
           <div className="mt-6 pt-5 border-t border-primary/10">
             <h4 className="text-lg font-display text-text mb-3">Postulaciones recibidas</h4>
-            {applications.length === 0 ? (
+            {ownedApplications.length === 0 ? (
               <p className="text-sm text-textLight">
                 Aun no hay postulaciones registradas.
               </p>
             ) : (
               <div className="space-y-3 max-h-[280px] overflow-y-auto pr-1 custom-scrollbar">
-                {applications.map((application) => (
+                {ownedApplications.map((application) => (
                   <article
                     key={application.id}
                     className="rounded-2xl border border-primary/15 bg-white/45 p-4"

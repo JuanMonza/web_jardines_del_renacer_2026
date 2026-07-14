@@ -43,6 +43,8 @@ function normalizeVacancyRecord(record: Partial<JobVacancy>): JobVacancy | null 
     postedAt: record.postedAt ?? now.slice(0, 10),
     createdAt: record.createdAt ?? now,
     updatedAt: record.updatedAt ?? now,
+    createdByCedula: record.createdByCedula ?? '',
+    createdByName: record.createdByName ?? '',
   };
 }
 

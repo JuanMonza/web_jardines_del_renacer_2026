@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import AuthLoginLayout from '@/components/login/AuthLoginLayout';
 import LoginTextField from '@/components/login/LoginTextField';
+import { findAdminUserByCredentials, type ManagedAdminUser } from '@/lib/adminUsersStorage';
 
 type LoginStep = 'credentials' | 'otp';
 
@@ -19,6 +20,7 @@ export default function AdminVacantesLoginPage() {
   const [step, setStep] = useState<LoginStep>('credentials');
   const [otpCode, setOtpCode] = useState('');
   const [otpInput, setOtpInput] = useState('');
+  const [pendingUser, setPendingUser] = useState<ManagedAdminUser | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -37,8 +39,11 @@ export default function AdminVacantesLoginPage() {
         return;
       }
 
-      if (cleanCedula === '3333333333' && password === 'vacantes123') {
+      const adminUser = findAdminUserByCredentials(cleanCedula, password, ['admin_vacantes']);
+
+      if (adminUser) {
         const code = generateOtpCode();
+        setPendingUser(adminUser);
         setOtpCode(code);
         setOtpInput('');
         setStep('otp');
@@ -57,14 +62,23 @@ export default function AdminVacantesLoginPage() {
       return;
     }
 
+    if (!pendingUser) {
+      setError('Vuelve a ingresar tus credenciales.');
+      setStep('credentials');
+      setLoading(false);
+      return;
+    }
+
     localStorage.setItem(
       'vacanciesAdminUser',
       JSON.stringify({
-        cedula: cleanCedula,
-        role: 'admin_vacantes',
-        name: 'Administrador de Vacantes',
+        cedula: pendingUser.cedula,
+        role: pendingUser.rol,
+        name: pendingUser.nombre,
       }),
     );
+    localStorage.removeItem('adminUser');
+    localStorage.removeItem('alliesAdminUser');
     router.push('/dashboard-vacantes');
   };
 
@@ -156,6 +170,7 @@ export default function AdminVacantesLoginPage() {
               setStep('credentials');
               setOtpInput('');
               setOtpCode('');
+              setPendingUser(null);
               setError('');
               setLoading(false);
             }}
@@ -167,6 +182,7 @@ export default function AdminVacantesLoginPage() {
 
         <div className="rounded-xl border border-black/10 bg-black/5 px-4 py-3 text-sm text-black/75">
           <p className="font-semibold text-black mb-1">Credenciales de prueba</p>
+          <p>Usuario inicial del master:</p>
           <p>Cedula: <span className="font-mono">3333333333</span></p>
           <p>Contrasena: <span className="font-mono">vacantes123</span></p>
           {step === 'otp' && (

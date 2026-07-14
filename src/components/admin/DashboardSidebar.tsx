@@ -8,6 +8,7 @@ import {
   ClipboardList,
   BookHeart,
   LogOut,
+  UserCog,
 } from 'lucide-react';
 
 const ADMIN_STORAGE_KEY = 'adminUser';
@@ -32,6 +33,11 @@ const navLinks = [
     href: '/dashboard/talleres',
     label: 'Talleres',
     icon: ClipboardList,
+  },
+  {
+    href: '/dashboard/usuarios',
+    label: 'Usuarios',
+    icon: UserCog,
   },
 ];
 
