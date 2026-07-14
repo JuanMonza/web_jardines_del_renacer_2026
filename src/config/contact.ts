@@ -49,6 +49,14 @@ export const CONTACT_INFO = {
   contactHref: '/contacto',
 };
 
-export function buildWhatsAppUrl(message = CONTACT_INFO.whatsappMessage) {
-  return `https://wa.me/${CONTACT_INFO.whatsappNumber}?text=${encodeURIComponent(message)}`;
+function normalizeWhatsAppNumber(number: string) {
+  const digits = number.replace(/\D/g, '');
+  return digits.length === 10 ? `57${digits}` : digits;
+}
+
+export function buildWhatsAppUrl(
+  message = CONTACT_INFO.whatsappMessage,
+  whatsappNumber = CONTACT_INFO.whatsappNumber,
+) {
+  return `https://wa.me/${normalizeWhatsAppNumber(whatsappNumber)}?text=${encodeURIComponent(message)}`;
 }

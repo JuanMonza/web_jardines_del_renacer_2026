@@ -54,7 +54,18 @@ export function findActiveClientByCedula(cedula: string): ClientData | null {
   const cleanCedula = cleanDocument(cedula);
   // TODO: Reemplazar con una consulta a la tabla de clientes/afiliados.
   if (cleanCedula) {
-    return { cedula: cleanCedula, nombre: 'Cliente', apellido: 'Activo', estado: 'activo' };
+    return {
+      cedula: cleanCedula,
+      nombre: 'Cliente',
+      apellido: 'Activo',
+      email: '',
+      telefono: '',
+      direccion: '',
+      planId: '',
+      planNombre: '',
+      valorMensual: 0,
+      estado: 'activo',
+    };
   }
   return null;
 }
@@ -139,7 +150,7 @@ export async function createDiscountRequestInDB(client: ClientData, ally: Commer
   // Esto es una simulación, lo ideal sería volver a consultar por el ID.
   const createdRequest: AllyDiscountRequest = {
     id: String(newId),
-    code: generateVerificationCode(),
+    code: newCode,
     clientCedula: cleanCedula,
     clientName: clientName,
     allyId: ally.id,
@@ -163,12 +174,22 @@ export async function findRequestForVerificationFromDB(params: {
   cedula: string;
   code?: string;
   allyId?: string;
+  requestId?: string;
 }): Promise<AllyDiscountRequest | null> {
   const cedula = cleanDocument(params.cedula);
   const code = params.code?.trim().toUpperCase();
 
-  let sql = 'SELECT * FROM codigos_descuento WHERE cliente_cedula = ?';
-  const queryParams: (string | undefined)[] = [cedula];
+  let sql = 'SELECT * FROM codigos_descuento WHERE 1 = 1';
+  const queryParams: string[] = [];
+
+  if (params.requestId) {
+    sql += ' AND id = ?';
+    queryParams.push(params.requestId);
+  }
+  if (cedula) {
+    sql += ' AND cliente_cedula = ?';
+    queryParams.push(cedula);
+  }
 
   if (code) {
     sql += ' AND codigo = ?';

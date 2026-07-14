@@ -8,7 +8,7 @@ interface PageHeroProps {
   subtitle: string;
   description?: string;
   image: string;
-  imageAlt: string;
+  imageAlt?: string;
   children?: React.ReactNode;
   className?: string;
 }
@@ -42,7 +42,7 @@ export default function PageHero({
       {/* Imagen principal */}
       <Image
         src={image}
-        alt={imageAlt}
+        alt={imageAlt ?? title}
         fill
         className="object-contain object-center md:object-cover"
         sizes="100vw"

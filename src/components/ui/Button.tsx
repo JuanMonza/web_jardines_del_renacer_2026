@@ -35,11 +35,23 @@ const Button = React.forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPro
       lg: 'px-8 py-4 text-lg',
     };
 
+    if (as === 'a') {
+      return (
+        <a
+          ref={ref as React.ForwardedRef<HTMLAnchorElement>}
+          className={cn(baseStyles, variants[variant], sizes[size], className)}
+          {...(props as React.AnchorHTMLAttributes<HTMLAnchorElement>)}
+        >
+          {children}
+        </a>
+      );
+    }
+
     return (
       <button
-        ref={ref}
+        ref={ref as React.ForwardedRef<HTMLButtonElement>}
         className={cn(baseStyles, variants[variant], sizes[size], className)}
-        {...props}
+        {...(props as React.ButtonHTMLAttributes<HTMLButtonElement>)}
       >
         {children}
       </button>

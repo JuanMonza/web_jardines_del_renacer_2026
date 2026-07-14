@@ -11,6 +11,12 @@ import PaymentDropdown from '@/components/ui/PaymentDropdown';
 
 const PARQUE_CONMEMORATIVO_URL = 'https://conmemorativo-jr-2025.vercel.app/';
 
+type NavSubmenuItem = {
+  href: string;
+  label: string;
+  external?: boolean;
+};
+
 export default function Navbar() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
@@ -25,13 +31,13 @@ export default function Navbar() {
   const [mobileServiciosOpen, setMobileServiciosOpen] = useState(false);
   const [mobileVisitanosOpen, setMobileVisitanosOpen] = useState(false);
 
-  const conocenosSubmenu = [
+  const conocenosSubmenu: NavSubmenuItem[] = [
     { href: '/servicios/quienes-somos', label: 'Quiénes Somos' },
     { href: '/servicios/resena-historica', label: 'Reseña Histórica' },
     { href: '/sorteos', label: 'Sorteos' },
   ];
 
-  const serviciosFunerariosSubmenu = [
+  const serviciosFunerariosSubmenu: NavSubmenuItem[] = [
     { href: '/servicios/condolencias-digitales', label: 'Condolencias Digitales' },
     { href: PARQUE_CONMEMORATIVO_URL, label: 'Parque Conmemorativo', external: true },
     { href: '/repatriaciones', label: 'Repatriaciones' },

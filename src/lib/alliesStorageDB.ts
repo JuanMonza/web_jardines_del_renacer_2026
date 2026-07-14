@@ -27,6 +27,8 @@ function mapDbAllyToCommercialAlly(dbAlly: any): CommercialAlly | null {
     departamento: resolveAllyDepartment(dbAlly.departamento),
     municipio: dbAlly.municipio,
     address: dbAlly.address,
+    email: dbAlly.email,
+    telefono: dbAlly.telefono,
     url: dbAlly.url,
     logo: dbAlly.logo,
     whatsappNumber: dbAlly.whatsapp_number,

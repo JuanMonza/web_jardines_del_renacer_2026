@@ -19,6 +19,8 @@ export interface CommercialAlly {
   url?: string;
   logo: string;
   address: string;
+  email?: string;
+  telefono?: string;
   whatsappNumber: string;
   whatsappTemplate: string;
   actionLabel: string;
@@ -394,6 +396,8 @@ export function createEmptyAlly(): CommercialAlly {
     logo: '',
     url: '',
     address: '',
+    email: '',
+    telefono: '',
     whatsappNumber: CONTACT_INFO.whatsappNumber,
     whatsappTemplate: DEFAULT_TEMPLATE,
     actionLabel: 'Mas informacion',

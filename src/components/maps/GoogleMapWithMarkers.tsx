@@ -69,7 +69,7 @@ export default function GoogleMapWithMarkers({
       <Map
         center={center}
         zoom={selectedLocation ? 14 : zoom}
-        options={mapOptions}
+        {...mapOptions}
         className="h-full w-full"
       >
         {locations.map((location) => (
@@ -94,9 +94,7 @@ export default function GoogleMapWithMarkers({
           <InfoWindow
             position={{ lat: selectedLocation.lat, lng: selectedLocation.lng }}
             onCloseClick={() => setActiveMarkerId(null)}
-            options={{
-              pixelOffset: new window.google.maps.Size(0, -30),
-            }}
+            pixelOffset={[0, -30]}
           >
             <div className="p-1 max-w-xs">
               <h3 className="font-display text-base font-bold text-text mb-1">

@@ -4,8 +4,8 @@ import {
   findActiveClientByCedula,
   findRequestForVerificationFromDB,
   redeemDiscountRequestInDB,
-} from '@/lib/allyMembershipStorage';
-import { getAllyByIdFromDB } from '@/lib/alliesStorage';
+} from '@/lib/allyMembershipStorageDB';
+import { getAllyByIdFromDB } from '@/lib/alliesStorageDB';
 
 export const dynamic = 'force-dynamic';
 
