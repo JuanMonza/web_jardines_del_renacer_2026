@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Container from '@/components/ui/Container';
-import SedeCard from '@/components/cards/SedeCard';
+import DepartamentoSedesClient from '@/components/sedes/DepartamentoSedesClient';
 import {
   getAllDepartamentos,
   getSedesByDepartamento,
@@ -140,35 +140,13 @@ export default async function DepartamentoPage({ params }: Props) {
         </Container>
       </section>
 
-      {/* Sede grid */}
+      {/* Sede grid – usa datos en vivo desde localStorage via hook */}
       <section className="py-14 pb-28">
         <Container>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {sedes.map((sede) => (
-              <SedeCard key={sede.id} sede={sede} />
-            ))}
-          </div>
-
-          {/* Back link */}
-          <div className="mt-16 text-center">
-            <Link
-              href="/sedes"
-              className="inline-flex items-center gap-2 text-primary font-medium text-sm hover:gap-3 transition-all duration-200"
-            >
-              <svg
-                width="16"
-                height="16"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-              </svg>
-              Ver todos los departamentos
-            </Link>
-          </div>
+          <DepartamentoSedesClient
+            departamentoSlug={departamento}
+            fallbackSedes={sedes}
+          />
         </Container>
       </section>
     </>

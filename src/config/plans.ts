@@ -15,7 +15,7 @@ export const PLANS_CONFIG = {
     price: 'Cotizar ahora',
     geographicCoverage: 'Nacional',
     conditions: 'Aplica para titular',
-    image: '/images/individual_plan.jpg',
+    image: '/images/individual_plan.webp',
     featured: true,
     benefits: [
       'Proteccion individual',
@@ -32,7 +32,7 @@ export const PLANS_CONFIG = {
   'proteccion-familiar-esencial': {
     id: 'proteccion-familiar-esencial',
     planType: 'Familiar',
-    name: 'Plan Proteccion Familiar Esencial',
+    name: 'Plan  Familiar Esencial',
     tagline: 'El plan mas adquirido para proteger tu nucleo familiar',
     description:
       'Plan mas adquirido, disenado para proteger al nucleo familiar con cobertura integral.',
@@ -41,7 +41,7 @@ export const PLANS_CONFIG = {
     price: 'Cotizar ahora',
     geographicCoverage: 'Nacional',
     conditions: 'Incluye hasta 2 adultos mayores',
-    image: '/images/familiar_plan.jpg',
+    image: '/images/familiar_plan.webp',
     featured: true,
     benefits: [
       'Economia familiar',
@@ -115,7 +115,7 @@ export const PLANS_CONFIG = {
     price: 'Cotizar ahora',
     geographicCoverage: 'Nacional',
     conditions: 'Aplica para miembros activos de juntas',
-    image: '/images/comunidad_plan.jpg',
+    image: '/images/comunidad_plan.webp',
     featured: false,
     benefits: [
       'Tarifas especiales',
@@ -138,7 +138,7 @@ export const PLANS_CONFIG = {
     price: 'Cotizar ahora',
     geographicCoverage: 'Nacional',
     conditions: 'Validacion como docente',
-    image: '/images/docente_plan.jpg',
+    image: '/images/docente_plan.webp',
     featured: false,
     benefits: [
       'Tarifas preferenciales',
@@ -185,7 +185,7 @@ export const PLANS_CONFIG = {
     price: 'Cotizar ahora',
     geographicCoverage: 'Nacional',
     conditions: 'Pago anticipado',
-    image: '/images/prevision_plan.jpg',
+    image: '/images/plan_prevision_inmediata.webp',
     featured: true,
     benefits: [
       'Acceso sin restricciones de edad',
@@ -199,7 +199,7 @@ export const PLANS_CONFIG = {
   'bienestar-empresarial': {
     id: 'bienestar-empresarial',
     planType: 'Corporativo',
-    name: 'Plan Bienestar Empresarial',
+    name: 'Plan Empresarial',
     tagline: 'Beneficio empresarial para colaboradores',
     description: 'Disenado para empresas que desean proteger a sus colaboradores.',
     includes: 'Cobertura para empleados via nomina',
@@ -222,7 +222,7 @@ export const PLANS_CONFIG = {
   'profesional-independiente': {
     id: 'profesional-independiente',
     planType: 'Independientes',
-    name: 'Plan Profesional Independiente',
+    name: 'Plan Independiente',
     tagline: 'Proteccion autonoma para profesionales independientes',
     description:
       'Dirigido a profesionales independientes que buscan proteccion sin depender de una empresa.',

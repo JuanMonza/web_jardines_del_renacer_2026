@@ -175,7 +175,7 @@ function AliadosComercialesPageContent() {
     }
 
     const query = params.toString();
-    router.replace(query ? `/aliados-comerciales?${query}` : '/aliados-comerciales');
+    router.replace(query ? `/aliados-comerciales?${query}` : '/aliados-comerciales', { scroll: false });
   };
 
   const handleCategoryChange = (category: string) => {
@@ -265,65 +265,38 @@ function AliadosComercialesPageContent() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <p className="text-[11px] uppercase tracking-[0.18em] text-textLight">Departamento</p>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() => handleDepartmentChange(ALL_DEPARTMENTS)}
-                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all glass border ${
-                      selectedDepartment === ALL_DEPARTMENTS
-                        ? 'border-primary text-primary bg-primary/5'
-                        : 'border-border text-textLight hover:border-primary/40'
-                    }`}
+              {/* Dropdown Departamento */}
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-textLight font-semibold">Departamento</p>
+                  <select
+                    value={selectedDepartment}
+                    onChange={(e) => handleDepartmentChange(e.target.value)}
+                    className="w-full rounded-xl border border-border bg-white/80 px-4 py-2.5 text-sm text-text outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
                   >
-                    Todos
-                  </button>
-                  {availableDepartments.map((department) => (
-                    <button
-                      key={department}
-                      onClick={() => handleDepartmentChange(department)}
-                      className={`px-4 py-2 rounded-xl text-sm font-medium transition-all glass border ${
-                        selectedDepartment === department
-                          ? 'border-primary text-primary bg-primary/5'
-                          : 'border-border text-textLight hover:border-primary/40'
-                      }`}
-                    >
-                      {department}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {selectedDepartment !== ALL_DEPARTMENTS && availableCities.length > 0 && (
-                <div className="space-y-2">
-                  <p className="text-[11px] uppercase tracking-[0.18em] text-textLight">Ciudad</p>
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      onClick={() => setSelectedCity('todas')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border ${
-                        selectedCity === 'todas'
-                          ? 'border-primary text-primary bg-primary/10'
-                          : 'border-border text-textLight hover:border-primary/40'
-                      }`}
-                    >
-                      Todas las ciudades
-                    </button>
-                    {availableCities.map((city) => (
-                      <button
-                        key={city}
-                        onClick={() => setSelectedCity(city)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border ${
-                          selectedCity === city
-                            ? 'border-primary text-primary bg-primary/10'
-                            : 'border-border text-textLight hover:border-primary/40'
-                        }`}
-                      >
-                        {city}
-                      </button>
+                    <option value={ALL_DEPARTMENTS}>Todos los departamentos</option>
+                    {availableDepartments.map((dep) => (
+                      <option key={dep} value={dep}>{dep}</option>
                     ))}
-                  </div>
+                  </select>
                 </div>
-              )}
+
+                {selectedDepartment !== ALL_DEPARTMENTS && availableCities.length > 0 && (
+                  <div className="space-y-1.5">
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-textLight font-semibold">Ciudad</p>
+                    <select
+                      value={selectedCity}
+                      onChange={(e) => setSelectedCity(e.target.value)}
+                      className="w-full rounded-xl border border-border bg-white/80 px-4 py-2.5 text-sm text-text outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    >
+                      <option value="todas">Todas las ciudades</option>
+                      {availableCities.map((city) => (
+                        <option key={city} value={city}>{city}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </div>
 
               <div className="space-y-2">
                 <p className="text-[11px] uppercase tracking-[0.18em] text-textLight">Categoria</p>

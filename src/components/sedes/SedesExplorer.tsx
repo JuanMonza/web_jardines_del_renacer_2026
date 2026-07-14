@@ -4,13 +4,19 @@ import { useState, useMemo } from 'react';
 import type { DepartamentoInfo, Sede } from '@/data/sedes';
 import DepartamentoFlipCard from '@/components/cards/DepartamentoFlipCard';
 import SedeCard from '@/components/cards/SedeCard';
+import { useSedesData } from '@/hooks/useSedesData';
 
 interface SedesExplorerProps {
   departamentos: DepartamentoInfo[];
   sedes: Sede[];
 }
 
-export default function SedesExplorer({ departamentos, sedes }: SedesExplorerProps) {
+export default function SedesExplorer({ departamentos: ssrDepts, sedes: ssrSedes }: SedesExplorerProps) {
+  const { sedes: liveSedes, departamentos: liveDepts } = useSedesData();
+
+  // Usa datos en vivo una vez hidratado, datos SSR como fallback inicial
+  const sedes = liveSedes.length > 0 ? liveSedes : ssrSedes;
+  const departamentos = liveSedes.length > 0 ? liveDepts : ssrDepts;
   const [query, setQuery] = useState('');
 
   const trimmed = query.trim().toLowerCase();

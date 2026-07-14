@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import DashboardSidebar from '../../components/admin/DashboardSidebar'; // Importamos el nuevo menú
 import { buildAdminGreeting } from '@/lib/adminGreeting';
+
+const ADMIN_STORAGE_KEY = 'adminUser';
 
 export default function DashboardLayout({
   children,
@@ -12,7 +15,7 @@ export default function DashboardLayout({
   const [user, setUser] = useState<{ name?: string; email?: string } | null>(null);
 
   useEffect(() => {
-    const userData = localStorage.getItem('adminUser');
+    const userData = localStorage.getItem(ADMIN_STORAGE_KEY);
     if (userData) {
       setUser(JSON.parse(userData));
     }
@@ -21,82 +24,40 @@ export default function DashboardLayout({
   const greeting = buildAdminGreeting(user?.name);
 
   return (
-    <div className="relative flex min-h-screen overflow-hidden admin-liquid-bg">
-      <div className="pointer-events-none absolute -top-24 -right-28 h-96 w-96 rounded-full bg-primary/25 blur-3xl" />
-      <div className="pointer-events-none absolute bottom-0 -left-24 h-80 w-80 rounded-full bg-sky-300/30 blur-3xl" />
+    <div className="relative flex min-h-screen admin-liquid-bg">
+      {/* Blobs decorativos en su propio contenedor clipado para no romper position:fixed */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -top-24 -right-28 h-96 w-96 rounded-full bg-primary/25 blur-3xl" />
+        <div className="absolute bottom-0 -left-24 h-80 w-80 rounded-full bg-sky-300/30 blur-3xl" />
+      </div>
 
-      {/* Sidebar con perfil */}
-      <aside className="fixed left-0 top-0 z-20 h-screen w-72 admin-liquid-sidebar border-r border-border/60">
-        {/* Profile Section */}
-        <div className="p-6 border-b border-border">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-primary-hover flex items-center justify-center text-white font-bold text-xl shadow-lg">
-              {user?.name?.charAt(0).toUpperCase() || 'A'}
-            </div>
-            <div className="flex-1">
-              <p className="text-xs uppercase tracking-wider text-textLight font-medium mb-1">
-                Administrador
-              </p>
-              <h3 className="text-text font-semibold text-base leading-tight">
-                {user?.name || 'Admin Obituarios Jardines del Renacer'}
-              </h3>
-              <p className="text-xs text-primary/90 mt-1">{greeting}</p>
-            </div>
-          </div>
-        </div>
+      {/* El nuevo menú lateral se integra aquí, reemplazando el anterior */}
+      <DashboardSidebar user={user} greeting={greeting} />
 
-        {/* Navigation */}
-        <nav className="p-6 space-y-8">
-          {/* Principal */}
-          <div>
-            <p className="text-xs uppercase tracking-wider text-textLight font-semibold mb-4 px-3">
+      <div className="fixed inset-x-0 top-0 z-30 border-b border-border/60 bg-white/85 backdrop-blur lg:hidden">
+        <div className="px-4 py-3">
+          <p className="text-xs uppercase tracking-wider text-textLight/80">Panel Administrativo</p>
+          <p className="text-sm font-semibold text-text">{greeting}</p>
+          <nav className="mt-3 flex gap-2 overflow-x-auto pb-1">
+            <Link href="/dashboard" className="rounded-full border border-border/70 bg-white px-3 py-1.5 text-xs font-medium text-text whitespace-nowrap">
               Principal
-            </p>
-            <div className="space-y-1">
-              <Link 
-                href="/dashboard" 
-                className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-primary/10 text-text hover:text-primary transition-all group"
-              >
-                <svg className="w-5 h-5 text-primary group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-                <span className="font-medium">Dashboard</span>
-              </Link>
-            </div>
-          </div>
-
-          {/* Gestión */}
-          <div>
-            <p className="text-xs uppercase tracking-wider text-textLight font-semibold mb-4 px-3">
-              Gestión
-            </p>
-            <div className="space-y-1">
-              <Link 
-                href="/dashboard/obituarios" 
-                className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-primary/10 text-text hover:text-primary transition-all group"
-              >
-                <svg className="w-5 h-5 text-primary group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <span className="font-medium">Obituarios</span>
-              </Link>
-
-            </div>
-          </div>
-        </nav>
-
-        {/* Footer Info */}
-        <div className="absolute bottom-0 left-0 right-0 p-6 border-t border-border">
-          <div className="glass rounded-xl p-4 border border-primary/20">
-            <p className="text-xs text-primary font-medium mb-1">Jardines del Renacer</p>
-            <p className="text-[10px] text-textLight">Sistema de Gestión v1.5.6</p>
-          </div>
+            </Link>
+            <Link href="/dashboard/obituarios" className="rounded-full border border-border/70 bg-white px-3 py-1.5 text-xs font-medium text-text whitespace-nowrap">
+              Homenajes
+            </Link>
+            <Link href="/dashboard/sedes" className="rounded-full border border-border/70 bg-white px-3 py-1.5 text-xs font-medium text-text whitespace-nowrap">
+              Sedes
+            </Link>
+            <Link href="/dashboard/talleres" className="rounded-full border border-border/70 bg-white px-3 py-1.5 text-xs font-medium text-text whitespace-nowrap">
+              Talleres
+            </Link>
+          </nav>
         </div>
-      </aside>
+      </div>
 
       {/* Main Content */}
-      <main className="ml-72 flex-1 p-5 relative z-10">
-        <div className="admin-liquid-main-card rounded-[30px] min-h-[calc(100vh-2.5rem)]">
+      <main className="relative z-10 flex-1 min-w-0 p-3 pt-28 sm:p-4 sm:pt-28 lg:ml-72 lg:p-5 lg:pt-5">
+        <div className="min-h-[calc(100vh-7.25rem)] rounded-2xl bg-white/80 lg:min-h-[calc(100vh-2.5rem)] lg:rounded-[30px]">
           {children}
         </div>
       </main>

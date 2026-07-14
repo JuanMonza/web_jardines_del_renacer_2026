@@ -7,6 +7,15 @@ import Button from '@/components/ui/Button';
 import Container from '@/components/ui/Container';
 import SectionTitle from '@/components/ui/SectionTitle';
 import { buildAdminGreeting } from '@/lib/adminGreeting';
+import {
+  BookHeart,
+  Users,
+  BarChart3,
+  TrendingUp,
+  ArrowUpRight,
+} from 'lucide-react';
+
+const ADMIN_STORAGE_KEY = 'adminUser';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -14,7 +23,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const userData = localStorage.getItem('adminUser');
+    const userData = localStorage.getItem(ADMIN_STORAGE_KEY);
     if (!userData) {
       router.push('/login/admin');
       return;
@@ -22,11 +31,6 @@ export default function DashboardPage() {
     setUser(JSON.parse(userData));
     setLoading(false);
   }, [router]);
-
-  const handleLogout = () => {
-    localStorage.removeItem('adminUser');
-    router.push('/');
-  };
 
   if (loading) {
     return (
@@ -37,118 +41,148 @@ export default function DashboardPage() {
   }
 
   const stats = [
-    { label: 'Total Obituarios', value: '45', icon: '', href: '/dashboard/obituarios' },
-    { label: 'Obituarios Activos', value: '12', icon: '', href: '/dashboard/obituarios' },
-    { label: 'Visitas al Sitio', value: '4,567', icon: '', href: '/dashboard/obituarios' },
-    { label: 'Este Mes', value: '28', icon: '', href: '/dashboard/obituarios' },
+    {
+      label: 'Total Homenajes',
+      value: '1,254',
+      icon: BookHeart,
+      href: '/dashboard/obituarios',
+      change: '+12.5%',
+      changeType: 'increase',
+    },
+    {
+      label: 'Sedes Activas',
+      value: '72',
+      icon: Users,
+      href: '/dashboard/sedes',
+      change: '+2',
+      changeType: 'increase',
+    },
+    {
+      label: 'Visitas al Sitio',
+      value: '28,791',
+      icon: BarChart3,
+      href: '#',
+      change: '+21.3%',
+      changeType: 'increase',
+    },
+    {
+      label: 'Nuevos Afiliados (Mes)',
+      value: '186',
+      icon: TrendingUp,
+      href: '#',
+      change: '-3.1%',
+      changeType: 'decrease',
+    },
   ];
-  const greeting = buildAdminGreeting(user?.name);
-
   return (
-    <div className="min-h-screen pt-24 pb-12">
-      <Container>
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl font-display text-text mb-2">
-              {greeting}
-            </h1>
-            <p className="text-textLight">
-              Panel de administración de Obituarios - Jardines del Renacer
-            </p>
-          </div>
-          <Button variant="outline" onClick={handleLogout} className="w-fit">
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
-            Cerrar Sesión
-          </Button>
-        </div>
-
+    <div className="min-h-screen">
+      <Container className="py-6 md:py-10">
         <SectionTitle
           title="Panel de Control"
-          subtitle="Vista general del sistema de obituarios"
+          subtitle="Vista general de las métricas y operaciones de la plataforma."
           align="left"
         />
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
-          {stats.map((stat) => (
-            <Link key={stat.label} href={stat.href}>
-              <div className="glass rounded-2xl p-6 hover:border-primary/50 transition-all cursor-pointer group">
-                <div className="text-4xl mb-3 group-hover:scale-110 transition-transform">{stat.icon}</div>
-                <h3 className="text-3xl font-bold text-text mb-1">{stat.value}</h3>
-                <p className="text-textLight text-sm">{stat.label}</p>
-              </div>
-            </Link>
-          ))}
+          {stats.map((stat) => {
+            const StatIcon = stat.icon;
+            return (
+              <Link key={stat.label} href={stat.href}>
+                <div className="glass rounded-2xl p-6 border border-transparent hover:border-primary/30 transition-all duration-300 cursor-pointer group">
+                  <div className="flex justify-between items-start">
+                    <h3 className="text-sm font-medium text-textLight uppercase tracking-wider">
+                      {stat.label}
+                    </h3>
+                    <StatIcon className="w-6 h-6 text-primary/70 group-hover:text-primary transition-colors" />
+                  </div>
+                  <div className="mt-4">
+                    <p className="text-3xl font-bold text-text md:text-4xl">{stat.value}</p>
+                    <div
+                      className={`text-xs flex items-center gap-1 mt-1 ${
+                        stat.changeType === 'increase'
+                          ? 'text-green-600'
+                          : 'text-red-500'
+                      }`}
+                    >
+                      <TrendingUp className="w-4 h-4" />
+                      <span>{stat.change} desde el mes pasado</span>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
         </div>
 
-        <div className="mt-12">
-          <h2 className="text-2xl font-display text-text mb-6">Gestión de Obituarios</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Link href="/dashboard/obituarios">
-              <div className="glass rounded-2xl p-6 hover:border-primary/50 transition-all cursor-pointer group">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                    <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-text group-hover:text-primary transition-colors">
-                      Administrar Obituarios
-                    </h3>
-                    <p className="text-sm text-textLight">
-                      Crear, editar y buscar por cédula
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </Link>
+        <div className="mt-12 grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Columna Izquierda: Accesos Rápidos */}
+          <div className="lg:col-span-1 space-y-6">
+            <h2 className="text-xl font-semibold text-text">Accesos Rápidos</h2>
+            <QuickAccessCard
+              href="/dashboard/obituarios"
+              icon={BookHeart}
+              title="Gestionar Homenajes"
+              subtitle="Crear, editar y buscar por cédula"
+            />
+            <QuickAccessCard
+              href="/dashboard/sedes"
+              icon={Users}
+              title="Administrar Sedes"
+              subtitle="Editar puntos de atención y administradores"
+            />
+          </div>
 
-            <div className="glass rounded-2xl p-6 bg-gradient-to-br from-primary/5 to-transparent">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center">
-                  <svg className="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-text">
-                    Sistema Operativo
-                  </h3>
-                  <p className="text-sm text-textLight">
-                    Todas las funciones activas
-                  </p>
-                </div>
-              </div>
+          {/* Columna Derecha: Actividad Reciente */}
+          <div className="lg:col-span-2 glass rounded-2xl p-8">
+            <h2 className="text-xl font-semibold text-text mb-6">
+              Actividad Reciente
+            </h2>
+            <div className="space-y-4">
+              {[
+                { action: 'Nuevo homenaje creado', time: 'Hace 2 horas', user: 'Admin', icon: BookHeart },
+                { action: 'Sede "Cali" actualizada', time: 'Hace 5 horas', user: 'Admin', icon: Users },
+                { action: 'Taller de duelo "Cometa" activado', time: 'Ayer', user: 'Admin', icon: TrendingUp },
+              ].map((activity, index) => {
+                const ActivityIcon = activity.icon;
+                return (
+                  <div key={index} className="flex flex-col items-start justify-between gap-3 border-b border-border/60 py-3 last:border-0 sm:flex-row sm:items-center">
+                    <div className="flex items-center gap-4">
+                      <div className="bg-primary/10 p-2 rounded-full">
+                        <ActivityIcon className="w-5 h-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-text font-medium">{activity.action}</p>
+                        <p className="text-sm text-textLight">{activity.user}</p>
+                      </div>
+                    </div>
+                    <span className="text-sm text-textLight">{activity.time}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
 
-        <div className="mt-12 glass rounded-2xl p-8">
-          <h3 className="text-2xl font-display mb-6 text-text">
-            Actividad Reciente
-          </h3>
-          <div className="space-y-4">
-            {[
-              { action: 'Nuevo obituario creado', time: 'Hace 2 horas', user: 'Admin', icon: '' },
-              { action: 'Obituario actualizado', time: 'Hace 3 horas', user: 'Sistema', icon: '' },
-              { action: 'Búsqueda realizada', time: 'Hace 5 horas', user: 'Admin', icon: '' },
-            ].map((activity, index) => (
-              <div key={index} className="flex items-center justify-between py-3 border-b border-border last:border-0">
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">{activity.icon}</span>
-                  <div>
-                    <p className="text-text font-medium">{activity.action}</p>
-                    <p className="text-sm text-textLight">{activity.user}</p>
-                  </div>
-                </div>
-                <span className="text-sm text-textLight">{activity.time}</span>
-              </div>
-            ))}
-          </div>
-        </div>
       </Container>
     </div>
+  );
+}
+
+function QuickAccessCard({ href, icon: Icon, title, subtitle }: any) {
+  return (
+    <Link href={href}>
+      <div className="group flex items-center gap-4 rounded-2xl border border-transparent bg-white/45 p-5 backdrop-blur-sm transition-all hover:border-primary/40 hover:bg-white/70">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 transition-colors group-hover:bg-primary/20">
+          <Icon className="w-6 h-6 text-primary" />
+        </div>
+        <div className="min-w-0">
+          <h3 className="text-base font-semibold text-text transition-colors group-hover:text-primary md:text-lg">
+            {title}
+          </h3>
+          <p className="text-sm leading-snug text-textLight">{subtitle}</p>
+        </div>
+        <ArrowUpRight className="ml-auto h-5 w-5 shrink-0 text-textLight transition-all group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-primary" />
+      </div>
+    </Link>
   );
 }

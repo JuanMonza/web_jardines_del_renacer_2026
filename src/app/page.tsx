@@ -14,9 +14,8 @@ import { CONTACT_INFO, buildWhatsAppUrl } from '@/config/contact';
 
 // NOTA: Preparado para utilizar una única imagen corporativa y limpia (Suministrada por Hugo).
 const heroImages = [
+  '/images/carrusel_1.webp',
   '/images/commemorativo.jpeg',
-  '/images/carrusel_1.jpg',
-  '/images/carrusel_2.jpg',
   '/images/parque-conmemorativo-2026.webp',
 ];
 
@@ -82,7 +81,7 @@ export default function HomePage() {
           </FadeIn>
           <FadeIn>
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-display font-extrabold mb-6 text-balance drop-shadow-[0_4px_8px_rgba(0,0,0,0.9)] animate-in fade-in slide-in-from-bottom-8 duration-1000 mt-2">
-              Un lugar para recordar, un espacio para renacer
+              Un lugar para trascender, un espacio para renacer.
             </h1>
           </FadeIn>
           <FadeIn delay={0.3}>
@@ -94,12 +93,12 @@ export default function HomePage() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-500">
               <a href={buildWhatsAppUrl('Hola jardines, quisiera mas informacion sobre planes')} target="_blank" rel="noopener noreferrer">
                 <Button variant="primary" size="lg">
-                  ¡ Cotiza Ya !
+                  ¡ Afíliate Ya !
                 </Button>
               </a>
               <Link href="/proximamente">
                 <Button variant="secondary" size="lg">
-                  Recorre Nuestras Salas
+                  Recorre nuestras salas
                 </Button>
               </Link>
             </div>
@@ -123,51 +122,51 @@ export default function HomePage() {
                 description: 'Ceremonias dignas y personalizadas para despedir a tus seres queridos',
                 imagePath: '/images/servicios_funerarios.jpg',
                 link: '/servicios#funerarios',
+                badge: '24 horas',
+                tags: ['Velación', 'Cremación', 'Inhumación'],
               },
               {
                 title: 'Planes de Previsión',
-                description: 'Protege a tu familia y planifica con tranquilidad',
-                imagePath: '/images/planes_funerarios.jpg',
+                description: 'Protege a tu familia y planifica con tranquilidad desde hoy',
+                imagePath: '/images/planes_funerarios.webp',
                 link: '/planes',
+                badge: 'Desde $0',
+                tags: ['Familiar', 'Individual', 'Senior'],
               },
               {
                 title: 'Siempre Contigo',
-                description: 'Transmisión en vivo 360 para acompañar la velación desde cualquier lugar',
+                description: 'Transmisión en vivo 360° para acompañar la velación desde cualquier lugar',
                 imagePath: '/images/siempre_contigo.jpg',
                 link: '/siempre-contigo',
+                badge: 'Live 360°',
+                tags: ['En vivo', 'Multidispositivo', 'HD'],
               },
             ].map((service, index) => (
               <FadeIn key={service.title} delay={index * 0.1}>
-                <Link href={service.link} className="group block h-full">
-                  <div className="relative flex h-full flex-col overflow-hidden rounded-[28px] border border-primary/20 bg-white/90 shadow-[0_20px_45px_rgba(25,52,91,0.1)] transition-all duration-500 hover:-translate-y-2 hover:scale-[1.01] hover:border-primary/50 hover:shadow-[0_30px_70px_rgba(25,52,91,0.22)] active:scale-[0.99] active:border-primary/70 sm:hover:shadow-[0_35px_80px_rgba(25,52,91,0.24)]">
-                    <div className="absolute inset-0 rounded-[28px] bg-gradient-to-br from-primary/20 via-primary/10 to-[#5a7ec0]/25 opacity-100" />
-                    <div className="absolute inset-x-3 top-3 h-[2px] rounded-full bg-gradient-to-r from-transparent via-primary to-transparent opacity-100" />
-                    <div className="relative h-52 overflow-hidden sm:h-56">
-                      <Image
-                        src={service.imagePath}
-                        alt={service.title}
-                        fill
-                        className="object-cover transition-transform duration-700 group-hover:scale-110"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
-                      <div className="absolute left-5 top-5 rounded-full bg-white/95 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-primary shadow-sm">
-                        Servicio
+                <Link href={service.link} className="group block">
+                  <div className="relative h-80 rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-1">
+                    <Image
+                      src={service.imagePath}
+                      alt={service.title}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-700"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-blue-950/90 via-black/25 to-transparent" />
+                    <span className="absolute top-4 left-4 inline-flex items-center rounded-full bg-blue-800 bg-opacity-80 backdrop-blur-sm border border-white/30 px-3 py-1.5 text-xs font-bold text-white">
+                      {service.badge}
+                    </span>
+                    <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                      <h3 className="text-2xl font-display font-extrabold mb-1 drop-shadow">{service.title}</h3>
+                      <p className="text-sm text-white font-bold mb-3 leading-relaxed">{service.description}</p>
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {service.tags.map((tag) => (
+                          <span key={tag} className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-white/20 backdrop-blur-sm border border-white/25">{tag}</span>
+                        ))}
                       </div>
-                    </div>
-
-                    <div className="relative z-10 flex flex-1 flex-col p-7">
-                      <h3 className="mb-3 text-2xl font-display text-text transition-colors duration-300 group-hover:text-primary">
-                        {service.title}
-                      </h3>
-                      <p className="mb-6 flex-1 text-sm leading-7 text-textLight">
-                        {service.description}
-                      </p>
-                      <div className="mt-auto inline-flex items-center font-semibold text-primary transition-all duration-300 group-hover:translate-x-1 group-hover:text-primary/90">
+                      <span className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-bold text-primary group-hover:bg-primary group-hover:text-white transition-all duration-300">
                         Ver más
-                        <svg className="ml-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                        </svg>
-                      </div>
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                      </span>
                     </div>
                   </div>
                 </Link>
@@ -212,8 +211,13 @@ export default function HomePage() {
 
           <div className="text-center mt-12">
             <Link href="/planes">
-              <Button variant="outline" size="lg">
-                Ver nuestros planes
+              <Button
+                variant="primary"
+                size="lg"
+                className="group relative overflow-hidden bg-gradient-to-r from-primary to-[#5a7ec0] text-white shadow-lg shadow-primary/30 transition-all duration-300 ease-out hover:shadow-2xl hover:shadow-primary/40 hover:scale-105"
+              >
+                <span className="absolute -inset-full top-0 block animate-[pulse_2s_infinite] bg-gradient-to-r from-transparent via-white/30 to-transparent"></span>
+                <span className="relative">Ver todos los planes</span>
               </Button>
             </Link>
           </div>
@@ -253,69 +257,80 @@ export default function HomePage() {
       <section className="py-20">
         <Container>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+
             {/* Parque Conmemorativo */}
             <FadeIn>
-              <div className="glass rounded-2xl overflow-hidden group hover:shadow-glass-lg transition-all duration-300">
-                <div className="relative h-64 overflow-hidden">
+              <div className="group relative rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-1">
+                <div className="relative h-80 overflow-hidden">
                   <Image
                     src="/images/commemorativo.jpeg"
                     alt="Parque Conmemorativo"
                     fill
-                    className="object-cover group-hover:scale-110 transition-transform duration-500"
+                    className="object-cover group-hover:scale-105 transition-transform duration-700"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                    <h3 className="text-2xl font-display mb-2">Parque Conmemorativo</h3>
-                    <p className="text-sm mb-4 opacity-90">
-                      Un espacio natural de paz y tranquilidad para honrar la memoria
-                    </p>
-                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                  {/* Badge */}
+                  <span className="absolute top-4 left-4 inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1.5 text-xs font-bold text-white backdrop-blur-sm border border-white/30">
+                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
+                    Espacio sagrado
+                  </span>
                 </div>
-                <div className="p-6 text-center">
-                  <a href="https://conmemorativo-jr-2025.vercel.app/" target="_blank" rel="noopener noreferrer">
-                    <Button
-                      variant="outline"
-                      size="md"
-                      className="w-full border-primary bg-white/95 text-primary hover:border-primary hover:bg-primary hover:text-white"
-                    >
-                      Ver Más
-                    </Button>
+                {/* Content panel */}
+                <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                  <h3 className="text-2xl font-display font-extrabold mb-1 drop-shadow">Parque Conmemorativo</h3>
+                  <p className="text-sm text-white/85 mb-4 leading-relaxed">
+                    Un espacio natural de paz, tranquilidad y dignidad para honrar la memoria de quienes amamos.
+                  </p>
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {['Senderos de paz', 'Jardines eternos', 'Capilla'].map((tag) => (
+                      <span key={tag} className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-white/20 backdrop-blur-sm border border-white/25">{tag}</span>
+                    ))}
+                  </div>
+                  <a href="https://conmemorativo-jr-2025.vercel.app/" target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-primary hover:bg-primary hover:text-white transition-all duration-300">
+                    Conocer el parque
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
                   </a>
                 </div>
               </div>
             </FadeIn>
 
             {/* Repatriaciones */}
-            <FadeIn delay={0.2}>
-              <div className="glass rounded-2xl overflow-hidden group hover:shadow-glass-lg transition-all duration-300">
-                <div className="relative h-64 overflow-hidden">
+            <FadeIn delay={0.15}>
+              <div className="group relative rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-1">
+                <div className="relative h-80 overflow-hidden">
                   <Image
-                    src="/images/Repatriaciones.jpg"
+                    src="/images/Repatriaciones.webp"
                     alt="Servicio de Repatriaciones"
                     fill
-                    className="object-cover group-hover:scale-110 transition-transform duration-500"
+                    className="object-cover group-hover:scale-105 transition-transform duration-700"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                    <h3 className="text-2xl font-display mb-2">Repatriaciones</h3>
-                    <p className="text-sm mb-4 opacity-90">
-                      Servicio completo de repatriación nacional e internacional
-                    </p>
-                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                  {/* Badge */}
+                  <span className="absolute top-4 left-4 inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1.5 text-xs font-bold text-white backdrop-blur-sm border border-white/30">
+                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" /></svg>
+                    Nacional e Internacional
+                  </span>
                 </div>
-                <div className="p-6 text-center">
-                  <Link href="/repatriaciones">
-                    <Button
-                      variant="outline"
-                      size="md"
-                      className="w-full border-primary bg-white/95 text-primary hover:border-primary hover:bg-primary hover:text-white"
-                    >
-                      Ver Más
-                    </Button>
+                <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                  <h3 className="text-2xl font-display font-extrabold mb-1 drop-shadow">Repatriaciones</h3>
+                  <p className="text-sm text-white/85 mb-4 leading-relaxed">
+                    Gestión integral del traslado de restos mortales con acompañamiento 24/7, cumpliendo todos los requisitos legales.
+                  </p>
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {['Atención 24/7', 'Trámites incluidos', 'Internacional'].map((tag) => (
+                      <span key={tag} className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-white/20 backdrop-blur-sm border border-white/25">{tag}</span>
+                    ))}
+                  </div>
+                  <Link href="/repatriaciones"
+                    className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-primary hover:bg-primary hover:text-white transition-all duration-300">
+                    Ver servicio
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
                   </Link>
                 </div>
               </div>
             </FadeIn>
+
           </div>
         </Container>
       </section>

@@ -23,7 +23,7 @@ export default function SedesPage() {
       <PageHero
         title="Nuestras Sedes"
         subtitle={`Presentes en ${departamentos.length} departamentos con ${totalSedes} puntos de atención en todo el país`}
-        image="/images/images-baners/nuetrassedes.webp"
+        image="/images/images-baners/nuetrasedes.webp"
         imageAlt="Sedes Jardines del Renacer"
       >
         <div className="flex flex-wrap gap-4">

@@ -38,6 +38,8 @@ export default function MembershipCard({
   useEffect(() => {
     if (codigoUnico) {
       savedCode.current = codigoUnico;
+      // Girar automáticamente al dorso para mostrar el código/QR
+      setIsFlipped(true);
     }
   }, [codigoUnico]);
 

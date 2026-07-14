@@ -20,6 +20,7 @@ export interface Sede {
   lat: number;
   lng: number;
   telefono: string; // Teléfono de contacto
+  fotoUrl?: string; // URL de la fotografía de la sede
   departamento: string; // Departamento (ej: Risaralda)
   ciudad: string; // Ciudad (ej: Pereira)
 }
@@ -53,37 +54,30 @@ export function getSedesByDepartamento(slug: string): Sede[] {
   );
 }
 
-// Agrupa todas las sedes por departamento
-export function getAllDepartamentos(): DepartamentoInfo[] {
+// Agrupa un arreglo de sedes por departamento (genérico, reutilizable)
+export function computeDepartamentos(sedes: Sede[]): DepartamentoInfo[] {
   const map = new Map<string, DepartamentoInfo>();
 
-  for (const sede of SEDES) {
+  for (const sede of sedes) {
     const slug = getDepartamentoSlug(sede.departamento);
-
-    // Si el departamento no existe en el mapa, lo crea
     if (!map.has(slug)) {
-      map.set(slug, {
-        nombre: sede.departamento,
-        slug,
-        count: 0,
-        ciudades: [],
-      });
+      map.set(slug, { nombre: sede.departamento, slug, count: 0, ciudades: [] });
     }
-
     const dep = map.get(slug)!;
-
-    dep.count++; // suma una sede más
-
-    // Agrega la ciudad si no existe aún
+    dep.count++;
     if (!dep.ciudades.includes(sede.ciudad)) {
       dep.ciudades.push(sede.ciudad);
     }
   }
 
-  // Convierte el Map a array y lo ordena alfabéticamente
   return Array.from(map.values()).sort((a, b) =>
     a.nombre.localeCompare(b.nombre, 'es')
   );
+}
+
+// Agrupa todas las sedes estáticas por departamento
+export function getAllDepartamentos(): DepartamentoInfo[] {
+  return computeDepartamentos(SEDES);
 }
 
 //HELPER CLAVE

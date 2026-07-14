@@ -28,7 +28,7 @@ const services = [
   {
     title: 'Atención Exequial Integral',
     description:
-      "Brindamos acompañamiento completo durante cada etapa del servicio funerario, ofreciendo respaldo humano, logístico y operativo las 24 horas del día.",
+      "Acompañamos a las familias con un servicio integral y humano en cada etapa del proceso, brindando orientación, apoyo y atención permanente las 24 horas del día, los 7 días de la semana, con la dignidad, sensibilidad y confianza que cada momento merece.",
     bullets: [
       "Atención inmediata 24/7",
       "Traslado del ser querido",
@@ -53,7 +53,7 @@ const services = [
   {
     title: 'Salas VIP',
     description:
-      "Disponemos de salas VIP ubicadas estratégicamente en Cali, Palmira, Zarzal y Cartago, ofreciendo privacidad, comodidad y exclusividad.",
+      "Nuestras salas VIP están diseñadas para ofrecer un ambiente de privacidad, confort y serenidad, brindando a las familias un espacio acogedor para reunirse, acompañarse y honrar la memoria de sus seres queridos. Disponibles en Cali, Palmira, Zarzal y Cartago.",
     bullets: [
       "Espacios privados",
       "Mayor comodidad",
@@ -65,7 +65,7 @@ const services = [
   {
     title: 'Parque Conmemorativo Espiritual',
     description:
-      "Un entorno diseñado para rendir homenaje a la vida, rodeado de naturaleza y espacios que invitan al recuerdo y la tranquilidad.",
+      "",
     bullets: [
       "Cartago - Valle",
       "Espacios naturales",
@@ -77,7 +77,7 @@ const services = [
   {
     title: 'Cremación',
     description:
-      "Contamos con horno crematorio de tecnología avanzada, amigable con el medio ambiente y diseñado para garantizar procesos seguros y ágiles.",
+      "Contamos con horno crematorio en el 'parque conmemorativo espiritual' (Zaragoza), con tecnología avanzada, amigable con el medio ambiente y diseñado para garantizar procesos seguros y ágiles.",
     bullets: [
       "Tecnología moderna",
       "Sin emisiones contaminantes",
@@ -106,7 +106,7 @@ const services = [
       "Gestión documental",
       "Coordinación internacional",
       "Traslado seguro",
-      "Acompañamiento permanente",
+      "Acompañamiento permanente 24H",
     ],
     image: "/images/images-baners/repatriacion.webp",
   },
@@ -255,9 +255,8 @@ const FaqItem = ({ faq, index, isOpen, onToggle }: FaqItemProps) => {
         <div className="flex justify-between items-center">
           <h3 className="text-lg font-semibold text-text mb-2">{faq.question}</h3>
           <ChevronDown
-            className={`w-5 h-5 text-primary transition-transform duration-300 ${
-              isOpen ? 'transform rotate-180' : ''
-            }`}
+            className={`w-5 h-5 text-primary transition-transform duration-300 ${isOpen ? 'transform rotate-180' : ''
+              }`}
           />
         </div>
         {isOpen && <p className="text-textLight leading-relaxed mt-4">{faq.answer}</p>}
@@ -301,10 +300,11 @@ const FullBleedBand = ({
   className = '',
   maxWidth = 'max-w-4xl',
 }: FullBleedBandProps) => (
-  <div className={`relative left-1/2 w-screen -translate-x-1/2 py-10 overflow-hidden bg-primary/5 ${className}`}>
-    <div className="absolute inset-0 w-full bg-gradient-to-r from-transparent via-primary/85 to-transparent" />
-    <div className="absolute inset-y-0 left-1/2 w-[72%] -translate-x-1/2 bg-primary/35 blur-2xl" />
-    <div className={`relative z-10 mx-auto ${maxWidth} text-center px-6 lg:px-8`}>
+  <div className={`relative left-1/2 w-screen -translate-x-1/2 overflow-hidden bg-primary ${className}`}>
+    {/* Shimmer cristal sutil — igual que TitleBand */}
+    <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-transparent to-black/10" />
+    <div className="absolute inset-y-0 left-0 w-1/3 bg-white/5 blur-2xl" />
+    <div className={`relative z-10 mx-auto ${maxWidth} text-center px-6 py-10 lg:px-8`}>
       {eyebrow && (
         <span className="inline-flex rounded-full bg-white/15 px-4 py-2 text-sm font-medium text-white shadow-sm backdrop-blur">
           {eyebrow}
@@ -342,9 +342,7 @@ export default function ServiciosClient() {
         <Container>
           <FadeIn>
             <FullBleedBand
-              eyebrow="Jardines del Renacer"
               title="Más de 25 años acompañando a las familias colombianas"
-              subtitle="Brindamos servicios exequiales con cobertura nacional, infraestructura propia y atención humana permanente, ofreciendo tranquilidad, confianza y respaldo cuando más se necesita."
               className="mb-16"
             />
           </FadeIn>
@@ -381,43 +379,41 @@ export default function ServiciosClient() {
           <div className="grid lg:grid-cols-2 gap-8">
             {services.map((service, index) => (
               <FadeIn key={service.title} delay={index * 0.07}>
-                <article className="group overflow-hidden rounded-[34px] glass border border-primary/10 hover:border-primary/30 hover:shadow-xl transition-all duration-500">
+                <article className="group relative rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-1">
+                  {/* Imagen full-height con overlay */}
                   <div className="relative h-72 overflow-hidden">
                     <Image
                       src={service.image}
                       alt={service.title}
                       fill
-                      className="object-cover transition-transform duration-700 group-hover:scale-110"
+                      className="object-cover transition-transform duration-700 group-hover:scale-105"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
-                    <div className="absolute bottom-8 left-8 z-10">
-                      <h3 className="text-3xl text-white font-display">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent" />
+                    {/* Título sobre imagen */}
+                    <div className="absolute bottom-0 left-0 right-0 px-7 pb-5">
+                      <h3 className="text-2xl font-display font-extrabold text-white drop-shadow">
                         {service.title}
                       </h3>
                     </div>
                   </div>
-                  <div className="p-8">
-                    <p className="text-textLight leading-relaxed mb-8">
-                      {service.description}
-                    </p>
-                    <div className="grid grid-cols-2 gap-4">
+                  {/* Panel inferior */}
+                  <div className="bg-white/95 p-7">
+                    {service.description && (
+                      <p className="text-sm text-textLight leading-relaxed mb-5">{service.description}</p>
+                    )}
+                    <div className="grid grid-cols-2 gap-2 mb-6">
                       {service.bullets.map((item) => (
-                        <div
-                          key={item}
-                          className="flex items-center gap-3 text-sm text-text"
-                        >
-                          <div className="w-2 h-2 rounded-full bg-primary" />
-                          <span>{item}</span>
+                        <div key={item} className="flex items-center gap-2 text-sm text-text">
+                          <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                          {item}
                         </div>
                       ))}
                     </div>
-                    <div className="mt-8">
-                      <Link href="/contacto">
-                        <Button variant="secondary">
-                          Solicitar información
-                        </Button>
-                      </Link>
-                    </div>
+                    <Link href="/contacto">
+                      <Button variant="secondary" className="w-full justify-center text-sm">
+                        Solicitar información
+                      </Button>
+                    </Link>
                   </div>
                 </article>
               </FadeIn>
@@ -549,7 +545,7 @@ export default function ServiciosClient() {
 
       {/* Cobertura Nacional Interactiva */}
 
-        <CoverageMap />
+      <CoverageMap />
 
       <section className="py-28 bg-primary/5 overflow-hidden">
         <Container>

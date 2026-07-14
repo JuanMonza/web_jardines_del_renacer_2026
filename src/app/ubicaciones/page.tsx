@@ -6,7 +6,8 @@ import Container from '@/components/ui/Container';
 import PageHero from '@/components/ui/PageHero';
 import AnimatedCounter from '@/components/ui/AnimatedCounter';
 import FadeIn from '@/components/animations/FadeIn';
-import { SEDES, getAllDepartamentos, type Sede } from '@/data/sedes';
+import type { Sede } from '@/data/sedes';
+import { useSedesData } from '@/hooks/useSedesData';
 import { getCiudadImagePath } from '@/config/ciudades';
 
 function getSedeMapsQuery(sede: Sede): string {
@@ -21,12 +22,12 @@ export default function UbicacionesPage() {
   const [deptFilter, setDeptFilter] = useState('todos');
   const [selectedId, setSelectedId]   = useState<string | null>(null);
 
-  const departamentos = getAllDepartamentos();
-  const totalSedes = SEDES.length;
+  const { sedes, departamentos } = useSedesData();
+  const totalSedes = sedes.length;
 
   const filtered = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    return SEDES.filter((s) => {
+    return sedes.filter((s) => {
       const matchesSearch =
         !q ||
         s.nombre.toLowerCase().includes(q) ||
@@ -37,9 +38,9 @@ export default function UbicacionesPage() {
         deptFilter === 'todos' || s.departamento === deptFilter;
       return matchesSearch && matchesDept;
     });
-  }, [searchQuery, deptFilter]);
+  }, [searchQuery, deptFilter, sedes]);
 
-  const selected = SEDES.find((s) => s.id === selectedId) ?? null;
+  const selected = sedes.find((s) => s.id === selectedId) ?? null;
   const mapsQuery = selected ? getSedeMapsQuery(selected) : null;
   const selectedCityImage = selected
     ? getCiudadImagePath(selected.departamento, selected.ciudad)
@@ -62,7 +63,7 @@ export default function UbicacionesPage() {
       <PageHero
         title="Nuestras Ubicaciones"
         subtitle={`Presentes en ${departamentos.length} departamentos con ${totalSedes} puntos de atención en todo el país`}
-        image="/images/images-baners/nuetrassedes.webp"
+        image="/images/images-baners/nuetrasedes.webp"
         imageAlt="Ubicaciones Jardines del Renacer"
       >
         <div className="flex flex-wrap gap-4">

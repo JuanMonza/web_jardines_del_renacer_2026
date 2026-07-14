@@ -97,7 +97,7 @@ export default function RepatriacionesPage() {
               <article className="glass rounded-3xl overflow-hidden border border-primary/15">
                 <div className="relative h-72 md:h-80">
                   <Image
-                    src="/images/repatriaciones.jpg"
+                    src="/images/repatriaciones.webp"
                     alt="Servicio de repatriaciones Jardines del Renacer"
                     fill
                     className="object-cover"

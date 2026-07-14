@@ -41,7 +41,7 @@ export default function PlanFlipCard(props: PlanFlipCardProps) {
       onMouseLeave={() => setFlipped(false)}
     >
       {/* Contenedor que define la altura automáticamente */}
-      <div className="relative min-h-[620px]">
+      <div className="relative min-h-[600px]">
         <motion.div
           className="absolute inset-0"
           animate={{
@@ -98,8 +98,8 @@ function FrontSide({
       {/* Halo azul */}
       <div className="absolute -top-16 left-1/2 h-40 w-40 -translate-x-1/2 rounded-full bg-blue-500/15 blur-3xl"></div>
 
-      {/* Imagen */}
-      <div className="relative h-64 overflow-hidden">
+      {/* Imagen — altura fija para igualar todas las cards */}
+      <div className="relative h-56 shrink-0 overflow-hidden">
 
         <Image
           src={image}

@@ -94,20 +94,21 @@ export default function CoverageMap() {
                     </div>
                 </div>
 
-            <div className="max-w-7xl mx-auto px-6">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6">
 
-                {/* Mapa + Panel */}
+                {/* Mapa + Panel — stack en móvil, 12 cols en desktop */}
 
-                <div className="grid lg:grid-cols-12 gap-10 items-start">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-start">
 
-                    {/* MAPA (izquierda) */}
+                    {/* MAPA */}
 
                     <div
                         ref={mapRef}
                         onPointerLeave={(event) => {
                             if (event.pointerType === 'mouse') resetMap();
                         }}
-                        className="lg:col-span-8 relative overflow-hidden rounded-[32px] border border-primary/10 bg-slate-950/5 min-h-[420px] sm:min-h-[520px]"
+                        className="lg:col-span-8 relative overflow-hidden rounded-[24px] border border-primary/10 bg-slate-950/5 w-full"
+                        style={{ aspectRatio: '3/4', maxHeight: '620px' }}
                     >
 
                         <ColombiaSVG

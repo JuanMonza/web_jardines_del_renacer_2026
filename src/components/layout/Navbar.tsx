@@ -17,18 +17,30 @@ export default function Navbar() {
   const [conocenosOpen, setConocenosOpen] = useState(false);
   const [aliadosOpen, setAliadosOpen] = useState(false);
   const [contactoOpen, setContactoOpen] = useState(false);
+  const [serviciosOpen, setServiciosOpen] = useState(false);
+  const [visitanosOpen, setVisitanosOpen] = useState(false);
   const [mobileConocenosOpen, setMobileConocenosOpen] = useState(false);
   const [mobileAliadosOpen, setMobileAliadosOpen] = useState(false);
   const [mobileContactoOpen, setMobileContactoOpen] = useState(false);
+  const [mobileServiciosOpen, setMobileServiciosOpen] = useState(false);
+  const [mobileVisitanosOpen, setMobileVisitanosOpen] = useState(false);
 
   const conocenosSubmenu = [
     { href: '/servicios/quienes-somos', label: 'Quiénes Somos' },
     { href: '/servicios/resena-historica', label: 'Reseña Histórica' },
+    { href: '/sorteos', label: 'Sorteos' },
+  ];
+
+  const serviciosFunerariosSubmenu = [
     { href: '/servicios/condolencias-digitales', label: 'Condolencias Digitales' },
     { href: PARQUE_CONMEMORATIVO_URL, label: 'Parque Conmemorativo', external: true },
     { href: '/repatriaciones', label: 'Repatriaciones' },
     { href: '/acompanamiento-en-duelo', label: 'Acompañamiento en Duelo' },
-    { href: '/sorteos', label: 'Sorteos' },
+  ];
+
+  const visitanosSubmenu = [
+    { href: '/recorrido-360', label: 'Recorrido 360°' },
+    { href: '/ubicaciones', label: 'Nuestras Sedes' },
   ];
 
   const aliadosSubmenu = ALLY_CATEGORIES.map((category) => ({
@@ -109,13 +121,59 @@ export default function Navbar() {
                   </div>
                 </div>
 
-                <Link href="/recorrido-360" className="text-white hover:text-white/80 transition-colors duration-300 text-sm uppercase tracking-wide font-medium">
-                  Recorrido 360
-                </Link>
+                {/* Servicios Funerarios Dropdown */}
+                <div
+                  className="relative group"
+                  onMouseEnter={() => setServiciosOpen(true)}
+                  onMouseLeave={() => setServiciosOpen(false)}
+                >
+                  <button className="text-white hover:text-white/80 transition-colors duration-300 flex items-center gap-1 text-sm uppercase tracking-wide font-medium">
+                    Servicios Funerarios
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  <div className={cn(
+                    'absolute top-full left-0 mt-2 w-60 bg-white rounded-xl overflow-hidden shadow-xl transition-all duration-300',
+                    serviciosOpen ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-2'
+                  )}>
+                    {serviciosFunerariosSubmenu.map((item) => (
+                      item.external ? (
+                        <a key={item.href} href={item.href} target="_blank" rel="noopener noreferrer" className={dropdownItemClass(item.href)}>
+                          {item.label}
+                        </a>
+                      ) : (
+                        <Link key={item.href} href={item.href} className={dropdownItemClass(item.href)}>
+                          {item.label}
+                        </Link>
+                      )
+                    ))}
+                  </div>
+                </div>
 
-                <Link href="/ubicaciones" className="text-white hover:text-white/80 transition-colors duration-300 text-sm uppercase tracking-wide font-medium">
-                  Nuestras Sedes
-                </Link>
+                {/* Visítanos Dropdown */}
+                <div
+                  className="relative group"
+                  onMouseEnter={() => setVisitanosOpen(true)}
+                  onMouseLeave={() => setVisitanosOpen(false)}
+                >
+                  <button className="text-white hover:text-white/80 transition-colors duration-300 flex items-center gap-1 text-sm uppercase tracking-wide font-medium">
+                    Visítanos
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  <div className={cn(
+                    'absolute top-full left-0 mt-2 w-52 bg-white rounded-xl overflow-hidden shadow-xl transition-all duration-300',
+                    visitanosOpen ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-2'
+                  )}>
+                    {visitanosSubmenu.map((item) => (
+                      <Link key={item.href} href={item.href} className={dropdownItemClass(item.href)}>
+                        {item.label}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
 
                 <Link href="/obituarios" className="text-white hover:text-white/80 transition-colors duration-300 text-sm uppercase tracking-wide font-medium">
                   Obituarios
@@ -348,21 +406,51 @@ export default function Navbar() {
               </div>
             </div>
 
-            <Link
-              href="/recorrido-360"
-              className="block px-2 py-2 text-white/90 hover:text-white transition-colors"
-              onClick={() => setIsOpen(false)}
-            >
-              Recorrido 360
-            </Link>
+            {/* Servicios Funerarios Mobile */}
+            <div className="space-y-1">
+              <button
+                onClick={() => setMobileServiciosOpen(!mobileServiciosOpen)}
+                className="flex items-center justify-between w-full px-2 py-2 text-white font-semibold hover:bg-white/10 rounded-lg transition-colors"
+              >
+                Servicios Funerarios
+                <svg className={cn('w-4 h-4 transition-transform duration-300', mobileServiciosOpen ? 'rotate-180' : '')} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              <div className={cn('overflow-hidden transition-all duration-300 space-y-1', mobileServiciosOpen ? 'max-h-72 opacity-100' : 'max-h-0 opacity-0')}>
+                {serviciosFunerariosSubmenu.map((item) => (
+                  item.external ? (
+                    <a key={item.href} href={item.href} target="_blank" rel="noopener noreferrer"
+                      className="block border-l-2 border-transparent pl-6 pr-2 py-2 text-white/80 hover:border-white hover:text-white transition-colors text-sm"
+                      onClick={() => setIsOpen(false)}>{item.label}</a>
+                  ) : (
+                    <Link key={item.href} href={item.href}
+                      className={cn('block border-l-2 pl-6 pr-2 py-2 text-white/80 hover:border-white hover:text-white transition-colors text-sm', isActive(item.href) ? 'border-white text-white' : 'border-transparent')}
+                      onClick={() => setIsOpen(false)}>{item.label}</Link>
+                  )
+                ))}
+              </div>
+            </div>
 
-            <Link
-              href="/ubicaciones"
-              className="block px-2 py-2 text-white/90 hover:text-white transition-colors"
-              onClick={() => setIsOpen(false)}
-            >
-              Nuestras Sedes
-            </Link>
+            {/* Visítanos Mobile */}
+            <div className="space-y-1">
+              <button
+                onClick={() => setMobileVisitanosOpen(!mobileVisitanosOpen)}
+                className="flex items-center justify-between w-full px-2 py-2 text-white font-semibold hover:bg-white/10 rounded-lg transition-colors"
+              >
+                Visítanos
+                <svg className={cn('w-4 h-4 transition-transform duration-300', mobileVisitanosOpen ? 'rotate-180' : '')} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              <div className={cn('overflow-hidden transition-all duration-300 space-y-1', mobileVisitanosOpen ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0')}>
+                {visitanosSubmenu.map((item) => (
+                  <Link key={item.href} href={item.href}
+                    className={cn('block border-l-2 pl-6 pr-2 py-2 text-white/80 hover:border-white hover:text-white transition-colors text-sm', isActive(item.href) ? 'border-white text-white' : 'border-transparent')}
+                    onClick={() => setIsOpen(false)}>{item.label}</Link>
+                ))}
+              </div>
+            </div>
 
             <Link
               href="/obituarios"

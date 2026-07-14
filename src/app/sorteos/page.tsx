@@ -104,24 +104,18 @@ export default function SorteosPage() {
                 <section className="py-20 bg-background-light">
                     <TitleBand title="Siguientes Sorteos" subtitle="Estos son los premios que podrías ganar en los próximos meses." />
                     <Container>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {upcoming.map((giveaway, index) => (
                                 <FadeIn key={giveaway.id} delay={index * 0.1}>
-                                    <div className="glass rounded-2xl border border-primary/10 overflow-hidden shadow-lg h-full flex flex-col">
-                                        <div className="relative aspect-video overflow-hidden">
-                                            <Image
-                                                src={giveaway.image}
-                                                alt={giveaway.title} fill
-                                                className="object-cover transition-transform duration-500 ease-in-out group-hover:scale-110" />
-                                            <div className="absolute bottom-0 w-full bg-primary/80 px-2 py-1 text-center text-[10px] font-semibold text-white backdrop-blur-sm">
-                                                *Imagen de referencia. Aplican T&C.
-                                            </div>
-                                        </div>
-                                        <div className="p-6 flex-1 flex flex-col">
-                                            <p className="text-sm font-semibold text-primary mb-2">
-                                                {new Date(giveaway.date).toLocaleDateString('es-CO', { month: 'long', year: 'numeric' })}
-                                            </p>
-                                            <h4 className="text-xl font-bold text-text flex-1">{giveaway.title}</h4>
+                                    <div className="group relative rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 h-72">
+                                        <Image src={giveaway.image} alt={giveaway.title} fill className="object-cover group-hover:scale-105 transition-transform duration-700" />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                                        <span className="absolute top-4 left-4 rounded-full bg-primary/90 backdrop-blur-sm px-3 py-1 text-xs font-bold text-white">
+                                            {new Date(giveaway.date).toLocaleDateString('es-CO', { month: 'short', year: 'numeric' })}
+                                        </span>
+                                        <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
+                                            <p className="text-xs text-white/70 mb-1">Próximo sorteo</p>
+                                            <h4 className="text-xl font-bold leading-tight">{giveaway.title}</h4>
                                         </div>
                                     </div>
                                 </FadeIn>
@@ -139,13 +133,19 @@ export default function SorteosPage() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                             {past.map((giveaway, index) => (
                                 <FadeIn key={giveaway.id} delay={index * 0.1}>
-                                    <div className="glass rounded-2xl p-6 border border-primary/15 text-center flex flex-col items-center transition-transform duration-300 ease-in-out hover:scale-105 hover:shadow-xl">
-                                        <img width="64" height="64" src="https://img.icons8.com/arcade/64/first-place-ribbon.png" alt="first-place-ribbon" className="mb-4" />
-                                        <p className="text-sm font-semibold text-primary mb-2">
-                                            {new Date(giveaway.date).toLocaleDateString('es-CO', { month: 'long', year: 'numeric' })}
-                                        </p>
-                                        <p className="text-textLight mb-2">Ganador del premio:</p>
-                                        <h4 className="text-lg font-bold text-text mb-2">{giveaway.winner?.name}</h4>
+                                    <div className="group relative rounded-3xl overflow-hidden border border-primary/15 bg-gradient-to-br from-white to-primary/5 p-6 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-yellow-400/20 border border-yellow-400/40">
+                                                <svg className="h-6 w-6 text-yellow-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-bold uppercase tracking-wider text-primary">
+                                                    {new Date(giveaway.date).toLocaleDateString('es-CO', { month: 'long', year: 'numeric' })}
+                                                </p>
+                                                <p className="text-xs text-textLight">Ganador confirmado</p>
+                                            </div>
+                                        </div>
+                                        <h4 className="text-base font-bold text-text mb-1">{giveaway.winner?.name}</h4>
                                         <p className="text-sm text-textLight">{giveaway.title}</p>
                                     </div>
                                 </FadeIn>

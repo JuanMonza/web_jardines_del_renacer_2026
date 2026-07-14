@@ -43,20 +43,40 @@ export const historyTimeline = [
     id: 1,
     year: '2000',
     title: 'El nacimiento de un sueño',
-    description: 'En el mes de octubre nació un sueño en la ciudad de Pereira: brindar servicios exequiales dignos y accesibles. Con vocación de servicio y determinación, iniciamos nuestra labor.',
-    image: '/images/quiene_somos.jpg',
+    description: 'Con la fe puesta en Dios el Sr. Richard Alexander Restrepo Piedrahita, fundador, aprovecha todos sus conocimientos y capacidades para así crear empresa, así nace Jardines del Renacer, funeraria, ubicada en la ciudad de Pereira con el fin de suplir la necesidad que tenían los estratos vulnerables de la región para adquirir una previsión exequial de calidad y a un precio justo. Inicialmente se crearon planes para la protección de las familias en los municipios de Marsella, Alcalá y Cartago.',
+    image: '/images/2000.jpeg', // Placeholder intercambiable desde el admin
     iconType: 'flag',
     order: 1,
     active: true,
   },
   {
     id: 2,
-    year: '2010',
+    year: '2004',
     title: 'Crecimiento y expansión',
-    description: 'Iniciamos un proceso de expansión, abriendo sedes en el Eje Cafetero y posteriormente en ciudades como Medellín, Cali, Barranquilla y Bogotá, consolidando nuestra presencia a nivel nacional.',
-    image: '/images/quiene_somos.jpg', // Placeholder intercambiable desde el admin
+    description: 'Se dio apertura a la primera oficina en la ciudad de Pereira y esta contaba con salas de velación propias, abriendo así puertas y oportunidades, e iniciando un buen camino en la prestación de servicios exequiales para la protección de las familias del Valle y Eje Cafetero. \n\nY el sueño siguió creciendo, para este año se hicieron más aperturas de sedes en el siguiente orden, Marsella, Alcalá y por último Cartago, también se realizó la compra del primer vehículo propio al cual se llamó “La verdolaga”.',
+    image: '/images/images-baners/reseñahistorica.webp', // Placeholder intercambiable desde el admin
     iconType: 'trending-up',
     order: 2,
+    active: true,
+  },
+  {
+    id: 4,
+    year: '2014',
+    title: 'Nuevos Horizontes y Servicios',
+    description: 'Se constituye el departamento empresarial, incursionando de una forma más estructurada en este mercado.En el mes de Julio y para más expansión se compra la empresa Las Exequias, ubicada en el Valle del Cauca, con presencia en La Unión, La Victoria, Obando, Toro y Anserma Nuevo.Ya para octubre se compra también la funeraria San Agustín con sedes en Tuluá (Valle del Caúca y Trujillo).',
+    image: '/images/2014.jpeg', // Placeholder intercambiable desde el admin
+    iconType: 'sparkles',
+    order: 3,
+    active: true,
+  },
+  {
+    id: 6,
+    year: '2023',
+    title: 'Creación del Parque Conmemorativo',
+    description: 'Se materializa uno de nuestros proyectos más anhelados: la creación del Parque Conmemorativo, un espacio sagrado y natural diseñado para honrar la memoria, celebrar la vida y ofrecer a las familias un lugar de paz y trascendencia.',
+    image: '/images/parque-conmemorativo-2026.webp',
+    iconType: 'leaf',
+    order: 4,
     active: true,
   },
   {
@@ -64,9 +84,19 @@ export const historyTimeline = [
     year: '2024',
     title: 'Consolidación y mejora continua',
     description: 'Hoy nos posicionamos como una empresa sólida, humana y en constante crecimiento, comprometida con acompañar a las familias con dignidad, sensibilidad y confianza.',
-    image: '/images/quiene_somos.jpg', // Placeholder intercambiable desde el admin
+    image: '/images/2014.jpeg', // Placeholder intercambiable desde el admin
     iconType: 'star',
-    order: 3,
+    order: 5,
+    active: true,
+  },
+  {
+    id: 5,
+    year: '2026',
+    title: 'Innovación y Futuro Digital',
+    description: 'Lanzamiento de nuestra nueva plataforma digital, integrando recorridos virtuales 360°, cotización en línea y un portal de aliados mejorado, reafirmando nuestro compromiso con la innovación y la accesibilidad para todas las familias.',
+    image: '/images/futuro-digital-2026.webp',
+    iconType: 'rocket',
+    order: 6,
     active: true,
   }
 ];
