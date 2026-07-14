@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useEffect, useMemo, useState } from 'react';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -1085,9 +1086,9 @@ export default function AliadosAdminPanel() {
                   className="rounded-2xl border border-primary/15 bg-white/40 p-4"
                 >
                   <div className="flex gap-3">
-                    <div className="w-14 h-14 rounded-xl border border-primary/20 bg-white p-2 flex items-center justify-center overflow-hidden shrink-0">
+                    <div className="w-14 h-14 rounded-xl border border-primary/20 bg-white p-2 flex items-center justify-center overflow-hidden shrink-0 relative">
                       {ally.logo ? (
-                        <img src={ally.logo} alt={ally.name} className="h-full w-full object-contain" />
+                        <Image src={ally.logo} alt={ally.name} width={56} height={56} className="h-full w-full object-contain" />
                       ) : (
                         <span className="text-xs text-textLight">Sin logo</span>
                       )}

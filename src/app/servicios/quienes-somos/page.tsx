@@ -31,19 +31,19 @@ const CheckIcon = () => (
 
 const valueIcons: { [key: string]: JSX.Element } = {
   Honestidad: (
-    <img width="32" height="32" src="https://img.icons8.com/arcade/128/add-bookmark.png" alt="add-bookmark"/>
+    <Image width="32" height="32" src="https://img.icons8.com/arcade/128/add-bookmark.png" alt="Icono de honestidad"/>
   ),
   Respeto: (
-    <img width="32" height="32" src="https://img.icons8.com/3d-fluency/94/trust.png" alt="trust"/>
+    <Image width="32" height="32" src="https://img.icons8.com/3d-fluency/94/trust.png" alt="Icono de respeto"/>
   ),
   'Calidad Humana': (
-    <img width="32" height="32" src="https://img.icons8.com/3d-fluency/94/best-seller.png" alt="best-seller"/>
+    <Image width="32" height="32" src="https://img.icons8.com/3d-fluency/94/best-seller.png" alt="Icono de calidad humana"/>
   ),
   Cumplimiento: (
-    <img width="32" height="32" src="https://img.icons8.com/3d-fluency/94/police-station.png" alt="police-station"/>
+    <Image width="32" height="32" src="https://img.icons8.com/3d-fluency/94/police-station.png" alt="Icono de cumplimiento"/>
   ),
   'Responsabilidad social': (
-    <img width="32" height="32" src="https://img.icons8.com/3d-fluency/94/user-group-man-woman--v4.png" alt="user-group-man-woman--v4"/>
+    <Image width="32" height="32" src="https://img.icons8.com/3d-fluency/94/user-group-man-woman--v4.png" alt="Icono de responsabilidad social"/>
   ),
 };
 

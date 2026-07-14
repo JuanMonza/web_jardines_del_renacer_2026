@@ -61,21 +61,8 @@ export default function MonthlyGiveawayPopup() {
     []
   );
 
-  // Si no hay próximos sorteos, no se muestra el popup
-  if (!nextGiveaway) {
-    return null;
-  }
-
   useEffect(() => {
-    const openTimer = window.setTimeout(() => {
-      setIsVisible(true);
-    }, PRELOADER_DURATION_MS + POPUP_DELAY_MS);
-
-    return () => window.clearTimeout(openTimer);
-  }, []);
-
-  useEffect(() => {
-    if (!isVisible) {
+    if (!nextGiveaway) {
       return;
     }
 
@@ -96,19 +83,20 @@ export default function MonthlyGiveawayPopup() {
     };
   }, [isVisible]);
 
+  // Efecto para abrir el popup después de un retraso
   useEffect(() => {
-    if (!isVisible) {
+    if (!nextGiveaway) {
       return;
     }
-
-    setTimeRemaining(getTimeRemaining(nextGiveaway.date));
-
     const countdownTimer = window.setInterval(() => {
       setTimeRemaining(getTimeRemaining(nextGiveaway.date));
     }, 1000);
 
     return () => window.clearInterval(countdownTimer);
-  }, [isVisible]);
+  }, [nextGiveaway]);
+
+  // Si no hay próximos sorteos o el popup no es visible, no se muestra nada
+  if (!nextGiveaway || !isVisible) return null;
 
   if (!isVisible) {
     return null;
