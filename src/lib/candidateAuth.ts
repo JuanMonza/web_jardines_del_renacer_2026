@@ -20,6 +20,8 @@ export interface CandidatePasswordResetRequest {
 
 const CANDIDATE_SESSION_STORAGE_KEY = 'jdr.vacantes.candidate.session.v1';
 const CANDIDATE_RESET_STORAGE_KEY = 'jdr.vacantes.candidate.reset.v1';
+export const CANDIDATE_SESSION_COOKIE_NAME = 'jdr.vacantes.candidate.session';
+export const CANDIDATE_SESSION_MAX_AGE_SECONDS = 60 * 60 * 8;
 
 function normalizeDocumentNumber(value: string) {
   return value.replace(/\D/g, '');
@@ -63,6 +65,69 @@ function randomHex(size: number) {
 
 function isExpired(isoDate: string) {
   return Number.isNaN(new Date(isoDate).getTime()) || new Date(isoDate).getTime() < Date.now();
+}
+
+function getCandidateJwtSecret() {
+  return process.env.CANDIDATE_JWT_SECRET || process.env.JWT_SECRET || '';
+}
+
+export async function signVacantesCandidateJwt(
+  session: Omit<VacantesCandidateSession, 'createdAt'>,
+) {
+  const secretValue = getCandidateJwtSecret();
+  if (!secretValue) {
+    throw new Error('CANDIDATE_JWT_SECRET o JWT_SECRET no esta definido.');
+  }
+
+  const { SignJWT } = await import('jose');
+  const secret = new TextEncoder().encode(secretValue);
+  const documentNumber = normalizeDocumentNumber(session.documentNumber);
+  const email = normalizeEmail(session.email);
+
+  return new SignJWT({
+    email,
+    name: session.name,
+    role: 'vacantes_usuario',
+  })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setSubject(documentNumber)
+    .setIssuedAt()
+    .setExpirationTime(`${CANDIDATE_SESSION_MAX_AGE_SECONDS}s`)
+    .sign(secret);
+}
+
+export async function verifyVacantesCandidateJwt(token: string) {
+  const secretValue = getCandidateJwtSecret();
+  if (!secretValue) {
+    return null as VacantesCandidateSession | null;
+  }
+
+  try {
+    const { jwtVerify } = await import('jose');
+    const secret = new TextEncoder().encode(secretValue);
+    const { payload } = await jwtVerify(token, secret);
+    const documentNumber = typeof payload.sub === 'string' ? normalizeDocumentNumber(payload.sub) : '';
+    const email = typeof payload.email === 'string' ? normalizeEmail(payload.email) : '';
+    const name = typeof payload.name === 'string' ? payload.name : '';
+    const role = payload.role === 'vacantes_usuario' ? 'vacantes_usuario' : null;
+    const issuedAt = typeof payload.iat === 'number'
+      ? new Date(payload.iat * 1000).toISOString()
+      : new Date().toISOString();
+
+    if (!documentNumber || !email || !name || !role) {
+      return null;
+    }
+
+    return {
+      documentNumber,
+      email,
+      name,
+      role,
+      createdAt: issuedAt,
+    };
+  } catch {
+    return null;
+  }
 }
 
 export async function hashCandidatePassword(password: string) {

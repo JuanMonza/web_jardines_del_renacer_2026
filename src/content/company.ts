@@ -83,7 +83,7 @@ export const historyTimeline = [
     id: 3,
     year: '2024',
     title: 'Consolidación y mejora continua',
-    description: 'Hoy nos posicionamos como una empresa sólida, humana y en constante crecimiento, comprometida con acompañar a las familias con dignidad, sensibilidad y confianza.',
+    description: 'Nos posicionamos como una empresa sólida, humana y en constante crecimiento, comprometida con acompañar a las familias con dignidad, sensibilidad y confianza.',
     image: '/images/2014.jpeg', // Placeholder intercambiable desde el admin
     iconType: 'star',
     order: 5,

@@ -22,7 +22,6 @@ import {
   writeCandidateApplications,
   writeCandidateProfile,
 } from '@/lib/candidateStorage';
-import { withCandidatePassword } from '@/lib/candidateAuth';
 import { readJobVacancies } from '@/lib/vacanciesStorage';
 
 const MAX_RESUME_SIZE = 5 * 1024 * 1024;
@@ -42,7 +41,6 @@ function calculateProfileCompletion(profile: CandidateProfile) {
     profile.documentNumber,
     profile.fullName,
     profile.email,
-    profile.passwordHash,
     profile.phone,
     profile.department,
     profile.city,
@@ -139,8 +137,6 @@ function PostulanteContent() {
   const [feedback, setFeedback] = useState('');
   const [saving, setSaving] = useState(false);
   const [applying, setApplying] = useState(false);
-  const [accessPassword, setAccessPassword] = useState('');
-  const [confirmAccessPassword, setConfirmAccessPassword] = useState('');
   const [trackingDocument, setTrackingDocument] = useState('');
   const [trackingEmail, setTrackingEmail] = useState('');
 
@@ -153,6 +149,15 @@ function PostulanteContent() {
     };
 
     syncData();
+    void fetch('/api/vacantes', { cache: 'no-store' })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data: JobVacancy[] | null) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setVacancies(data);
+        }
+      })
+      .catch(() => undefined);
+
     window.addEventListener('candidate-storage-updated', syncData);
     return () => window.removeEventListener('candidate-storage-updated', syncData);
   }, []);
@@ -243,55 +248,19 @@ function PostulanteContent() {
       return;
     }
 
-    const wantsPasswordUpdate =
-      accessPassword.trim().length > 0 || confirmAccessPassword.trim().length > 0;
-    const hasConfiguredPassword = profile.passwordHash.trim().length > 0;
-
-    if (!hasConfiguredPassword && !wantsPasswordUpdate) {
-      setFeedback('Debes crear una contrasena para ingresar a tu perfil.');
-      setSaving(false);
-      return;
-    }
-
-    if (wantsPasswordUpdate) {
-      if (accessPassword.trim().length < 8) {
-        setFeedback('Tu contrasena debe tener al menos 8 caracteres.');
-        setSaving(false);
-        return;
-      }
-
-      if (accessPassword !== confirmAccessPassword) {
-        setFeedback('La confirmacion de contrasena no coincide.');
-        setSaving(false);
-        return;
-      }
-    }
-
-    let nextProfile: CandidateProfile = {
+    const nextProfile: CandidateProfile = {
       ...profile,
       documentNumber: normalizedDocument,
       updatedAt: new Date().toISOString(),
     };
 
-    if (wantsPasswordUpdate) {
-      nextProfile = await withCandidatePassword(nextProfile, accessPassword);
-    }
-
     setProfile(nextProfile);
     writeCandidateProfile(nextProfile);
-    if (wantsPasswordUpdate) {
-      setAccessPassword('');
-      setConfirmAccessPassword('');
-    }
     setSaving(false);
-    setFeedback(
-      wantsPasswordUpdate
-        ? 'Perfil y contrasena guardados correctamente.'
-        : 'Perfil guardado. Puedes editarlo cuando quieras.',
-    );
+    setFeedback('Perfil guardado. Puedes postularte o ingresar al portal con documento y correo.');
   };
 
-  const handleApplyToVacancy = () => {
+  const handleApplyToVacancy = async () => {
     if (!selectedVacancy) {
       setFeedback('Selecciona una vacante para postularte.');
       return;
@@ -310,12 +279,6 @@ function PostulanteContent() {
 
     if (!profile.fullName.trim() || !profile.email.trim() || !profile.phone.trim()) {
       setFeedback('Completa documento, nombre, correo y telefono antes de postularte.');
-      setApplying(false);
-      return;
-    }
-
-    if (!profile.passwordHash.trim()) {
-      setFeedback('Antes de postularte, crea tu contrasena en el perfil.');
       setApplying(false);
       return;
     }
@@ -339,35 +302,51 @@ function PostulanteContent() {
       return;
     }
 
-    const newApplication: JobApplication = {
-      id: `app-${Date.now().toString(36)}`,
-      vacancyId: selectedVacancy.id,
-      vacancyTitle: selectedVacancy.title,
-      candidateDocument: normalizedDocument,
-      candidateName: profile.fullName.trim(),
-      candidateEmail: profile.email.trim(),
-      candidatePhone: profile.phone.trim(),
-      resumeFileName: profile.resumeFileName || 'Hoja de vida adjunta',
-      appliedAt: new Date().toISOString(),
-      status: 'Recibida',
-      trackingCode: '',
-      resumeFileData: ''
-    };
+    try {
+      const response = await fetch('/api/postulantes/mis-postulaciones', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          vacancyId: selectedVacancy.id,
+          vacancyTitle: selectedVacancy.title,
+          candidateDocument: normalizedDocument,
+          candidateName: profile.fullName.trim(),
+          candidateEmail: profile.email.trim(),
+          candidatePhone: profile.phone.trim(),
+          candidateCity: profile.city.trim(),
+          candidateDepartment: profile.department.trim(),
+          resumeFileName: profile.resumeFileName || 'Hoja de vida adjunta',
+          resumeFileData: profile.resumeFileData,
+        }),
+      });
+      const result = (await response.json()) as {
+        success: boolean;
+        data?: JobApplication;
+        message?: string;
+      };
 
-    const nextApplications = [newApplication, ...applications];
-    setApplications(nextApplications);
-    writeCandidateApplications(nextApplications);
+      if (!response.ok || !result.success || !result.data) {
+        throw new Error(result.message || 'No se pudo registrar la postulacion.');
+      }
 
-    const nextProfile: CandidateProfile = {
-      ...profile,
-      documentNumber: normalizedDocument,
-      updatedAt: new Date().toISOString(),
-    };
-    setProfile(nextProfile);
-    writeCandidateProfile(nextProfile);
+      const nextApplications = [result.data, ...applications];
+      setApplications(nextApplications);
+      writeCandidateApplications(nextApplications);
 
-    setApplying(false);
-    setFeedback(`Postulacion enviada a "${selectedVacancy.title}".`);
+      const nextProfile: CandidateProfile = {
+        ...profile,
+        documentNumber: normalizedDocument,
+        updatedAt: new Date().toISOString(),
+      };
+      setProfile(nextProfile);
+      writeCandidateProfile(nextProfile);
+
+      setFeedback(`Postulacion enviada a "${selectedVacancy.title}". Ya puedes ingresar al portal.`);
+    } catch (error) {
+      setFeedback(error instanceof Error ? error.message : 'No se pudo registrar la postulacion.');
+    } finally {
+      setApplying(false);
+    }
   };
 
   return (
@@ -418,26 +397,6 @@ function PostulanteContent() {
                       placeholder="correo@ejemplo.com"
                     />
                   </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Input
-                      label={profile.passwordHash ? 'Nueva contrasena (opcional)' : 'Contrasena de acceso'}
-                      type="password"
-                      value={accessPassword}
-                      onChange={(event) => setAccessPassword(event.target.value)}
-                      placeholder="Minimo 8 caracteres"
-                    />
-                    <Input
-                      label={profile.passwordHash ? 'Confirmar nueva contrasena' : 'Confirmar contrasena'}
-                      type="password"
-                      value={confirmAccessPassword}
-                      onChange={(event) => setConfirmAccessPassword(event.target.value)}
-                      placeholder="Repite tu contrasena"
-                    />
-                  </div>
-                  <p className="text-xs text-textLight -mt-2">
-                    Esta contrasena se usa para ingresar por la opcion "Mi perfil" con doble verificacion.
-                  </p>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Input

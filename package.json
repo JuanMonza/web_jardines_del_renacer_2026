@@ -14,8 +14,10 @@
   "dependencies": {
     "@lottiefiles/dotlottie-react": "^0.19.3",
     "@vis.gl/react-google-maps": "^1.8.3",
+    "bcryptjs": "^3.0.3",
     "clsx": "^2.1.0",
     "framer-motion": "^11.0.3",
+    "jose": "^6.2.3",
     "lucide-react": "^1.23.0",
     "mysql2": "^3.22.5",
     "next": "^14.1.0",
@@ -26,12 +28,15 @@
     "react-barcode": "^1.6.1",
     "react-countup": "^6.5.3",
     "react-dom": "^18.2.0",
+    "react-hot-toast": "^2.6.0",
     "react-intersection-observer": "^10.0.3",
+    "recharts": "^3.9.2",
     "shiki": "^4.0.2",
     "tailwind-merge": "^2.2.1"
   },
   "devDependencies": {
     "@svgr/webpack": "^8.1.0",
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20.11.5",
     "@types/react": "^18.2.48",
     "@types/react-dom": "^18.2.18",
