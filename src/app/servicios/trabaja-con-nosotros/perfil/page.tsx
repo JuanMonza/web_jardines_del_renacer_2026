@@ -24,7 +24,7 @@ export default function PerfilPostulantePage() {
       try {
         const response = await fetch('/api/postulantes/perfil');
         if (response.status === 401) {
-          router.push('/postulantes/dashboard');
+          router.push('/login/usuario-vacantes?next=/servicios/trabaja-con-nosotros/perfil');
           return;
         }
         if (!response.ok) {
@@ -146,7 +146,10 @@ export default function PerfilPostulantePage() {
               </div>
 
               <div className="flex justify-end gap-4 pt-6 border-t border-primary/10">
-                <Link href="/postulantes/dashboard" className="btn btn-secondary">
+                <Link
+                  href="/servicios/trabaja-con-nosotros/postulante/dashboard"
+                  className="btn btn-secondary"
+                >
                   Volver al Dashboard
                 </Link>
                 <Button type="submit" variant="primary" disabled={isSaving}>

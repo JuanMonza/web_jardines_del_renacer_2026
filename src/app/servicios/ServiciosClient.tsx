@@ -12,6 +12,7 @@ import FadeIn from '@/components/animations/FadeIn';
 import Button from '@/components/ui/Button';
 import CoverageMap from '@/components/coverage/CoverageMap';
 import { SEDES, getAllDepartamentos } from '@/data/sedes';
+import { buildWhatsAppUrl } from '@/config/contact';
 import {
   Building2,
   HeartHandshake,
@@ -24,9 +25,12 @@ import {
   MessageSquare,
 } from 'lucide-react';
 
+const SERVICIOS_WHATSAPP_MESSAGE =
+  'Hola, estoy interesado en sus servicios y me gustaría recibir más información.';
+
 const services = [
   {
-    title: 'Atención Exequial Integral',
+    title: 'Atención exequial integral',
     description:
       "Acompañamos a las familias con un servicio integral y humano en cada etapa del proceso, brindando orientación, apoyo y atención permanente las 24 horas del día, los 7 días de la semana, con la dignidad, sensibilidad y confianza que cada momento merece.",
     bullets: [
@@ -36,10 +40,10 @@ const services = [
       "Coordinación de ceremonias",
       "Inhumación o cremación",
     ],
-    image: "/images/services/atencion.jpg",
+    image: "/images/images-baners/atencion_integral.webp",
   },
   {
-    title: 'Salas de Velación',
+    title: 'Salas de velación',
     description:
       "Más de 200 salas de velación distribuidas a nivel nacional, diseñadas para ofrecer un ambiente tranquilo, digno y acogedor para familiares y amigos.",
     bullets: [
@@ -48,10 +52,10 @@ const services = [
       "Atención permanente",
       "Cobertura nacional",
     ],
-    image: "/images/services/salas.jpg",
+    image: "/images/images-baners/salas_standar.webp",
   },
   {
-    title: 'Salas VIP',
+    title: 'Salas vip',
     description:
       "Nuestras salas VIP están diseñadas para ofrecer un ambiente de privacidad, confort y serenidad, brindando a las familias un espacio acogedor para reunirse, acompañarse y honrar la memoria de sus seres queridos. Disponibles en Cali, Palmira, Zarzal y Cartago.",
     bullets: [
@@ -60,19 +64,19 @@ const services = [
       "Ambientes exclusivos",
       "Atención personalizada",
     ],
-    image: "/images/services/vip.jpg",
+    image: "/images/images-baners/vip_sala.webp",
   },
   {
-    title: 'Parque Conmemorativo Espiritual',
+    title: "Parque Conmemorativo Espiritual",
     description:
-      "",
+      "Un lugar diseñado para honrar la memoria de quienes han partido, rodeado de naturaleza, tranquilidad y espacios que invitan al recogimiento, la reflexión y el encuentro espiritual con la familia.",
     bullets: [
       "Cartago - Valle",
       "Espacios naturales",
       "Crematorio",
       "Ambiente espiritual",
     ],
-    image: "/images/parque-conmemorativo-2026.webp",
+    image: "/images/carrusel_1.webp",
   },
   {
     title: 'Cremación',
@@ -84,22 +88,22 @@ const services = [
       "Entrega oportuna de cenizas",
       "Procesos certificados",
     ],
-    image: "/images/services/cremacion.jpg",
+    image: "/images/images-baners/cremacion.webp",
   },
   {
-    title: 'Parque Automotor',
+    title: "Parque Automotor",
     description:
-      "Más de 70 vehículos especializados distribuidos estratégicamente para brindar atención rápida y segura en diferentes regiones del país.",
+      "Contamos con una moderna flota de más de 70 vehículos especializados, preparados para ofrecer traslados oportunos, seguros y con los más altos estándares de calidad, garantizando una atención ágil y un acompañamiento digno a las familias en todo momento.",
     bullets: [
-      "Carrozas",
-      "HH Alargadas",
-      "Peugeot",
+      "Más de 70 vehículos",
+      "Carrozas especializadas",
+      "HH alargadas",
       "Vans comerciales",
     ],
-    image: "/images/services/flota.jpg",
+    image: "/images/images-baners/carrozas.webp",
   },
   {
-    title: 'Repatriación y Expatriación',
+    title: 'Repatriación y expatriación',
     description:
       "Coordinamos todos los trámites y la logística necesaria para el traslado nacional e internacional del ser querido.",
     bullets: [
@@ -111,7 +115,7 @@ const services = [
     image: "/images/images-baners/repatriacion.webp",
   },
   {
-    title: "Planes de Previsión",
+    title: "Planes de previsión",
     description:
       "Protege hoy el bienestar de tu familia con planes diseñados para brindar tranquilidad, respaldo económico y acompañamiento permanente.",
     bullets: [
@@ -161,19 +165,19 @@ const stats = [
 const reasons = [
   {
     icon: HeartHandshake,
-    title: "Calidad Humana",
+    title: "Calidad humana",
     description:
       "Acompañamos cada familia con respeto, empatía y un profundo sentido humano, honrando la historia de vida de cada persona.",
   },
   {
     icon: ShieldCheck,
-    title: "Respaldo y Experiencia",
+    title: "Respaldo y experiencia",
     description:
       "Más de 25 años ofreciendo servicios exequiales con altos estándares de calidad y atención permanente.",
   },
   {
     icon: Building2,
-    title: "Infraestructura Propia",
+    title: "Infraestructura propia",
     description:
       "Contamos con sedes, salas de velación, parque automotor y parque conmemorativo propios para brindar una atención integral.",
   },
@@ -431,7 +435,7 @@ export default function ServiciosClient() {
                   title="Mucho más que un servicio funerario"
                   subtitle="Nuestro propósito es acompañar a las familias con respeto, empatía y compromiso, ofreciendo una atención integral respaldada por infraestructura propia, cobertura nacional y un equipo humano preparado para brindar apoyo en cada etapa."
                 />
-                <Link href="/nosotros">
+                <Link href="/servicios/resena-historica" className="mt-8 inline-block">
                   <Button>
                     Conocer nuestra historia
                     <ArrowRight className="ml-2 w-5 h-5" />
@@ -491,7 +495,7 @@ export default function ServiciosClient() {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                   <div className="absolute bottom-12 left-12 max-w-lg">
                     <span className="inline-flex px-4 py-2 rounded-full bg-white/20 backdrop-blur text-white mb-6">
-                      Parque Conmemorativo Espiritual
+                      Parque conmemorativo espiritual
                     </span>
                     <h3 className="text-5xl font-display text-white mb-5">
                       Un homenaje rodeado de naturaleza
@@ -615,12 +619,15 @@ export default function ServiciosClient() {
                   />
                   <div className="mt-12 flex flex-wrap gap-5">
                     <Link href="/contacto">
-                      <Button>Hablar con un asesor ahora</Button>
+                      <Button>¡Cotiza Ya!</Button>
                     </Link>
-                    <Link href="https://wa.me/573115423312" target="_blank">
+                    <Link
+                      href={buildWhatsAppUrl(SERVICIOS_WHATSAPP_MESSAGE)}
+                      target="_blank"
+                    >
                       <Button variant="secondary" className="transition-transform hover:scale-105"><MessageSquare className="w-5 h-5 mr-2" /> WhatsApp</Button>
                     </Link>
-                    <Link href="tel:+573115423312">
+                    <Link href="tel:+573113906052">
                       <Button variant="secondary">Llamar 24/7</Button>
                     </Link>
                     <Link href="/cotizar">

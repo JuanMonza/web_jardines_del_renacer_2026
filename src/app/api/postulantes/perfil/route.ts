@@ -6,8 +6,8 @@ import {
   verifyVacantesCandidateJwt,
 } from '@/lib/candidateAuth';
 import {
-  getCandidateProfileFromApplications,
-  updateCandidateProfileInApplications,
+  getCandidateProfileFromDB,
+  updateCandidateProfileInDB,
 } from '@/lib/candidateStorageDB';
 import type { CandidateProfile } from '@/config/candidates';
 
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ success: false, message: 'No autorizado.' }, { status: 401 });
   }
 
-  const profile = await getCandidateProfileFromApplications({
+  const profile = await getCandidateProfileFromDB({
     documentNumber: session.documentNumber,
     email: session.email,
   });
@@ -47,13 +47,13 @@ export async function PUT(request: NextRequest) {
 
   try {
     const profile = (await request.json()) as Partial<CandidateProfile>;
-    await updateCandidateProfileInApplications({
+    await updateCandidateProfileInDB({
       documentNumber: session.documentNumber,
       email: session.email,
       profile,
     });
 
-    const updatedProfile = await getCandidateProfileFromApplications({
+    const updatedProfile = await getCandidateProfileFromDB({
       documentNumber: session.documentNumber,
       email: session.email,
     });

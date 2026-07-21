@@ -108,3 +108,65 @@ export async function deactivateVacancyInDB(id: string): Promise<number> {
   const result = await execute(sql, [id]);
   return result.affectedRows;
 }
+/**
+ * Actualiza una vacante existente.
+ */
+export async function updateVacancyInDB(
+  id: string,
+  vacancyData: Omit<JobVacancy, 'id' | 'createdAt' | 'updatedAt'>
+): Promise<number> {
+  const {
+    title,
+    area,
+    department,
+    city,
+    modality,
+    contractType,
+    schedule,
+    summary,
+    requirements,
+    benefits,
+    salary,
+    featured,
+    postedAt,
+  } = vacancyData;
+
+  const sql = `
+    UPDATE vacantes
+    SET
+      title = ?,
+      area = ?,
+      department = ?,
+      city = ?,
+      modality = ?,
+      contract_type = ?,
+      schedule = ?,
+      summary = ?,
+      requirements = ?,
+      benefits = ?,
+      salary = ?,
+      featured = ?,
+      posted_at = ?,
+      updated_at = CURRENT_TIMESTAMP
+    WHERE id = ?
+  `;
+
+  const result = await execute(sql, [
+    title,
+    area,
+    department,
+    city,
+    modality,
+    contractType,
+    schedule,
+    summary,
+    JSON.stringify(requirements),
+    JSON.stringify(benefits),
+    salary,
+    featured,
+    postedAt,
+    id,
+  ]);
+
+  return result.affectedRows;
+}

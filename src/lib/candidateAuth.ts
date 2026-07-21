@@ -2,6 +2,7 @@ import type { CandidateProfile } from '@/config/candidates';
 import { readCandidateProfile, writeCandidateProfile } from '@/lib/candidateStorage';
 
 export interface VacantesCandidateSession {
+  candidateId?: string;
   documentNumber: string;
   email: string;
   name: string;
@@ -85,6 +86,7 @@ export async function signVacantesCandidateJwt(
   const email = normalizeEmail(session.email);
 
   return new SignJWT({
+    candidateId: session.candidateId,
     email,
     name: session.name,
     role: 'vacantes_usuario',
@@ -107,6 +109,7 @@ export async function verifyVacantesCandidateJwt(token: string) {
     const secret = new TextEncoder().encode(secretValue);
     const { payload } = await jwtVerify(token, secret);
     const documentNumber = typeof payload.sub === 'string' ? normalizeDocumentNumber(payload.sub) : '';
+    const candidateId = typeof payload.candidateId === 'string' ? payload.candidateId : undefined;
     const email = typeof payload.email === 'string' ? normalizeEmail(payload.email) : '';
     const name = typeof payload.name === 'string' ? payload.name : '';
     const role = payload.role === 'vacantes_usuario' ? 'vacantes_usuario' : null;
@@ -120,6 +123,7 @@ export async function verifyVacantesCandidateJwt(token: string) {
 
     return {
       documentNumber,
+      candidateId,
       email,
       name,
       role,
@@ -139,6 +143,31 @@ export async function hashCandidatePassword(password: string) {
   }
 
   return buildFallbackHash(normalized);
+}
+
+export async function hashCandidatePasswordForDB(password: string) {
+  const normalized = password.trim();
+  if (normalized.length < 8) {
+    throw new Error('La contrasena debe tener al menos 8 caracteres.');
+  }
+
+  const bcrypt = await import('bcryptjs');
+  return bcrypt.hash(normalized, 12);
+}
+
+export async function verifyCandidatePasswordForDB(password: string, passwordHash: string) {
+  if (!password.trim() || !passwordHash) {
+    return false;
+  }
+
+  const bcrypt = await import('bcryptjs');
+  return bcrypt.compare(password.trim(), passwordHash);
+}
+
+export async function hashCandidateResetToken(token: string) {
+  const encoded = new TextEncoder().encode(token);
+  const digest = await crypto.subtle.digest('SHA-256', encoded);
+  return toHex(digest);
 }
 
 export async function withCandidatePassword(profile: CandidateProfile, password: string) {

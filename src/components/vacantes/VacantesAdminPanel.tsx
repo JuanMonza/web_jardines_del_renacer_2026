@@ -56,10 +56,9 @@ import {
 } from '@/lib/candidateStorage';
 import { APPLICATION_PROGRESS_STEPS, getApplicationProgress } from '@/lib/applicationProgress';
 import {
-  readJobVacancies,
+  // Eliminados: readJobVacancies y writeJobVacancies
   removeJobVacancy,
   upsertJobVacancy,
-  writeJobVacancies,
 } from '@/lib/vacanciesStorage';
 
 type CandidateUser = Partial<JobApplication>;
@@ -190,14 +189,14 @@ function VacanciesMetrics({
     const sixMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 5, 1);
 
     applications.forEach(app => {
-        const appDate = new Date(app.appliedAt);
-        if (appDate >= sixMonthsAgo) {
-            const monthName = monthNames[appDate.getMonth()];
-            const monthEntry = monthlyData.find(m => m.name === monthName);
-            if (monthEntry) {
-                monthEntry.Postulaciones++;
-            }
+      const appDate = new Date(app.appliedAt);
+      if (appDate >= sixMonthsAgo) {
+        const monthName = monthNames[appDate.getMonth()];
+        const monthEntry = monthlyData.find(m => m.name === monthName);
+        if (monthEntry) {
+          monthEntry.Postulaciones++;
         }
+      }
     });
 
     return monthlyData;
@@ -661,13 +660,12 @@ function ApplicationProgressTrack({ status }: { status: JobApplication['status']
       <div className="flex items-center justify-between gap-3 mb-2">
         <p className="text-[11px] uppercase tracking-[0.12em] text-textLight">Ruta del proceso</p>
         <span
-          className={`text-[11px] font-semibold px-2 py-1 rounded-full ${
-            progress.isRejected
-              ? 'text-red-700 bg-red-100 border border-red-200'
-              : progress.isFinished
-                ? 'text-green-700 bg-green-100 border border-green-200'
-                : 'text-primary bg-primary/10 border border-primary/20'
-          }`}
+          className={`text-[11px] font-semibold px-2 py-1 rounded-full ${progress.isRejected
+            ? 'text-red-700 bg-red-100 border border-red-200'
+            : progress.isFinished
+              ? 'text-green-700 bg-green-100 border border-green-200'
+              : 'text-primary bg-primary/10 border border-primary/20'
+            }`}
         >
           {status}
         </span>
@@ -688,11 +686,10 @@ function ApplicationProgressTrack({ status }: { status: JobApplication['status']
           return (
             <div key={step} className="flex flex-col items-center gap-1">
               <span
-                className={`h-3 w-3 rounded-full border transition-colors ${
-                  reached
-                    ? 'bg-primary border-primary'
-                    : 'bg-white border-primary/25'
-                } ${isCurrent ? 'ring-2 ring-primary/30' : ''}`}
+                className={`h-3 w-3 rounded-full border transition-colors ${reached
+                  ? 'bg-primary border-primary'
+                  : 'bg-white border-primary/25'
+                  } ${isCurrent ? 'ring-2 ring-primary/30' : ''}`}
               />
               <span className="text-[10px] text-textLight text-center leading-tight">
                 {APPLICATION_PROGRESS_SHORT_LABELS[step]}
@@ -725,27 +722,48 @@ export default function VacantesAdminPanel() {
   );
   const [expandedVacancyId, setExpandedVacancyId] = useState<string | null>(null);
   const vacanciesListRef = useRef<HTMLDivElement>(null);
+  const loadVacancies = async () => {
+    try {
+      const response = await fetch('/api/vacantes', {
+        cache: 'no-store',
+      });
+
+      const data = await response.json();
+
+      setVacancies(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Error cargando vacantes:', error);
+      setVacancies([]);
+    }
+  };
 
   useEffect(() => {
-    const rawSession = localStorage.getItem('vacanciesAdminUser');
-    if (rawSession) {
-      try {
-        setSession(JSON.parse(rawSession) as VacanciesSession);
-      } catch {
-        setSession(null);
+    async function initialize() {
+      const rawSession = localStorage.getItem('vacanciesAdminUser');
+
+      if (rawSession) {
+        try {
+          setSession(JSON.parse(rawSession) as VacanciesSession);
+        } catch {
+          setSession(null);
+        }
       }
+
+      await loadVacancies();
+
+      setApplications(readCandidateApplications());
     }
 
-    setVacancies(readJobVacancies());
-    setApplications(readCandidateApplications());
+    initialize();
 
-    const syncFromStorage = () => {
-      setVacancies(readJobVacancies());
+    const syncFromStorage = async () => {
+      await loadVacancies();
       setApplications(readCandidateApplications());
     };
 
     window.addEventListener('storage', syncFromStorage);
     window.addEventListener('candidate-storage-updated', syncFromStorage);
+
     return () => {
       window.removeEventListener('storage', syncFromStorage);
       window.removeEventListener('candidate-storage-updated', syncFromStorage);
@@ -787,7 +805,7 @@ export default function VacantesAdminPanel() {
     setEditingId(null);
   };
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
     if (!draft.title.trim()) {
@@ -796,7 +814,7 @@ export default function VacantesAdminPanel() {
     }
 
     if (!draft.area.trim()) {
-      toast.error('Debes ingresar el area.');
+      toast.error('Debes ingresar el área.');
       return;
     }
 
@@ -811,12 +829,14 @@ export default function VacantesAdminPanel() {
     }
 
     const now = new Date().toISOString();
-    const current = editingId ? vacancies.find((vacancy) => vacancy.id === editingId) : null;
+
+    const current = editingId
+      ? vacancies.find((vacancy) => vacancy.id === editingId)
+      : null;
+
     const record: JobVacancy = {
       ...draft,
-      id:
-        editingId ||
-        `vac-${slugify(draft.title || 'vacante')}-${Date.now().toString(36).slice(-4)}`,
+      id: editingId || '',
       title: draft.title.trim(),
       area: draft.area.trim(),
       city: draft.city.trim(),
@@ -834,11 +854,32 @@ export default function VacantesAdminPanel() {
       createdByName: current?.createdByName || session?.name || '',
     };
 
-    const next = upsertJobVacancy(vacancies, record);
-    setVacancies(next);
-    writeJobVacancies(next);
-    resetDraft();
-    toast.success(editingId ? 'Vacante actualizada correctamente.' : 'Vacante creada correctamente.');
+    try {
+      if (editingId) {
+        await fetch(`/api/vacantes/${editingId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(record),
+        });
+        toast.success('Vacante actualizada correctamente.');
+      } else {
+        await fetch('/api/vacantes', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(record),
+        });
+        toast.success('Vacante creada correctamente.');
+      }
+      await loadVacancies();
+      resetDraft();
+    } catch (error) {
+      console.error(error);
+      toast.error('No fue posible guardar la vacante.');
+    }
   };
 
   const handleMetricClick = (metric: 'vacancies' | 'users' | 'applications') => {
@@ -860,18 +901,27 @@ export default function VacantesAdminPanel() {
     toast(`Editando vacante: ${vacancy.title}`, { icon: '✍️' });
   };
 
-  const handleDelete = (vacancy: JobVacancy) => {
-    const confirmed = window.confirm(`¿Deseas eliminar la vacante "${vacancy.title}"?`);
+  const handleDelete = async (vacancy: JobVacancy) => {
+    const confirmed = window.confirm(
+      `¿Deseas eliminar la vacante "${vacancy.title}"?`
+    );
+
     if (!confirmed) {
       return;
     }
-    const next = removeJobVacancy(vacancies, vacancy.id);
-    setVacancies(next);
-    writeJobVacancies(next);
-    if (editingId === vacancy.id) {
-      resetDraft();
+    try {
+      await fetch(`/api/vacantes/${vacancy.id}`, {
+        method: 'DELETE',
+      });
+      await loadVacancies();
+      if (editingId === vacancy.id) {
+        resetDraft();
+      }
+      toast.success('Vacante desactivada correctamente.');
+    } catch (error) {
+      console.error(error);
+      toast.error('No fue posible eliminar la vacante.');
     }
-    toast.success('Vacante eliminada correctamente.');
   };
 
   const handleUpdateApplicationStatus = (
@@ -1105,21 +1155,19 @@ export default function VacantesAdminPanel() {
           <div className="flex border-b border-primary/10 mb-4">
             <button
               onClick={() => setActiveTab('vacancies')}
-              className={`px-4 py-2 text-sm font-semibold transition-colors ${
-                activeTab === 'vacancies'
-                  ? 'text-primary border-b-2 border-primary'
-                  : 'text-textLight hover:text-text'
-              }`}
+              className={`px-4 py-2 text-sm font-semibold transition-colors ${activeTab === 'vacancies'
+                ? 'text-primary border-b-2 border-primary'
+                : 'text-textLight hover:text-text'
+                }`}
             >
               Vacantes y Postulaciones
             </button>
             <button
               onClick={() => setActiveTab('users')}
-              className={`px-4 py-2 text-sm font-semibold transition-colors ${
-                activeTab === 'users'
-                  ? 'text-primary border-b-2 border-primary'
-                  : 'text-textLight hover:text-text'
-              }`}
+              className={`px-4 py-2 text-sm font-semibold transition-colors ${activeTab === 'users'
+                ? 'text-primary border-b-2 border-primary'
+                : 'text-textLight hover:text-text'
+                }`}
             >
               Usuarios Registrados
             </button>
@@ -1224,18 +1272,18 @@ export default function VacantesAdminPanel() {
                                   <p className="text-xs text-textLight mt-1">
                                     C.C: {application.candidateDocument || 'No registrado'}
                                   </p>
-                                  
+
                                   <div className="mt-2 flex flex-wrap gap-2">
-                                      <a
-                                        href={`/dashboard/vacantes/${application.id}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-xs font-semibold px-2 py-1 rounded-lg border border-blue-500/25 text-blue-600 hover:bg-blue-500/10 transition-colors"
-                                      >
-                                        Ver Detalles
-                                      </a>
-                                    </div>
-                                  
+                                    <a
+                                      href={`/dashboard/vacantes/${application.id}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-xs font-semibold px-2 py-1 rounded-lg border border-blue-500/25 text-blue-600 hover:bg-blue-500/10 transition-colors"
+                                    >
+                                      Ver Detalles
+                                    </a>
+                                  </div>
+
                                   <div className="mt-2">
                                     <label className="block text-xs text-textLight mb-1">
                                       Estado

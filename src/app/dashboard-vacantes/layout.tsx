@@ -87,14 +87,24 @@ export default function DashboardVacantesLayout({
               Vacantes
             </p>
             <div className="space-y-1">
+
               <Link
-                href="/dashboard-vacantes"
+                href="/dashboard-vacantes/vacantes"
                 className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-primary/10 text-text hover:text-primary transition-all group"
               >
-                <svg className="w-5 h-5 text-primary group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                <svg className="w-5 h-5 text-primary group-hover:scale-110 transition-transform"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor">
+
+                  <path strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 12l9-9 9 9M4 10v10h16V10" />
+
                 </svg>
-                <span className="font-medium">Panel de Vacantes</span>
+                <span className="font-medium">inicio</span>
+
               </Link>
 
               <Link
@@ -120,7 +130,7 @@ export default function DashboardVacantesLayout({
           </button>
           <div className="glass rounded-xl p-4 border border-primary/20">
             <p className="text-xs text-primary font-medium mb-1">Jardines del Renacer</p>
-            <p className="text-[10px] text-textLight">Panel Vacantes</p>
+            <p className="text-[10px] text-textLight">Centro de Gestión de Vacantes</p>
           </div>
         </div>
       </aside>

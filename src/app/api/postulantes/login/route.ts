@@ -3,8 +3,12 @@ import {
   CANDIDATE_SESSION_COOKIE_NAME,
   CANDIDATE_SESSION_MAX_AGE_SECONDS,
   signVacantesCandidateJwt,
+  verifyCandidatePasswordForDB,
 } from '@/lib/candidateAuth';
-import { findCandidateIdentityFromApplications } from '@/lib/candidateStorageDB';
+import {
+  getCandidateAccountForLogin,
+  updateCandidateLastLogin,
+} from '@/lib/candidateStorageDB';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,35 +25,44 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const documentNumber = normalizeDocumentNumber(asText(body.documentNumber));
     const email = asText(body.email).toLowerCase();
+    const password = asText(body.password);
 
-    if (documentNumber.length < 6 || !email.includes('@')) {
+    if (documentNumber.length < 6 || !email.includes('@') || password.length < 8) {
       return NextResponse.json(
-        { success: false, message: 'Documento y correo validos son requeridos.' },
+        { success: false, message: 'Documento, correo y contrasena validos son requeridos.' },
         { status: 400 },
       );
     }
 
-    const candidate = await findCandidateIdentityFromApplications({ documentNumber, email });
-    if (!candidate) {
+    const candidate = await getCandidateAccountForLogin({ documentNumber, email });
+    const passwordOk = candidate
+      ? await verifyCandidatePasswordForDB(password, candidate.password_hash)
+      : false;
+
+    if (!candidate || !passwordOk) {
       return NextResponse.json(
-        { success: false, message: 'No encontramos postulaciones con ese documento y correo.' },
+        { success: false, message: 'Documento, correo o contrasena incorrectos.' },
         { status: 401 },
       );
     }
 
+    await updateCandidateLastLogin(candidate.documento);
+    const fullName = [candidate.nombre, candidate.apellido ?? ''].filter(Boolean).join(' ');
     const token = await signVacantesCandidateJwt({
-      documentNumber: candidate.documentNumber,
+      candidateId: candidate.id,
+      documentNumber: candidate.documento,
       email: candidate.email,
-      name: candidate.name,
+      name: fullName || 'Postulante',
       role: 'vacantes_usuario',
     });
 
     const response = NextResponse.json({
       success: true,
       data: {
-        documentNumber: candidate.documentNumber,
+        candidateId: candidate.id,
+        documentNumber: candidate.documento,
         email: candidate.email,
-        name: candidate.name,
+        name: fullName || 'Postulante',
       },
     });
 

@@ -2,14 +2,16 @@ import {
   APPLICATION_STATUS_OPTIONS,
   CANDIDATE_APPLICATIONS_STORAGE_KEY,
   CANDIDATE_PROFILE_STORAGE_KEY,
+  type CandidateAccount,
   createEmptyCandidateProfile,
   type CandidateProfile,
   type JobApplication,
-} from '@/config/candidates'
-import { query, execute } from './db';
+} from "@/config/candidates";
+import { query, execute } from "./db";
 
 type DbApplicationRow = {
   id: string;
+  candidato_id?: string | null;
   vacancy_id: string;
   vacancy_title: string | null;
   candidate_document: string;
@@ -29,20 +31,69 @@ type VacancyApplicationCountRow = {
   count: number | string;
 };
 
-type CreateApplicationInput = Omit<JobApplication, 'id' | 'trackingCode' | 'appliedAt' | 'status'> & {
+type CandidateAccountRow = {
+  id: string;
+  documento: string;
+  nombre: string;
+  apellido: string | null;
+  email: string;
+  telefono: string | null;
+  password_hash: string;
+  foto: string | null;
+  fecha_nacimiento: string | Date | null;
+  direccion: string | null;
+  ciudad: string | null;
+  departamento: string | null;
+  profesion: string | null;
+  experiencia: string | null;
+  educacion: string | null;
+  linkedin: string | null;
+  portfolio: string | null;
+  cv_url: string | null;
+  activo: number | boolean;
+  ultimo_login: string | Date | null;
+  reset_token_hash: string | null;
+  reset_expires_at: string | Date | null;
+  deleted_at: string | Date | null;
+  created_at: string | Date;
+  updated_at: string | Date;
+};
+
+type CreateApplicationInput = Omit<
+  JobApplication,
+  "id" | "trackingCode" | "appliedAt" | "status"
+> & {
+  candidateId?: string;
   candidateCity?: string;
   candidateDepartment?: string;
 };
 
+export type CandidateRegistrationInput = {
+  documentNumber: string;
+  firstName: string;
+  lastName?: string;
+  email: string;
+  phone?: string;
+  passwordHash: string;
+  city?: string;
+  department?: string;
+  professionalTitle?: string;
+  yearsExperience?: string;
+  education?: string;
+  linkedinUrl?: string;
+  portfolioUrl?: string;
+  cvUrl?: string;
+};
+
 function toIsoString(value: string | Date | null | undefined) {
   if (!value) {
-    return '';
+    return "";
   }
   return value instanceof Date ? value.toISOString() : value;
 }
 
 function normalizeDocumentNumber(value: string) {
-  return value.replace(/\D/g, '');
+  return value.replace(/\D/g, "");
 }
 
 function normalizeEmail(value: string) {
@@ -57,48 +108,131 @@ function decodeBase64File(value: string) {
   if (!value) {
     return null;
   }
-  const payload = value.includes(',') ? value.split(',')[1] : value;
-  return payload ? Buffer.from(payload, 'base64') : null;
+  const payload = value.includes(",") ? value.split(",")[1] : value;
+  return payload ? Buffer.from(payload, "base64") : null;
+}
+
+function buildFullName(firstName: string, lastName?: string | null) {
+  return [firstName, lastName ?? ""].map((part) => part.trim()).filter(Boolean).join(" ");
+}
+
+function splitFullName(fullName: string) {
+  const parts = fullName.trim().split(/\s+/).filter(Boolean);
+  if (parts.length <= 1) {
+    return { firstName: parts[0] ?? "", lastName: "" };
+  }
+  return {
+    firstName: parts.slice(0, -1).join(" "),
+    lastName: parts[parts.length - 1],
+  };
+}
+
+function mapCandidateAccount(row: CandidateAccountRow): CandidateAccount {
+  const firstName = row.nombre ?? "";
+  const lastName = row.apellido ?? "";
+  return {
+    id: row.id,
+    documentNumber: row.documento,
+    firstName,
+    lastName,
+    fullName: buildFullName(firstName, lastName),
+    email: normalizeEmail(row.email),
+    phone: row.telefono ?? "",
+    photoUrl: row.foto ?? "",
+    birthDate: toIsoString(row.fecha_nacimiento).slice(0, 10),
+    address: row.direccion ?? "",
+    city: row.ciudad ?? "",
+    department: row.departamento ?? "",
+    professionalTitle: row.profesion ?? "",
+    yearsExperience: row.experiencia ?? "",
+    education: row.educacion ?? "",
+    skills: "",
+    about: "",
+    linkedinUrl: row.linkedin ?? "",
+    portfolioUrl: row.portfolio ?? "",
+    cvUrl: row.cv_url ?? "",
+    active: Boolean(row.activo) && !row.deleted_at,
+    lastLoginAt: toIsoString(row.ultimo_login),
+    createdAt: toIsoString(row.created_at),
+    updatedAt: toIsoString(row.updated_at),
+  };
+}
+
+function mapCandidateProfile(row: CandidateAccountRow): CandidateProfile {
+  const account = mapCandidateAccount(row);
+  return {
+    ...createEmptyCandidateProfile(),
+    documentNumber: account.documentNumber,
+    firstName: account.firstName,
+    lastName: account.lastName,
+    fullName: account.fullName,
+    email: account.email,
+    phone: account.phone,
+    photoUrl: account.photoUrl,
+    birthDate: account.birthDate,
+    address: account.address,
+    city: account.city,
+    department: account.department,
+    professionalTitle: account.professionalTitle,
+    yearsExperience: account.yearsExperience,
+    education: account.education,
+    linkedinUrl: account.linkedinUrl,
+    portfolioUrl: account.portfolioUrl,
+    cvUrl: account.cvUrl,
+    active: account.active,
+    lastLoginAt: account.lastLoginAt,
+    updatedAt: account.updatedAt,
+  };
 }
 
 /**
  * Normaliza los datos de un perfil de candidato para asegurar que tiene
  * todos los campos requeridos en la interfaz `CandidateProfile`.
- * 
+ *
  * @param record - Objeto parcial almacenado que puede tener datos faltantes.
  * @returns El perfil completo y estandarizado con los campos por defecto.
  */
 function normalizeProfile(record: Partial<CandidateProfile>): CandidateProfile {
   return {
-    documentNumber: record.documentNumber ?? '',
-    fullName: record.fullName ?? '',
-    email: record.email ?? '',
-    passwordHash: record.passwordHash ?? '',
-    passwordUpdatedAt: record.passwordUpdatedAt ?? '',
-    phone: record.phone ?? '',
-    department: record.department ?? '',
-    city: record.city ?? '',
-    professionalTitle: record.professionalTitle ?? '',
-    yearsExperience: record.yearsExperience ?? '',
-    education: record.education ?? '',
-    skills: record.skills ?? '',
-    about: record.about ?? '',
-    linkedinUrl: record.linkedinUrl ?? '',
-    portfolioUrl: record.portfolioUrl ?? '',
-    resumeFileName: record.resumeFileName ?? '',
-    resumeFileData: record.resumeFileData ?? '',
-    updatedAt: record.updatedAt ?? '',
+    documentNumber: record.documentNumber ?? "",
+    firstName: record.firstName ?? "",
+    lastName: record.lastName ?? "",
+    fullName: record.fullName ?? "",
+    email: record.email ?? "",
+    passwordHash: record.passwordHash ?? "",
+    passwordUpdatedAt: record.passwordUpdatedAt ?? "",
+    phone: record.phone ?? "",
+    photoUrl: record.photoUrl ?? "",
+    birthDate: record.birthDate ?? "",
+    address: record.address ?? "",
+    department: record.department ?? "",
+    city: record.city ?? "",
+    professionalTitle: record.professionalTitle ?? "",
+    yearsExperience: record.yearsExperience ?? "",
+    education: record.education ?? "",
+    skills: record.skills ?? "",
+    about: record.about ?? "",
+    linkedinUrl: record.linkedinUrl ?? "",
+    portfolioUrl: record.portfolioUrl ?? "",
+    cvUrl: record.cvUrl ?? "",
+    resumeFileName: record.resumeFileName ?? "",
+    resumeFileData: record.resumeFileData ?? "",
+    active: record.active ?? true,
+    lastLoginAt: record.lastLoginAt ?? "",
+    updatedAt: record.updatedAt ?? "",
   };
 }
 
 /**
  * Normaliza los datos de una postulación individual para asegurar consistencia.
  * También proporciona soporte a datos generados en versiones anteriores de la plataforma.
- * 
+ *
  * @param record - Objeto parcial con la postulación guardada en el navegador.
  * @returns Un objeto `JobApplication` válido o `null` si faltan campos obligatorios críticos.
  */
-function normalizeApplication(record: Partial<JobApplication>): JobApplication | null {
+function normalizeApplication(
+  record: Partial<JobApplication>,
+): JobApplication | null {
   // Soporte de compatibilidad (Legacy) para datos de versiones anteriores del formulario.
   const legacyRecord = record as Partial<JobApplication> & {
     email?: string;
@@ -107,10 +241,18 @@ function normalizeApplication(record: Partial<JobApplication>): JobApplication |
     documentNumber?: string;
     trackingCode?: string;
   };
-  const candidateEmail = (record.candidateEmail ?? legacyRecord.email ?? '').trim();
-  const candidateDocument = (record.candidateDocument ?? legacyRecord.documentNumber ?? '')
+  const candidateEmail = (
+    record.candidateEmail ??
+    legacyRecord.email ??
+    ""
+  ).trim();
+  const candidateDocument = (
+    record.candidateDocument ??
+    legacyRecord.documentNumber ??
+    ""
+  )
     .toString()
-    .replace(/\D/g, '');
+    .replace(/\D/g, "");
 
   if (
     !record.id ||
@@ -123,23 +265,23 @@ function normalizeApplication(record: Partial<JobApplication>): JobApplication |
   const validStatus = APPLICATION_STATUS_OPTIONS.includes(
     record.status as (typeof APPLICATION_STATUS_OPTIONS)[number],
   )
-    ? (record.status as JobApplication['status'])
-    : 'Recibida';
+    ? (record.status as JobApplication["status"])
+    : "Recibida";
   return {
     id: record.id,
     trackingCode:
-      (record.trackingCode ?? legacyRecord.trackingCode ?? '')
+      (record.trackingCode ?? legacyRecord.trackingCode ?? "")
         .toString()
         .trim()
         .toUpperCase() || `JDR-${record.id.toUpperCase()}`,
     vacancyId: record.vacancyId,
     vacancyTitle: record.vacancyTitle,
     candidateDocument,
-    candidateName: record.candidateName ?? legacyRecord.fullName ?? '',
+    candidateName: record.candidateName ?? legacyRecord.fullName ?? "",
     candidateEmail,
-    candidatePhone: record.candidatePhone ?? legacyRecord.phone ?? '',
-    resumeFileName: record.resumeFileName ?? '',
-    resumeFileData: record.resumeFileData ?? '',
+    candidatePhone: record.candidatePhone ?? legacyRecord.phone ?? "",
+    resumeFileName: record.resumeFileName ?? "",
+    resumeFileData: record.resumeFileData ?? "",
     appliedAt: record.appliedAt ?? new Date().toISOString(),
     status: validStatus,
   };
@@ -148,11 +290,11 @@ function normalizeApplication(record: Partial<JobApplication>): JobApplication |
 /**
  * Lee y recupera el perfil del candidato guardado en el navegador (Local Storage).
  * Si no existe o hay error de formato, devuelve un perfil completamente vacío.
- * 
+ *
  * @returns El objeto de perfil del candidato activo.
  */
 export function readCandidateProfile() {
-  if (typeof window === 'undefined') {
+  if (typeof window === "undefined") {
     return createEmptyCandidateProfile();
   }
   const raw = window.localStorage.getItem(CANDIDATE_PROFILE_STORAGE_KEY);
@@ -170,25 +312,28 @@ export function readCandidateProfile() {
  * Guarda el perfil del candidato directamente en el Local Storage del navegador
  * y emite un evento custom ('candidate-storage-updated') para que el resto de
  * la aplicación (como los paneles en otras pestañas) sepa que debe refrescar los datos.
- * 
+ *
  * @param profile - El objeto `CandidateProfile` que se desea guardar.
  */
 export function writeCandidateProfile(profile: CandidateProfile) {
-  if (typeof window === 'undefined') {
+  if (typeof window === "undefined") {
     return;
   }
-  window.localStorage.setItem(CANDIDATE_PROFILE_STORAGE_KEY, JSON.stringify(profile));
-  window.dispatchEvent(new Event('candidate-storage-updated'));
+  window.localStorage.setItem(
+    CANDIDATE_PROFILE_STORAGE_KEY,
+    JSON.stringify(profile),
+  );
+  window.dispatchEvent(new Event("candidate-storage-updated"));
 }
 
 /**
  * Lee el arreglo de postulaciones a vacantes (historial) del candidato activo
  * y las normaliza para evitar errores en las vistas de listados.
- * 
+ *
  * @returns Una lista tipada `JobApplication[]`. Si no hay datos devuelve `[]`.
  */
 export function readCandidateApplications() {
-  if (typeof window === 'undefined') {
+  if (typeof window === "undefined") {
     return [] as JobApplication[];
   }
   const raw = window.localStorage.getItem(CANDIDATE_APPLICATIONS_STORAGE_KEY);
@@ -207,19 +352,281 @@ export function readCandidateApplications() {
     return [] as JobApplication[];
   }
 }
+export async function getAllApplicationsFromDB() {
+  const sql = `
+    SELECT *
+    FROM postulaciones
+    ORDER BY applied_at DESC
+  `;
+
+  return query(sql);
+}
 
 /**
  * Guarda todo el historial de postulaciones de un candidato en el Storage
  * y notifica al resto del frontend que hubo cambios en las aplicaciones.
- * 
+ *
  * @param applications - Arreglo de objetos `JobApplication` que reemplazará al actual.
  */
 export function writeCandidateApplications(applications: JobApplication[]) {
-  if (typeof window === 'undefined') {
+  if (typeof window === "undefined") {
     return;
   }
-  window.localStorage.setItem(CANDIDATE_APPLICATIONS_STORAGE_KEY, JSON.stringify(applications));
-  window.dispatchEvent(new Event('candidate-storage-updated'));
+  window.localStorage.setItem(
+    CANDIDATE_APPLICATIONS_STORAGE_KEY,
+    JSON.stringify(applications),
+  );
+  window.dispatchEvent(new Event("candidate-storage-updated"));
+}
+
+export async function createCandidateAccountInDB(input: CandidateRegistrationInput) {
+  const id = createUuid();
+  const documentNumber = normalizeDocumentNumber(input.documentNumber);
+  const email = normalizeEmail(input.email);
+  const sql = `
+    INSERT INTO candidatos (
+      id,
+      documento,
+      nombre,
+      apellido,
+      email,
+      telefono,
+      password_hash,
+      ciudad,
+      departamento,
+      profesion,
+      experiencia,
+      educacion,
+      linkedin,
+      portfolio,
+      cv_url,
+      activo
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+  `;
+
+  await execute(sql, [
+    id,
+    documentNumber,
+    input.firstName.trim(),
+    input.lastName?.trim() ?? "",
+    email,
+    input.phone?.trim() ?? "",
+    input.passwordHash,
+    input.city?.trim() ?? "",
+    input.department?.trim() ?? "",
+    input.professionalTitle?.trim() ?? "",
+    input.yearsExperience?.trim() ?? "",
+    input.education?.trim() ?? "",
+    input.linkedinUrl?.trim() ?? "",
+    input.portfolioUrl?.trim() ?? "",
+    input.cvUrl?.trim() ?? "",
+  ]);
+
+  await execute(
+    `
+      UPDATE postulaciones
+      SET candidato_id = ?
+      WHERE candidato_id IS NULL
+        AND (candidate_document = ? OR LOWER(candidate_email) = ?)
+    `,
+    [id, documentNumber, email],
+  );
+
+  return id;
+}
+
+export async function getCandidateAccountByDocumentOrEmail(input: {
+  documentNumber?: string;
+  email?: string;
+}) {
+  const documentNumber = normalizeDocumentNumber(input.documentNumber ?? "");
+  const email = normalizeEmail(input.email ?? "");
+  const conditions: string[] = [];
+  const params: string[] = [];
+
+  if (documentNumber) {
+    conditions.push("documento = ?");
+    params.push(documentNumber);
+  }
+  if (email) {
+    conditions.push("LOWER(email) = ?");
+    params.push(email);
+  }
+  if (conditions.length === 0) {
+    return null;
+  }
+
+  const rows = await query<CandidateAccountRow>(
+    `
+      SELECT *
+      FROM candidatos
+      WHERE (${conditions.join(" OR ")})
+        AND deleted_at IS NULL
+      LIMIT 1
+    `,
+    params,
+  );
+
+  return rows[0] ?? null;
+}
+
+export async function getCandidateAccountForLogin(input: {
+  documentNumber: string;
+  email: string;
+}) {
+  const rows = await query<CandidateAccountRow>(
+    `
+      SELECT *
+      FROM candidatos
+      WHERE documento = ?
+        AND LOWER(email) = ?
+        AND activo = 1
+        AND deleted_at IS NULL
+      LIMIT 1
+    `,
+    [normalizeDocumentNumber(input.documentNumber), normalizeEmail(input.email)],
+  );
+
+  return rows[0] ?? null;
+}
+
+export async function getCandidateProfileFromDB(input: {
+  documentNumber: string;
+  email: string;
+}): Promise<CandidateProfile | null> {
+  const account = await getCandidateAccountForLogin(input);
+  return account ? mapCandidateProfile(account) : null;
+}
+
+export async function updateCandidateLastLogin(documentNumber: string) {
+  await execute(
+    "UPDATE candidatos SET ultimo_login = CURRENT_TIMESTAMP WHERE documento = ? AND deleted_at IS NULL",
+    [normalizeDocumentNumber(documentNumber)],
+  );
+}
+
+export async function updateCandidateProfileInDB(input: {
+  documentNumber: string;
+  email: string;
+  profile: Partial<CandidateProfile>;
+}) {
+  const profile = input.profile;
+  const nameParts = profile.fullName ? splitFullName(profile.fullName) : null;
+  const firstName = profile.firstName?.trim() || nameParts?.firstName || "";
+  const lastName = profile.lastName?.trim() || nameParts?.lastName || "";
+
+  const result = await execute(
+    `
+      UPDATE candidatos
+      SET nombre = ?,
+          apellido = ?,
+          telefono = ?,
+          foto = ?,
+          fecha_nacimiento = ?,
+          direccion = ?,
+          ciudad = ?,
+          departamento = ?,
+          profesion = ?,
+          experiencia = ?,
+          educacion = ?,
+          linkedin = ?,
+          portfolio = ?,
+          cv_url = ?
+      WHERE documento = ?
+        AND LOWER(email) = ?
+        AND deleted_at IS NULL
+    `,
+    [
+      firstName,
+      lastName,
+      profile.phone?.trim() ?? "",
+      profile.photoUrl?.trim() ?? "",
+      profile.birthDate?.trim() || null,
+      profile.address?.trim() ?? "",
+      profile.city?.trim() ?? "",
+      profile.department?.trim() ?? "",
+      profile.professionalTitle?.trim() ?? "",
+      profile.yearsExperience?.trim() ?? "",
+      profile.education?.trim() ?? "",
+      profile.linkedinUrl?.trim() ?? "",
+      profile.portfolioUrl?.trim() ?? "",
+      profile.cvUrl?.trim() ?? "",
+      normalizeDocumentNumber(input.documentNumber),
+      normalizeEmail(input.email),
+    ],
+  );
+
+  return result.affectedRows;
+}
+
+export async function updateCandidatePasswordInDB(input: {
+  documentNumber: string;
+  email: string;
+  passwordHash: string;
+}) {
+  const result = await execute(
+    `
+      UPDATE candidatos
+      SET password_hash = ?,
+          reset_token_hash = NULL,
+          reset_expires_at = NULL
+      WHERE documento = ?
+        AND LOWER(email) = ?
+        AND deleted_at IS NULL
+    `,
+    [
+      input.passwordHash,
+      normalizeDocumentNumber(input.documentNumber),
+      normalizeEmail(input.email),
+    ],
+  );
+
+  return result.affectedRows;
+}
+
+export async function setCandidatePasswordResetToken(input: {
+  documentNumber: string;
+  email: string;
+  tokenHash: string;
+  expiresAt: Date;
+}) {
+  const result = await execute(
+    `
+      UPDATE candidatos
+      SET reset_token_hash = ?,
+          reset_expires_at = ?
+      WHERE documento = ?
+        AND LOWER(email) = ?
+        AND activo = 1
+        AND deleted_at IS NULL
+    `,
+    [
+      input.tokenHash,
+      input.expiresAt,
+      normalizeDocumentNumber(input.documentNumber),
+      normalizeEmail(input.email),
+    ],
+  );
+
+  return result.affectedRows;
+}
+
+export async function getCandidateByResetToken(tokenHash: string) {
+  const rows = await query<CandidateAccountRow>(
+    `
+      SELECT *
+      FROM candidatos
+      WHERE reset_token_hash = ?
+        AND reset_expires_at > CURRENT_TIMESTAMP
+        AND activo = 1
+        AND deleted_at IS NULL
+      LIMIT 1
+    `,
+    [tokenHash],
+  );
+
+  return rows[0] ?? null;
 }
 
 /**
@@ -227,30 +634,33 @@ export function writeCandidateApplications(applications: JobApplication[]) {
  * @param dbApplication - El objeto de postulación desde la base de datos.
  * @returns Un objeto `JobApplication` normalizado o `null`.
  */
-function mapDbApplicationToJobApplication(dbApplication: DbApplicationRow): JobApplication | null {
+function mapDbApplicationToJobApplication(
+  dbApplication: DbApplicationRow,
+): JobApplication | null {
   if (!dbApplication || !dbApplication.id) {
     return null;
   }
 
   const status = APPLICATION_STATUS_OPTIONS.includes(
-    dbApplication.status as JobApplication['status'],
+    dbApplication.status as JobApplication["status"],
   )
-    ? (dbApplication.status as JobApplication['status'])
-    : 'Recibida';
+    ? (dbApplication.status as JobApplication["status"])
+    : "Recibida";
 
   // La hoja de vida se almacena como BLOB, no la devolvemos en listados.
   return {
     id: dbApplication.id,
     trackingCode: `JDR-${dbApplication.id.toUpperCase().slice(0, 8)}`,
     vacancyId: dbApplication.vacancy_id,
-    vacancyTitle: dbApplication.vacancy_title ?? 'Vacante sin titulo',
+    vacancyTitle: dbApplication.vacancy_title ?? "Vacante sin titulo",
     candidateDocument: dbApplication.candidate_document,
     candidateName: dbApplication.candidate_name,
     candidateEmail: dbApplication.candidate_email,
-    candidatePhone: dbApplication.candidate_phone ?? '',
-    resumeFileName: dbApplication.resume_filename ?? '',
-    resumeFileData: '', // No se devuelve el binario en las listas
-    appliedAt: toIsoString(dbApplication.applied_at) || new Date().toISOString(),
+    candidatePhone: dbApplication.candidate_phone ?? "",
+    resumeFileName: dbApplication.resume_filename ?? "",
+    resumeFileData: "", // No se devuelve el binario en las listas
+    appliedAt:
+      toIsoString(dbApplication.applied_at) || new Date().toISOString(),
     status,
   };
 }
@@ -264,6 +674,7 @@ export async function createApplicationInDB(
   applicationData: CreateApplicationInput,
 ) {
   const {
+    candidateId,
     vacancyId,
     candidateDocument,
     candidateName,
@@ -282,6 +693,7 @@ export async function createApplicationInDB(
   const sql = `
     INSERT INTO postulaciones (
       id,
+      candidato_id,
       vacancy_id,
       candidate_document,
       candidate_name,
@@ -293,18 +705,19 @@ export async function createApplicationInDB(
       resume_filedata,
       status
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Recibida')
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Recibida')
   `;
 
   const params = [
     id,
+    candidateId || null,
     vacancyId,
     normalizeDocumentNumber(candidateDocument),
     candidateName.trim(),
     normalizeEmail(candidateEmail),
     candidatePhone.trim(),
-    candidateCity?.trim() ?? '',
-    candidateDepartment?.trim() ?? '',
+    candidateCity?.trim() ?? "",
+    candidateDepartment?.trim() ?? "",
     resumeFileName,
     resumeBuffer,
   ];
@@ -324,7 +737,7 @@ export async function getApplicationsByCandidateFromDB(
 ): Promise<JobApplication[]> {
   try {
     const params: string[] = [normalizeDocumentNumber(document)];
-    const emailCondition = email ? 'AND LOWER(p.candidate_email) = ?' : '';
+    const emailCondition = email ? "AND LOWER(p.candidate_email) = ?" : "";
     if (email) {
       params.push(normalizeEmail(email));
     }
@@ -343,7 +756,7 @@ export async function getApplicationsByCandidateFromDB(
       .map(mapDbApplicationToJobApplication)
       .filter(Boolean) as JobApplication[];
   } catch (error) {
-    console.error('Error al leer las postulaciones del candidato:', error);
+    console.error("Error al leer las postulaciones del candidato:", error);
     return [];
   }
 }
@@ -374,13 +787,13 @@ export async function findCandidateIdentityFromApplications(input: {
     return {
       documentNumber: row.candidate_document,
       email: normalizeEmail(row.candidate_email),
-      name: row.candidate_name || 'Postulante',
-      phone: row.candidate_phone ?? '',
-      city: row.city ?? '',
-      department: row.department ?? '',
+      name: row.candidate_name || "Postulante",
+      phone: row.candidate_phone ?? "",
+      city: row.city ?? "",
+      department: row.department ?? "",
     };
   } catch (error) {
-    console.error('Error al validar identidad de postulante:', error);
+    console.error("Error al validar identidad de postulante:", error);
     return null;
   }
 }
@@ -411,16 +824,16 @@ export async function getCandidateProfileFromApplications(input: {
     return {
       ...createEmptyCandidateProfile(),
       documentNumber: row.candidate_document,
-      fullName: row.candidate_name || '',
+      fullName: row.candidate_name || "",
       email: normalizeEmail(row.candidate_email),
-      phone: row.candidate_phone ?? '',
-      city: row.city ?? '',
-      department: row.department ?? '',
-      resumeFileName: row.resume_filename ?? '',
+      phone: row.candidate_phone ?? "",
+      city: row.city ?? "",
+      department: row.department ?? "",
+      resumeFileName: row.resume_filename ?? "",
       updatedAt: toIsoString(row.applied_at),
     };
   } catch (error) {
-    console.error('Error al leer perfil desde postulaciones:', error);
+    console.error("Error al leer perfil desde postulaciones:", error);
     return null;
   }
 }
@@ -432,10 +845,10 @@ export async function updateCandidateProfileInApplications(input: {
 }) {
   const documentNumber = normalizeDocumentNumber(input.documentNumber);
   const email = normalizeEmail(input.email);
-  const fullName = input.profile.fullName?.trim() ?? '';
-  const phone = input.profile.phone?.trim() ?? '';
-  const department = input.profile.department?.trim() ?? '';
-  const city = input.profile.city?.trim() ?? '';
+  const fullName = input.profile.fullName?.trim() ?? "";
+  const phone = input.profile.phone?.trim() ?? "";
+  const department = input.profile.department?.trim() ?? "";
+  const city = input.profile.city?.trim() ?? "";
 
   const sql = `
     UPDATE postulaciones
@@ -464,7 +877,9 @@ export async function updateCandidateProfileInApplications(input: {
  * @param id - El UUID de la postulación.
  * @returns Una promesa que se resuelve en un objeto `JobApplication` o `null`.
  */
-export async function getApplicationByIdFromDB(id: string): Promise<JobApplication | null> {
+export async function getApplicationByIdFromDB(
+  id: string,
+): Promise<JobApplication | null> {
   try {
     const sql = `
       SELECT p.*, v.title as vacancy_title
@@ -478,7 +893,9 @@ export async function getApplicationByIdFromDB(id: string): Promise<JobApplicati
     }
     const application = mapDbApplicationToJobApplication(rows[0]);
     if (application && rows[0].resume_filedata) {
-      application.resumeFileData = Buffer.from(rows[0].resume_filedata).toString('base64');
+      application.resumeFileData = Buffer.from(
+        rows[0].resume_filedata,
+      ).toString("base64");
     }
     return application;
   } catch (error) {
@@ -491,7 +908,9 @@ export async function getApplicationByIdFromDB(id: string): Promise<JobApplicati
  * Obtiene el número de postulaciones para cada vacante.
  * @returns Un objeto donde la clave es el ID de la vacante y el valor es el número de postulaciones.
  */
-export async function getVacancyApplicationCounts(): Promise<Record<string, number>> {
+export async function getVacancyApplicationCounts(): Promise<
+  Record<string, number>
+> {
   try {
     const sql = `
       SELECT vacancy_id, COUNT(id) as count
@@ -505,8 +924,7 @@ export async function getVacancyApplicationCounts(): Promise<Record<string, numb
     }
     return counts;
   } catch (error) {
-    console.error('Error al contar las postulaciones por vacante:', error);
+    console.error("Error al contar las postulaciones por vacante:", error);
     return {};
   }
 }
-

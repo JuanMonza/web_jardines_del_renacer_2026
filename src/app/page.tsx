@@ -110,7 +110,7 @@ export default function HomePage() {
       <section className="pb-20" id="conoce-mas">
         <FadeIn>
           <TitleBand
-            title="Servicios Funerarios y Planes"
+            title="Servicios funerarios y planes"
             subtitle="Acompañamiento integral en los momentos más importantes"
           />
         </FadeIn>
@@ -118,7 +118,7 @@ export default function HomePage() {
           <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-3">
             {[
               {
-                title: 'Servicios Funerarios',
+                title: 'Servicios funerarios',
                 description: 'Ceremonias dignas y personalizadas para despedir a tus seres queridos',
                 imagePath: '/images/servicios_funerarios.jpg',
                 link: '/servicios#funerarios',
@@ -126,7 +126,7 @@ export default function HomePage() {
                 tags: ['Velación', 'Cremación', 'Inhumación'],
               },
               {
-                title: 'Planes de Previsión',
+                title: 'Planes de previsión',
                 description: 'Protege a tu familia y planifica con tranquilidad desde hoy',
                 imagePath: '/images/planes_funerarios.webp',
                 link: '/planes',
@@ -134,7 +134,7 @@ export default function HomePage() {
                 tags: ['Familiar', 'Individual', 'Senior'],
               },
               {
-                title: 'Siempre Contigo',
+                title: 'Siempre contigo',
                 description: 'Transmisión en vivo 360° para acompañar la velación desde cualquier lugar',
                 imagePath: '/images/siempre_contigo.jpg',
                 link: '/siempre-contigo',
@@ -180,7 +180,7 @@ export default function HomePage() {
       <section className="py-20 bg-white/50">
         <FadeIn>
           <TitleBand
-            title="Nuestros Planes"
+            title="Nuestros planes"
             subtitle="Elige el plan que mejor se adapte a tus necesidades"
           />
         </FadeIn>
@@ -246,7 +246,7 @@ export default function HomePage() {
             </p>
             <Link href="/proximamente">
               <Button variant="primary" size="lg">
-                Iniciar Recorrido Virtual
+                Iniciar recorrido virtual
               </Button>
             </Link>
           </FadeIn>
@@ -277,7 +277,7 @@ export default function HomePage() {
                 </div>
                 {/* Content panel */}
                 <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                  <h3 className="text-2xl font-display font-extrabold mb-1 drop-shadow">Parque Conmemorativo</h3>
+                  <h3 className="text-2xl font-display font-extrabold mb-1 drop-shadow">Parque conmemorativo</h3>
                   <p className="text-sm text-white/85 mb-4 leading-relaxed">
                     Un espacio natural de paz, tranquilidad y dignidad para honrar la memoria de quienes amamos.
                   </p>
@@ -301,7 +301,7 @@ export default function HomePage() {
                 <div className="relative h-80 overflow-hidden">
                   <Image
                     src="/images/Repatriaciones.webp"
-                    alt="Servicio de Repatriaciones"
+                    alt="Servicio de repatriaciones"
                     fill
                     className="object-cover group-hover:scale-105 transition-transform duration-700"
                   />
@@ -338,7 +338,7 @@ export default function HomePage() {
       {/* Aliados */}
       <section className="py-20">
         <TitleBand
-          title="Nuestros Aliados"
+          title="Nuestros aliados"
           subtitle="Red de confianza al servicio de tu familia"
         />
 

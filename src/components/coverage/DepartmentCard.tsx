@@ -73,16 +73,7 @@ export default function DepartmentCard({ department, selectedSedeId }: Departmen
                     transition={{
                         duration: 0.4,
                     }}
-                    className="
-            relative
-            overflow-hidden
-            glass
-            rounded-[34px]
-            border
-            border-primary/10
-            p-10
-            shadow-[0_25px_70px_rgba(0,0,0,.12)]
-          "
+                    className=" relative overflow-hidden glass rounded-[34px] border border-primary/10 p-10 shadow-[0_25px_70px_rgba(0,0,0,.12)]"
                 >
                     {/* Glow */}
 
