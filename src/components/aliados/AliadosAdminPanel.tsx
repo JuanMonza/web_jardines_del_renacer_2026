@@ -17,7 +17,7 @@ import {
   getSubcategoriesByCategory,
   sanitizeWhatsAppNumber,
   type CommercialAlly,
-} from '@/config/all ies';
+} from '@/config/allies';
 import {
   readCommercialAllies,
   removeCommercialAlly,
