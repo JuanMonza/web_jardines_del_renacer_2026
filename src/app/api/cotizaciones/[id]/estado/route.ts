@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { execute } from '@/lib/db';
+import { ADMIN_SESSION_COOKIE, requireAdminPermission } from '@/lib/iam/admin-session';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -12,6 +13,8 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const session = await requireAdminPermission(request.cookies.get(ADMIN_SESSION_COOKIE)?.value, 'quotes.update');
+    if (!session) return NextResponse.json({ ok: false, message: 'No autorizado.' }, { status: 403 });
     const { id } = await params;
     const body = await request.json() as { estado?: string; notasAsesor?: string; asesorId?: number };
 
@@ -29,7 +32,7 @@ export async function PATCH(
               asesor_id     = COALESCE(?, asesor_id),
               actualizado_en = CURRENT_TIMESTAMP
         WHERE id = ?`,
-      [body.estado, body.notasAsesor ?? null, body.asesorId ?? null, id],
+      [body.estado, body.notasAsesor ?? null, session.userId, id],
     );
 
     if (result.affectedRows === 0) {

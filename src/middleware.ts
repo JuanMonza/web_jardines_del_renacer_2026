@@ -1,0 +1,6 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { hasPermission, verifyAdminToken } from '@/lib/iam/admin-token';
+const ADMIN_SESSION_COOKIE = 'jdr_admin_session';
+const routes = [{ prefix: '/dashboard-vacantes', permission: 'dashboard.vacantes.view', login: '/login/admin-vacantes' }, { prefix: '/dashboard-aliados', permission: 'dashboard.aliados.view', login: '/login/admin-aliados' }, { prefix: '/dashboard', permission: 'dashboard.admin.view', login: '/login/admin' }];
+export async function middleware(request: NextRequest) { const route = routes.find(({ prefix }) => request.nextUrl.pathname === prefix || request.nextUrl.pathname.startsWith(`${prefix}/`)); if (!route) return NextResponse.next(); const session = await verifyAdminToken(request.cookies.get(ADMIN_SESSION_COOKIE)?.value); if (!session || !hasPermission(session, route.permission)) { const url = new URL(route.login, request.url); url.searchParams.set('next', request.nextUrl.pathname); return NextResponse.redirect(url); } return NextResponse.next(); }
+export const config = { matcher: ['/dashboard/:path*', '/dashboard-aliados/:path*', '/dashboard-vacantes/:path*'] };

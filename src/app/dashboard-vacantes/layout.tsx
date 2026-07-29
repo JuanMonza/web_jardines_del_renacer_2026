@@ -21,31 +21,20 @@ export default function DashboardVacantesLayout({
   const [user, setUser] = useState<VacanciesAdminUser | null>(null);
 
   useEffect(() => {
-    const raw = localStorage.getItem('vacanciesAdminUser');
-    if (!raw) {
-      router.replace('/login/admin-vacantes');
-      return;
-    }
-
-    try {
-      const parsed = JSON.parse(raw) as VacanciesAdminUser;
-      if (parsed.role !== 'admin_vacantes') {
-        localStorage.removeItem('vacanciesAdminUser');
-        router.replace('/login/admin-vacantes');
-        return;
-      }
-
-      setUser(parsed);
-      setCheckingAccess(false);
-    } catch {
-      localStorage.removeItem('vacanciesAdminUser');
-      router.replace('/login/admin-vacantes');
-    }
+    fetch('/api/iam/admin/session')
+      .then(async (response) => {
+        if (!response.ok) throw new Error('No autorizado');
+        return response.json() as Promise<{ user: { name: string; email: string } }>;
+      })
+      .then(({ user: authenticatedUser }) => {
+        setUser({ cedula: '', role: '', name: authenticatedUser.name });
+        setCheckingAccess(false);
+      })
+      .catch(() => router.replace('/login/admin-vacantes'));
   }, [router]);
 
   const handleLogout = () => {
-    localStorage.removeItem('vacanciesAdminUser');
-    router.push('/');
+    fetch('/api/iam/admin/logout', { method: 'POST' }).finally(() => router.push('/'));
   };
 
   const greeting = buildAdminGreeting(user?.name);

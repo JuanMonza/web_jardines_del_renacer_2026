@@ -24,6 +24,7 @@ function VacantesUserLoginContent() {
 
   const [documentNumber, setDocumentNumber] = useState('');
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -47,6 +48,12 @@ function VacantesUserLoginContent() {
       return;
     }
 
+    if (password.length < 8) {
+      setError('Ingresa tu contraseña de al menos 8 caracteres.');
+      setLoading(false);
+      return;
+    }
+
     try {
       const response = await fetch('/api/postulantes/login', {
         method: 'POST',
@@ -54,6 +61,7 @@ function VacantesUserLoginContent() {
         body: JSON.stringify({
           documentNumber: normalizedDocument,
           email: normalizedEmail,
+          password,
         }),
       });
       const result = (await response.json()) as { success: boolean; message?: string };
@@ -113,6 +121,18 @@ function VacantesUserLoginContent() {
           }
         />
 
+        <LoginTextField
+          label="Contraseña"
+          type="password"
+          value={password}
+          onChange={(event) => {
+            setPassword(event.target.value);
+            setError('');
+          }}
+          placeholder="Ingresa tu contraseña"
+          required
+        />
+
         {error && (
           <p className="rounded-xl border border-red-400/40 bg-red-50 px-3 py-2 text-sm text-red-700">
             {error}
@@ -128,9 +148,7 @@ function VacantesUserLoginContent() {
         </button>
 
         <div className="rounded-xl border border-black/10 bg-black/5 px-4 py-3 text-sm text-black/75">
-          Si olvidaste tus datos de acceso, usa el documento y correo con los que enviaste tu
-          hoja de vida. La recuperacion con contraseña requiere una tabla de candidatos que aun
-          no existe en el esquema actual.
+          Usa el documento, correo y contraseña registrados en tu perfil de postulante.
         </div>
 
         <div className="text-center text-sm text-black/75 space-y-2">

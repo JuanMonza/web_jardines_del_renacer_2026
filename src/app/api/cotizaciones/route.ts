@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { execute, query } from '@/lib/db';
+import { ADMIN_SESSION_COOKIE, requireAdminPermission } from '@/lib/iam/admin-session';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -65,6 +66,8 @@ export async function POST(request: NextRequest) {
 // GET /api/cotizaciones — listar (admin)
 export async function GET(request: NextRequest) {
   try {
+    const session = await requireAdminPermission(request.cookies.get(ADMIN_SESSION_COOKIE)?.value, 'quotes.view');
+    if (!session) return NextResponse.json({ ok: false, message: 'No autorizado.' }, { status: 403 });
     console.log('[GET /api/cotizaciones] Iniciando proceso para listar cotizaciones.');
     const { searchParams } = new URL(request.url);
     const estado = searchParams.get('estado');
@@ -75,19 +78,16 @@ export async function GET(request: NextRequest) {
     const where  = estado ? 'WHERE estado = ?' : '';
     const params = estado ? [estado, limit, offset] : [limit, offset];
 
-    console.log(`[GET /api/cotizaciones] Consultando cotizaciones con:`, { where, params });
     const rows = await query(
       `SELECT * FROM cotizaciones ${where} ORDER BY creado_en DESC LIMIT ? OFFSET ?`,
       params,
     );
 
-    console.log(`[GET /api/cotizaciones] Consultando conteo total...`);
     const [{ total }] = await query<{ total: number }>(
       `SELECT COUNT(*) as total FROM cotizaciones ${where}`,
       estado ? [estado] : [],
     );
 
-    console.log(`[GET /api/cotizaciones] Consulta exitosa. Total: ${total}, Filas devueltas: ${rows.length}`);
     return NextResponse.json({ ok: true, data: rows, total, page, limit });
   } catch (err) {
     console.error('[GET /api/cotizaciones]', err);

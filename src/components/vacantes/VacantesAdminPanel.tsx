@@ -50,10 +50,6 @@ import {
   createEmptyVacancy,
   type JobVacancy,
 } from '@/config/vacancies';
-import {
-  readCandidateApplications,
-  writeCandidateApplications,
-} from '@/lib/candidateStorage';
 import { APPLICATION_PROGRESS_STEPS, getApplicationProgress } from '@/lib/applicationProgress';
 import {
   // Eliminados: readJobVacancies y writeJobVacancies
@@ -737,37 +733,32 @@ export default function VacantesAdminPanel() {
     }
   };
 
+  const loadApplications = async () => {
+    try {
+      const response = await fetch('/api/vacantes/postulaciones', { cache: 'no-store' });
+      const result = await response.json() as { success?: boolean; data?: JobApplication[] };
+      setApplications(response.ok && result.success && Array.isArray(result.data) ? result.data : []);
+    } catch (error) {
+      console.error('Error cargando postulaciones:', error);
+      setApplications([]);
+    }
+  };
+
   useEffect(() => {
     async function initialize() {
-      const rawSession = localStorage.getItem('vacanciesAdminUser');
-
-      if (rawSession) {
-        try {
-          setSession(JSON.parse(rawSession) as VacanciesSession);
-        } catch {
-          setSession(null);
-        }
+      try {
+        const response = await fetch('/api/iam/admin/session', { cache: 'no-store' });
+        const result = await response.json() as { user?: { name?: string } };
+        setSession(response.ok && result.user?.name ? { cedula: '', role: '', name: result.user.name } : null);
+      } catch {
+        setSession(null);
       }
-
-      await loadVacancies();
-
-      setApplications(readCandidateApplications());
+      await Promise.all([loadVacancies(), loadApplications()]);
     }
 
     initialize();
 
-    const syncFromStorage = async () => {
-      await loadVacancies();
-      setApplications(readCandidateApplications());
-    };
-
-    window.addEventListener('storage', syncFromStorage);
-    window.addEventListener('candidate-storage-updated', syncFromStorage);
-
-    return () => {
-      window.removeEventListener('storage', syncFromStorage);
-      window.removeEventListener('candidate-storage-updated', syncFromStorage);
-    };
+    return undefined;
   }, []);
 
   const ownedVacancies = useMemo(() => {
@@ -933,7 +924,6 @@ export default function VacantesAdminPanel() {
       application.id === applicationId ? { ...application, status } : application,
     );
     setApplications(next);
-    writeCandidateApplications(next);
     const toastId = toast.loading('Actualizando estado y enviando notificación...');
 
     if (!target || !target.candidateEmail) {

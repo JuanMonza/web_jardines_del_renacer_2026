@@ -21,31 +21,20 @@ export default function DashboardAliadosLayout({
   const [user, setUser] = useState<AlliesAdminUser | null>(null);
 
   useEffect(() => {
-    const raw = localStorage.getItem('alliesAdminUser');
-    if (!raw) {
-      router.replace('/login/admin-aliados');
-      return;
-    }
-
-    try {
-      const parsed = JSON.parse(raw) as AlliesAdminUser;
-      if (parsed.role !== 'admin_aliados') {
-        localStorage.removeItem('alliesAdminUser');
-        router.replace('/login/admin-aliados');
-        return;
-      }
-
-      setUser(parsed);
-      setCheckingAccess(false);
-    } catch {
-      localStorage.removeItem('alliesAdminUser');
-      router.replace('/login/admin-aliados');
-    }
+    fetch('/api/iam/admin/session')
+      .then(async (response) => {
+        if (!response.ok) throw new Error('No autorizado');
+        return response.json() as Promise<{ user: { name: string; email: string } }>;
+      })
+      .then(({ user: authenticatedUser }) => {
+        setUser({ cedula: '', role: '', name: authenticatedUser.name });
+        setCheckingAccess(false);
+      })
+      .catch(() => router.replace('/login/admin-aliados'));
   }, [router]);
 
   const handleLogout = () => {
-    localStorage.removeItem('alliesAdminUser');
-    router.push('/');
+    fetch('/api/iam/admin/logout', { method: 'POST' }).finally(() => router.push('/'));
   };
 
   const greeting = buildAdminGreeting(user?.name);

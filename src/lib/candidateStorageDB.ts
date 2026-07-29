@@ -127,6 +127,14 @@ function splitFullName(fullName: string) {
   };
 }
 
+const CANDIDATE_ACCOUNT_COLUMNS = `
+  id, documento, nombres AS nombre, apellidos AS apellido, email, telefono,
+  password_hash, foto_url AS foto, fecha_nacimiento, direccion, ciudad,
+  departamento, profesion, experiencia, educacion, linkedin, portfolio, cv_url,
+  activo, ultimo_login, reset_token_hash, reset_expires_at, deleted_at,
+  created_at, updated_at
+`;
+
 function mapCandidateAccount(row: CandidateAccountRow): CandidateAccount {
   const firstName = row.nombre ?? "";
   const lastName = row.apellido ?? "";
@@ -380,15 +388,13 @@ export function writeCandidateApplications(applications: JobApplication[]) {
 }
 
 export async function createCandidateAccountInDB(input: CandidateRegistrationInput) {
-  const id = createUuid();
   const documentNumber = normalizeDocumentNumber(input.documentNumber);
   const email = normalizeEmail(input.email);
   const sql = `
     INSERT INTO candidatos (
-      id,
       documento,
-      nombre,
-      apellido,
+      nombres,
+      apellidos,
       email,
       telefono,
       password_hash,
@@ -402,11 +408,10 @@ export async function createCandidateAccountInDB(input: CandidateRegistrationInp
       cv_url,
       activo
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
   `;
 
-  await execute(sql, [
-    id,
+  const result = await execute(sql, [
     documentNumber,
     input.firstName.trim(),
     input.lastName?.trim() ?? "",
@@ -430,10 +435,10 @@ export async function createCandidateAccountInDB(input: CandidateRegistrationInp
       WHERE candidato_id IS NULL
         AND (candidate_document = ? OR LOWER(candidate_email) = ?)
     `,
-    [id, documentNumber, email],
+    [String(result.insertId), documentNumber, email],
   );
 
-  return id;
+  return String(result.insertId);
 }
 
 export async function getCandidateAccountByDocumentOrEmail(input: {
@@ -459,7 +464,7 @@ export async function getCandidateAccountByDocumentOrEmail(input: {
 
   const rows = await query<CandidateAccountRow>(
     `
-      SELECT *
+      SELECT ${CANDIDATE_ACCOUNT_COLUMNS}
       FROM candidatos
       WHERE (${conditions.join(" OR ")})
         AND deleted_at IS NULL
@@ -477,7 +482,7 @@ export async function getCandidateAccountForLogin(input: {
 }) {
   const rows = await query<CandidateAccountRow>(
     `
-      SELECT *
+      SELECT ${CANDIDATE_ACCOUNT_COLUMNS}
       FROM candidatos
       WHERE documento = ?
         AND LOWER(email) = ?
@@ -519,10 +524,10 @@ export async function updateCandidateProfileInDB(input: {
   const result = await execute(
     `
       UPDATE candidatos
-      SET nombre = ?,
-          apellido = ?,
+      SET nombres = ?,
+          apellidos = ?,
           telefono = ?,
-          foto = ?,
+          foto_url = ?,
           fecha_nacimiento = ?,
           direccion = ?,
           ciudad = ?,
@@ -615,7 +620,7 @@ export async function setCandidatePasswordResetToken(input: {
 export async function getCandidateByResetToken(tokenHash: string) {
   const rows = await query<CandidateAccountRow>(
     `
-      SELECT *
+      SELECT ${CANDIDATE_ACCOUNT_COLUMNS}
       FROM candidatos
       WHERE reset_token_hash = ?
         AND reset_expires_at > CURRENT_TIMESTAMP

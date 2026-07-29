@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query, execute } from '@/lib/db';
+import { ADMIN_SESSION_COOKIE, requireAdminPermission } from '@/lib/iam/admin-session';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -12,6 +13,8 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const session = await requireAdminPermission(request.cookies.get(ADMIN_SESSION_COOKIE)?.value, 'allies.codes.redeem');
+    if (!session) return NextResponse.json({ ok: false, message: 'No autorizado.' }, { status: 403 });
     const { id }         = await params;
     const body           = await request.json() as { valorConsumido?: number; canjeadoPor?: string };
     const valorConsumido = Number(body.valorConsumido ?? 0);
@@ -55,7 +58,7 @@ export async function PATCH(
               canjeado_por      = ?,
               canjeado_en       = CURRENT_TIMESTAMP
         WHERE id = ?`,
-      [valorConsumido, valorDescuento, totalDespuesDto, body.canjeadoPor ?? null, id],
+      [valorConsumido, valorDescuento, totalDespuesDto, session.name, id],
     );
 
     return NextResponse.json({ ok: true, valorConsumido, valorDescuento, totalDespuesDto });

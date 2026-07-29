@@ -37,6 +37,20 @@ CREATE TABLE IF NOT EXISTS candidatos (
   INDEX idx_candidatos_ciudad_departamento (ciudad, departamento)
 );
 
+SET @has_reset_token_hash := (
+  SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'candidatos' AND COLUMN_NAME = 'reset_token_hash'
+);
+SET @sql := IF(@has_reset_token_hash = 0, 'ALTER TABLE candidatos ADD COLUMN reset_token_hash VARCHAR(255) NULL AFTER ultimo_login', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @has_reset_expires_at := (
+  SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'candidatos' AND COLUMN_NAME = 'reset_expires_at'
+);
+SET @sql := IF(@has_reset_expires_at = 0, 'ALTER TABLE candidatos ADD COLUMN reset_expires_at TIMESTAMP NULL AFTER reset_token_hash', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
 SET @has_candidato_id := (
   SELECT COUNT(*)
   FROM INFORMATION_SCHEMA.COLUMNS

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query, execute } from '@/lib/db';
+import { ADMIN_SESSION_COOKIE, requireAdminPermission } from '@/lib/iam/admin-session';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -17,6 +18,8 @@ function generarCodigoUnico(): string {
 // POST /api/codigos-descuento — generar código
 export async function POST(request: NextRequest) {
   try {
+    const session = await requireAdminPermission(request.cookies.get(ADMIN_SESSION_COOKIE)?.value, 'allies.codes.generate');
+    if (!session) return NextResponse.json({ ok: false, message: 'No autorizado.' }, { status: 403 });
     const body = await request.json() as {
       clienteCedula?: string; clienteNombre?: string; aliadoId?: string;
       aliadoNombre?: string; aliadoLoginId?: string; aliadoDepartamento?: string;

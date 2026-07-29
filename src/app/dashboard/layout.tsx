@@ -5,8 +5,6 @@ import Link from 'next/link';
 import DashboardSidebar from '../../components/admin/DashboardSidebar'; // Importamos el nuevo menú
 import { buildAdminGreeting } from '@/lib/adminGreeting';
 
-const ADMIN_STORAGE_KEY = 'adminUser';
-
 export default function DashboardLayout({
   children,
 }: {
@@ -16,25 +14,16 @@ export default function DashboardLayout({
   const [checkingAccess, setCheckingAccess] = useState(true);
 
   useEffect(() => {
-    const userData = localStorage.getItem(ADMIN_STORAGE_KEY);
-    if (userData) {
-      try {
-        const parsed = JSON.parse(userData) as { role?: string; name?: string; email?: string };
-        if (parsed.role !== 'admin') {
-          localStorage.removeItem(ADMIN_STORAGE_KEY);
-          window.location.href = '/login/admin';
-          return;
-        }
-        setUser(parsed);
+    fetch('/api/iam/admin/session')
+      .then(async (response) => {
+        if (!response.ok) throw new Error('No autorizado');
+        return response.json() as Promise<{ user: { name?: string; email?: string } }>;
+      })
+      .then(({ user: authenticatedUser }) => {
+        setUser(authenticatedUser);
         setCheckingAccess(false);
-      } catch {
-        localStorage.removeItem(ADMIN_STORAGE_KEY);
-        window.location.href = '/login/admin';
-      }
-      return;
-    }
-
-    window.location.href = '/login/admin';
+      })
+      .catch(() => { window.location.href = '/login/admin'; });
   }, []);
 
   const greeting = buildAdminGreeting(user?.name);

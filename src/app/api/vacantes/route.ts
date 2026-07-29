@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDefaultJobVacancies } from "@/lib/vacanciesStorage";
 import {getVacanciesFromDB,createVacancyInDB,} from "@/lib/vacanciesStorageDB";
 import { getVacancyApplicationCounts } from "@/lib/candidateStorageDB";
+import { ADMIN_SESSION_COOKIE, requireAdminPermission } from '@/lib/iam/admin-session';
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +36,8 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await requireAdminPermission(request.cookies.get(ADMIN_SESSION_COOKIE)?.value, 'vacancies.create');
+    if (!session) return NextResponse.json({ success: false, message: 'No autorizado.' }, { status: 403 });
     const body = await request.json();
 
     const id = await createVacancyInDB(body);

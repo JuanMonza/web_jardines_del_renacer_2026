@@ -11,8 +11,6 @@ import {
   UserCog,
 } from 'lucide-react';
 
-const ADMIN_STORAGE_KEY = 'adminUser';
-
 const navLinks = [
   {
     href: '/dashboard',
@@ -75,10 +73,9 @@ interface DashboardSidebarProps {
 }
 
 export default function DashboardSidebar({ user, greeting }: DashboardSidebarProps) {
-  // TODO: Implementar una función de logout real
   const handleLogout = () => {
-    localStorage.removeItem(ADMIN_STORAGE_KEY);
-    window.location.href = '/login/admin';
+    fetch('/api/iam/admin/logout', { method: 'POST' })
+      .finally(() => { window.location.href = '/login/admin'; });
   };
 
   return (

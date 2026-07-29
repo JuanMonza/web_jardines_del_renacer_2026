@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
+import { ADMIN_SESSION_COOKIE, requireAdminPermission } from '@/lib/iam/admin-session';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -12,10 +13,12 @@ interface CodigoRow {
 
 // GET /api/codigos-descuento/:id — verificar validez por código
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const session = await requireAdminPermission(request.cookies.get(ADMIN_SESSION_COOKIE)?.value, 'allies.codes.redeem');
+    if (!session) return NextResponse.json({ ok: false, message: 'No autorizado.' }, { status: 403 });
     const { id: codigo } = await params;
 
     if (!codigo || codigo.length < 4) {

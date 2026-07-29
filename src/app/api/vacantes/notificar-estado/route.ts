@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { ApplicationStatus } from '@/config/candidates';
+import { ADMIN_SESSION_COOKIE, requireAdminPermission } from '@/lib/iam/admin-session';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -92,6 +93,8 @@ function buildHtmlMail(payload: {
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await requireAdminPermission(request.cookies.get(ADMIN_SESSION_COOKIE)?.value, 'vacancies.applications.update');
+    if (!session) return NextResponse.json({ ok: false, message: 'No autorizado.' }, { status: 403 });
     const payload = (await request.json()) as NotifyStatusPayload;
 
     const candidateName = asText(payload.candidateName);

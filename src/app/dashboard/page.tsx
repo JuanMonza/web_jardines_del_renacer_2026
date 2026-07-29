@@ -15,21 +15,22 @@ import {
   ArrowUpRight,
 } from 'lucide-react';
 
-const ADMIN_STORAGE_KEY = 'adminUser';
-
 export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const userData = localStorage.getItem(ADMIN_STORAGE_KEY);
-    if (!userData) {
-      router.push('/login/admin');
-      return;
-    }
-    setUser(JSON.parse(userData));
-    setLoading(false);
+    fetch('/api/iam/admin/session')
+      .then(async (response) => {
+        if (!response.ok) throw new Error('No autorizado');
+        return response.json() as Promise<{ user: { name: string; email: string } }>;
+      })
+      .then(({ user: authenticatedUser }) => {
+        setUser(authenticatedUser);
+        setLoading(false);
+      })
+      .catch(() => router.replace('/login/admin'));
   }, [router]);
 
   if (loading) {

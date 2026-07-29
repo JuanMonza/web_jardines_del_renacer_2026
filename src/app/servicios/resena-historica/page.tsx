@@ -1,49 +1,41 @@
-import Container from '@/components/ui/Container';
-import PageHero from '@/components/ui/PageHero';
-import FadeIn from '@/components/animations/FadeIn';
+'use client';
+
+import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { motion, useReducedMotion } from 'framer-motion';
 import Button from '@/components/ui/Button';
+import Container from '@/components/ui/Container';
+import PageHero from '@/components/ui/PageHero';
 import { historyTimeline } from '@/content/company';
 
-// Helper para renderizar iconos SVG elegantes según la base de datos
-const renderIcon = (type: string) => {
-  switch (type) {
-    case 'flag':
-      return (
-        <svg className="w-6 h-6 md:w-8 md:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
-        </svg>
-      );
-    case 'trending-up':
-      return (
-        <svg className="w-6 h-6 md:w-8 md:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-        </svg>
-      );
-    case 'star':
-      return (
-        <svg className="w-6 h-6 md:w-8 md:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11.049 2.927c.3-.921 1.603-.921 1.898 0l1.518 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.518-4.674z" />
-        </svg>
-      );
-    default:
-      return (
-        <svg className="w-6 h-6 md:w-8 md:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      );
-  }
-};
+type TimelineItem = (typeof historyTimeline)[number];
+
+function relativePosition(index: number, activeIndex: number, total: number) {
+  let position = index - activeIndex;
+  if (position > total / 2) position -= total;
+  if (position < -total / 2) position += total;
+  return position;
+}
+
+function timelineImage(item: TimelineItem) {
+  return item.id === 5 ? '/images/images-baners/equipo.webp' : item.image;
+}
 
 export default function ResenaHistoricaPage() {
-  // Simulación de carga desde el administrador: filtramos los activos y los ordenamos.
-  const timelineData = historyTimeline
-    .filter(item => item.active)
-    .sort((a, b) => a.order - b.order);
+  const timeline = historyTimeline.filter((item) => item.active).sort((a, b) => a.order - b.order);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [isFlipped, setIsFlipped] = useState(false);
+  const reduceMotion = useReducedMotion();
+  const activeItem = timeline[activeIndex];
+
+  const goTo = (nextIndex: number) => {
+    setActiveIndex((nextIndex + timeline.length) % timeline.length);
+    setIsFlipped(false);
+  };
 
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen bg-background">
       <PageHero
         title="Reseña Histórica"
         subtitle="Una evolución constante basada en el respeto, la dignidad y el servicio a las familias colombianas."
@@ -51,101 +43,100 @@ export default function ResenaHistoricaPage() {
         imageAlt="Reseña histórica Jardines del Renacer"
       />
 
-      {/* LÍNEA DEL TIEMPO INTERACTIVA */}
-      <section className="py-24 relative overflow-hidden">
-        <Container maxWidth="2xl">
-          <div className="relative">
-            {/* Línea vertical central (adaptativa a móvil/desktop) */}
-            <div className="absolute left-6 md:left-1/2 top-4 bottom-4 w-1 bg-gradient-to-b from-primary/5 via-primary/30 to-primary/5 -translate-x-1/2 rounded-full"></div>
+      <section className="relative overflow-hidden bg-[#132b4b] py-14 sm:py-20 lg:py-24">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_25%,rgba(115,151,205,0.35),transparent_38%),linear-gradient(180deg,#173457_0%,#102540_100%)]" />
+        <Container maxWidth="2xl" className="relative">
+          <div className="mx-auto mb-9 max-w-2xl text-center text-white sm:mb-12">
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/65">Nuestro recorrido</p>
+            <h2 className="mt-3 font-display text-3xl leading-tight sm:text-5xl">Una historia para descubrir.</h2>
+            <p className="mt-4 text-sm leading-relaxed text-white/75 sm:text-base">Explora cada momento y acompáñanos en el recorrido que ha dado forma a Jardines del Renacer.</p>
+          </div>
 
-            {/* Cambiamos a Lista Ordenada para Accesibilidad y SEO */}
-            <ol className="space-y-16 md:space-y-24 relative z-10" aria-label="Línea del tiempo histórica">
-              {timelineData.map((item, index) => {
-                // Intercalamos izquierda a derecha para pantallas grandes
-                const isEven = index % 2 === 0;
+          <div className="relative mx-auto h-[470px] max-w-[1200px] sm:h-[530px] lg:h-[580px]" aria-roledescription="carrusel" aria-label="Hitos de la historia de Jardines del Renacer">
+            {timeline.map((item, index) => {
+              const position = relativePosition(index, activeIndex, timeline.length);
+              const visible = Math.abs(position) <= 2;
+              const isActive = position === 0;
+              const translateX = position * 175;
+              const scale = isActive ? 1 : Math.abs(position) === 1 ? 0.82 : 0.68;
+              const opacity = isActive ? 1 : Math.abs(position) === 1 ? 0.72 : 0.34;
 
-                return (
-                  <li key={item.id}>
-                    <FadeIn delay={index * 0.1}>
-                      <div className={`group/timeline relative flex flex-col md:flex-row items-center ${isEven ? '' : 'md:flex-row-reverse'}`} aria-label={`Año ${item.year}`}>
-                      
-                        {/* Efecto de "Latido" (Heartbeat) constante de fondo */}
-                        <div className="absolute left-6 md:left-1/2 top-8 md:top-1/2 w-12 h-12 md:w-16 md:h-16 bg-primary/20 rounded-full animate-ping -translate-x-1/2 md:-translate-y-1/2 z-10" style={{ animationDuration: '3s' }}></div>
-
-                        {/* Ícono circular flotante */}
-                        <div className="absolute left-6 md:left-1/2 top-8 md:top-1/2 w-12 h-12 md:w-16 md:h-16 bg-white border-4 border-primary/20 rounded-full flex items-center justify-center text-primary shadow-xl -translate-x-1/2 md:-translate-y-1/2 z-20 transition-all duration-500 group-hover/timeline:scale-110 group-hover/timeline:border-primary group-hover/timeline:bg-primary/5 group-hover/timeline:shadow-primary/20">
-                          {renderIcon(item.iconType)}
-                        </div>
-
-                        {/* Conector horizontal magnético (Crece suavemente al hacer hover) */}
-                        <div className={`hidden md:block absolute top-1/2 h-[2px] bg-primary/20 group-hover/timeline:bg-primary transition-all duration-700 ease-out -translate-y-1/2 z-10 ${isEven ? 'right-1/2 mr-8 w-4 group-hover/timeline:w-12 lg:group-hover/timeline:w-20' : 'left-1/2 ml-8 w-4 group-hover/timeline:w-12 lg:group-hover/timeline:w-20'}`}></div>
-
-                        {/* Contenedor del Texto (Tarjeta Glassmorphism) */}
-                        <div className={`w-full pl-16 md:pl-0 md:w-1/2 ${isEven ? 'md:pr-12 lg:pr-16 md:text-right' : 'md:pl-12 lg:pl-16 md:text-left'} mb-8 md:mb-0`}>
-                          <div className="glass rounded-[2rem] p-6 md:p-10 border border-primary/10 shadow-glass transition-all duration-700 ease-out bg-white/60 group group-hover/timeline:-translate-y-2 group-hover/timeline:shadow-2xl group-hover/timeline:bg-white/80">
-                            <span className="block text-4xl md:text-5xl font-extrabold mb-3 opacity-90 group-hover:opacity-100 transition-all duration-500 bg-gradient-to-r from-primary to-[#5a7ec0] group-hover:to-primary bg-clip-text text-transparent transform group-hover:scale-105 origin-left">
-                              {item.year}
-                            </span>
-                            <h3 className="text-2xl font-bold text-text mb-4">
-                              {item.title}
-                            </h3>
-                            <p className="text-textLight leading-relaxed md:text-lg">
-                              {item.description}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Contenedor de la Imagen */}
-                        <div className={`w-full pl-16 md:pl-0 md:w-1/2 ${isEven ? 'md:pl-12 lg:pl-16' : 'md:pr-12 lg:pr-16'}`}>
-                          <div className="w-full relative aspect-video md:aspect-[4/3] rounded-[2rem] overflow-hidden shadow-xl border border-white/20 group transition-all duration-700 ease-out group-hover/timeline:shadow-2xl group-hover/timeline:-translate-y-2">
-                            {/* Filtro sutil superpuesto */}
-                            <div className="absolute inset-0 bg-primary/20 mix-blend-multiply group-hover/timeline:bg-transparent transition-all duration-700 z-10"></div>
-                            <Image
-                              src={item.image}
-                              alt={item.title}
-                              fill
-                              className="object-cover scale-110 group-hover/timeline:scale-100 transition-transform duration-700 ease-out"
-                            />
-                          </div>
-                        </div>
-
-                      </div>
-                    </FadeIn>
-                  </li>
-                );
-              })}
-            </ol>
-
-            {/* Cierre de la línea del tiempo / Call to Action */}
-            <FadeIn delay={0.3}>
-              <div className="mt-20 md:mt-32 text-center flex flex-col items-center justify-center relative z-10 group cursor-default">
-                {/* Conector final desvanecido */}
-                <div className="w-1 h-16 bg-gradient-to-b from-primary/30 to-transparent mb-4"></div>
-                
-                {/* Punto final luminoso */}
-                <div className="w-4 h-4 rounded-full bg-primary mb-12 animate-pulse shadow-[0_0_20px_rgba(60,96,162,0.8)] relative">
-                  <div className="absolute inset-0 rounded-full bg-primary animate-ping opacity-50"></div>
+              return (
+                <div
+                  key={item.id}
+                  className={`absolute left-1/2 top-0 h-[410px] w-[78vw] max-w-[430px] -translate-x-1/2 sm:h-[470px] sm:w-[380px] ${visible ? 'pointer-events-auto' : 'pointer-events-none'}`}
+                  style={{ zIndex: 20 - Math.abs(position) }}
+                >
+                  <motion.button
+                    type="button"
+                    aria-label={`Ver hito ${item.year}: ${item.title}`}
+                    aria-current={isActive ? 'true' : undefined}
+                    aria-pressed={isActive && isFlipped}
+                    onClick={() => {
+                      if (isActive) {
+                        setIsFlipped((flipped) => !flipped);
+                      } else {
+                        setActiveIndex(index);
+                        setIsFlipped(false);
+                      }
+                    }}
+                    initial={false}
+                    animate={{ x: translateX, scale, opacity, rotateY: reduceMotion ? 0 : position * -7 }}
+                    transition={{ type: 'spring', stiffness: 220, damping: 26 }}
+                    className={`relative h-full w-full rounded-[2rem] border text-left shadow-2xl transition-colors ${isActive ? 'border-white/60' : 'border-white/20'}`}
+                    style={{ transformPerspective: 1200 }}
+                  >
+                    <motion.span
+                      animate={{ rotateY: isActive && isFlipped ? 180 : 0 }}
+                      transition={{ duration: reduceMotion ? 0 : 0.65, ease: [0.22, 1, 0.36, 1] }}
+                      className="absolute inset-0 block"
+                      style={{ transformStyle: 'preserve-3d' }}
+                    >
+                      <span className="absolute inset-0 block overflow-hidden rounded-[2rem]" style={{ backfaceVisibility: 'hidden' }}>
+                        <Image src={timelineImage(item)} alt={item.title} fill className="object-cover" sizes="(min-width: 640px) 380px, 78vw" priority={isActive} />
+                        <span className="absolute inset-0 bg-gradient-to-t from-[#071628]/60 via-transparent to-black/5" />
+                        <span className="absolute bottom-8 left-0 right-0 px-7 text-center text-white drop-shadow-lg">
+                          <span className="block text-xl font-bold leading-tight sm:text-2xl">{item.title}</span>
+                          {isActive && <span className="mt-2 block text-xs font-medium uppercase tracking-[0.18em] text-white/80">Toca para conocer este capítulo</span>}
+                        </span>
+                      </span>
+                      <span className="absolute inset-0 flex flex-col overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#1c416b] via-[#102b4d] to-[#081c33] p-7 text-white sm:p-9" style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
+                        <span className="absolute -right-14 -top-14 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
+                        <span className="relative block text-xs font-semibold uppercase tracking-[0.28em] text-white/60">{item.year}</span>
+                        <span className="relative mt-5 block text-2xl font-bold leading-tight sm:text-3xl">{item.title}</span>
+                        <span tabIndex={isActive && isFlipped ? 0 : -1} className="relative mt-5 min-h-0 flex-1 overflow-y-auto pr-3 text-sm leading-7 text-white/90 [scrollbar-color:rgba(255,255,255,0.55)_transparent] [scrollbar-width:thin] sm:text-base">
+                          {item.description}
+                        </span>
+                        <span className="relative mt-4 block border-t border-white/15 pt-3 text-xs font-semibold uppercase tracking-[0.14em] text-white/65">Desliza el texto para leer · toca para volver</span>
+                      </span>
+                    </motion.span>
+                    <span className="absolute -bottom-6 left-1/2 z-10 -translate-x-1/2 rounded-full border border-white/40 bg-[#0b2340] px-5 py-2 text-sm font-bold tracking-[0.14em] text-white shadow-xl">{item.year}</span>
+                  </motion.button>
                 </div>
+              );
+            })}
+          </div>
 
-                {/* Tarjeta interactiva final */}
-                <div className="glass rounded-[2.5rem] p-10 md:p-14 border border-primary/10 shadow-glass transition-all duration-700 ease-out hover:shadow-2xl hover:-translate-y-3 hover:bg-white/80 max-w-4xl mx-auto relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
-                  
-                  <h3 className="text-3xl md:text-5xl font-display mb-6 bg-gradient-to-r from-primary to-[#5a7ec0] bg-clip-text text-transparent transform transition-transform duration-700 group-hover:scale-105">
-                    La historia continúa...
-                  </h3>
-                  <p className="text-textLight mb-10 text-lg md:text-xl leading-relaxed relative z-10 max-w-2xl mx-auto">
-                    Seguimos evolucionando cada día para brindar el mejor acompañamiento. Te invitamos a conocer más sobre nuestros planes de previsión para ti y tu familia.
-                  </p>
-                  <Link href="/planes" className="relative z-10 inline-block">
-                    <Button variant="primary" size="lg" className="shadow-xl hover:shadow-primary/40 hover:-translate-y-2 transition-all duration-300 text-base md:text-lg px-8 md:px-10 py-4 group/btn">
-                      Conoce Nuestros Planes
-                      <svg className="w-5 h-5 ml-2 transform group-hover/btn:translate-x-2 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
-                    </Button>
-                  </Link>
-                </div>
+          <div className="mx-auto mt-1 flex max-w-[430px] items-center justify-between gap-3 rounded-full border border-white/20 bg-white/10 p-2 pl-4 text-white backdrop-blur-xl sm:mt-4">
+            <button type="button" onClick={() => goTo(activeIndex - 1)} className="grid h-10 w-10 place-items-center rounded-full bg-white/15 text-xl transition-colors hover:bg-white/25" aria-label="Hito anterior">‹</button>
+            <div className="min-w-0 flex-1 text-center">
+              <p className="truncate text-sm font-semibold">{activeItem?.year} · {activeItem?.title}</p>
+              <div className="mt-2 flex justify-center gap-1.5">
+                {timeline.map((item, index) => <button key={item.id} type="button" onClick={() => goTo(index)} aria-label={`Ir al hito ${item.year}`} className={`h-1.5 rounded-full transition-all ${index === activeIndex ? 'w-5 bg-white' : 'w-1.5 bg-white/40 hover:bg-white/70'}`} />)}
               </div>
-            </FadeIn>
+            </div>
+            <button type="button" onClick={() => goTo(activeIndex + 1)} className="grid h-10 w-10 place-items-center rounded-full bg-white/15 text-xl transition-colors hover:bg-white/25" aria-label="Siguiente hito">›</button>
+          </div>
+        </Container>
+      </section>
+
+      <section className="py-14 sm:py-20">
+        <Container maxWidth="xl">
+          <div className="rounded-[2rem] bg-primary px-7 py-10 text-center text-white sm:px-12 sm:py-14">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/65">El próximo capítulo</p>
+            <h2 className="mt-4 font-display text-3xl sm:text-5xl">La historia continúa.</h2>
+            <p className="mx-auto mt-5 max-w-2xl text-sm leading-relaxed text-white/80 sm:text-base">Seguimos evolucionando para acompañar con dignidad, sensibilidad y confianza a las familias colombianas.</p>
+            <Link href="/planes" className="mt-8 inline-block"><Button variant="secondary" size="lg">Conoce nuestros planes</Button></Link>
           </div>
         </Container>
       </section>
