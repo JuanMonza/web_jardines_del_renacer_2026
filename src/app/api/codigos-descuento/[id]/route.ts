@@ -1,50 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { query } from '@/lib/db';
 import { ADMIN_SESSION_COOKIE, requireAdminPermission } from '@/lib/iam/admin-session';
+import { deleteDiscountRequestInDB, findRequestForVerificationFromDB } from '@/lib/allyMembershipStorageDB';
+import { recordAllyAudit } from '@/lib/ally-audit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-interface CodigoRow {
-  id: string; codigo: string; cliente_nombre: string; cliente_cedula: string;
-  aliado_nombre: string; descuento_etiqueta: string; descuento_porcentaje: number;
-  estado: string; expira_en: string; canjeado_en: string | null;
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const session = await requireAdminPermission(request.cookies.get(ADMIN_SESSION_COOKIE)?.value, 'allies.codes.redeem');
+  if (!session) return NextResponse.json({ message: 'No autorizado.' }, { status: 403 });
+  const { id: code } = await params;
+  const cedula = request.nextUrl.searchParams.get('cedula') ?? '';
+  const data = await findRequestForVerificationFromDB({ code, cedula });
+  return data ? NextResponse.json({ data }) : NextResponse.json({ message: 'Código no encontrado.' }, { status: 404 });
 }
 
-// GET /api/codigos-descuento/:id — verificar validez por código
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
-    const session = await requireAdminPermission(request.cookies.get(ADMIN_SESSION_COOKIE)?.value, 'allies.codes.redeem');
-    if (!session) return NextResponse.json({ ok: false, message: 'No autorizado.' }, { status: 403 });
-    const { id: codigo } = await params;
-
-    if (!codigo || codigo.length < 4) {
-      return NextResponse.json({ ok: false, message: 'Código inválido.' }, { status: 400 });
-    }
-
-    const rows = await query<CodigoRow>(
-      `SELECT id, codigo, cliente_nombre, cliente_cedula,
-              aliado_nombre, descuento_etiqueta, descuento_porcentaje,
-              estado, expira_en, canjeado_en
-         FROM codigos_descuento
-        WHERE codigo = ? LIMIT 1`,
-      [codigo.toUpperCase()],
-    );
-
-    if (rows.length === 0) {
-      return NextResponse.json({ ok: false, valido: false, message: 'Código no encontrado.' }, { status: 404 });
-    }
-
-    const row     = rows[0];
-    const expirado = new Date(row.expira_en) < new Date();
-    const valido   = row.estado === 'active' && !expirado;
-
-    return NextResponse.json({ ok: true, valido, data: row });
-  } catch (err) {
-    console.error('[GET /api/codigos-descuento/:id]', err);
-    return NextResponse.json({ ok: false, message: 'Error interno del servidor.' }, { status: 500 });
-  }
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const session = await requireAdminPermission(request.cookies.get(ADMIN_SESSION_COOKIE)?.value, 'allies.codes.redeem');
+  if (!session) return NextResponse.json({ message: 'No autorizado.' }, { status: 403 });
+  const { id } = await params;
+  const current = await findRequestForVerificationFromDB({ cedula: '', requestId: id });
+  if (!current || !(await deleteDiscountRequestInDB(id))) return NextResponse.json({ message: 'El código no puede anularse.' }, { status: 409 });
+  await recordAllyAudit({ allyId: current.allyId, adminUserId: session.userId, actorType: 'ADMIN', eventType: 'DISCOUNT_VOIDED', entityType: 'codigos_descuento', entityId: id, details: { code: current.code, clientCedula: current.clientCedula }, ip: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? request.headers.get('x-real-ip'), userAgent: request.headers.get('user-agent') });
+  return new NextResponse(null, { status: 204 });
 }

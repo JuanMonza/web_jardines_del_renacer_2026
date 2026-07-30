@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query, execute } from '@/lib/db';
 import { ADMIN_SESSION_COOKIE, requireAdminPermission } from '@/lib/iam/admin-session';
+import { getAllDiscountRequestsFromDB } from '@/lib/allyMembershipStorageDB';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -13,6 +14,13 @@ function generarCodigoUnico(): string {
     if (i === 3) code += '-';
   }
   return code;
+}
+
+export async function GET(request: NextRequest) {
+  const session = await requireAdminPermission(request.cookies.get(ADMIN_SESSION_COOKIE)?.value, 'allies.view');
+  if (!session) return NextResponse.json({ message: 'No autorizado.' }, { status: 403 });
+  try { return NextResponse.json({ data: await getAllDiscountRequestsFromDB() }); }
+  catch (error) { console.error('[GET /api/codigos-descuento]', error); return NextResponse.json({ message: 'No fue posible consultar los códigos.' }, { status: 500 }); }
 }
 
 // POST /api/codigos-descuento — generar código

@@ -43,7 +43,7 @@ export default function UbicacionesPage() {
   const selected = sedes.find((s) => s.id === selectedId) ?? null;
   const mapsQuery = selected ? getSedeMapsQuery(selected) : null;
   const selectedCityImage = selected
-    ? getCiudadImagePath(selected.departamento, selected.ciudad)
+    ? selected.fotoUrl || getCiudadImagePath(selected.departamento, selected.ciudad)
     : null;
   const mapsSearchUrl = mapsQuery
     ? `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`
@@ -153,7 +153,7 @@ export default function UbicacionesPage() {
               )}
 
               {filtered.map((sede, index) => {
-                const cityImage = getCiudadImagePath(sede.departamento, sede.ciudad);
+                const cityImage = sede.fotoUrl || getCiudadImagePath(sede.departamento, sede.ciudad);
                 const sedeMapsQuery = getSedeMapsQuery(sede);
                 const sedeDirectionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${sedeMapsQuery}`;
                 const sedeMapsUrl = `https://www.google.com/maps/search/?api=1&query=${sedeMapsQuery}`;
@@ -190,8 +190,8 @@ export default function UbicacionesPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2 mb-1">
                           <h3 className="text-base font-bold text-text leading-tight">Sede {sede.nombre}</h3>
-                          <span className="shrink-0 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
-                            24 Horas
+                          <span className={`shrink-0 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${sede.estadoOperativo === 'Activa' ? 'bg-emerald-500/10 text-emerald-700 border-emerald-500/20' : sede.estadoOperativo === 'Cerrada temporalmente' ? 'bg-rose-500/10 text-rose-700 border-rose-500/20' : 'bg-amber-500/10 text-amber-700 border-amber-500/20'}`}>
+                            {sede.estadoOperativo ?? 'Activa'}
                           </span>
                         </div>
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { loadSedes, SEDES_UPDATED_EVENT } from '@/lib/sedesStorage';
+import { SEDES_UPDATED_EVENT } from '@/lib/sedesStorage';
 import { computeDepartamentos, type Sede, type DepartamentoInfo } from '@/data/sedes';
 
 /**
@@ -13,13 +13,28 @@ export function useSedesData(): { sedes: Sede[]; departamentos: DepartamentoInfo
   const [sedes, setSedes] = useState<Sede[]>([]);
 
   useEffect(() => {
-    const update = () => setSedes(loadSedes());
-    update(); // carga inicial
+    let mounted = true;
+    const update = async () => {
+      try {
+        const response = await fetch('/api/sedes/public');
+        const payload = await response.json() as { data?: Sede[] };
+        if (mounted && response.ok) setSedes(payload.data ?? []);
+      } catch { /* El SSR conserva sus datos de respaldo. */ }
+    };
+    void update();
+
+    const channel = typeof BroadcastChannel !== 'undefined'
+      ? new BroadcastChannel('jdr-sedes')
+      : null;
+    channel?.addEventListener('message', update);
 
     window.addEventListener(SEDES_UPDATED_EVENT, update);
     window.addEventListener('storage', update); // sincronización entre pestañas
 
     return () => {
+      mounted = false;
+      channel?.removeEventListener('message', update);
+      channel?.close();
       window.removeEventListener(SEDES_UPDATED_EVENT, update);
       window.removeEventListener('storage', update);
     };

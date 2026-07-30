@@ -2,122 +2,79 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import {
-  LayoutDashboard,
-  Building,
-  ClipboardList,
-  BookHeart,
-  LogOut,
-  UserCog,
-} from 'lucide-react';
+import type { ElementType } from 'react';
+import { LayoutDashboard, Building2, ClipboardList, BookHeart, LogOut, UserCog, ArrowUpRight } from 'lucide-react';
 
-const navLinks = [
-  {
-    href: '/dashboard',
-    label: 'Principal',
-    icon: LayoutDashboard,
-  },
-  {
-    href: '/dashboard/obituarios',
-    label: 'Homenajes',
-    icon: BookHeart,
-  },
-  {
-    href: '/dashboard/sedes',
-    label: 'Sedes',
-    icon: Building,
-  },
-  {
-    href: '/dashboard/talleres',
-    label: 'Talleres',
-    icon: ClipboardList,
-  },
-  {
-    href: '/dashboard/usuarios',
-    label: 'Usuarios',
-    icon: UserCog,
-  },
-];
-
-function NavLink({
-  href,
-  label,
-  icon: Icon,
-}: {
+export type AdminNavigationItem = {
   href: string;
   label: string;
-  icon: React.ElementType;
-}) {
-  const pathname = usePathname();
-  const isActive = pathname === href;
+  icon: ElementType;
+  external?: boolean;
+};
 
-  return (
-    <Link
-      href={href}
-      className={`relative flex w-full items-center gap-4 rounded-lg px-4 py-3 text-textLight transition-all duration-200 hover:bg-primary/10 hover:text-text ${
-        isActive
-          ? 'bg-primary/10 font-semibold text-primary'
-          : 'hover:bg-primary/5'
-      }`}
-    >
-      {isActive && <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r-full"></div>}
-      <Icon className="h-4 w-4" />
-      {label}
-    </Link>
-  );
-}
+const defaultNavigation: AdminNavigationItem[] = [
+  { href: '/dashboard', label: 'Resumen', icon: LayoutDashboard },
+  { href: '/dashboard/obituarios', label: 'Homenajes', icon: BookHeart },
+  { href: '/dashboard/sedes', label: 'Sedes', icon: Building2 },
+  { href: '/dashboard/talleres', label: 'Talleres', icon: ClipboardList },
+  { href: '/dashboard/usuarios', label: 'Usuarios', icon: UserCog },
+];
 
 interface DashboardSidebarProps {
   user: { name?: string; email?: string } | null;
   greeting: string;
+  workspace?: string;
+  navigation?: AdminNavigationItem[];
+  onLogout: () => void;
 }
 
-export default function DashboardSidebar({ user, greeting }: DashboardSidebarProps) {
-  const handleLogout = () => {
-    fetch('/api/iam/admin/logout', { method: 'POST' })
-      .finally(() => { window.location.href = '/login/admin'; });
-  };
+export default function DashboardSidebar({
+  user,
+  greeting,
+  workspace = 'Administración',
+  navigation = defaultNavigation,
+  onLogout,
+}: DashboardSidebarProps) {
+  const pathname = usePathname();
 
   return (
-    <aside className="fixed left-0 top-0 z-20 hidden h-screen w-72 flex-col border-r border-border bg-white lg:flex">
-      <div className="flex h-full max-h-screen flex-col">
-        {/* Profile Section - Mantenemos el diseño original */}
-        <div className="p-6 border-b border-border/80">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-primary-hover flex items-center justify-center text-white font-bold text-xl shadow-lg">
-              {user?.name?.charAt(0).toUpperCase() || 'A'}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-xs uppercase tracking-wider text-textLight/80 font-medium mb-1">
-                Administrador
-              </p>
-              <h3 className="truncate text-base font-semibold leading-tight text-text">
-                {user?.name || 'Admin JDR'}
-              </h3>
-              <p className="text-xs text-primary mt-1">{greeting}</p>
-            </div>
+    <aside className="fixed inset-y-3 left-3 z-20 hidden w-[17.5rem] flex-col rounded-[28px] border border-white/55 bg-white/58 p-3 shadow-[0_24px_70px_-38px_rgba(8,37,88,0.75)] backdrop-blur-2xl lg:flex">
+      <div className="rounded-2xl border border-white/70 bg-white/45 p-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#244f91] via-[#3867ad] to-[#9ab8df] text-lg font-bold text-white shadow-lg shadow-blue-950/20">
+            {user?.name?.charAt(0).toUpperCase() || 'J'}
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#486992]">{workspace}</p>
+            <h3 className="truncate text-sm font-bold text-[#16345d]">{user?.name || 'Equipo Jardines'}</h3>
+            <p className="truncate text-xs text-[#607a9c]">{greeting}</p>
           </div>
         </div>
+      </div>
 
-        {/* Navigation - Usamos el nuevo sistema de enlaces */}
-        <div className="flex-1 overflow-auto py-6">
-          <nav className="grid items-start px-4 text-sm font-medium gap-1">
-            {navLinks.map((link) => (
-              <NavLink key={link.href} {...link} />
-            ))}
-          </nav>
-        </div>
+      <nav className="mt-6 flex-1 space-y-1.5" aria-label={`Navegación ${workspace}`}>
+        <p className="px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#6a83a5]">Espacio de trabajo</p>
+        {navigation.map(({ href, label, icon: Icon, external }) => {
+          const active = !external && (pathname === href || (href !== '/dashboard' && pathname.startsWith(`${href}/`)));
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={`group flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition-all ${active ? 'bg-[#214b86] text-white shadow-lg shadow-blue-950/15' : 'text-[#345477] hover:bg-white/70 hover:text-[#173c70]'}`}
+            >
+              <Icon className={`h-[18px] w-[18px] ${active ? 'text-white' : 'text-[#5e84b6] group-hover:text-[#204a85]'}`} />
+              <span>{label}</span>
+              {external && <ArrowUpRight className="ml-auto h-4 w-4" />}
+            </Link>
+          );
+        })}
+      </nav>
 
-        {/* Footer con Logout y versión */}
-        <div className="mt-auto p-4 border-t border-border/80">
-          <button
-            onClick={handleLogout}
-            className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-red-400/80 transition-all hover:bg-red-500/10 hover:text-red-400"
-          >
-            <LogOut className="h-5 w-5" />
-            <span className="font-medium">Cerrar Sesión</span>
-          </button>
-        </div>
+      <div className="border-t border-[#9fb9da]/35 pt-3">
+        <button onClick={onLogout} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-[#8c3345] transition-colors hover:bg-red-50/80">
+          <LogOut className="h-[18px] w-[18px]" /> Cerrar sesión
+        </button>
+        <p className="px-3 pt-2 text-[10px] text-[#7088a5]">Jardines del Renacer · Plataforma segura</p>
       </div>
     </aside>
   );

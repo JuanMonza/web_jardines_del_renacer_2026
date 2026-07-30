@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Sede, getAllDepartamentos } from '@/data/sedes';
 import { motion } from 'framer-motion';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 
 const DEFAULT_SEDE_IMAGE = '/logos_jr_favico.png';
 
@@ -26,6 +28,7 @@ const emptySede: Omit<Sede, 'id'> = {
   departamento: 'Risaralda',
   ciudad: '',
   fotoUrl: '',
+  estadoOperativo: 'Activa',
 };
 
 export default function SedeFormModal({
@@ -36,24 +39,17 @@ export default function SedeFormModal({
 }: SedeFormModalProps) {
   const [formData, setFormData] = useState<Omit<Sede, 'id'>>(emptySede);
   const [imagePreview, setImagePreview] = useState(DEFAULT_SEDE_IMAGE);
-
-  // Bloquea scroll del body y fuerza scroll al top cuando el modal abre
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-      window.scrollTo({ top: 0 });
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => { document.body.style.overflow = ''; };
-  }, [isOpen]);
+  const [initialFormData, setInitialFormData] = useState<Omit<Sede, 'id'>>(emptySede);
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
 
   useEffect(() => {
     if (sede) {
       setFormData(sede);
+      setInitialFormData(sede);
       setImagePreview(sede.fotoUrl || DEFAULT_SEDE_IMAGE);
     } else {
       setFormData(emptySede);
+      setInitialFormData(emptySede);
       setImagePreview(DEFAULT_SEDE_IMAGE);
     }
   }, [sede, isOpen]);
@@ -80,20 +76,31 @@ export default function SedeFormModal({
     onSave(sedeToSave);
   };
 
+  const hasUnsavedChanges = JSON.stringify(formData) !== JSON.stringify(initialFormData);
+  const requestClose = () => {
+    if (hasUnsavedChanges) {
+      setConfirmDiscard(true);
+      return;
+    }
+    onClose();
+  };
+
   if (!isOpen) return null;
 
   const departamentos = getAllDepartamentos();
 
-  return (
+  return <>
+    {createPortal(
     <div
-      className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-      onClick={onClose}
+      className="fixed inset-0 z-[1100] flex items-center justify-center bg-[#07182e]/55 p-4 backdrop-blur-sm"
+      style={{ zIndex: 2147483647 }}
+      onClick={requestClose}
     >
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
-        className="glass rounded-3xl border-2 border-primary/30 p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+        className="glass relative rounded-3xl border-2 border-primary/30 p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-2xl font-bold text-text mb-6">
@@ -134,6 +141,12 @@ export default function SedeFormModal({
               required
             />
           </div>
+          <div className="w-full">
+            <label className="block text-sm font-medium text-text mb-2">Estado operativo</label>
+            <select name="estadoOperativo" value={formData.estadoOperativo ?? 'Activa'} onChange={handleChange} className="w-full px-4 py-3 rounded-xl glass border border-border text-text focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-300">
+              <option value="Activa">Activa</option><option value="Cerrada temporalmente">Cerrada temporalmente</option><option value="Próxima apertura">Próxima apertura</option><option value="En revisión">En revisión</option>
+            </select>
+          </div>
           <Input
             label="Dirección Técnica (o Plus Code)"
             name="direccion"
@@ -146,6 +159,11 @@ export default function SedeFormModal({
             value={formData.direccionVisible}
             onChange={handleChange}
           />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input label="Latitud" name="lat" type="number" value={String(formData.lat ?? '')} onChange={handleChange} placeholder="Ej: 4.8145" />
+            <Input label="Longitud" name="lng" type="number" value={String(formData.lng ?? '')} onChange={handleChange} placeholder="Ej: -75.6946" />
+          </div>
+          {Number(formData.lat) !== 0 && Number(formData.lng) !== 0 && <a href={`https://www.google.com/maps?q=${formData.lat},${formData.lng}`} target="_blank" rel="noopener noreferrer" className="inline-flex rounded-xl border border-primary/20 bg-primary/5 px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/10">Ver coordenadas en Google Maps</a>}
           <Input
             label="Administrador(a)"
             name="administradora"
@@ -160,12 +178,12 @@ export default function SedeFormModal({
             onChange={handleChange}
           />
           <Input
-            label="URL de la Foto"
+            label="Imagen de la sede (ruta o URL)"
             name="fotoUrl"
-            type="url"
+            type="text"
             value={formData.fotoUrl}
             onChange={handleChange}
-            placeholder="https://ejemplo.com/foto.jpg"
+            placeholder="/images/ciudades/... o https://ejemplo.com/foto.jpg"
           />
 
           {/* Subir imagen local */}
@@ -233,7 +251,8 @@ export default function SedeFormModal({
           </div>
 
           <div className="flex justify-end gap-4 pt-4">
-            <Button type="button" variant="ghost" onClick={onClose}>
+            <div className="mr-auto text-xs font-semibold text-amber-700">{hasUnsavedChanges ? 'Cambios sin guardar' : 'Sin cambios pendientes'}</div>
+            <Button type="button" variant="ghost" onClick={requestClose}>
               Cancelar
             </Button>
             <Button type="submit" variant="primary">
@@ -243,5 +262,7 @@ export default function SedeFormModal({
         </form>
       </motion.div>
     </div>
-  );
+  , document.body)}
+    <ConfirmDialog open={confirmDiscard} title="Hay cambios sin guardar" description="Si cierras ahora, los cambios realizados en esta sede se perderán." confirmLabel="Descartar cambios" cancelLabel="Seguir editando" variant="danger" onCancel={() => setConfirmDiscard(false)} onConfirm={() => { setConfirmDiscard(false); onClose(); }} />
+  </>;
 }

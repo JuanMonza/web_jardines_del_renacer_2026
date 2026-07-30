@@ -34,9 +34,14 @@ export async function POST(request: NextRequest) {
     const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
     await setCandidatePasswordResetToken({ documentNumber, email, tokenHash, expiresAt });
 
+    if (process.env.RESEND_API_KEY) {
+      const url = `${request.nextUrl.origin}/login/usuario-vacantes/restablecer?token=${token}`;
+      await fetch('https://api.resend.com/emails', { method: 'POST', headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ from: process.env.EMAIL_FROM || 'Jardines del Renacer <onboarding@resend.dev>', to: [email], subject: 'Restablece tu contraseña de postulante', html: `<p>Solicitaste restablecer tu contraseña.</p><p><a href="${url}">Restablecer contraseña</a></p><p>El enlace vence en 30 minutos.</p>` }) });
+    }
+
     return NextResponse.json({
       success: true,
-      message: 'Si la cuenta existe, se genero una solicitud de recuperacion.',
+      message: 'Si la cuenta existe, recibirás instrucciones para restablecer tu contraseña.',
       data: process.env.NODE_ENV === 'production' ? undefined : { resetToken: token },
     });
   } catch (error) {

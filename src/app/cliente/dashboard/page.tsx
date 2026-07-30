@@ -10,28 +10,23 @@ import FadeIn from '@/components/animations/FadeIn';
 
 export default function ClienteDashboardPage() {
   const router = useRouter();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<{ name: string; documentNumber: string } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const userData = localStorage.getItem('user');
-    if (!userData) {
-      router.push('/login');
-      return;
-    }
-    
-    const parsedUser = JSON.parse(userData);
-    if (parsedUser.role !== 'cliente') {
-      router.push('/login');
-      return;
-    }
-    
-    setUser(parsedUser);
-    setLoading(false);
+    let mounted = true;
+    fetch('/api/iam/client/session')
+      .then(async (response) => {
+        if (!response.ok) throw new Error('Sesión no válida');
+        return response.json() as Promise<{ user: { name: string; documentNumber: string } }>;
+      })
+      .then((payload) => { if (mounted) { setUser(payload.user); setLoading(false); } })
+      .catch(() => { if (mounted) router.replace('/login'); });
+    return () => { mounted = false; };
   }, [router]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('user');
+  const handleLogout = async () => {
+    await fetch('/api/iam/client/logout', { method: 'POST' });
     router.push('/');
   };
 

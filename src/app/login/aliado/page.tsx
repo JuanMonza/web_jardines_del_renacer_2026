@@ -1,59 +1,29 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import AuthLoginLayout from '@/components/login/AuthLoginLayout';
 import LoginTextField from '@/components/login/LoginTextField';
-import { type CommercialAlly } from '@/config/allies';
-import { ensureExcelAlliesSeeded } from '@/lib/allyExcelImport';
-import { readCommercialAllies } from '@/lib/alliesStorage';
 
 export default function AliadoLoginPage() {
   const router = useRouter();
   const [loginId, setLoginId] = useState('');
   const [password, setPassword] = useState('');
-  const [allies, setAllies] = useState<CommercialAlly[]>([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [recovering, setRecovering] = useState(false);
+  const [email, setEmail] = useState('');
+  const [recoveryMessage, setRecoveryMessage] = useState('');
 
-  useEffect(() => {
-    ensureExcelAlliesSeeded()
-      .then(setAllies)
-      .catch(() => setAllies(readCommercialAllies()));
-  }, []);
-
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError('');
     setLoading(true);
 
-    const normalizedLogin = loginId.trim().toUpperCase();
-    const ally = allies.find(
-      (item) =>
-        item.loginId?.toUpperCase() === normalizedLogin &&
-        item.loginPassword === password,
-    );
-
-    if (!ally) {
-      setError('ID o contrasena de aliado incorrectos.');
-      setLoading(false);
-      return;
-    }
-
-    localStorage.setItem(
-      'allyPortalUser',
-      JSON.stringify({
-        cedula: ally.loginId,
-        role: 'ally_user',
-        name: ally.name,
-        allyId: ally.id,
-        loginId: ally.loginId,
-      }),
-    );
-    localStorage.removeItem('alliesAdminUser');
-    router.push('/dashboard-aliado');
+    try { const response=await fetch('/api/iam/ally/login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({loginId,password})}); const payload=await response.json(); if(!response.ok) throw new Error(payload.message); router.replace('/dashboard-aliado'); } catch(error){setError(error instanceof Error?error.message:'No fue posible iniciar sesión.');} finally{setLoading(false);}
   };
+  const requestRecovery = async (event: React.FormEvent) => { event.preventDefault(); setLoading(true); const response = await fetch('/api/iam/ally/password-reset', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email }) }); const payload = await response.json(); setRecoveryMessage(payload.message); setLoading(false); };
 
   return (
     <AuthLoginLayout
@@ -61,7 +31,7 @@ export default function AliadoLoginPage() {
       subtitle="Acceso exclusivo para validar codigos de descuento y registrar consumos."
       sectionLabel="Aliado Comercial"
     >
-      <form onSubmit={handleSubmit} className="space-y-6">
+      {recovering ? <form onSubmit={requestRecovery} className="space-y-6"><LoginTextField label="Correo registrado" type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="correo@ejemplo.com" required /><button type="submit" disabled={loading} className="w-full rounded-xl bg-white py-3.5 text-lg font-semibold text-[#17355f]">{loading ? 'Enviando…' : 'Enviar enlace de recuperación'}</button>{recoveryMessage && <p className="text-sm text-white/80">{recoveryMessage}</p>}<button type="button" onClick={() => setRecovering(false)} className="w-full text-sm text-white/70 hover:text-white">Volver al login</button></form> : <form onSubmit={handleSubmit} className="space-y-6">
         <LoginTextField
           label="ID del aliado"
           type="text"
@@ -100,22 +70,14 @@ export default function AliadoLoginPage() {
           {loading ? 'Validando...' : 'Ingresar al portal aliado'}
         </button>
 
-        <div className="rounded-xl border border-black/10 bg-black/5 px-4 py-3 text-sm text-black/75">
-          <p className="font-semibold text-black mb-1">Credencial ejemplo</p>
-          <p>ID aliado: <span className="font-mono">AMM9198</span></p>
-          <p>Contrasena: <span className="font-mono">JR9198</span></p>
-        </div>
 
-        <div className="text-center text-sm text-black/75 space-y-2">
-          <Link href="/login/admin-aliados" className="block hover:text-[#2f5bd6] transition-colors">
-            Ir al login administrativo
-          </Link>
-          <Link href="/" className="block hover:text-[#2f5bd6] transition-colors">
+        <div className="text-center text-sm text-white/75 space-y-3">
+          <button type="button" onClick={() => setRecovering(true)} className="block w-full font-semibold text-white hover:text-[#c7ddf5] transition-colors">¿Olvidaste tu contraseña?</button>
+          <Link href="/" className="block hover:text-white transition-colors">
             Volver al inicio
           </Link>
         </div>
-      </form>
+      </form>}
     </AuthLoginLayout>
   );
 }
-

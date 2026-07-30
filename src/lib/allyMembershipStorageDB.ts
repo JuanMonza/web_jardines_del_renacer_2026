@@ -1,5 +1,5 @@
 import { query, execute } from './db';
-import { type ClientData } from '@/data/mockClients'; // Se mantiene el tipo por ahora
+import { type ClientData } from '@/data/mockClients'; // Se mantiene solo para compatibilidad de tipos heredados.
 import { type CommercialAlly } from '@/config/allies';
 
 export type DiscountRequestStatus = 'active' | 'redeemed' | 'expired' | 'deleted';
@@ -79,7 +79,9 @@ function mapDbCodeToDiscountRequest(dbCode: any): AllyDiscountRequest | null {
     code: dbCode.codigo,
     clientCedula: dbCode.cliente_cedula,
     clientName: dbCode.cliente_nombre,
-    allyId: dbCode.aliado_id,
+    // MySQL entrega BIGINT como número; el portal usa IDs como texto en la sesión.
+    // Normalizar aquí evita que el filtro del aliado oculte sus propios códigos.
+    allyId: String(dbCode.aliado_id),
     allyName: dbCode.aliado_nombre,
     allyLoginId: dbCode.aliado_login_id,
     departamento: dbCode.aliado_departamento,
@@ -100,12 +102,27 @@ function mapDbCodeToDiscountRequest(dbCode: any): AllyDiscountRequest | null {
   };
 }
 
+export async function getDiscountRequestsForAllyFromDB(allyId: string): Promise<AllyDiscountRequest[]> {
+  const rows = await query('SELECT * FROM codigos_descuento WHERE aliado_id = ? ORDER BY creado_en DESC', [allyId]);
+  return rows.map(mapDbCodeToDiscountRequest).filter(Boolean) as AllyDiscountRequest[];
+}
+
+export async function getAllDiscountRequestsFromDB(): Promise<AllyDiscountRequest[]> {
+  const rows = await query('SELECT * FROM codigos_descuento ORDER BY creado_en DESC');
+  return rows.map(mapDbCodeToDiscountRequest).filter(Boolean) as AllyDiscountRequest[];
+}
+
+export async function deleteDiscountRequestInDB(requestId: string): Promise<boolean> {
+  const result = await execute("UPDATE codigos_descuento SET estado = 'deleted', eliminado_en = NOW() WHERE id = ? AND estado = 'active'", [requestId]);
+  return result.affectedRows > 0;
+}
+
 function generateVerificationCode() {
   const random = Math.random().toString(36).slice(2, 8).toUpperCase();
   return `JR-${random}`;
 }
 
-export async function createDiscountRequestInDB(client: ClientData, ally: CommercialAlly): Promise<AllyDiscountRequest> {
+export async function createDiscountRequestInDB(client: Pick<ClientData, 'cedula' | 'nombre' | 'apellido'>, ally: CommercialAlly): Promise<AllyDiscountRequest> {
   const cleanCedula = cleanDocument(client.cedula);
 
   // 1. Verificar si ya existe un código activo para este cliente y aliado.
@@ -143,30 +160,10 @@ export async function createDiscountRequestInDB(client: ClientData, ally: Commer
     discountLabel, discountPercent, now, expiresAt
   ];
 
-  const result = await execute(sql, params);
-  const newId = result.insertId; // Asumiendo que `execute` devuelve un objeto con `insertId`
-
-  // 3. Devolver el objeto completo del código recién creado.
-  // Esto es una simulación, lo ideal sería volver a consultar por el ID.
-  const createdRequest: AllyDiscountRequest = {
-    id: String(newId),
-    code: newCode,
-    clientCedula: cleanCedula,
-    clientName: clientName,
-    allyId: ally.id,
-    allyName: ally.name,
-    allyLoginId: ally.loginId ?? '',
-    departamento: ally.departamento,
-    municipio: ally.municipio,
-    categorySlug: ally.categorySlug,
-    subcategory: ally.subcategory,
-    discountLabel,
-    discountPercent,
-    status: 'active',
-    createdAt: now.toISOString(),
-    expiresAt: expiresAt.toISOString(),
-  };
-
+  await execute(sql, params);
+  const createdRows = await query('SELECT * FROM codigos_descuento WHERE codigo = ? LIMIT 1', [newCode]);
+  const createdRequest = mapDbCodeToDiscountRequest(createdRows[0]);
+  if (!createdRequest) throw new Error('No fue posible recuperar el código creado.');
   return createdRequest;
 }
 
@@ -213,16 +210,21 @@ export async function redeemDiscountRequestInDB(params: {
   requestId: string;
   consumedValue: number;
   redeemedBy: string;
+  allyId?: string;
+  discountValueOverride?: number;
 }): Promise<AllyDiscountRequest | null> {
   const now = new Date();
-  const requestToRedeem = await findRequestForVerificationFromDB({ cedula: '', code: undefined, allyId: undefined, requestId: params.requestId });
+  const requestToRedeem = await findRequestForVerificationFromDB({ cedula: '', code: undefined, allyId: params.allyId, requestId: params.requestId });
 
   if (!requestToRedeem || requestToRedeem.status !== 'active') {
     return null; // No se puede canjear un código que no está activo
   }
 
-  const discountPercent = requestToRedeem.discountPercent ?? extractDiscountPercent(requestToRedeem.discountLabel);
-  const discountValue = Math.round((params.consumedValue * discountPercent) / 100);
+  const configuredPercent = requestToRedeem.discountPercent ?? extractDiscountPercent(requestToRedeem.discountLabel);
+  const discountValue = params.discountValueOverride === undefined
+    ? Math.round((params.consumedValue * configuredPercent) / 100)
+    : Math.min(Math.round(params.discountValueOverride), params.consumedValue);
+  const discountPercent = params.consumedValue > 0 ? Number(((discountValue / params.consumedValue) * 100).toFixed(2)) : configuredPercent;
   const totalAfterDiscount = params.consumedValue - discountValue;
 
   const sql = `
@@ -234,10 +236,12 @@ export async function redeemDiscountRequestInDB(params: {
       total_despues_dto = ?,
       canjeado_por = ?,
       canjeado_en = ?
-    WHERE id = ? AND estado = 'active'
+    WHERE id = ? AND estado = 'active'${params.allyId ? ' AND aliado_id = ?' : ''}
   `;
 
-  const queryParams = [params.consumedValue, discountValue, totalAfterDiscount, params.redeemedBy, now, params.requestId];
+  const queryParams = params.allyId
+    ? [params.consumedValue, discountValue, totalAfterDiscount, params.redeemedBy, now, params.requestId, params.allyId]
+    : [params.consumedValue, discountValue, totalAfterDiscount, params.redeemedBy, now, params.requestId];
   const result = await execute(sql, queryParams);
 
   if (result.affectedRows > 0) {

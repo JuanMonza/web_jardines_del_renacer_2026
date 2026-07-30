@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ADMIN_SESSION_COOKIE, authenticateAdmin, signAdminSession } from '@/lib/iam/admin-session';
 export const runtime = 'nodejs';
-const permissions: Record<string, string> = { '/dashboard': 'dashboard.admin.view', '/dashboard-aliados': 'dashboard.aliados.view', '/dashboard-vacantes': 'dashboard.vacantes.view' };
+const permissions: Record<string, string> = { '/dashboard': 'dashboard.admin.view', '/dashboard-aliados': 'dashboard.aliados.view', '/dashboard-vacantes': 'dashboard.vacantes.view', '/dashboard-sedes': 'dashboard.sedes.view' };
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json(); const destination = typeof body.destination === 'string' ? body.destination : ''; const requiredPermission = permissions[destination];

@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { useEffect, useMemo, useState } from 'react';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Textarea from '@/components/ui/Textarea';
@@ -19,31 +20,45 @@ import {
   type CommercialAlly,
 } from '@/config/allies';
 import {
-  readCommercialAllies,
-  removeCommercialAlly,
-  upsertCommercialAlly,
-  writeCommercialAllies,
-} from '@/lib/alliesStorage';
-import { ensureExcelAlliesSeeded } from '@/lib/allyExcelImport';
-import {
-  deleteDiscountRequest,
-  findRequestForVerification,
   formatCurrency,
   getClientConsumptionSummary,
   getConsumptionComparatives,
   getDiscountStats,
-  readDiscountRequests,
-  redeemDiscountRequest,
   type AllyDiscountRequest,
   type DiscountRequestStatus,
 } from '@/lib/allyMembershipStorage';
 
 type AlliesSession = {
-  cedula: string;
   role: 'admin_aliados' | 'ally_user';
   name: string;
   allyId?: string;
   loginId?: string;
+};
+
+type AllyAccessStatus = {
+  allyId: string;
+  accountConfigured: boolean;
+  accessActive: boolean;
+  lockedUntil: string | null;
+  lastLogin: string | null;
+};
+
+type AllyActivityEntry = {
+  id: string;
+  allyId: string;
+  allyName: string;
+  actorType: 'ALLY' | 'ADMIN' | 'SYSTEM';
+  eventType: string;
+  createdAt: string;
+};
+
+const ACTIVITY_LABELS: Record<string, string> = {
+  ALLY_CREATED: 'Aliado creado',
+  ALLY_UPDATED: 'Datos actualizados',
+  ALLY_DEACTIVATED: 'Aliado desactivado',
+  ALLY_ACCESS_RESET: 'Credenciales restablecidas',
+  DISCOUNT_REDEEMED: 'Descuento aplicado',
+  DISCOUNT_VOIDED: 'Código anulado',
 };
 
 const STATUS_LABELS: Record<DiscountRequestStatus, string> = {
@@ -89,78 +104,77 @@ function createTemporaryAllyFromDraft(draft: CommercialAlly): CommercialAlly {
   };
 }
 
-export default function AliadosAdminPanel() {
+export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' | 'ally' }) {
   const [allies, setAllies] = useState<CommercialAlly[]>([]);
   const [draft, setDraft] = useState<CommercialAlly>(createEmptyAlly());
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [accessPassword, setAccessPassword] = useState('');
+  const [showAccessPassword, setShowAccessPassword] = useState(false);
+  const [confirmation, setConfirmation] = useState<{ title: string; description: string; confirmLabel: string; action: () => void } | null>(null);
+  const [notice, setNotice] = useState<{ title: string; description: string; variant: 'error' | 'success' | 'info' } | null>(null);
   const [feedback, setFeedback] = useState('');
   const [session, setSession] = useState<AlliesSession | null>(null);
   const [requests, setRequests] = useState<AllyDiscountRequest[]>([]);
   const [verifyCedula, setVerifyCedula] = useState('');
   const [verifyCode, setVerifyCode] = useState('');
   const [consumedValue, setConsumedValue] = useState('');
+  const [manualDiscountValue, setManualDiscountValue] = useState('');
   const [verificationFeedback, setVerificationFeedback] = useState('');
   const [activeRequest, setActiveRequest] = useState<AllyDiscountRequest | null>(null);
   const [loadingError, setLoadingError] = useState('');
   const [expandedClientCedula, setExpandedClientCedula] = useState<string | null>(null);
+  const [allySearch, setAllySearch] = useState('');
+  const [reportPeriod, setReportPeriod] = useState<'day' | 'week' | 'month'>('month');
+  const [formTab, setFormTab] = useState<'commercial' | 'access' | 'content'>('commercial');
+  const [accessStatuses, setAccessStatuses] = useState<Record<string, AllyAccessStatus>>({});
+  const [activity, setActivity] = useState<AllyActivityEntry[]>([]);
 
   useEffect(() => {
     let mounted = true;
     
-    // Priorizar sesión de admin sobre aliado
-    let rawSession = localStorage.getItem('alliesAdminUser');
-    if (rawSession) {
-      // Si hay sesión de admin, limpiar sesión de aliado
-      localStorage.removeItem('allyPortalUser');
-    } else {
-      // Si no hay admin, intentar con aliado
-      rawSession = localStorage.getItem('allyPortalUser');
-    }
-    
-    if (rawSession) {
-      try {
-        setSession(JSON.parse(rawSession) as AlliesSession);
-      } catch {
-        setSession(null);
-      }
-    }
-    setRequests(readDiscountRequests());
-    
-    ensureExcelAlliesSeeded()
-      .then((seededAllies) => {
+    const sessionEndpoint = mode === 'ally' ? '/api/iam/ally/session' : '/api/iam/admin/session';
+    const alliesEndpoint = mode === 'ally' ? '/api/aliados/public' : '/api/aliados';
+    const requestsPromise = fetch(mode === 'ally' ? '/api/iam/ally/codes' : '/api/codigos-descuento');
+    const accessStatusPromise = mode === 'admin' ? fetch('/api/aliados/access-status') : null;
+    const activityPromise = mode === 'admin' ? fetch('/api/aliados/audit') : null;
+    Promise.all([fetch(sessionEndpoint), fetch(alliesEndpoint), requestsPromise, accessStatusPromise, activityPromise])
+      .then(async ([sessionResponse, alliesResponse, requestsResponse, accessStatusResponse, activityResponse]) => {
+        if (!sessionResponse.ok || !alliesResponse.ok || (requestsResponse && !requestsResponse.ok)) throw new Error('No fue posible cargar el panel.');
+        const sessionPayload = await sessionResponse.json() as { user: { name: string; allyId?: number; loginId?: string } };
+        const alliesPayload = await alliesResponse.json() as { data: CommercialAlly[] };
+        const requestsPayload = requestsResponse ? await requestsResponse.json() as { data: AllyDiscountRequest[] } : null;
+        const accessStatusPayload = accessStatusResponse ? await accessStatusResponse.json() as { data?: AllyAccessStatus[] } : null;
+        const activityPayload = activityResponse ? await activityResponse.json() as { data?: AllyActivityEntry[] } : null;
         if (mounted) {
-          setAllies(seededAllies);
+          setSession(mode === 'ally'
+            ? { role: 'ally_user', name: sessionPayload.user.name, allyId: String(sessionPayload.user.allyId ?? ''), loginId: sessionPayload.user.loginId }
+            : { role: 'admin_aliados', name: sessionPayload.user.name });
+          setAllies(alliesPayload.data);
+          setRequests(requestsPayload?.data ?? []);
+          setAccessStatuses(Object.fromEntries((accessStatusPayload?.data ?? []).map((item) => [item.allyId, item])));
+          setActivity(activityPayload?.data ?? []);
           setLoadingError('');
-          console.log('Aliados cargados:', seededAllies.length);
         }
       })
-      .catch((error) => {
-        console.error('Error cargando aliados:', error);
-        if (mounted) {
-          const fallback = readCommercialAllies();
-          setAllies(fallback);
-          if (fallback.length === 0) {
-            setLoadingError('No se pudieron cargar aliados de Excel ni localStorage.');
-          }
-        }
-      });
+      .catch(() => { if (mounted) setLoadingError('No fue posible cargar los aliados desde la base de datos.'); });
 
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [mode]);
 
-  const sessionAlly = useMemo(
-    () => allies.find((ally) => ally.id === session?.allyId) ?? null,
-    [allies, session?.allyId],
-  );
-
-  const visibleRequests = useMemo(() => {
-    if (session?.role === 'ally_user' && sessionAlly) {
-      return requests.filter((request) => request.allyId === sessionAlly.id);
-    }
-    return requests;
-  }, [requests, session?.role, sessionAlly]);
+  const visibleRequests = session?.role === 'ally_user' && session.allyId
+    ? requests.filter((request) => request.allyId === session.allyId)
+    : requests;
+  const currentAlly = useMemo(() => session?.role === 'ally_user'
+    ? allies.find((ally) => ally.id === session.allyId) ?? null
+    : null, [allies, session]);
+  const hasFlexibleDiscount = Boolean(activeRequest && /sujet[oa].*(condicion|cambio)|por definir/i.test(activeRequest.discountLabel));
+  const canSetManualDiscount = hasFlexibleDiscount && session?.role === 'ally_user';
+  const previewConsumedValue = Number(consumedValue) || 0;
+  const previewDiscountValue = canSetManualDiscount
+    ? Math.min(Number(manualDiscountValue) || 0, previewConsumedValue)
+    : Math.round((previewConsumedValue * (activeRequest?.discountPercent ?? 0)) / 100);
 
   const stats = useMemo(() => getDiscountStats(visibleRequests), [visibleRequests]);
   const comparatives = useMemo(
@@ -221,6 +235,32 @@ export default function AliadosAdminPanel() {
     );
   }, [allies]);
 
+  const filteredAllies = useMemo(() => {
+    const term = allySearch.trim().toLocaleLowerCase('es-CO');
+    if (!term) return allies;
+    return allies.filter((ally) => [ally.name, ally.loginId, ally.departamento, ally.municipio, ally.categorySlug, ally.subcategory]
+      .some((value) => value?.toLocaleLowerCase('es-CO').includes(term)));
+  }, [allies, allySearch]);
+
+  const downloadReport = () => {
+    const now = new Date();
+    const start = new Date(now);
+    if (reportPeriod === 'day') start.setHours(0, 0, 0, 0);
+    if (reportPeriod === 'week') start.setDate(now.getDate() - 6);
+    if (reportPeriod === 'month') start.setMonth(now.getMonth() - 1);
+    const reportRows = (isAllyUser ? visibleRequests : requests).filter((request) => new Date(request.redeemedAt ?? request.createdAt) >= start);
+    const escape = (value: string | number | undefined) => `"${String(value ?? '').replace(/"/g, '""')}"`;
+    const headers = ['Código', 'Estado', 'Fecha', 'Cliente', 'Cédula', 'Aliado', 'ID aliado', 'Beneficio', 'Consumo', 'Descuento', 'Total pagado', 'Registrado por'];
+    const rows = reportRows.map((request) => [request.code, STATUS_LABELS[request.status], new Date(request.redeemedAt ?? request.createdAt).toLocaleString('es-CO'), request.clientName, request.clientCedula, request.allyName, request.allyLoginId, request.discountLabel, request.consumedValue, request.discountValue, request.totalAfterDiscount, request.redeemedBy]);
+    const csv = `\uFEFF${headers.map(escape).join(';')}\n${rows.map((row) => row.map(escape).join(';')).join('\n')}`;
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+    link.download = `reporte-aliados-${reportPeriod}-${now.toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+    setNotice({ title: 'Reporte descargado', description: `${reportRows.length} registros exportados. El archivo CSV se abre directamente con Excel.`, variant: 'success' });
+  };
+
   useEffect(() => {
     if (availableSubcategories.length === 0) {
       return;
@@ -239,7 +279,7 @@ export default function AliadosAdminPanel() {
     setEditingId(null);
   };
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setFeedback('');
 
@@ -288,35 +328,59 @@ export default function AliadosAdminPanel() {
       whatsappTemplate: template,
       actionLabel: draft.actionLabel.trim() || 'Mas informacion',
       loginId: draft.loginId?.trim() || `${slugify(draft.name).slice(0, 3).toUpperCase()}${Date.now().toString().slice(-4)}`,
-      loginPassword: draft.loginPassword?.trim() || `JR${Date.now().toString().slice(-4)}`,
       createdAt: existing?.createdAt || now,
       updatedAt: now,
     };
 
-    const next = upsertCommercialAlly(allies, allyRecord);
-    setAllies(next);
-    writeCommercialAllies(next);
-    resetDraft();
-    setFeedback(editingId ? 'Aliado actualizado correctamente.' : 'Aliado creado correctamente.');
+    try {
+      const editableFields = ['name', 'loginId', 'categorySlug', 'subcategory', 'discountLabel', 'departamento', 'municipio', 'address', 'url', 'logo', 'whatsappNumber', 'whatsappTemplate', 'featured', 'email', 'telefono', 'description'] as const;
+      const patch = editingId && existing ? Object.fromEntries(editableFields.filter((field) => allyRecord[field] !== existing[field]).map((field) => [field, allyRecord[field]])) : allyRecord;
+      let payload: { data?: CommercialAlly; message?: string } = { data: existing ?? undefined };
+      if (!editingId || Object.keys(patch).length > 0) {
+        const response = await fetch(editingId ? `/api/aliados/${editingId}` : '/api/aliados', {
+          method: editingId ? 'PATCH' : 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(patch),
+        });
+        payload = await response.json() as { data?: CommercialAlly; message?: string };
+        if (!response.ok || !payload.data) throw new Error(payload.message);
+      }
+      setAllies((current) => editingId ? current.map((ally) => ally.id === editingId ? payload.data! : ally) : [...current, payload.data!]);
+      if (accessPassword) {
+        const accessResponse = await fetch(`/api/aliados/${editingId || payload.data!.id}/access`, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ loginId: allyRecord.loginId, password: accessPassword }) });
+        if (!accessResponse.ok) { const accessPayload = await accessResponse.json() as { message?: string }; throw new Error(accessPayload.message); }
+        setAccessStatuses((current) => ({ ...current, [editingId || payload.data!.id]: { allyId: editingId || payload.data!.id, accountConfigured: true, accessActive: true, lockedUntil: null, lastLogin: current[editingId || payload.data!.id]?.lastLogin ?? null } }));
+      }
+      setAccessPassword(''); resetDraft();
+      const message = editingId ? 'Aliado actualizado correctamente.' : 'Aliado creado correctamente.';
+      setFeedback(message);
+      setNotice({ title: 'Cambios guardados', description: message, variant: 'success' });
+    } catch (error) {
+      const message = error instanceof Error && error.message ? error.message : 'No fue posible guardar el aliado.';
+      setFeedback(message);
+      setNotice({ title: 'No fue posible guardar los cambios', description: message, variant: 'error' });
+    }
   };
 
-  const handleDelete = (ally: CommercialAlly) => {
-    const confirmed = window.confirm(`¿Deseas eliminar el aliado "${ally.name}"?`);
-    if (!confirmed) {
-      return;
+  const deactivateAlly = async (ally: CommercialAlly) => {
+    try {
+      const response = await fetch(`/api/aliados/${ally.id}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error('No fue posible desactivar el aliado.');
+      setAllies((current) => current.filter((item) => item.id !== ally.id));
+      if (editingId === ally.id) resetDraft();
+      setFeedback('Aliado desactivado correctamente.');
+      setNotice({ title: 'Aliado desactivado', description: 'El aliado ya no aparece en el catálogo público y puede recuperarse desde MySQL.', variant: 'success' });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'No fue posible desactivar el aliado.';
+      setFeedback(message);
+      setNotice({ title: 'No fue posible desactivar el aliado', description: message, variant: 'error' });
     }
-    const next = removeCommercialAlly(allies, ally.id);
-    setAllies(next);
-    writeCommercialAllies(next);
-    if (editingId === ally.id) {
-      resetDraft();
-    }
-    setFeedback('Aliado eliminado correctamente.');
   };
+
+  const handleDelete = (ally: CommercialAlly) => setConfirmation({ title: '¿Desactivar aliado?', description: `“${ally.name}” dejará de aparecer en el catálogo público. No se borrará definitivamente y podrá recuperarse desde MySQL.`, confirmLabel: 'Sí, desactivar', action: () => deactivateAlly(ally) });
 
   const handleEdit = (ally: CommercialAlly) => {
     setDraft({ ...ally });
     setEditingId(ally.id);
+    setAccessPassword('');
     window.scrollTo({ top: 0, behavior: 'smooth' });
     setFeedback(`Editando: ${ally.name}`);
   };
@@ -341,18 +405,29 @@ export default function AliadosAdminPanel() {
     reader.readAsDataURL(file);
   };
 
-  const refreshRequests = () => setRequests(readDiscountRequests());
+  const refreshRequests = async () => {
+    const response = await fetch(mode === 'ally' ? '/api/iam/ally/codes' : '/api/codigos-descuento');
+    const payload = await response.json() as { data?: AllyDiscountRequest[] };
+    if (response.ok && payload.data) setRequests(payload.data);
+  };
 
-  const handleFindDiscount = (event: React.FormEvent) => {
+  const handleFindDiscount = async (event: React.FormEvent) => {
     event.preventDefault();
     setVerificationFeedback('');
     setActiveRequest(null);
 
-    const request = findRequestForVerification({
-      cedula: verifyCedula,
-      code: verifyCode,
-      allyId: session?.role === 'ally_user' ? sessionAlly?.id : undefined,
-    });
+    let request: AllyDiscountRequest | null;
+    if (mode === 'ally') {
+      const params = new URLSearchParams({ cedula: verifyCedula, code: verifyCode });
+      const response = await fetch(`/api/iam/ally/codes?${params.toString()}`);
+      const payload = await response.json() as { data?: AllyDiscountRequest };
+      request = response.ok ? payload.data ?? null : null;
+    } else {
+      const params = new URLSearchParams({ cedula: verifyCedula });
+      const response = await fetch(`/api/codigos-descuento/${encodeURIComponent(verifyCode)}?${params.toString()}`);
+      const payload = await response.json() as { data?: AllyDiscountRequest };
+      request = response.ok ? payload.data ?? null : null;
+    }
 
     if (!request) {
       setVerificationFeedback('No encontramos un codigo para esa cedula y aliado.');
@@ -367,10 +442,11 @@ export default function AliadosAdminPanel() {
     }
 
     setActiveRequest(request);
+    setManualDiscountValue('');
     setVerificationFeedback('Codigo activo. Ingresa el valor consumido para aplicar el descuento.');
   };
 
-  const handleRedeemDiscount = () => {
+  const handleRedeemDiscount = async () => {
     if (!activeRequest) {
       return;
     }
@@ -380,16 +456,27 @@ export default function AliadosAdminPanel() {
       setVerificationFeedback('Ingresa un valor consumido valido mayor a cero.');
       return;
     }
+    const manualValue = Number(manualDiscountValue);
+    if (canSetManualDiscount && (!Number.isFinite(manualValue) || manualValue < 0 || manualValue > value)) {
+      setVerificationFeedback('Ingresa un valor de descuento entre $0 y el valor consumido.');
+      return;
+    }
 
-    const redeemed = redeemDiscountRequest({
-      requestId: activeRequest.id,
-      consumedValue: value,
-      redeemedBy: session?.loginId || session?.cedula || 'admin',
-    });
+    let redeemed: AllyDiscountRequest | null;
+    if (mode === 'ally') {
+      const response = await fetch(`/api/iam/ally/codes/${activeRequest.id}/redeem`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ consumedValue: value, discountValue: canSetManualDiscount ? manualValue : undefined }) });
+      const payload = await response.json() as { data?: AllyDiscountRequest };
+      redeemed = response.ok ? payload.data ?? null : null;
+    } else {
+      const response = await fetch(`/api/codigos-descuento/${activeRequest.id}/canjear`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ consumedValue: value, discountValue: canSetManualDiscount ? manualValue : undefined }) });
+      const payload = await response.json() as { data?: AllyDiscountRequest };
+      redeemed = response.ok ? payload.data ?? null : null;
+    }
 
-    refreshRequests();
+    await refreshRequests();
     setActiveRequest(null);
     setConsumedValue('');
+    setManualDiscountValue('');
     setVerifyCode('');
     setVerificationFeedback(
       redeemed
@@ -398,55 +485,55 @@ export default function AliadosAdminPanel() {
     );
   };
 
-  const handleDeleteDiscount = (request: AllyDiscountRequest) => {
-    const confirmed = window.confirm(`¿Deseas eliminar el codigo ${request.code}?`);
-    if (!confirmed) {
-      return;
-    }
-
-    deleteDiscountRequest(request.id);
-    refreshRequests();
-    setVerificationFeedback('Codigo eliminado correctamente.');
+  const deleteDiscount = async (request: AllyDiscountRequest) => {
+    const response = await fetch(`/api/codigos-descuento/${request.id}`, { method: 'DELETE' });
+    if (!response.ok) { setVerificationFeedback('No fue posible anular el código.'); return; }
+    await refreshRequests();
+    setVerificationFeedback('Código anulado correctamente.');
   };
+  const handleDeleteDiscount = (request: AllyDiscountRequest) => setConfirmation({ title: '¿Eliminar código de descuento?', description: `El código ${request.code} quedará anulado y no podrá usarse para un canje.`, confirmLabel: 'Sí, eliminar código', action: () => deleteDiscount(request) });
 
   const previewAlly = createTemporaryAllyFromDraft(draft);
   const isAllyUser = session?.role === 'ally_user';
 
   const handleReloadAlliesFromExcel = async () => {
-    setFeedback('Recargando aliados desde Excel...');
+    setFeedback('Actualizando aliados desde MySQL...');
     setLoadingError('');
-    
-    // Limpiar la marca de ya cargado
-    localStorage.removeItem('jdr.commercial-allies.excel-seeded.v1');
-    
     try {
-      const reloaded = await ensureExcelAlliesSeeded();
-      setAllies(reloaded);
-      setFeedback(`✓ Cargados ${reloaded.length} aliados desde Excel.`);
+      const response = await fetch('/api/aliados');
+      const payload = await response.json() as { data?: CommercialAlly[]; message?: string };
+      if (!response.ok || !payload.data) throw new Error(payload.message);
+      setAllies(payload.data);
+      setFeedback(`Cargados ${payload.data.length} aliados desde MySQL.`);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Error desconocido';
-      setLoadingError(`Error al recargar: ${message}`);
-      const fallback = readCommercialAllies();
-      setAllies(fallback);
+      setLoadingError(error instanceof Error ? error.message : 'No fue posible actualizar los aliados.');
     }
   };
 
   return (
-    <div className="min-h-screen pt-2 pb-10">
-      <SectionTitle
-        title="Panel de Aliados Comerciales"
-        subtitle={
-          isAllyUser
-            ? 'Valida codigos activos y registra el valor consumido por cada cliente.'
-            : 'Administra aliados, credenciales, codigos de descuento y consumos.'
-        }
-        align="center"
-        className="mb-8"
-      />
+    <div id="inicio" className="min-h-screen pt-2 pb-10 scroll-mt-6">
+      <ConfirmDialog open={Boolean(confirmation)} title={confirmation?.title ?? ''} description={confirmation?.description ?? ''} confirmLabel={confirmation?.confirmLabel} onCancel={() => setConfirmation(null)} onConfirm={() => { const action = confirmation?.action; setConfirmation(null); action?.(); }} />
+      <ConfirmDialog open={Boolean(notice)} title={notice?.title ?? ''} description={notice?.description ?? ''} confirmLabel="Entendido" showCancel={false} variant={notice?.variant} onCancel={() => setNotice(null)} onConfirm={() => setNotice(null)} />
+      {isAllyUser ? (
+        <SectionTitle title="Portal del aliado comercial" subtitle="Valida códigos activos y registra el valor consumido por cada cliente." align="center" className="mb-8" />
+      ) : (
+        <section className="mb-8 overflow-hidden rounded-[30px] border border-white/80 bg-gradient-to-br from-white/85 via-[#eef5fc]/90 to-[#dceafa]/80 p-6 shadow-[0_16px_40px_rgba(34,76,125,0.1)] backdrop-blur-xl md:p-8">
+          <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
+            <div><p className="text-xs font-bold uppercase tracking-[0.22em] text-[#5c80ad]">Administración comercial</p><h1 className="mt-2 text-3xl font-bold tracking-tight text-[#173861] md:text-4xl">Aliados comerciales</h1><p className="mt-3 max-w-2xl text-sm leading-6 text-[#5c7190]">Gestiona el catálogo, las credenciales y la trazabilidad de descuentos desde un solo lugar.</p></div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center"><select value={reportPeriod} onChange={(event) => setReportPeriod(event.target.value as 'day' | 'week' | 'month')} className="rounded-xl border border-[#bfd1e5] bg-white/85 px-4 py-3 text-sm font-semibold text-[#315d98] outline-none"><option value="day">Reporte de hoy</option><option value="week">Últimos 7 días</option><option value="month">Últimos 30 días</option></select><button type="button" onClick={downloadReport} className="rounded-xl bg-[#244f8a] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-blue-900/15 transition hover:bg-[#193f73]">Descargar Excel</button></div>
+          </div>
+        </section>
+      )}
+
+      {isAllyUser && (
+        <section className="mb-8 overflow-hidden rounded-[28px] border border-white/70 bg-gradient-to-br from-[#173861]/95 via-[#24548f]/92 to-[#5f89bc]/85 p-6 text-white shadow-[0_20px_55px_rgba(22,58,104,0.25)] backdrop-blur-xl md:p-8">
+          <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#d4e7ff]">Operación segura</p><h2 className="mt-3 text-2xl font-bold md:text-3xl">Valida descuentos sin salir de tu portal</h2><p className="mt-3 max-w-2xl text-sm leading-6 text-[#e6f0fc]">Consulta códigos, registra consumos y conserva la trazabilidad exclusiva de tu establecimiento.</p>
+        </section>
+      )}
 
       {loadingError && (
         <div className="mb-6 rounded-2xl border border-red-500/25 bg-red-50 p-4 text-sm text-red-700 flex items-center justify-between">
-          <span>⚠️ {loadingError}</span>
+          <span>{loadingError}</span>
           <button
             onClick={handleReloadAlliesFromExcel}
             className="ml-4 font-semibold px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors"
@@ -458,40 +545,45 @@ export default function AliadosAdminPanel() {
 
       {allies.length === 0 && !loadingError && (
         <div className="mb-6 rounded-2xl border border-amber-500/25 bg-amber-50 p-4 text-sm text-amber-700 flex items-center justify-between">
-          <span>ℹ️ No hay aliados cargados aun. Crea el primer aliado o recarga desde Excel.</span>
+          <span>No hay aliados cargados aún. Crea el primer aliado o actualiza la consulta.</span>
           <button
             onClick={handleReloadAlliesFromExcel}
             className="ml-4 font-semibold px-4 py-2 rounded-lg bg-amber-600 text-white hover:bg-amber-700 transition-colors"
           >
-            Cargar desde Excel
+            Actualizar desde MySQL
           </button>
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        {[
-          ['Codigos generados', stats.generated.toString()],
-          ['Codigos activos', stats.active.toString()],
-          ['Codigos usados', stats.redeemed.toString()],
-          ['Codigos vencidos', stats.expired.toString()],
-          ['Codigos eliminados', stats.deleted.toString()],
-          ['Consumo total', formatCurrency(stats.totalConsumed)],
-          ['Descuento total', formatCurrency(stats.totalDiscount)],
-          ['Total despues desc.', formatCurrency(stats.totalAfterDiscount)],
-        ].map(([label, value]) => (
-          <article key={label} className="rounded-2xl border border-primary/15 bg-white/55 p-4">
-            <p className="text-xs uppercase tracking-[0.16em] text-textLight">{label}</p>
-            <p className="mt-2 text-2xl font-semibold text-text">{value}</p>
+      <div className="grid grid-cols-1 gap-4 mb-8 sm:grid-cols-2 xl:grid-cols-4">
+        {(isAllyUser ? [
+          { label: 'Códigos activos', value: stats.active.toString(), mark: '✓', tone: 'bg-sky-500/10 text-sky-700', glow: 'bg-sky-400/20' },
+          { label: 'Canjes realizados', value: stats.redeemed.toString(), mark: '↗', tone: 'bg-emerald-500/10 text-emerald-700', glow: 'bg-emerald-400/20' },
+          { label: 'Consumo registrado', value: formatCurrency(stats.totalConsumed), mark: '$', tone: 'bg-[#315d98]/10 text-[#315d98]', glow: 'bg-[#5e8dca]/20' },
+          { label: 'Total cobrado', value: formatCurrency(stats.totalAfterDiscount), mark: '$', tone: 'bg-violet-500/10 text-violet-700', glow: 'bg-violet-400/20' },
+        ] : [
+          { label: 'Códigos generados', value: stats.generated.toString(), mark: '01', tone: 'bg-[#315d98]/10 text-[#315d98]', glow: 'bg-[#5e8dca]/20' },
+          { label: 'Códigos activos', value: stats.active.toString(), mark: '✓', tone: 'bg-sky-500/10 text-sky-700', glow: 'bg-sky-400/20' },
+          { label: 'Códigos usados', value: stats.redeemed.toString(), mark: '↗', tone: 'bg-emerald-500/10 text-emerald-700', glow: 'bg-emerald-400/20' },
+          { label: 'Códigos vencidos', value: stats.expired.toString(), mark: '◷', tone: 'bg-amber-500/10 text-amber-700', glow: 'bg-amber-400/20' },
+          { label: 'Códigos anulados', value: stats.deleted.toString(), mark: '—', tone: 'bg-rose-500/10 text-rose-700', glow: 'bg-rose-400/20' },
+          { label: 'Consumo registrado', value: formatCurrency(stats.totalConsumed), mark: '$', tone: 'bg-[#315d98]/10 text-[#315d98]', glow: 'bg-[#5e8dca]/20' },
+          { label: 'Descuentos aplicados', value: formatCurrency(stats.totalDiscount), mark: '%', tone: 'bg-emerald-500/10 text-emerald-700', glow: 'bg-emerald-400/20' },
+          { label: 'Total facturado', value: formatCurrency(stats.totalAfterDiscount), mark: '$', tone: 'bg-violet-500/10 text-violet-700', glow: 'bg-violet-400/20' },
+        ]).map((metric) => (
+          <article key={metric.label} className={`group relative min-h-[148px] overflow-hidden rounded-[24px] border p-5 transition duration-300 hover:-translate-y-1 ${isAllyUser ? 'border-white/80 bg-white/65 shadow-[0_14px_34px_rgba(32,75,125,0.12)] backdrop-blur-xl hover:shadow-[0_20px_44px_rgba(32,75,125,0.18)]' : 'border-primary/15 bg-white/55'}`}>
+            <div className={`pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full blur-2xl ${metric.glow}`} />
+            <div className="relative flex items-start justify-between gap-3">
+              <p className="max-w-[13rem] text-[11px] font-bold uppercase tracking-[0.15em] text-[#6681a0]">{metric.label}</p>
+              <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-2xl text-base font-bold ${metric.tone}`}>{metric.mark}</span>
+            </div>
+            <p className="relative mt-5 break-words text-2xl font-bold tracking-tight text-[#173861]">{metric.value}</p>
+            <div className="relative mt-3 h-px w-full bg-gradient-to-r from-[#b6cbe5] to-transparent" />
+            <p className="relative mt-2 text-xs text-[#7690ad]">Actualizado en tiempo real</p>
           </article>
         ))}
       </div>
 
-      {isAllyUser && sessionAlly && (
-        <div className="mb-6 rounded-2xl border border-primary/15 bg-primary/10 p-4 text-sm text-text">
-          Sesion de aliado activa: <span className="font-semibold">{sessionAlly.name}</span> -
-          {' '}ID <span className="font-mono">{sessionAlly.loginId}</span>
-        </div>
-      )}
 
       <section className="mb-8 grid grid-cols-1 lg:grid-cols-3 gap-4">
         {[
@@ -501,20 +593,21 @@ export default function AliadosAdminPanel() {
         ].map(([label, item]) => {
           const summary = item as { count: number; consumed: number; discount: number };
           return (
-            <article key={label as string} className="rounded-3xl border border-primary/15 bg-white/65 p-5 shadow-sm">
-              <p className="text-xs uppercase tracking-[0.18em] text-primary">{label as string}</p>
-              <div className="mt-4 grid grid-cols-3 gap-3 text-sm">
-                <div>
+            <article key={label as string} className={`relative overflow-hidden rounded-[26px] border p-5 ${isAllyUser ? 'border-white/80 bg-white/60 shadow-[0_12px_30px_rgba(32,75,125,0.1)] backdrop-blur-xl' : 'border-primary/15 bg-white/65 shadow-sm'}`}>
+              <div className="absolute right-4 top-4 h-16 w-16 rounded-full bg-[#4f7fbb]/10 blur-xl" />
+              <p className="relative text-xs font-bold uppercase tracking-[0.18em] text-[#4874ab]">{label as string}</p>
+              <div className="relative mt-5 grid grid-cols-3 gap-3 text-sm">
+                <div className="rounded-xl bg-white/55 p-2.5">
                   <p className="text-textLight">Usos</p>
-                  <p className="text-xl font-semibold text-text">{summary.count}</p>
+                  <p className="mt-1 text-xl font-bold text-[#173861]">{summary.count}</p>
                 </div>
-                <div>
+                <div className="rounded-xl bg-white/55 p-2.5">
                   <p className="text-textLight">Consumo</p>
-                  <p className="font-semibold text-text">{formatCurrency(summary.consumed)}</p>
+                  <p className="mt-1 font-bold text-[#173861]">{formatCurrency(summary.consumed)}</p>
                 </div>
-                <div>
+                <div className="rounded-xl bg-emerald-50/75 p-2.5">
                   <p className="text-textLight">Descuento</p>
-                  <p className="font-semibold text-green-700">{formatCurrency(summary.discount)}</p>
+                  <p className="mt-1 font-bold text-emerald-700">{formatCurrency(summary.discount)}</p>
                 </div>
               </div>
             </article>
@@ -522,11 +615,14 @@ export default function AliadosAdminPanel() {
         })}
       </section>
 
-      <section className="glass rounded-3xl border border-primary/15 p-6 md:p-8 mb-8">
-        <div className="grid grid-cols-1 xl:grid-cols-[0.95fr_1.05fr] gap-8">
-          <div>
-            <h3 className="text-2xl font-display text-text mb-2">Verificar descuento</h3>
-            <p className="text-sm text-textLight mb-5">
+      <section id="validar" className={`scroll-mt-6 rounded-[30px] border p-4 md:p-5 mb-8 ${isAllyUser ? 'border-white/70 bg-white/55 shadow-[0_18px_48px_rgba(35,79,132,0.12)] backdrop-blur-xl' : 'glass border-primary/15'}`}>
+        <div className="grid grid-cols-1 gap-5 xl:grid-cols-[0.92fr_1.08fr]">
+          <div className="rounded-[24px] border border-white/80 bg-white/75 p-6 shadow-[0_10px_26px_rgba(35,79,132,0.08)] backdrop-blur-xl">
+            <div className="mb-6 flex items-start gap-4">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[#315d98]/10 text-lg font-bold text-[#315d98]">✓</span>
+              <div><p className="text-xs font-bold uppercase tracking-[0.18em] text-[#6283aa]">Operación</p><h3 className="mt-1 text-2xl font-bold text-[#173861]">Verificar descuento</h3></div>
+            </div>
+            <p className="text-sm leading-6 text-textLight mb-6">
               Consulta la cedula y el codigo generado por el cliente. Al aplicar el descuento se registra el consumo.
             </p>
 
@@ -548,12 +644,12 @@ export default function AliadosAdminPanel() {
               </div>
 
               <Button type="submit" variant="primary">
-                Consultar codigo activo
+                Consultar código activo
               </Button>
             </form>
 
             {activeRequest && (
-              <div className="mt-5 rounded-2xl border border-green-500/25 bg-green-50 p-4">
+              <div className="mt-6 rounded-[22px] border border-emerald-400/25 bg-gradient-to-br from-emerald-50 to-white p-5 shadow-sm">
                 <p className="font-semibold text-green-800">{activeRequest.clientName}</p>
                 <p className="text-sm text-green-700">
                   {activeRequest.allyName} - {activeRequest.discountLabel}
@@ -564,11 +660,9 @@ export default function AliadosAdminPanel() {
                 <p className="text-xs text-green-700 mt-1">
                   Vence: {new Date(activeRequest.expiresAt).toLocaleString('es-CO')}
                 </p>
-                <p className="text-xs text-green-700 mt-1">
-                  Descuento calculado: {activeRequest.discountPercent}% sobre el valor consumido.
-                </p>
+                <p className="text-xs text-green-700 mt-1">{hasFlexibleDiscount ? 'Beneficio sujeto a condiciones: define el valor autorizado para este consumo.' : `Descuento calculado: ${activeRequest.discountPercent}% sobre el valor consumido.`}</p>
 
-                <div className="mt-4 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-end">
+                <div className={`mt-4 grid grid-cols-1 gap-3 items-end ${hasFlexibleDiscount ? 'md:grid-cols-[1fr_1fr_auto]' : 'md:grid-cols-[1fr_auto]'}`}>
                   <Input
                     label="Valor consumido"
                     type="number"
@@ -577,6 +671,17 @@ export default function AliadosAdminPanel() {
                     onChange={(event) => setConsumedValue(event.target.value)}
                     placeholder="Ej: 85000"
                   />
+                  {canSetManualDiscount && (
+                    <Input
+                      label="Valor a descontar"
+                      type="number"
+                      min="0"
+                      max={consumedValue || undefined}
+                      value={manualDiscountValue}
+                      onChange={(event) => setManualDiscountValue(event.target.value)}
+                      placeholder="Ej: 15000"
+                    />
+                  )}
                   <Button type="button" variant="primary" onClick={handleRedeemDiscount}>
                     Aplicar descuento
                   </Button>
@@ -590,13 +695,13 @@ export default function AliadosAdminPanel() {
                     <div className="rounded-xl bg-white/70 p-3">
                       <p className="text-textLight">Descuento</p>
                       <p className="font-semibold text-green-700">
-                        {formatCurrency(Math.round((Number(consumedValue) * activeRequest.discountPercent) / 100))}
+                        {formatCurrency(previewDiscountValue)}
                       </p>
                     </div>
                     <div className="rounded-xl bg-white/70 p-3">
                       <p className="text-textLight">Total a pagar</p>
                       <p className="font-semibold text-text">
-                        {formatCurrency(Number(consumedValue) - Math.round((Number(consumedValue) * activeRequest.discountPercent) / 100))}
+                        {formatCurrency(Math.max(0, Number(consumedValue) - previewDiscountValue))}
                       </p>
                     </div>
                   </div>
@@ -675,16 +780,16 @@ export default function AliadosAdminPanel() {
             )}
           </div>
 
-          <div>
-            <h3 className="text-lg font-semibold text-text mb-4">Trazabilidad reciente</h3>
-            <div className="max-h-80 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
+          <div className="rounded-[24px] border border-white/80 bg-white/65 p-6 shadow-[0_10px_26px_rgba(35,79,132,0.08)] backdrop-blur-xl">
+            <div className="mb-6 flex items-center justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[0.18em] text-[#6283aa]">Historial</p><h3 className="mt-1 text-2xl font-bold text-[#173861]">Trazabilidad reciente</h3></div><span className="rounded-full bg-[#315d98]/10 px-3 py-1 text-xs font-bold text-[#315d98]">{visibleRequests.length} registros</span></div>
+            <div className="max-h-[390px] overflow-y-auto space-y-3 pr-1 custom-scrollbar">
               {visibleRequests.length === 0 ? (
                 <div className="rounded-2xl border border-primary/10 bg-white/50 p-4 text-sm text-textLight">
                   Aun no hay codigos generados.
                 </div>
               ) : (
                 visibleRequests.slice(0, 8).map((request) => (
-                  <article key={request.id} className="rounded-2xl border border-primary/10 bg-white/50 p-4">
+                  <article key={request.id} className="rounded-2xl border border-[#d9e6f4] bg-white/80 p-4 transition hover:border-[#9db9dc] hover:shadow-sm">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
                         <p className="font-semibold text-text">{request.clientName}</p>
@@ -731,11 +836,10 @@ export default function AliadosAdminPanel() {
       </section>
 
       {/* SECCIÓN DE CLIENTES CON DESGLOSE */}
-      <section className="glass rounded-3xl border border-primary/15 p-6 md:p-8 mb-8">
-        <h3 className="text-2xl font-display text-text mb-2">Consumo por cliente</h3>
-        <p className="text-sm text-textLight mb-6">
+      <section id="reportes" className={`scroll-mt-6 rounded-[30px] border p-6 md:p-8 mb-8 ${isAllyUser ? 'border-white/70 bg-white/60 shadow-[0_16px_42px_rgba(35,79,132,0.12)] backdrop-blur-xl' : 'glass border-primary/15'}`}>
+        <div className="mb-7 flex flex-col gap-3 md:flex-row md:items-end md:justify-between"><div><p className="text-xs font-bold uppercase tracking-[0.18em] text-[#6283aa]">Relación comercial</p><h3 className="mt-1 text-2xl font-bold text-[#173861]">Consumo por cliente</h3></div><p className="max-w-xl text-sm leading-6 text-textLight">
           Revisa el consumo total de cada cliente y dónde aplicó los descuentos.
-        </p>
+        </p></div>
 
         {clientsSummary.length === 0 ? (
           <div className="rounded-2xl border border-primary/10 bg-white/50 p-6 text-center text-sm text-textLight">
@@ -744,21 +848,21 @@ export default function AliadosAdminPanel() {
         ) : (
           <div className="space-y-3">
             {clientsSummary.map((client) => (
-              <div key={client.cedula} className="rounded-2xl border border-primary/15 bg-white/50 p-4">
+              <div key={client.cedula} className="rounded-[22px] border border-white/80 bg-white/75 p-5 shadow-[0_8px_22px_rgba(35,79,132,0.07)] transition hover:shadow-[0_14px_28px_rgba(35,79,132,0.12)]">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                   <div className="flex-1">
                     <p className="font-semibold text-text">{client.name}</p>
                     <p className="text-xs text-textLight">Cédula: {client.cedula}</p>
-                    <div className="mt-2 grid grid-cols-3 gap-3 text-sm">
-                      <div>
+                    <div className="mt-4 grid grid-cols-1 gap-3 text-sm sm:grid-cols-3">
+                      <div className="rounded-xl bg-[#f3f7fc] p-3">
                         <p className="text-textLight">Consumo total</p>
                         <p className="font-semibold text-text">{formatCurrency(client.totalConsumed)}</p>
                       </div>
-                      <div>
+                      <div className="rounded-xl bg-emerald-50/70 p-3">
                         <p className="text-textLight">Descuento total</p>
                         <p className="font-semibold text-green-700">{formatCurrency(client.totalDiscount)}</p>
                       </div>
-                      <div>
+                      <div className="rounded-xl bg-[#f3f7fc] p-3">
                         <p className="text-textLight">Usos</p>
                         <p className="font-semibold text-text">{client.requestCount}</p>
                       </div>
@@ -768,7 +872,7 @@ export default function AliadosAdminPanel() {
                     onClick={() => setExpandedClientCedula(
                       expandedClientCedula === client.cedula ? null : client.cedula
                     )}
-                    className="px-4 py-2 rounded-lg border border-primary/25 text-primary font-semibold hover:bg-primary/10 transition-colors text-sm"
+                    className="px-4 py-2.5 rounded-xl border border-primary/25 bg-white text-primary font-semibold hover:bg-primary/10 transition-colors text-sm"
                   >
                     {expandedClientCedula === client.cedula ? 'Contraer' : 'Ver más'}
                   </button>
@@ -826,6 +930,13 @@ export default function AliadosAdminPanel() {
         )}
       </section>
 
+      {isAllyUser && (
+        <section id="perfil" className="scroll-mt-6 mb-8 grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
+          <article className="rounded-[28px] border border-white/80 bg-white/65 p-6 shadow-[0_14px_36px_rgba(35,79,132,0.1)] backdrop-blur-xl"><p className="text-xs font-bold uppercase tracking-[0.18em] text-[#6283aa]">Mi perfil comercial</p><h3 className="mt-2 text-2xl font-bold text-[#173861]">{currentAlly?.name ?? session?.name}</h3><div className="mt-5 grid gap-4 sm:grid-cols-2"><div className="rounded-2xl bg-[#f2f6fb] p-4"><p className="text-xs text-[#7189a4]">Beneficio registrado</p><p className="mt-1 font-semibold text-[#173861]">{currentAlly?.discountLabel ?? 'Por confirmar'}</p></div><div className="rounded-2xl bg-[#f2f6fb] p-4"><p className="text-xs text-[#7189a4]">Ubicación</p><p className="mt-1 font-semibold text-[#173861]">{currentAlly ? `${currentAlly.municipio}, ${currentAlly.departamento}` : 'Por confirmar'}</p></div><div className="rounded-2xl bg-[#f2f6fb] p-4"><p className="text-xs text-[#7189a4]">ID de acceso</p><p className="mt-1 font-mono text-sm font-semibold text-[#173861]">{session?.loginId}</p></div><div className="rounded-2xl bg-[#f2f6fb] p-4"><p className="text-xs text-[#7189a4]">Correo registrado</p><p className="mt-1 break-all font-semibold text-[#173861]">{currentAlly?.email ?? 'No registrado'}</p></div></div></article>
+          <article className="rounded-[28px] border border-[#d8e6f4] bg-gradient-to-br from-[#edf5fd] to-white p-6 shadow-[0_14px_36px_rgba(35,79,132,0.08)]"><p className="text-xs font-bold uppercase tracking-[0.18em] text-[#6283aa]">Acompañamiento</p><h3 className="mt-2 text-xl font-bold text-[#173861]">¿Necesitas ayuda?</h3><p className="mt-3 text-sm leading-6 text-[#607b99]">Solicita actualización de datos comerciales o apoyo durante una validación de descuento.</p><a href="/contacto" className="mt-6 inline-flex rounded-xl bg-[#315d98] px-4 py-3 text-sm font-bold text-white shadow-lg shadow-blue-900/15 transition hover:bg-[#244f8a]">Contactar soporte</a></article>
+        </section>
+      )}
+
       {session?.role === 'admin_aliados' && (
       <div className="grid grid-cols-1 xl:grid-cols-[1.05fr_0.95fr] gap-8">
         <section className="glass rounded-3xl border border-primary/15 p-6 md:p-8">
@@ -834,6 +945,15 @@ export default function AliadosAdminPanel() {
           </h3>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-3 rounded-2xl border border-[#d4e0ee] bg-[#eef4fa]/80 p-1">
+              {([
+                ['commercial', 'Comercial'],
+                ['access', 'Acceso'],
+                ['content', 'Contenido'],
+              ] as const).map(([tab, label]) => <button key={tab} type="button" onClick={() => setFormTab(tab)} className={`rounded-xl px-2 py-2.5 text-xs font-bold transition sm:text-sm ${formTab === tab ? 'bg-white text-[#244f8a] shadow-[0_5px_14px_rgba(35,79,132,0.12)]' : 'text-[#7089a5] hover:text-[#315d98]'}`}>{label}</button>)}
+            </div>
+
+            {formTab === 'commercial' && <div className="space-y-4 animate-fade-in">
             <Input
               label="Nombre del aliado"
               value={draft.name}
@@ -950,27 +1070,39 @@ export default function AliadosAdminPanel() {
                 placeholder="Mas informacion"
               />
             </div>
+            </div>}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {formTab === 'access' && <div className="space-y-4 animate-fade-in">
+            <Input
+              label="Correo de recuperación del aliado"
+              type="email"
+              value={draft.email ?? ''}
+              onChange={(event) => setDraft((prev) => ({ ...prev, email: event.target.value }))}
+              placeholder="correo@aliado.com"
+            />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 rounded-2xl border border-primary/15 bg-primary/5 p-4">
               <Input
-                label="ID login aliado"
+                label="Usuario / ID de ingreso"
                 value={draft.loginId ?? ''}
                 onChange={(event) =>
                   setDraft((prev) => ({ ...prev, loginId: event.target.value.toUpperCase() }))
                 }
                 placeholder="Ej: AMM1234"
               />
-
-              <Input
-                label="Contrasena aliado"
-                value={draft.loginPassword ?? ''}
-                onChange={(event) =>
-                  setDraft((prev) => ({ ...prev, loginPassword: event.target.value }))
-                }
-                placeholder="Ej: JR1234"
-              />
+              <div>
+                <div className="relative">
+                  <Input label="Contraseña provisional o nueva" type={showAccessPassword ? 'text' : 'password'} value={accessPassword} onChange={(event) => setAccessPassword(event.target.value)} placeholder="Mínimo 10 caracteres" />
+                  <button type="button" onClick={() => setShowAccessPassword((value) => !value)} className="absolute bottom-3 right-3 rounded-md px-2 py-1 text-xs font-semibold text-primary hover:bg-primary/10">
+                    {showAccessPassword ? 'Ocultar' : 'Ver'}
+                  </button>
+                </div>
+                <p className="mt-1 text-xs text-textLight">Al guardar se crea o restablece el acceso. Por seguridad la contraseña no vuelve a mostrarse.</p>
+              </div>
             </div>
+            </div>}
 
+            {formTab === 'content' && <div className="space-y-4 animate-fade-in">
             <Input
               label="Logo (URL o ruta publica)"
               value={draft.logo}
@@ -1023,6 +1155,7 @@ export default function AliadosAdminPanel() {
               />
               Mostrar como destacado (aparece en Home)
             </label>
+            </div>}
 
             <div className="flex flex-wrap gap-3 pt-2">
               <Button type="submit" variant="primary">
@@ -1075,12 +1208,14 @@ export default function AliadosAdminPanel() {
             <div className="flex items-center justify-between gap-4 mb-4">
               <h3 className="text-lg font-semibold text-text">Aliados cargados</h3>
               <span className="text-xs font-semibold px-2.5 py-1 rounded-full border border-primary/20 bg-primary/10 text-primary">
-                {allies.length} registros
+                {filteredAllies.length} de {allies.length}
               </span>
             </div>
 
+            <div className="relative mb-4"><input value={allySearch} onChange={(event) => setAllySearch(event.target.value)} placeholder="Buscar por nombre, ID, ciudad, departamento o categoría…" className="w-full rounded-xl border border-[#cbd9e8] bg-white/80 px-4 py-3 pr-10 text-sm text-[#173861] outline-none transition placeholder:text-[#88a0ba] focus:border-[#5a83b7] focus:ring-4 focus:ring-[#5a83b7]/10" /><span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#6384aa]">⌕</span></div>
+
             <div className="space-y-3 max-h-[640px] overflow-y-auto pr-1 custom-scrollbar">
-              {allies.map((ally) => (
+              {filteredAllies.length === 0 ? <div className="rounded-2xl border border-dashed border-[#bfd1e5] bg-white/50 p-6 text-center text-sm text-[#6384aa]">No encontramos aliados con esa búsqueda.</div> : filteredAllies.map((ally) => (
                 <div
                   key={ally.id}
                   className="rounded-2xl border border-primary/15 bg-white/40 p-4"
@@ -1101,10 +1236,18 @@ export default function AliadosAdminPanel() {
                       <p className="text-xs text-textLight mt-1">{ally.municipio}, {ally.departamento}</p>
                       <p className="text-xs text-textLight line-clamp-1 mt-1">{ally.address}</p>
                       <p className="text-xs font-semibold text-green-700 mt-1">{ally.discountLabel}</p>
-                      <p className="text-[11px] text-textLight mt-1">
-                        Login: <span className="font-mono">{ally.loginId || 'Sin ID'}</span> /
-                        {' '}<span className="font-mono">{ally.loginPassword || 'Sin clave'}</span>
-                      </p>
+                      <p className="text-[11px] text-textLight mt-1">ID de aliado: <span className="font-mono">{ally.loginId || 'Sin ID'}</span></p>
+                      {(() => {
+                        const access = accessStatuses[ally.id];
+                        const isLocked = Boolean(access?.lockedUntil && new Date(access.lockedUntil).getTime() > Date.now());
+                        const statusLabel = !access?.accountConfigured ? 'Sin credenciales' : isLocked ? 'Acceso bloqueado' : access.accessActive ? 'Acceso activo' : 'Acceso inactivo';
+                        const statusStyle = !access?.accountConfigured ? 'border-amber-400/30 bg-amber-50 text-amber-700' : isLocked ? 'border-red-400/30 bg-red-50 text-red-700' : access.accessActive ? 'border-emerald-400/30 bg-emerald-50 text-emerald-700' : 'border-slate-400/30 bg-slate-50 text-slate-700';
+                        return <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px]">
+                          <span className={`rounded-full border px-2 py-0.5 font-semibold ${statusStyle}`}>{statusLabel}</span>
+                          <span className={`rounded-full border px-2 py-0.5 font-semibold ${ally.email ? 'border-sky-400/30 bg-sky-50 text-sky-700' : 'border-slate-300 bg-slate-50 text-slate-500'}`}>{ally.email ? 'Correo configurado' : 'Sin correo'}</span>
+                          {access?.lastLogin && <span className="text-textLight">Último ingreso: {new Date(access.lastLogin).toLocaleDateString('es-CO')}</span>}
+                        </div>;
+                      })()}
                       <div className="flex gap-2 mt-3">
                         <button
                           type="button"
@@ -1123,6 +1266,21 @@ export default function AliadosAdminPanel() {
                       </div>
                     </div>
                   </div>
+                </div>
+              ))}
+            </div>
+          </article>
+
+          <article className="glass rounded-3xl border border-primary/15 p-6">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div><p className="text-xs font-bold uppercase tracking-[0.18em] text-[#6283aa]">Control operativo</p><h3 className="mt-1 text-lg font-semibold text-text">Bitácora reciente</h3></div>
+              <span className="rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">MySQL</span>
+            </div>
+            <div className="space-y-2.5">
+              {activity.length === 0 ? <p className="rounded-xl border border-dashed border-[#bfd1e5] bg-white/45 p-4 text-sm text-[#6384aa]">Aún no hay movimientos registrados.</p> : activity.slice(0, 8).map((entry) => (
+                <div key={entry.id} className="flex items-start justify-between gap-3 rounded-xl border border-white/75 bg-white/55 p-3">
+                  <div className="min-w-0"><p className="truncate text-sm font-semibold text-[#173861]">{ACTIVITY_LABELS[entry.eventType] ?? entry.eventType}</p><p className="truncate text-xs text-[#6984a3]">{entry.allyName} · {entry.actorType === 'ALLY' ? 'Aliado' : entry.actorType === 'ADMIN' ? 'Administración' : 'Sistema'}</p></div>
+                  <time className="shrink-0 text-[11px] text-[#6984a3]">{new Date(entry.createdAt).toLocaleDateString('es-CO', { day: '2-digit', month: 'short' })}</time>
                 </div>
               ))}
             </div>

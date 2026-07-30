@@ -50,30 +50,24 @@ export default function ClientLoginPage() {
       return;
     }
 
-    // Validación de longitud mínima de contraseña
-    if (formData.password.length < 4) {
-      setError('La contrasena debe tener al menos 4 caracteres.');
+    if (formData.password.length < 8) {
+      setError('La contraseña debe tener al menos 8 caracteres.');
       setLoading(false);
       return;
     }
 
     try {
-      // Simulador de autenticación con credenciales "quemadas" (A reemplazar por backend en producción)
-      if (formData.cedula === '9876543210' && formData.password === 'cliente123') {
-        // Guardado de la "sesión" en LocalStorage temporalmente
-        localStorage.setItem(
-          'user',
-          JSON.stringify({
-            cedula: formData.cedula,
-            role: 'cliente',
-            name: 'Cliente Jardines del Renacer',
-          }),
-        );
-        // Redirigir al panel protegido tras iniciar sesión exitosamente
-        router.push('/cliente/dashboard');
-      } else {
-        setError('Cedula o contrasena incorrectos.');
+      const response = await fetch('/api/iam/client/login', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ cedula: formData.cedula, password: formData.password }),
+      });
+      const payload = await response.json() as { message?: string };
+      if (!response.ok) {
+        setError(payload.message ?? 'Cédula o contraseña incorrectas.');
+        return;
       }
+      router.push('/cliente/dashboard');
     } catch {
       setError('Error al iniciar sesion. Por favor intenta nuevamente.');
     } finally {
@@ -156,9 +150,8 @@ export default function ClientLoginPage() {
         </button>
 
         <div className="rounded-xl border border-black/10 bg-black/5 px-4 py-3 text-sm text-black/75">
-          <p className="font-semibold text-black mb-1">Credenciales de prueba</p>
-          <p>Cedula: <span className="font-mono">9876543210</span></p>
-          <p>Contrasena: <span className="font-mono">cliente123</span></p>
+          <p className="font-semibold text-black mb-1">Acceso seguro</p>
+          <p>Tu sesión se valida de forma segura con la información registrada en Jardines del Renacer.</p>
         </div>
 
         <div className="text-center text-sm text-black/70 pt-1">

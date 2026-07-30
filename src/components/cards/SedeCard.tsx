@@ -13,7 +13,8 @@ export default function SedeCard({ sede }: SedeCardProps) {
   const [imageFailed, setImageFailed] = useState(false);
   const phoneDigits = sede.telefono.replace(/\s/g, '');
   const phoneHref = phoneDigits ? `tel:+57${phoneDigits}` : null;
-  const cityImage = getCiudadImagePath(sede.departamento, sede.ciudad);
+  const cityImage = sede.fotoUrl || getCiudadImagePath(sede.departamento, sede.ciudad);
+  const operationalStatus = sede.estadoOperativo ?? 'Activa';
   const shouldShowImage = cityImage && !imageFailed;
 
   const mapsQuery = encodeURIComponent(
@@ -97,7 +98,7 @@ export default function SedeCard({ sede }: SedeCardProps) {
             </span>
           </div>
 
-          {/* Atención 24h */}
+          {/* Estado operativo */}
           <div className="flex items-center gap-3">
             <span className="shrink-0 w-7 h-7 rounded-lg bg-primary/10 border border-primary/15 flex items-center justify-center">
               <svg width="14" height="14" fill="none" stroke="#3C60A2" strokeWidth="1.75" viewBox="0 0 24 24" aria-hidden="true">
@@ -105,7 +106,7 @@ export default function SedeCard({ sede }: SedeCardProps) {
                 <path strokeLinecap="round" d="M12 6v6l4 2" />
               </svg>
             </span>
-            <span className="text-textLight text-sm">24 Horas</span>
+            <span className={`text-sm font-semibold ${operationalStatus === 'Activa' ? 'text-emerald-700' : operationalStatus === 'Cerrada temporalmente' ? 'text-rose-700' : 'text-amber-700'}`}>{operationalStatus}</span>
           </div>
         </div>
 

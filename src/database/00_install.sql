@@ -31,6 +31,7 @@ SOURCE sedes/02_constraints.sql;
 SOURCE sedes/03_indexes.sql;
 SOURCE sedes/04_views.sql;
 SOURCE sedes/05_seed.sql;
+SOURCE sedes/10_audit_schema.sql;
 -- 07_procedures.sql, 08_triggers.sql y 09_events.sql se ejecutan después
 -- de validar su contrato de auditoría con el Core vigente. No se incluyen
 -- aquí para evitar que un trigger legado bloquee la instalación completa.
@@ -42,6 +43,15 @@ SOURCE rrhh/04_views.sql;
 SOURCE rrhh/05_kpis.sql;
 SOURCE rrhh/06_triggers.sql;
 SOURCE rrhh/07_seed.sql;
+
+SOURCE aliados/01_schema.sql;
+SOURCE aliados/02_access_schema.sql;
+SOURCE aliados/03_password_reset_schema.sql;
+SOURCE aliados/04_expand_logo_column.sql;
+SOURCE aliados/05_seed.sql;
+SOURCE aliados/06_audit_schema.sql;
+SOURCE aliados/07_membership_clients.sql;
+SOURCE aliados/08_client_access_schema.sql;
 
 SOURCE ../lib/migrations/20260721_postulantes_candidatos.sql;
 SOURCE core/12_development_access_seed.sql;

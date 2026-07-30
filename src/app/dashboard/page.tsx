@@ -3,9 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Button from '@/components/ui/Button';
-import Container from '@/components/ui/Container';
-import SectionTitle from '@/components/ui/SectionTitle';
 import { buildAdminGreeting } from '@/lib/adminGreeting';
 import {
   BookHeart,
@@ -76,20 +73,22 @@ export default function DashboardPage() {
     },
   ];
   return (
-    <div className="min-h-screen">
-      <Container className="py-6 md:py-10">
-        <SectionTitle
-          title="Panel de Control"
-          subtitle="Vista general de las métricas y operaciones de la plataforma."
-          align="left"
-        />
+    <div className="min-h-screen p-5 md:p-8">
+      <div className="mb-8 flex flex-col gap-4 border-b border-[#a9c2df]/45 pb-6 md:flex-row md:items-end md:justify-between">
+        <div>
+          <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.2em] text-[#54759e]">Centro de operaciones</p>
+          <h1 className="font-display text-3xl text-[#163861] md:text-4xl">Panel de control</h1>
+          <p className="mt-2 max-w-2xl text-sm text-[#57718f] md:text-base">Vista general de métricas y operaciones de Jardines del Renacer.</p>
+        </div>
+        <div className="rounded-2xl border border-white/80 bg-white/45 px-4 py-3 text-sm text-[#3e608a] shadow-sm backdrop-blur">Información protegida por rol</div>
+      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           {stats.map((stat) => {
             const StatIcon = stat.icon;
             return (
               <Link key={stat.label} href={stat.href}>
-                <div className="glass rounded-2xl p-6 border border-transparent hover:border-primary/30 transition-all duration-300 cursor-pointer group">
+                <div className="group rounded-2xl border border-white/70 bg-white/50 p-5 shadow-[0_16px_35px_-28px_rgba(8,37,88,0.65)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-[#7fa7d6] hover:bg-white/70">
                   <div className="flex justify-between items-start">
                     <h3 className="text-sm font-medium text-textLight uppercase tracking-wider">
                       {stat.label}
@@ -115,10 +114,10 @@ export default function DashboardPage() {
           })}
         </div>
 
-        <div className="mt-12 grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="mt-8 grid grid-cols-1 gap-5 lg:grid-cols-3">
           {/* Columna Izquierda: Accesos Rápidos */}
-          <div className="lg:col-span-1 space-y-6">
-            <h2 className="text-xl font-semibold text-text">Accesos Rápidos</h2>
+          <div className="space-y-3 lg:col-span-1">
+            <h2 className="text-lg font-semibold text-[#23476f]">Accesos rápidos</h2>
             <QuickAccessCard
               href="/dashboard/obituarios"
               icon={BookHeart}
@@ -134,9 +133,9 @@ export default function DashboardPage() {
           </div>
 
           {/* Columna Derecha: Actividad Reciente */}
-          <div className="lg:col-span-2 glass rounded-2xl p-8">
-            <h2 className="text-xl font-semibold text-text mb-6">
-              Actividad Reciente
+          <div className="rounded-2xl border border-white/70 bg-white/48 p-5 shadow-[0_16px_35px_-28px_rgba(8,37,88,0.65)] backdrop-blur-xl md:p-6 lg:col-span-2">
+            <h2 className="mb-5 text-lg font-semibold text-[#23476f]">
+              Actividad reciente
             </h2>
             <div className="space-y-4">
               {[
@@ -164,7 +163,6 @@ export default function DashboardPage() {
           </div>
         </div>
 
-      </Container>
     </div>
   );
 }
@@ -172,7 +170,7 @@ export default function DashboardPage() {
 function QuickAccessCard({ href, icon: Icon, title, subtitle }: any) {
   return (
     <Link href={href}>
-      <div className="group flex items-center gap-4 rounded-2xl border border-transparent bg-white/45 p-5 backdrop-blur-sm transition-all hover:border-primary/40 hover:bg-white/70">
+      <div className="group flex items-center gap-4 rounded-2xl border border-white/70 bg-white/45 p-4 shadow-sm backdrop-blur-sm transition-all hover:border-[#7fa7d6] hover:bg-white/70">
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 transition-colors group-hover:bg-primary/20">
           <Icon className="w-6 h-6 text-primary" />
         </div>

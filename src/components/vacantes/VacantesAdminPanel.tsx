@@ -40,6 +40,7 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Textarea from '@/components/ui/Textarea';
 import SectionTitle from '@/components/ui/SectionTitle';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { formatDate } from '@/lib/utils';
 import {
   APPLICATION_STATUS_OPTIONS,
@@ -710,6 +711,8 @@ export default function VacantesAdminPanel() {
   const [session, setSession] = useState<VacanciesSession | null>(null);
   const [draft, setDraft] = useState<VacancyDraft>(createInitialDraft());
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [showVacancyForm, setShowVacancyForm] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<JobVacancy | null>(null);
   const [search, setSearch] = useState('');
   const searchParams = useSearchParams();
   const initialTab = searchParams.get('tab');
@@ -888,18 +891,12 @@ export default function VacantesAdminPanel() {
   const handleEdit = (vacancy: JobVacancy) => {
     setDraft(createDraftFromVacancy(vacancy));
     setEditingId(vacancy.id);
+    setShowVacancyForm(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
     toast(`Editando vacante: ${vacancy.title}`, { icon: '✍️' });
   };
 
   const handleDelete = async (vacancy: JobVacancy) => {
-    const confirmed = window.confirm(
-      `¿Deseas eliminar la vacante "${vacancy.title}"?`
-    );
-
-    if (!confirmed) {
-      return;
-    }
     try {
       await fetch(`/api/vacantes/${vacancy.id}`, {
         method: 'DELETE',
@@ -964,7 +961,8 @@ export default function VacantesAdminPanel() {
   return (
     <div className="min-h-screen pt-2 pb-10">
       {/* Es recomendable mover el componente Toaster a un layout principal para que las notificaciones persistan durante la navegación */}
-      <Toaster position="bottom-right" toastOptions={{ duration: 5000 }} />
+      <Toaster position="top-center" toastOptions={{ duration: 4500, style: { borderRadius: '16px', padding: '14px 18px', fontWeight: 600 } }} />
+      <ConfirmDialog open={Boolean(pendingDelete)} title="¿Cerrar esta vacante?" description={`La vacante “${pendingDelete?.title ?? ''}” dejará de estar disponible en el portal, pero conservará su trazabilidad.`} confirmLabel="Sí, cerrar vacante" variant="danger" onCancel={() => setPendingDelete(null)} onConfirm={() => { if (pendingDelete) void handleDelete(pendingDelete); setPendingDelete(null); }} />
       <SectionTitle
         title="Panel de Vacantes"
         subtitle={session?.name ? `Administra las vacantes creadas por ${session.name}.` : 'Administra vacantes de Trabaja con Nosotros en un panel exclusivo.'}
@@ -972,13 +970,16 @@ export default function VacantesAdminPanel() {
         className="mb-8"
       />
 
-      <div className="grid grid-cols-1 xl:grid-cols-[1.08fr_0.92fr] gap-8">
-        <section className="glass rounded-3xl border border-primary/15 p-6 md:p-8">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/80 bg-white/60 p-4 shadow-sm backdrop-blur-xl"><div><p className="text-xs font-bold uppercase tracking-[.16em] text-primary">Gestión de oportunidades</p><p className="mt-1 text-sm text-textLight">Crea una vacante solo cuando la necesites; el resto del panel queda enfocado en control y seguimiento.</p></div><Button type="button" variant="primary" onClick={() => { resetDraft(); setShowVacancyForm(true); }}>Nueva vacante</Button></div>
+
+      <div className={`grid grid-cols-1 gap-8 ${showVacancyForm ? 'xl:grid-cols-[1.08fr_0.92fr]' : ''}`}>
+        {showVacancyForm && <section className="glass rounded-3xl border border-primary/15 p-6 md:p-8">
           <h3 className="text-2xl font-display text-text mb-6">
             {editingId ? 'Editar vacante' : 'Crear nueva vacante'}
           </h3>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Información principal</p>
             <Input
               label="Cargo"
               value={draft.title}
@@ -1022,6 +1023,7 @@ export default function VacantesAdminPanel() {
               />
             </div>
 
+            <div className="border-t border-primary/10 pt-5"><p className="mb-4 text-xs font-bold uppercase tracking-[0.16em] text-primary">Condiciones de la vacante</p>
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-text mb-2">Modalidad</label>
@@ -1080,7 +1082,9 @@ export default function VacantesAdminPanel() {
                 placeholder="1+ ano"
               />
             </div>
+            </div>
 
+            <div className="border-t border-primary/10 pt-5"><p className="mb-4 text-xs font-bold uppercase tracking-[0.16em] text-primary">Descripción y propuesta de valor</p>
             <Textarea
               label="Resumen de la vacante"
               value={draft.summary}
@@ -1111,8 +1115,9 @@ export default function VacantesAdminPanel() {
                 rows={5}
               />
             </div>
+            </div>
 
-            <label className="flex items-center gap-2 text-sm text-text">
+            <div className="flex items-center justify-between gap-4 rounded-2xl border border-primary/10 bg-primary/[0.035] p-4"><label className="flex items-center gap-2 text-sm font-semibold text-text">
               <input
                 type="checkbox"
                 checked={draft.featured}
@@ -1122,13 +1127,13 @@ export default function VacantesAdminPanel() {
                 className="accent-primary"
               />
               Marcar como vacante destacada
-            </label>
+            </label><span className="text-xs text-textLight">Se publicará en el portal de empleo.</span></div>
 
             <div className="flex flex-wrap gap-3 pt-2">
               <Button type="submit" variant="primary">
                 {editingId ? 'Guardar cambios' : 'Crear vacante'}
               </Button>
-              <Button type="button" variant="secondary" onClick={resetDraft}>
+              <Button type="button" variant="secondary" onClick={() => { resetDraft(); setShowVacancyForm(false); }}>
                 Limpiar formulario
               </Button>
               {editingId && (
@@ -1139,9 +1144,9 @@ export default function VacantesAdminPanel() {
             </div>
           </form>
 
-        </section>
+        </section>}
 
-        <section className="glass rounded-3xl border border-primary/15 p-6 md:p-7">
+        <section className="rounded-3xl border border-white/80 bg-white/65 p-6 shadow-[0_14px_36px_rgba(35,79,132,0.12)] backdrop-blur-xl md:p-7">
           <div className="flex border-b border-primary/10 mb-4">
             <button
               onClick={() => setActiveTab('vacancies')}
@@ -1172,7 +1177,7 @@ export default function VacantesAdminPanel() {
               />
 
               <div ref={vacanciesListRef} className="mt-6 pt-5 border-t border-primary/10">
-                <h3 className="text-xl font-display text-text mb-4">Gestión de Vacantes</h3>
+                <div className="mb-4 flex items-center justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[.16em] text-primary">Catálogo operativo</p><h3 className="mt-1 text-xl font-display text-text">Vacantes publicadas</h3></div><span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">{filteredVacancies.length} resultados</span></div>
                 <Input
                   label="Buscar en listado de vacantes"
                   value={search}
@@ -1181,7 +1186,7 @@ export default function VacantesAdminPanel() {
                 />
               </div>
 
-              <div className="mt-4 space-y-3 max-h-[calc(100vh-300px)] overflow-y-auto pr-1 custom-scrollbar">
+              <div className="mt-4 grid gap-3 max-h-[calc(100vh-300px)] overflow-y-auto pr-1 custom-scrollbar md:grid-cols-2">
                 {filteredVacancies.map((vacancy) => {
                   const applicationsForVacancy = ownedApplications.filter(
                     (app) => app.vacancyId === vacancy.id,
@@ -1191,7 +1196,7 @@ export default function VacantesAdminPanel() {
                   return (
                     <article
                       key={vacancy.id}
-                      className="rounded-2xl border border-primary/15 bg-white/45 p-4 transition-all"
+                      className="rounded-2xl border border-white/80 bg-white/60 p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
@@ -1213,18 +1218,18 @@ export default function VacantesAdminPanel() {
                         )}
                       </div>
 
-                      <div className="flex flex-wrap gap-2 mt-3">
+                      <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-primary/10 pt-3">
                         <button
                           type="button"
                           onClick={() => handleEdit(vacancy)}
-                          className="text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-primary/25 text-primary hover:bg-primary/10 transition-colors"
+                          className="text-xs font-bold px-3 py-2 rounded-lg bg-primary text-white shadow-sm hover:bg-primary-hover transition-colors"
                         >
                           Editar
                         </button>
                         <button
                           type="button"
-                          onClick={() => handleDelete(vacancy)}
-                          className="text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-red-300 text-red-600 hover:bg-red-50 transition-colors"
+                          onClick={() => setPendingDelete(vacancy)}
+                          className="text-xs font-semibold px-2.5 py-2 rounded-lg border border-red-300 text-red-600 hover:bg-red-50 transition-colors"
                         >
                           Eliminar
                         </button>
@@ -1233,7 +1238,7 @@ export default function VacantesAdminPanel() {
                           onClick={() =>
                             setExpandedVacancyId(isExpanded ? null : vacancy.id)
                           }
-                          className="text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-sky-500/25 text-sky-600 hover:bg-sky-500/10 transition-colors flex items-center gap-1"
+                          className="ml-auto text-xs font-semibold px-2.5 py-2 rounded-lg border border-sky-500/25 text-sky-600 hover:bg-sky-500/10 transition-colors flex items-center gap-1"
                         >
                           <Users size={14} />
                           Postulaciones ({applicationsForVacancy.length})

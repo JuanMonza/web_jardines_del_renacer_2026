@@ -1,69 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { query, execute } from '@/lib/db';
 import { ADMIN_SESSION_COOKIE, requireAdminPermission } from '@/lib/iam/admin-session';
+import { redeemDiscountRequestInDB } from '@/lib/allyMembershipStorageDB';
+import { recordAllyAudit } from '@/lib/ally-audit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-interface CodigoRow { estado: string; descuento_porcentaje: number; expira_en: string; }
-
-// PATCH /api/codigos-descuento/:id/canjear
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
-    const session = await requireAdminPermission(request.cookies.get(ADMIN_SESSION_COOKIE)?.value, 'allies.codes.redeem');
-    if (!session) return NextResponse.json({ ok: false, message: 'No autorizado.' }, { status: 403 });
-    const { id }         = await params;
-    const body           = await request.json() as { valorConsumido?: number; canjeadoPor?: string };
-    const valorConsumido = Number(body.valorConsumido ?? 0);
-
-    if (!valorConsumido || valorConsumido <= 0) {
-      return NextResponse.json(
-        { ok: false, message: 'valorConsumido debe ser mayor que 0.' },
-        { status: 400 },
-      );
-    }
-
-    const rows = await query<CodigoRow>(
-      'SELECT estado, descuento_porcentaje, expira_en FROM codigos_descuento WHERE id = ?',
-      [id],
-    );
-
-    if (rows.length === 0) {
-      return NextResponse.json({ ok: false, message: 'Código no encontrado.' }, { status: 404 });
-    }
-
-    const row = rows[0];
-
-    if (row.estado !== 'active') {
-      return NextResponse.json({ ok: false, message: `El código ya fue ${row.estado}.` }, { status: 409 });
-    }
-
-    if (new Date(row.expira_en) < new Date()) {
-      await execute('UPDATE codigos_descuento SET estado = ? WHERE id = ?', ['expired', id]);
-      return NextResponse.json({ ok: false, message: 'El código está expirado.' }, { status: 409 });
-    }
-
-    const valorDescuento  = +(valorConsumido * (row.descuento_porcentaje / 100)).toFixed(2);
-    const totalDespuesDto = +(valorConsumido - valorDescuento).toFixed(2);
-
-    await execute(
-      `UPDATE codigos_descuento
-          SET estado            = 'redeemed',
-              valor_consumido   = ?,
-              valor_descuento   = ?,
-              total_despues_dto = ?,
-              canjeado_por      = ?,
-              canjeado_en       = CURRENT_TIMESTAMP
-        WHERE id = ?`,
-      [valorConsumido, valorDescuento, totalDespuesDto, session.name, id],
-    );
-
-    return NextResponse.json({ ok: true, valorConsumido, valorDescuento, totalDespuesDto });
-  } catch (err) {
-    console.error('[PATCH /api/codigos-descuento/:id/canjear]', err);
-    return NextResponse.json({ ok: false, message: 'Error interno del servidor.' }, { status: 500 });
-  }
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const session = await requireAdminPermission(request.cookies.get(ADMIN_SESSION_COOKIE)?.value, 'allies.codes.redeem');
+  if (!session) return NextResponse.json({ message: 'No autorizado.' }, { status: 403 });
+  const body = await request.json() as { consumedValue?: number; discountValue?: number };
+  const consumedValue = Number(body.consumedValue);
+  const discountValue = body.discountValue === undefined ? undefined : Number(body.discountValue);
+  if (!Number.isFinite(consumedValue) || consumedValue <= 0 || (discountValue !== undefined && (!Number.isFinite(discountValue) || discountValue < 0 || discountValue > consumedValue))) return NextResponse.json({ message: 'Los valores del consumo no son válidos.' }, { status: 422 });
+  const { id } = await params;
+  const data = await redeemDiscountRequestInDB({ requestId: id, consumedValue, discountValueOverride: discountValue, redeemedBy: session.name });
+  if (data) await recordAllyAudit({ allyId: data.allyId, adminUserId: session.userId, actorType: 'ADMIN', eventType: 'DISCOUNT_REDEEMED', entityType: 'codigos_descuento', entityId: data.id, details: { code: data.code, consumedValue: data.consumedValue, discountValue: data.discountValue, totalAfterDiscount: data.totalAfterDiscount }, ip: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? request.headers.get('x-real-ip'), userAgent: request.headers.get('user-agent') });
+  return data ? NextResponse.json({ data }) : NextResponse.json({ message: 'Código no disponible.' }, { status: 409 });
 }

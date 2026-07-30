@@ -14,13 +14,8 @@ import {
   getCategoryLabel,
   type CommercialAlly,
 } from '@/config/allies';
-import { readCommercialAllies } from '@/lib/alliesStorage';
 import MembershipCard from './MembershipCard';
-import { ensureExcelAlliesSeeded } from '@/lib/allyExcelImport';
 import {
-  createDiscountRequest,
-  findActiveClientByCedula,
-  findRequestForVerification,
   type AllyDiscountRequest,
 } from '@/lib/allyMembershipStorage';
 import type { ClientData } from '@/data/mockClients';
@@ -54,14 +49,13 @@ function AliadosComercialesPageContent() {
     setSelectedCategory(initialCategory);
     setSelectedSubcategory(initialSubcategory);
     setSelectedDepartment(initialDepartment);
-    setAllies(readCommercialAllies());
-    ensureExcelAlliesSeeded()
-      .then(setAllies)
-      .catch(() => setAllies(readCommercialAllies()));
-
-    const syncFromStorage = () => setAllies(readCommercialAllies());
-    window.addEventListener('storage', syncFromStorage);
-    return () => window.removeEventListener('storage', syncFromStorage);
+    fetch('/api/aliados/public')
+      .then(async (response) => {
+        if (!response.ok) throw new Error('No fue posible cargar aliados.');
+        return response.json() as Promise<{ data: CommercialAlly[] }>;
+      })
+      .then(({ data }) => setAllies(data))
+      .catch(() => setAllies([]));
   }, [searchParams]);
 
   const availableCities = useMemo(() => {
@@ -111,43 +105,40 @@ function AliadosComercialesPageContent() {
     });
   }, [allies, search, selectedCategory, selectedSubcategory, selectedDepartment, selectedCity]);
 
-  const handleClientVerification = (event: React.FormEvent) => {
+  const handleClientVerification = async (event: React.FormEvent) => {
     event.preventDefault();
     setGeneratedCode(null);
     setFixedCode(null);
-    const client = findActiveClientByCedula(cedula);
-    if (!client) {
+    try {
+      const response = await fetch('/api/codigos-descuento/public/validate', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cedula }) });
+      const payload = await response.json() as { data?: ClientData; message?: string };
+      if (!response.ok || !payload.data) throw new Error(payload.message);
+      const client = payload.data;
+      setVerifiedClient(client);
+      setMemberFeedback(`Membresía activa para ${client.nombre} ${client.apellido}. Ya puedes generar un código.`);
+    } catch (error) {
       setVerifiedClient(null);
-      setMemberFeedback('No encontramos una membresia activa con esa cedula.');
-      return;
+      setMemberFeedback(error instanceof Error ? error.message : 'No fue posible validar la membresía.');
     }
-
-    setVerifiedClient(client);
-    setMemberFeedback(`Membresia activa para ${client.nombre} ${client.apellido}. Ya puedes generar un codigo.`);
   };
 
-  const handleGenerateCode = (ally: CommercialAlly) => {
+  const handleGenerateCode = async (ally: CommercialAlly) => {
     if (!verifiedClient) {
       setMemberFeedback('Primero valida una cedula activa.');
       return;
     }
 
-    const existingActiveCode = findRequestForVerification({
-      cedula: verifiedClient.cedula,
-      allyId: ally.id,
-    });
-    const request =
-      existingActiveCode?.status === 'active'
-        ? existingActiveCode
-        : createDiscountRequest(verifiedClient, ally);
-
-    setGeneratedCode(request);
-    setFixedCode(request.code);
-    setMemberFeedback(
-      existingActiveCode?.status === 'active'
-        ? 'Ya tienes un codigo activo para este aliado. Te mostramos el mismo codigo vigente.'
-        : 'Codigo generado correctamente. Presentalo en el establecimiento aliado.',
-    );
+    try {
+      const response = await fetch('/api/codigos-descuento/public', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cedula: verifiedClient.cedula, allyId: ally.id }) });
+      const payload = await response.json() as { data?: AllyDiscountRequest; message?: string };
+      if (!response.ok || !payload.data) throw new Error(payload.message);
+      setGeneratedCode(payload.data);
+      setFixedCode(payload.data.code);
+      setMemberFeedback('Código generado correctamente. Preséntalo en el establecimiento aliado.');
+    } catch (error) {
+      setMemberFeedback(error instanceof Error ? error.message : 'No fue posible generar el código.');
+      return;
+    }
 
     setTimeout(() => {
       cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });

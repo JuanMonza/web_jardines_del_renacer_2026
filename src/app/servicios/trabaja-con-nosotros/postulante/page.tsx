@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Container from '@/components/ui/Container';
 import SectionTitle from '@/components/ui/SectionTitle';
 import Button from '@/components/ui/Button';
@@ -16,13 +16,6 @@ import {
 } from '@/config/candidates';
 import { APPLICATION_PROGRESS_STEPS, getApplicationProgress } from '@/lib/applicationProgress';
 import { VACANCY_DEPARTMENTS, type JobVacancy } from '@/config/vacancies';
-import {
-  readCandidateApplications,
-  readCandidateProfile,
-  writeCandidateApplications,
-  writeCandidateProfile,
-} from '@/lib/candidateStorage';
-import { readJobVacancies } from '@/lib/vacanciesStorage';
 
 const MAX_RESUME_SIZE = 5 * 1024 * 1024;
 
@@ -124,6 +117,7 @@ function ApplicationProgressTrack({ status }: { status: JobApplication['status']
 }
 
 function PostulanteContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const requestedVacancyId = searchParams.get('vacante') ?? '';
   const requestedTrackingCedula =
@@ -141,25 +135,24 @@ function PostulanteContent() {
   const [trackingEmail, setTrackingEmail] = useState('');
 
   useEffect(() => {
-    // Centralizamos la carga inicial para perfil, postulaciones y vacantes.
-    const syncData = () => {
-      setProfile(readCandidateProfile());
-      setApplications(readCandidateApplications());
-      setVacancies(readJobVacancies());
-    };
-
-    syncData();
-    void fetch('/api/vacantes', { cache: 'no-store' })
-      .then((response) => (response.ok ? response.json() : null))
-      .then((data: JobVacancy[] | null) => {
-        if (Array.isArray(data) && data.length > 0) {
-          setVacancies(data);
-        }
-      })
-      .catch(() => undefined);
-
-    window.addEventListener('candidate-storage-updated', syncData);
-    return () => window.removeEventListener('candidate-storage-updated', syncData);
+    void Promise.all([
+      fetch('/api/vacantes', { cache: 'no-store' }),
+      fetch('/api/postulantes/perfil', { cache: 'no-store' }),
+      fetch('/api/postulantes/mis-postulaciones', { cache: 'no-store' }),
+    ]).then(async ([vacanciesResponse, profileResponse, applicationsResponse]) => {
+      if (vacanciesResponse.ok) {
+        const data = await vacanciesResponse.json() as JobVacancy[];
+        if (Array.isArray(data)) setVacancies(data);
+      }
+      if (profileResponse.ok) {
+        const result = await profileResponse.json() as { success?: boolean; data?: CandidateProfile };
+        if (result.success && result.data) setProfile(result.data);
+      }
+      if (applicationsResponse.ok) {
+        const result = await applicationsResponse.json() as { success?: boolean; data?: JobApplication[] };
+        if (result.success && Array.isArray(result.data)) setApplications(result.data);
+      }
+    }).catch(() => setFeedback('No fue posible cargar la información. Intenta nuevamente.'));
   }, []);
 
   useEffect(() => {
@@ -254,15 +247,29 @@ function PostulanteContent() {
       updatedAt: new Date().toISOString(),
     };
 
-    setProfile(nextProfile);
-    writeCandidateProfile(nextProfile);
-    setSaving(false);
-    setFeedback('Perfil guardado. Puedes postularte o ingresar al portal con documento y correo.');
+    try {
+      const response = await fetch('/api/postulantes/perfil', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(nextProfile) });
+      const result = await response.json() as { success?: boolean; data?: CandidateProfile; message?: string };
+      if (!response.ok || !result.success || !result.data) throw new Error(result.message || 'Inicia sesión para guardar tu perfil.');
+      setProfile(result.data);
+      setFeedback('Perfil guardado correctamente en tu cuenta.');
+    } catch (error) {
+      setFeedback(error instanceof Error ? error.message : 'No fue posible guardar el perfil.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleApplyToVacancy = async () => {
     if (!selectedVacancy) {
       setFeedback('Selecciona una vacante para postularte.');
+      return;
+    }
+
+    const sessionResponse = await fetch('/api/postulantes/perfil', { cache: 'no-store' });
+    if (sessionResponse.status === 401) {
+      const destination = `/servicios/trabaja-con-nosotros/postulante?vacante=${encodeURIComponent(selectedVacancy.id)}`;
+      router.push(`/login/usuario-vacantes?next=${encodeURIComponent(destination)}`);
       return;
     }
 
@@ -329,17 +336,7 @@ function PostulanteContent() {
         throw new Error(result.message || 'No se pudo registrar la postulacion.');
       }
 
-      const nextApplications = [result.data, ...applications];
-      setApplications(nextApplications);
-      writeCandidateApplications(nextApplications);
-
-      const nextProfile: CandidateProfile = {
-        ...profile,
-        documentNumber: normalizedDocument,
-        updatedAt: new Date().toISOString(),
-      };
-      setProfile(nextProfile);
-      writeCandidateProfile(nextProfile);
+      setApplications((current) => [result.data!, ...current]);
 
       setFeedback(`Postulacion enviada a "${selectedVacancy.title}". Ya puedes ingresar al portal.`);
     } catch (error) {

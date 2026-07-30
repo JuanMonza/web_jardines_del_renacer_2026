@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { CANDIDATE_SESSION_COOKIE_NAME, verifyVacantesCandidateJwt } from '@/lib/candidateAuth';
 import {
   createApplicationInDB,
+  getCandidateProfileFromDB,
   getApplicationsByCandidateFromDB,
 } from '@/lib/candidateStorageDB';
 import type { JobApplication } from '@/config/candidates';
@@ -37,19 +38,22 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await readSession(request);
+    if (!session) return NextResponse.json({ success: false, message: 'No autorizado.' }, { status: 401 });
     const body = await request.json();
     const vacancyId = asText(body.vacancyId);
     const vacancyTitle = asText(body.vacancyTitle);
-    const candidateDocument = normalizeDocumentNumber(asText(body.candidateDocument));
-    const candidateName = asText(body.candidateName);
-    const candidateEmail = asText(body.candidateEmail).toLowerCase();
-    const candidatePhone = asText(body.candidatePhone);
-    const candidateCity = asText(body.candidateCity);
-    const candidateDepartment = asText(body.candidateDepartment);
     const resumeFileName = asText(body.resumeFileName);
     const resumeFileData = asText(body.resumeFileData);
+    const profile = await getCandidateProfileFromDB({ documentNumber: session.documentNumber, email: session.email });
+    const candidateDocument = session.documentNumber;
+    const candidateName = profile?.fullName || session.name;
+    const candidateEmail = session.email;
+    const candidatePhone = profile?.phone ?? '';
+    const candidateCity = profile?.city ?? '';
+    const candidateDepartment = profile?.department ?? '';
 
-    if (!vacancyId || !vacancyTitle || !candidateDocument || !candidateName || !candidateEmail) {
+    if (!vacancyId || !vacancyTitle || !candidateName) {
       return NextResponse.json(
         { success: false, message: 'Faltan datos obligatorios para la postulacion.' },
         { status: 400 },
@@ -71,6 +75,7 @@ export async function POST(request: NextRequest) {
     }
 
     const id = await createApplicationInDB({
+      candidateId: session.candidateId,
       vacancyId,
       vacancyTitle,
       candidateDocument,

@@ -80,6 +80,15 @@ function VacantesUserLoginContent() {
     }
   };
 
+  const handlePasswordRecovery = async () => {
+    const normalizedDocument = normalizeDocumentNumber(documentNumber);
+    const normalizedEmail = email.trim().toLowerCase();
+    if (normalizedDocument.length < 6 || !normalizedEmail.includes('@')) { setError('Escribe tu documento y correo para recuperar la contraseña.'); return; }
+    const response = await fetch('/api/postulantes/recuperar-password', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ documentNumber: normalizedDocument, email: normalizedEmail }) });
+    const result = await response.json() as { message?: string };
+    setError(result.message || 'Revisa tu correo para continuar con la recuperación.');
+  };
+
   return (
     <AuthLoginLayout
       title="Portal de postulantes"
@@ -139,6 +148,8 @@ function VacantesUserLoginContent() {
           </p>
         )}
 
+        <div className="flex items-center justify-between gap-3 text-sm"><Link href={`/login/usuario-vacantes/registro?next=${encodeURIComponent(nextPath)}`} className="font-semibold text-white underline decoration-white/50 underline-offset-4 transition hover:text-white/75">Crear cuenta</Link><button type="button" onClick={() => void handlePasswordRecovery()} className="font-semibold text-white underline decoration-white/50 underline-offset-4 transition hover:text-white/75">¿Olvidaste tu contraseña?</button></div>
+
         <button
           type="submit"
           disabled={loading}
@@ -147,11 +158,7 @@ function VacantesUserLoginContent() {
           {loading ? 'Validando...' : 'Ingresar al portal'}
         </button>
 
-        <div className="rounded-xl border border-black/10 bg-black/5 px-4 py-3 text-sm text-black/75">
-          Usa el documento, correo y contraseña registrados en tu perfil de postulante.
-        </div>
-
-        <div className="text-center text-sm text-black/75 space-y-2">
+        <div className="text-center text-sm text-white/90 space-y-2">
           <Link
             href="/servicios/trabaja-con-nosotros"
             className="block hover:text-[#2f5bd6] transition-colors"

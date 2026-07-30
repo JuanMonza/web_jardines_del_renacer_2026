@@ -4,7 +4,9 @@ import { ADMIN_SESSION_COOKIE, requireAdminPermission } from '@/lib/iam/admin-se
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+  const session = await requireAdminPermission(request.cookies.get(ADMIN_SESSION_COOKIE)?.value, 'vacancies.applications.view');
+  if (!session) return NextResponse.json({ success: false, message: 'No autorizado.' }, { status: 403 });
   try {
     const vacancy = await getVacancyByIdFromDB(params.id);
     if (!vacancy) return NextResponse.json({ success: false, message: 'Vacante no encontrada.' }, { status: 404 });

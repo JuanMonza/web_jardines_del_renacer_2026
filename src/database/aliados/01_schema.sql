@@ -1,0 +1,61 @@
+-- JARDINES DEL RENACER | Módulo Aliados
+-- Esquema idempotente para MySQL 8. Ejecutar después de CORE.
+
+CREATE TABLE IF NOT EXISTS aliados (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  login_id VARCHAR(20) NOT NULL,
+  name VARCHAR(150) NOT NULL,
+  category_slug VARCHAR(80) DEFAULT NULL,
+  subcategory VARCHAR(80) DEFAULT NULL,
+  discount_label VARCHAR(100) DEFAULT NULL,
+  departamento VARCHAR(80) DEFAULT NULL,
+  municipio VARCHAR(80) DEFAULT NULL,
+  address TEXT DEFAULT NULL,
+  url TEXT DEFAULT NULL,
+  -- Permite imágenes Base64 de carga local (hasta 16 MB) sin bloquear la edición.
+  logo MEDIUMTEXT DEFAULT NULL,
+  whatsapp_number VARCHAR(30) DEFAULT NULL,
+  whatsapp_template TEXT DEFAULT NULL,
+  featured BOOLEAN NOT NULL DEFAULT TRUE,
+  email VARCHAR(150) DEFAULT NULL,
+  telefono VARCHAR(30) DEFAULT NULL,
+  description TEXT DEFAULT NULL,
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_aliados_login_id (login_id),
+  KEY idx_aliados_active_featured (active, featured),
+  KEY idx_aliados_categoria (category_slug),
+  KEY idx_aliados_ubicacion (departamento, municipio)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS codigos_descuento (
+  id CHAR(36) NOT NULL DEFAULT (UUID()),
+  codigo VARCHAR(20) NOT NULL,
+  cliente_cedula VARCHAR(20) NOT NULL,
+  cliente_nombre VARCHAR(150) NOT NULL,
+  aliado_id BIGINT UNSIGNED NOT NULL,
+  aliado_nombre VARCHAR(150) NOT NULL,
+  aliado_login_id VARCHAR(20) NOT NULL,
+  aliado_departamento VARCHAR(80) DEFAULT NULL,
+  aliado_municipio VARCHAR(80) DEFAULT NULL,
+  aliado_categoria VARCHAR(80) DEFAULT NULL,
+  aliado_subcategoria VARCHAR(80) DEFAULT NULL,
+  descuento_etiqueta VARCHAR(100) DEFAULT NULL,
+  descuento_porcentaje DECIMAL(5,2) NOT NULL DEFAULT 0,
+  estado ENUM('active','redeemed','expired','deleted') NOT NULL DEFAULT 'active',
+  valor_consumido DECIMAL(12,2) DEFAULT NULL,
+  valor_descuento DECIMAL(12,2) DEFAULT NULL,
+  total_despues_dto DECIMAL(12,2) DEFAULT NULL,
+  canjeado_por VARCHAR(150) DEFAULT NULL,
+  canjeado_en TIMESTAMP NULL DEFAULT NULL,
+  eliminado_en TIMESTAMP NULL DEFAULT NULL,
+  creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  expira_en TIMESTAMP NOT NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_codigos_descuento_codigo (codigo),
+  KEY idx_codigos_cliente_aliado_estado (cliente_cedula, aliado_id, estado),
+  KEY idx_codigos_aliado_estado (aliado_id, estado),
+  KEY idx_codigos_expiracion (expira_en),
+  CONSTRAINT fk_codigos_descuento_aliado FOREIGN KEY (aliado_id) REFERENCES aliados(id) ON UPDATE CASCADE ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -9,7 +9,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "db:import-allies": "node scripts/import-allies-to-mysql.js",
+    "db:import-sedes": "node scripts/import-sedes-to-mysql.js"
   },
   "dependencies": {
     "@lottiefiles/dotlottie-react": "^0.19.3",

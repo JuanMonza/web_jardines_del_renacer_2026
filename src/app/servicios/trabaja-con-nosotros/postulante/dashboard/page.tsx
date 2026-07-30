@@ -8,9 +8,9 @@ import type { CandidateProfile, JobApplication } from '@/config/candidates';
 import { createEmptyCandidateProfile } from '@/config/candidates';
 import { VACANCY_DEPARTMENTS } from '@/config/vacancies';
 import Container from '@/components/ui/Container';
-import PageHero from '@/components/ui/PageHero';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
+import Textarea from '@/components/ui/Textarea';
 import { formatDate } from '@/lib/utils';
 
 type ApiResponse<T> = {
@@ -43,6 +43,21 @@ export default function PostulanteDashboardPage() {
   const [feedback, setFeedback] = useState('');
 
   useEffect(() => {
+    async function refreshApplications() {
+      try {
+        const response = await fetch('/api/postulantes/mis-postulaciones', { cache: 'no-store' });
+        if (!response.ok) return;
+
+        const result = (await response.json()) as ApiResponse<JobApplication[]>;
+        if (result.success && result.data) {
+          // Solo relee el estado persistido: nunca escribe ni reemplaza datos del candidato.
+          setApplications(result.data);
+        }
+      } catch {
+        // La actualización en segundo plano no debe interrumpir el uso del portal.
+      }
+    }
+
     async function fetchPortalData() {
       try {
         const [profileResponse, applicationsResponse] = await Promise.all([
@@ -78,6 +93,15 @@ export default function PostulanteDashboardPage() {
     }
 
     void fetchPortalData();
+
+    // Refleja cambios hechos por RRHH sin modificar el registro al abrir la página.
+    const refreshInterval = window.setInterval(() => void refreshApplications(), 20_000);
+    window.addEventListener('focus', refreshApplications);
+
+    return () => {
+      window.clearInterval(refreshInterval);
+      window.removeEventListener('focus', refreshApplications);
+    };
   }, [router]);
 
   const handleLogout = async () => {
@@ -122,14 +146,9 @@ export default function PostulanteDashboardPage() {
 
   return (
     <>
-      <PageHero
-        title={profile.fullName ? `Hola, ${profile.fullName.split(' ')[0]}` : 'Portal de postulantes'}
-        subtitle="Consulta tus postulaciones, revisa el estado de cada proceso y mantén tus datos actualizados."
-        image="/images/images-baners/trabaja-con-nosotros.webp"
-      />
-
-      <section className="py-16">
+      <section className="bg-gradient-to-b from-[#eef5ff] to-white py-12">
         <Container maxWidth="2xl">
+          <section className="mb-8 flex flex-wrap items-center justify-between gap-5 rounded-[28px] border border-white/80 bg-white/70 p-6 shadow-[0_14px_36px_rgba(35,79,132,0.12)] backdrop-blur-xl"><div className="flex items-center gap-4"><div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-primary to-[#7ca5d4] text-2xl font-bold text-white shadow-lg">{profile.photoUrl ? <img src={profile.photoUrl} alt="Foto de perfil" className="h-full w-full object-cover" /> : (profile.fullName || 'P').trim().charAt(0).toUpperCase()}</div><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Portal de postulantes</p><h1 className="mt-1 text-2xl font-bold text-text">Hola, {profile.fullName?.split(' ')[0] || 'postulante'}</h1><p className="mt-1 text-sm text-textLight">Mantén tu perfil listo para nuevas oportunidades.</p></div></div><div className="rounded-2xl border border-primary/10 bg-primary/5 px-5 py-3"><p className="text-xs font-semibold text-textLight">Postulaciones</p><p className="mt-1 text-3xl font-bold text-primary">{applications.length}</p></div></section>
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
             <Link href="/servicios/trabaja-con-nosotros">
               <Button variant="secondary">Ver vacantes</Button>
@@ -153,14 +172,15 @@ export default function PostulanteDashboardPage() {
           <div className="grid grid-cols-1 gap-8 xl:grid-cols-[0.9fr_1.1fr]">
             <form
               onSubmit={handleSaveProfile}
-              className="rounded-2xl border border-primary/15 bg-white/75 p-6 shadow-sm"
+              className="rounded-[24px] border border-white/80 bg-white/75 p-6 shadow-[0_14px_36px_rgba(35,79,132,0.12)] backdrop-blur-xl"
             >
-              <div className="mb-6 flex items-center gap-3">
-                <User className="h-5 w-5 text-primary" />
-                <h2 className="text-xl font-display text-text">Mi perfil</h2>
+              <div className="mb-6 flex items-center justify-between gap-3"><div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10"><User className="h-5 w-5 text-primary" /></span>
+                <div><p className="text-xs font-bold uppercase tracking-wider text-primary">Información personal</p><h2 className="text-xl font-display text-text">Mi perfil</h2></div></div><span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-700">Cuenta activa</span>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-3">
+                <details open className="group rounded-2xl border border-primary/10 bg-white/55 p-4"><summary className="cursor-pointer list-none font-bold text-text">Datos de contacto <span className="float-right text-xs font-semibold text-primary">Editar</span></summary><div className="mt-4 space-y-4">
                 <Input
                   label="Nombre completo"
                   value={profile.fullName}
@@ -206,7 +226,17 @@ export default function PostulanteDashboardPage() {
                     setProfile((prev) => ({ ...prev, city: event.target.value }))
                   }
                 />
-              </div>
+                <Input label="Dirección" value={profile.address} onChange={(event) => setProfile((prev) => ({ ...prev, address: event.target.value }))} />
+                </div></details>
+                <details className="group rounded-2xl border border-primary/10 bg-white/55 p-4"><summary className="cursor-pointer list-none font-bold text-text">Perfil profesional <span className="float-right text-xs font-semibold text-primary">Completar</span></summary><div className="mt-4 space-y-4">
+                <Input label="Cargo o profesión" value={profile.professionalTitle} onChange={(event) => setProfile((prev) => ({ ...prev, professionalTitle: event.target.value }))} />
+                <div className="grid gap-4 sm:grid-cols-2"><Input label="Años de experiencia" value={profile.yearsExperience} onChange={(event) => setProfile((prev) => ({ ...prev, yearsExperience: event.target.value }))} /><Input label="LinkedIn" value={profile.linkedinUrl} onChange={(event) => setProfile((prev) => ({ ...prev, linkedinUrl: event.target.value }))} /></div>
+                <Textarea label="Formación académica" value={profile.education} onChange={(event) => setProfile((prev) => ({ ...prev, education: event.target.value }))} />
+                <Textarea label="Perfil profesional" value={profile.about} onChange={(event) => setProfile((prev) => ({ ...prev, about: event.target.value }))} />
+                </div></details>
+                <details className="group rounded-2xl border border-primary/10 bg-white/55 p-4"><summary className="cursor-pointer list-none font-bold text-text">Hoja de vida <span className="float-right text-xs font-semibold text-primary">{profile.resumeFileName ? 'Cargada' : 'Pendiente'}</span></summary><div className="mt-4">
+                <div className="rounded-2xl border border-dashed border-primary/25 bg-primary/[0.03] p-4"><label className="block text-sm font-bold text-text">Hoja de vida / CV</label><p className="mt-1 text-xs text-textLight">PDF o documento de máximo 5 MB.</p><input type="file" accept=".pdf,.doc,.docx" className="mt-3 block w-full text-sm text-textLight file:mr-3 file:rounded-lg file:border-0 file:bg-primary file:px-3 file:py-2 file:text-xs file:font-bold file:text-white" onChange={(event) => { const file = event.target.files?.[0]; if (!file || file.size > 5 * 1024 * 1024) return; const reader = new FileReader(); reader.onload = async () => { const fileData = String(reader.result || ''); const response = await fetch('/api/postulantes/cv', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fileName: file.name, fileData }) }); const result = await response.json() as { success?: boolean; data?: { url: string } }; if (response.ok && result.success && result.data) { setProfile((prev) => ({ ...prev, resumeFileName: file.name, resumeFileData: '', cvUrl: result.data!.url })); setFeedback('Hoja de vida cargada y guardada correctamente.'); } else setFeedback('No fue posible guardar la hoja de vida.'); }; reader.readAsDataURL(file); }} />{profile.resumeFileName && <p className="mt-2 text-xs font-semibold text-emerald-700">CV disponible: {profile.resumeFileName}</p>}</div>
+                </div></details></div>
 
               <Button type="submit" className="mt-6 w-full" disabled={saving}>
                 {saving ? 'Guardando...' : 'Guardar cambios'}
@@ -214,26 +244,24 @@ export default function PostulanteDashboardPage() {
               </Button>
             </form>
 
-            <section className="rounded-2xl border border-primary/15 bg-white/75 p-6 shadow-sm">
-              <div className="mb-6 flex items-center gap-3">
-                <Briefcase className="h-5 w-5 text-primary" />
-                <h2 className="text-xl font-display text-text">Mis postulaciones</h2>
+            <section className="h-fit rounded-[24px] border border-white/80 bg-white/70 p-5 shadow-[0_14px_36px_rgba(35,79,132,0.12)] backdrop-blur-xl md:p-6">
+              <div className="mb-6 flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10"><Briefcase className="h-5 w-5 text-primary" /></span><div><p className="text-xs font-bold uppercase tracking-wider text-primary">Seguimiento</p><h2 className="text-xl font-display text-text">Mis postulaciones</h2></div>
               </div>
 
               {applications.length === 0 ? (
-                <div className="rounded-xl border border-primary/10 bg-primary/5 p-6 text-sm text-textLight">
-                  Aun no encontramos postulaciones asociadas a tu documento y correo.
+                <div className="rounded-2xl border border-dashed border-primary/20 bg-primary/[0.035] p-6 text-sm text-textLight">
+                  Aún no tienes postulaciones activas. Cuando encuentres una vacante de tu interés, tu seguimiento aparecerá aquí.
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {applications.map((application) => (
                     <article
                       key={application.id}
-                      className="rounded-xl border border-primary/10 bg-white p-5"
+                      className="rounded-2xl border border-white/80 bg-white/65 p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-md"
                     >
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
-                          <h3 className="font-semibold text-text">{application.vacancyTitle}</h3>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-primary">Proceso de selección</p><h3 className="mt-1 font-semibold text-text">{application.vacancyTitle}</h3>
                           <p className="mt-1 flex items-center gap-2 text-sm text-textLight">
                             <Calendar size={14} />
                             {formatDate(application.appliedAt)}
@@ -241,7 +269,7 @@ export default function PostulanteDashboardPage() {
                         </div>
                         <StatusBadge status={application.status} />
                       </div>
-                      <p className="mt-3 text-xs text-textLight">
+                      <p className="mt-3 border-t border-primary/10 pt-3 text-xs text-textLight">
                         Codigo de seguimiento:{' '}
                         <span className="font-mono text-text">{application.trackingCode}</span>
                       </p>

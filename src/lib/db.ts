@@ -16,7 +16,9 @@ const dbConfig = {
 };
 
 // Crea un pool de conexiones para reutilizarlas y mejorar el rendimiento
-const pool = mysql.createPool(dbConfig);
+const globalDatabase = globalThis as typeof globalThis & { __jdrMysqlPool?: mysql.Pool };
+const pool = globalDatabase.__jdrMysqlPool ?? mysql.createPool(dbConfig);
+if (process.env.NODE_ENV !== 'production') globalDatabase.__jdrMysqlPool = pool;
 
 /**
  * Ejecuta una consulta SQL y devuelve las filas.

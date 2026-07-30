@@ -24,6 +24,10 @@ type DbApplicationRow = {
   resume_filedata?: Buffer | Uint8Array | null;
   applied_at: string | Date;
   status: string;
+  documento?: string;
+  created_at?: string | Date | null;
+  estado?: string;
+  vacante_id?: string | number;
 };
 
 type VacancyApplicationCountRow = {
@@ -362,12 +366,38 @@ export function readCandidateApplications() {
 }
 export async function getAllApplicationsFromDB() {
   const sql = `
-    SELECT *
-    FROM postulaciones
-    ORDER BY applied_at DESC
+    SELECT CAST(p.id AS CHAR) AS id, CAST(p.vacante_id AS CHAR) AS vacancyId, CONCAT(c.nombres, ' ', c.apellidos) AS candidateName,
+      c.email AS candidateEmail, v.titulo AS vacancyTitle,
+      CASE p.estado
+        WHEN 'Postulado' THEN 'Recibida'
+        WHEN 'Recibido' THEN 'Recibida'
+        WHEN 'En revisión' THEN 'En revision'
+        WHEN 'Filtro RH' THEN 'En revision'
+        WHEN 'Prueba técnica' THEN 'Prueba tecnica'
+        WHEN 'Entrevista RH' THEN 'Entrevista'
+        WHEN 'Entrevista Técnica' THEN 'Entrevista'
+        WHEN 'Finalista' THEN 'Entrevista'
+        WHEN 'Contratado' THEN 'Seleccionado'
+        WHEN 'No seleccionado' THEN 'No continua'
+        WHEN 'Proceso cerrado' THEN 'No continua'
+        ELSE p.estado
+      END AS status,
+      p.created_at AS appliedAt
+    FROM postulaciones p INNER JOIN candidatos c ON c.id = p.candidato_id INNER JOIN vacantes v ON v.id = p.vacante_id
+    WHERE p.deleted_at IS NULL ORDER BY p.created_at DESC
   `;
 
   return query(sql);
+}
+
+export async function updateApplicationStatusInDB(input: { id: string; status: JobApplication['status']; notes?: string }) {
+  const corporateStatus = { Recibida: 'Postulado', 'En revision': 'En revisión', Entrevista: 'Entrevista RH', 'Prueba tecnica': 'Prueba técnica', Seleccionado: 'Contratado', 'No continua': 'No seleccionado' }[input.status];
+  const result = await execute(
+    'UPDATE postulaciones SET estado = ?, observaciones_rh = ? WHERE id = ?',
+    [corporateStatus, input.notes?.trim() || null, input.id],
+  );
+  if (result.affectedRows > 0) await execute('INSERT INTO activity_logs (usuario_tipo, accion, modulo, tabla_afectada, registro_id, descripcion) VALUES (?,?,?,?,?,?)', ['Admin', 'POSTULACION_ESTADO_ACTUALIZADO', 'Vacantes', 'postulaciones', input.id, `Estado actualizado a ${corporateStatus}. ${input.notes?.trim() || ''}`]);
+  return result.affectedRows > 0;
 }
 
 /**
@@ -646,26 +676,19 @@ function mapDbApplicationToJobApplication(
     return null;
   }
 
-  const status = APPLICATION_STATUS_OPTIONS.includes(
-    dbApplication.status as JobApplication["status"],
-  )
-    ? (dbApplication.status as JobApplication["status"])
-    : "Recibida";
+  const rawStatus = String(dbApplication.estado ?? dbApplication.status ?? 'Postulado');
+  const statusMap: Record<string, JobApplication['status']> = { Postulado: 'Recibida', Recibido: 'Recibida', 'En revisión': 'En revision', 'Filtro RH': 'En revision', 'Prueba técnica': 'Prueba tecnica', 'Entrevista RH': 'Entrevista', 'Entrevista Técnica': 'Entrevista', Finalista: 'Entrevista', Contratado: 'Seleccionado', 'No seleccionado': 'No continua', 'Proceso cerrado': 'No continua' };
+  const status = statusMap[rawStatus] ?? (APPLICATION_STATUS_OPTIONS.includes(rawStatus as JobApplication['status']) ? rawStatus as JobApplication['status'] : 'Recibida');
 
   // La hoja de vida se almacena como BLOB, no la devolvemos en listados.
   return {
-    id: dbApplication.id,
-    trackingCode: `JDR-${dbApplication.id.toUpperCase().slice(0, 8)}`,
-    vacancyId: dbApplication.vacancy_id,
+    id: String(dbApplication.id),
+    trackingCode: `JDR-${String(dbApplication.id).padStart(6, '0')}`,
+    vacancyId: String(dbApplication.vacante_id ?? dbApplication.vacancy_id),
     vacancyTitle: dbApplication.vacancy_title ?? "Vacante sin titulo",
-    candidateDocument: dbApplication.candidate_document,
-    candidateName: dbApplication.candidate_name,
-    candidateEmail: dbApplication.candidate_email,
-    candidatePhone: dbApplication.candidate_phone ?? "",
-    resumeFileName: dbApplication.resume_filename ?? "",
+    candidateDocument: dbApplication.documento ?? '', candidateName: dbApplication.candidate_name ?? '', candidateEmail: dbApplication.candidate_email ?? '', candidatePhone: dbApplication.candidate_phone ?? '', resumeFileName: '',
     resumeFileData: "", // No se devuelve el binario en las listas
-    appliedAt:
-      toIsoString(dbApplication.applied_at) || new Date().toISOString(),
+    appliedAt: toIsoString(dbApplication.created_at) || new Date().toISOString(),
     status,
   };
 }
@@ -693,42 +716,19 @@ export async function createApplicationInDB(
 
   // Convertir la hoja de vida de Base64 a Buffer para almacenarla como BLOB.
   const resumeBuffer = decodeBase64File(resumeFileData);
-  const id = createUuid();
 
   const sql = `
     INSERT INTO postulaciones (
-      id,
-      candidato_id,
-      vacancy_id,
-      candidate_document,
-      candidate_name,
-      candidate_email,
-      candidate_phone,
-      city,
-      department,
-      resume_filename,
-      resume_filedata,
-      status
+      candidato_id, vacante_id, estado, fuente, observaciones_candidato
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Recibida')
+    VALUES (?, ?, 'Postulado', 'Portal Web', ?)
   `;
 
   const params = [
-    id,
-    candidateId || null,
-    vacancyId,
-    normalizeDocumentNumber(candidateDocument),
-    candidateName.trim(),
-    normalizeEmail(candidateEmail),
-    candidatePhone.trim(),
-    candidateCity?.trim() ?? "",
-    candidateDepartment?.trim() ?? "",
-    resumeFileName,
-    resumeBuffer,
+    candidateId || null, vacancyId, `Postulación de ${candidateName.trim()}`,
   ];
 
-  await execute(sql, params);
-  return id;
+  const result = await execute(sql, params); return String(result.insertId);
 }
 
 /**
@@ -742,19 +742,18 @@ export async function getApplicationsByCandidateFromDB(
 ): Promise<JobApplication[]> {
   try {
     const params: string[] = [normalizeDocumentNumber(document)];
-    const emailCondition = email ? "AND LOWER(p.candidate_email) = ?" : "";
+    const emailCondition = email ? "AND LOWER(c.email) = ?" : "";
     if (email) {
       params.push(normalizeEmail(email));
     }
 
     // Hacemos un JOIN para obtener el título de la vacante.
     const sql = `
-      SELECT p.*, v.title as vacancy_title
-      FROM postulaciones p
-      LEFT JOIN vacantes v ON p.vacancy_id = v.id
-      WHERE p.candidate_document = ?
+      SELECT p.*, v.titulo as vacancy_title, c.documento, CONCAT(c.nombres, ' ', c.apellidos) AS candidate_name, c.email AS candidate_email, c.telefono AS candidate_phone
+      FROM postulaciones p INNER JOIN candidatos c ON c.id = p.candidato_id INNER JOIN vacantes v ON p.vacante_id = v.id
+      WHERE c.documento = ? AND p.deleted_at IS NULL
       ${emailCondition}
-      ORDER BY p.applied_at DESC
+      ORDER BY p.created_at DESC
     `;
     const rows = await query<DbApplicationRow>(sql, params);
     return rows

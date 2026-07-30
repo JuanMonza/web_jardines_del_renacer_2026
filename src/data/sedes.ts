@@ -23,6 +23,7 @@ export interface Sede {
   fotoUrl?: string; // URL de la fotografía de la sede
   departamento: string; // Departamento (ej: Risaralda)
   ciudad: string; // Ciudad (ej: Pereira)
+  estadoOperativo?: 'Activa' | 'Cerrada temporalmente' | 'Próxima apertura' | 'En revisión';
 }
 
 export interface DepartamentoInfo {

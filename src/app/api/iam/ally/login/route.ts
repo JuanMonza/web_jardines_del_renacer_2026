@@ -1,0 +1,4 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { ALLY_SESSION_COOKIE, authenticateAlly, signAllySession } from '@/lib/iam/ally-session';
+export const runtime='nodejs';
+export async function POST(request:NextRequest){try{const body=await request.json() as {loginId?:string;password?:string};const session=await authenticateAlly(String(body.loginId||'').trim(),String(body.password||''),request.headers.get('x-forwarded-for')?.split(',')[0]||'0.0.0.0',request.headers.get('user-agent')||'unknown');if(!session)return NextResponse.json({message:'Credenciales inválidas.'},{status:401});const response=NextResponse.json({user:{name:session.name,loginId:session.loginId}});response.cookies.set(ALLY_SESSION_COOKIE,await signAllySession(session),{httpOnly:true,sameSite:'lax',secure:process.env.NODE_ENV==='production',path:'/',maxAge:28800});return response;}catch{return NextResponse.json({message:'No fue posible iniciar sesión.'},{status:500});}}

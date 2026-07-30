@@ -1,0 +1,4 @@
+-- Los aliados comerciales reales se importan desde:
+-- public/data/base-aliados-actualizados-tics.json
+-- Ejecuta: npm run db:import-allies
+-- No se incluyen ejemplos ficticios en instalaciones nuevas.

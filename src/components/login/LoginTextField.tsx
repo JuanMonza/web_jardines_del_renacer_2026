@@ -31,15 +31,15 @@ export default function LoginTextField({
 
   return (
     <label className="block">
-      <span className="text-sm md:text-base font-medium text-black/80">{label}</span>
+      <span className="text-sm font-medium text-white/85">{label}</span>
       <div className="mt-2 relative">
         <input
           type={resolvedType}
-          className={`w-full bg-transparent border-0 border-b-2 border-black/45 pb-2.5 text-black placeholder:text-black/45 focus:outline-none focus:border-[#2f5bd6] transition-colors ${rightPaddingClass} ${className}`}
+          className={`w-full rounded-xl border border-white/20 bg-white/[0.07] px-3 py-3 text-white placeholder:text-white/45 shadow-inner shadow-black/10 outline-none transition-colors focus:border-[#b7d5f4] focus:bg-white/[0.12] ${rightPaddingClass} ${className}`}
           {...props}
         />
         {icon && (
-          <span className={`absolute ${iconRightClass} top-1/2 -translate-y-1/2 text-black/55`}>
+          <span className={`absolute ${iconRightClass} top-1/2 -translate-y-1/2 text-white/55`}>
             {icon}
           </span>
         )}
@@ -47,7 +47,7 @@ export default function LoginTextField({
           <button
             type="button"
             onClick={() => setIsPasswordVisible((prev) => !prev)}
-            className="absolute right-1 top-1/2 -translate-y-1/2 text-black/60 hover:text-[#2f5bd6] transition-colors"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60 transition-colors hover:text-white"
             aria-label={isPasswordVisible ? 'Ocultar contrasena' : 'Mostrar contrasena'}
           >
             {isPasswordVisible ? (

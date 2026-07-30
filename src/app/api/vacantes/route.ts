@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDefaultJobVacancies } from "@/lib/vacanciesStorage";
 import {getVacanciesFromDB,createVacancyInDB,} from "@/lib/vacanciesStorageDB";
 import { getVacancyApplicationCounts } from "@/lib/candidateStorageDB";
 import { ADMIN_SESSION_COOKIE, requireAdminPermission } from '@/lib/iam/admin-session';
@@ -13,11 +12,8 @@ export async function GET() {
       getVacancyApplicationCounts(),
     ]);
 
-    const vacancies =
-      dbVacancies.length > 0 ? dbVacancies : getDefaultJobVacancies();
-
     return NextResponse.json(
-      vacancies.map((vacancy) => ({
+      dbVacancies.map((vacancy) => ({
         ...vacancy,
         applicationCount: counts[vacancy.id] ?? 0,
       })),
@@ -25,12 +21,7 @@ export async function GET() {
   } catch (error) {
     console.error("Error en GET /api/vacantes:", error);
 
-    return NextResponse.json(
-      getDefaultJobVacancies().map((vacancy) => ({
-        ...vacancy,
-        applicationCount: 0,
-      })),
-    );
+    return NextResponse.json({ success: false, message: 'No fue posible consultar las vacantes desde la base operativa.' }, { status: 503 });
   }
 }
 
