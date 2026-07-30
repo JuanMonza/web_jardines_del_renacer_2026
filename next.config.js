@@ -8,6 +8,10 @@ const nextConfig = {
   },
 
   images: {
+    // Las imágenes propias se sirven directamente desde /public. Así el sitio no
+    // depende del optimizador de Next del proveedor de hosting y conserva las
+    // mismas rutas en local y en producción.
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: "https",

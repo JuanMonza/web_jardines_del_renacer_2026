@@ -103,7 +103,7 @@ export default function TrabajaConNosotrosPage() {
       <PageHero
         title="Trabaja con Nosotros"
         subtitle="Únete a un equipo comprometido con la dignidad, el servicio y el crecimiento humano."
-        image="/images/images-baners/trabaja-con-nosotros.webp"
+        image="/images/images-baners/Trabaja_con_nosotros.webp"
       />
 
       <section className="py-16">

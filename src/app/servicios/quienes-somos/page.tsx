@@ -78,7 +78,7 @@ export default function QuienesSomosPage() {
                 </div>
                 <div className="group/item2 relative w-full h-1/2 rounded-3xl overflow-hidden shadow-lg transition-all duration-500 ease-out hover:h-2/3">
                   <Image
-                    src="/images/carrusel_1.jpg"
+                    src="/images/carrusel_1.webp"
                     alt="Instalaciones de Jardines del Renacer"
                     fill
                     className="object-cover transition-transform duration-500 group-hover/item2:scale-105"

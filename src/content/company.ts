@@ -94,7 +94,7 @@ export const historyTimeline = [
     year: '2026',
     title: 'Innovación y Futuro Digital',
     description: 'Lanzamiento de nuestra nueva plataforma digital, integrando recorridos virtuales 360°, cotización en línea y un portal de aliados mejorado, reafirmando nuestro compromiso con la innovación y la accesibilidad para todas las familias.',
-    image: '/images/futuro-digital-2026.webp',
+    image: '/images/images-baners/equipo.webp',
     iconType: 'rocket',
     order: 6,
     active: true,

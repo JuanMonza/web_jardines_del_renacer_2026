@@ -19,7 +19,7 @@ export default function PageHero({ title, subtitle, images }: PageHeroProps) {
     <SharedPageHero
       title={title}
       subtitle={subtitle}
-      image={images[0] ?? '/images/contactanos.jpg'}
+      image={images[0] ?? '/images/images-baners/contacto.webp'}
       imageAlt={title}
     />
   );

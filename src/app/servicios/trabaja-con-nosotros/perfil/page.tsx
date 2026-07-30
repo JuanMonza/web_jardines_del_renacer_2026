@@ -89,7 +89,7 @@ export default function PerfilPostulantePage() {
       <PageHero
         title="Mi Perfil de Postulante"
         subtitle="Mantén tu información actualizada para mejorar tus oportunidades."
-        image="/images/images-baners/trabaja-con-nosotros.webp"
+        image="/images/images-baners/Trabaja_con_nosotros.webp"
       />
       <section className="py-24">
         <Container maxWidth="lg">

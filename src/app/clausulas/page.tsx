@@ -6,7 +6,7 @@ export default function ClausulasPage() {
   return (
     <section className="min-h-screen bg-gradient-to-b from-background via-white/70 to-background py-12 sm:py-16">
       <Container maxWidth="xl">
-        <div className="relative py-20 mb-12 rounded-3xl overflow-hidden bg-[url('/images/clasulas.jpg')] bg-cover bg-center bg-no-repeat shadow-sm border border-primary/10">
+        <div className="relative py-20 mb-12 rounded-3xl overflow-hidden bg-[url('/images/images-baners/terminos&condiciones.webp')] bg-cover bg-center bg-no-repeat shadow-sm border border-primary/10">
           <div className="relative z-10">
             <FadeIn>
               <div className="mx-auto max-w-3xl text-center">

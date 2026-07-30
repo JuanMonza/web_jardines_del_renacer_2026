@@ -31,7 +31,7 @@ export const giveawaysData: readonly Giveaway[] = [
     date: '2026-05-20T19:00:00-05:00',
     title: 'Bono de Mercado de $200.000',
     description: 'Sorteo especial del Día de la Madre.',
-    image: '/images/sorteos/sorteo-placeholder-1.webp',
+    image: '/images/sorteos_img/ecooter-e5lite-blanci-2.jpg',
     winner: { name: 'Ana María Giraldo' },
   },
   {
@@ -39,7 +39,7 @@ export const giveawaysData: readonly Giveaway[] = [
     date: '2026-06-18T19:00:00-05:00',
     title: 'Freidora de Aire (Air Fryer)',
     description: 'Celebra el Día del Padre con este increíble premio.',
-    image: '/images/sorteos/sorteo-placeholder-2.webp',
+    image: '/images/sorteos_img/Pixel10_001.webp',
     winner: { name: 'Carlos Restrepo' },
   },
   // Próximos Sorteos (Desde el mes actual)

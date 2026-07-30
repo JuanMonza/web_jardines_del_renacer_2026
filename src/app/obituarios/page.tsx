@@ -40,7 +40,7 @@ export default function ObituariosPage() {
       <PageHero
         title="Obituarios"
         subtitle="Un espacio para honrar y recordar a quienes han partido, acompañando a sus familias en la distancia."
-        image="/images/images-baners/obituarios.webp"
+        image="/images/images-baners/Obituarios.webp"
         imageAlt="Obituarios Jardines del Renacer"
         className="relative z-10"
       />

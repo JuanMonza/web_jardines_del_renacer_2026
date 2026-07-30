@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { motion, useReducedMotion } from 'framer-motion';
 import Button from '@/components/ui/Button';
 import Container from '@/components/ui/Container';
-import PageHero from '@/components/ui/PageHero';
 import { historyTimeline } from '@/content/company';
 
 type TimelineItem = (typeof historyTimeline)[number];
@@ -36,13 +35,6 @@ export default function ResenaHistoricaPage() {
 
   return (
     <main className="min-h-screen bg-background">
-      <PageHero
-        title="Reseña Histórica"
-        subtitle="Una evolución constante basada en el respeto, la dignidad y el servicio a las familias colombianas."
-        image="/images/images-baners/reseñahistorica.webp"
-        imageAlt="Reseña histórica Jardines del Renacer"
-      />
-
       <section className="relative overflow-hidden bg-[#132b4b] py-14 sm:py-20 lg:py-24">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_25%,rgba(115,151,205,0.35),transparent_38%),linear-gradient(180deg,#173457_0%,#102540_100%)]" />
         <Container maxWidth="2xl" className="relative">
