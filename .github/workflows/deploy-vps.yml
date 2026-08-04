@@ -47,6 +47,6 @@ jobs:
           npm run type-check
           npm run build
           sudo /usr/bin/systemctl restart jardines-renacer
-          sudo /usr/bin/systemctl is-active --quiet jardines-renacer
+          sudo /usr/bin/systemctl is-active jardines-renacer
           curl --fail --silent --show-error http://127.0.0.1:3000 >/dev/null
           EOF
