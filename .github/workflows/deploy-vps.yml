@@ -1,0 +1,52 @@
+name: Desplegar en VPS
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: produccion-vps
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Actualizar Jardines del Renacer
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Configurar acceso SSH seguro
+        env:
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_SSH_KNOWN_HOSTS: ${{ secrets.VPS_SSH_KNOWN_HOSTS }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/id_ed25519
+          printf '%s\n' "$VPS_SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/id_ed25519 ~/.ssh/known_hosts
+
+      - name: Desplegar, validar y reiniciar
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          ssh -i ~/.ssh/id_ed25519 -p "$VPS_PORT" \
+            -o BatchMode=yes \
+            -o StrictHostKeyChecking=yes \
+            "$VPS_USER@$VPS_HOST" 'bash -se' <<'EOF'
+          set -euo pipefail
+
+          cd /var/www/jardines-renacer
+          git fetch origin main
+          git checkout main
+          git reset --hard origin/main
+          npm ci
+          npm run type-check
+          npm run build
+          sudo /usr/bin/systemctl restart jardines-renacer
+          sudo /usr/bin/systemctl is-active --quiet jardines-renacer
+          curl --fail --silent --show-error http://127.0.0.1:3000 >/dev/null
+          EOF
