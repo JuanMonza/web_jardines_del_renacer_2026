@@ -316,8 +316,7 @@ export default function Navbar() {
 
                 {/* Botones CTA */}
                 <PaymentDropdown
-                  wompiUrl="https://checkout.wompi.co/method"
-                  pseUrl="https://checkout.wompi.co/l/TU_LINK_DE_PSE_AQUI"
+                  wompiUrl="https://checkout.wompi.co/l/VPOS_BZBTG1"
                   buttonVariant="secondary"
                   buttonSize="sm"
                 />
@@ -542,8 +541,7 @@ export default function Navbar() {
                 </Button>
               </Link>
               <PaymentDropdown
-                wompiUrl="https://checkout.wompi.co/method"
-                pseUrl="https://checkout.wompi.co/l/TU_LINK_DE_PSE_AQUI"
+                wompiUrl="https://checkout.wompi.co/l/VPOS_BZBTG1"
                 buttonVariant="secondary"
                 buttonSize="sm"
               />

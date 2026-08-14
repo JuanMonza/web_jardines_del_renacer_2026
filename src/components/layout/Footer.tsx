@@ -40,7 +40,7 @@ export default function Footer() {
     atencion: [
       { label: "Obituarios", href: "/obituarios" },
       { label: "Agendar Visita", href: "/agendar-visita" },
-      { label: "Medios de Pago", href: "https://checkout.wompi.co/method" },
+      { label: "Medios de Pago", href: "https://checkout.wompi.co/l/VPOS_BZBTG1" },
       { label: "Contacto", href: "/contacto" },
     ],
     recursos: [
