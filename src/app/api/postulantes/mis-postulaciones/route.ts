@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { CANDIDATE_SESSION_COOKIE_NAME, verifyVacantesCandidateJwt } from '@/lib/candidateAuth';
 import {
   createApplicationInDB,
+  getCandidateAccountForLogin,
   getCandidateProfileFromDB,
   getApplicationsByCandidateFromDB,
 } from '@/lib/candidateStorageDB';
@@ -46,6 +47,10 @@ export async function POST(request: NextRequest) {
     const resumeFileName = asText(body.resumeFileName);
     const resumeFileData = asText(body.resumeFileData);
     const profile = await getCandidateProfileFromDB({ documentNumber: session.documentNumber, email: session.email });
+    const candidate = await getCandidateAccountForLogin({ documentNumber: session.documentNumber, email: session.email });
+    if (!candidate || !profile) {
+      return NextResponse.json({ success: false, message: 'No encontramos tu perfil de postulante.' }, { status: 404 });
+    }
     const candidateDocument = session.documentNumber;
     const candidateName = profile?.fullName || session.name;
     const candidateEmail = session.email;
@@ -57,6 +62,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, message: 'Faltan datos obligatorios para la postulacion.' },
         { status: 400 },
+      );
+    }
+
+    if (!profile.cvUrl && !resumeFileData) {
+      return NextResponse.json(
+        { success: false, message: 'Carga tu hoja de vida antes de postularte.' },
+        { status: 422 },
       );
     }
 
@@ -75,7 +87,7 @@ export async function POST(request: NextRequest) {
     }
 
     const id = await createApplicationInDB({
-      candidateId: session.candidateId,
+      candidateId: candidate.id,
       vacancyId,
       vacancyTitle,
       candidateDocument,
@@ -86,6 +98,7 @@ export async function POST(request: NextRequest) {
       candidateDepartment,
       resumeFileName,
       resumeFileData,
+      resumeUrl: profile.cvUrl,
     });
 
     const application: JobApplication = {

@@ -1,6 +1,7 @@
 import Container from '@/components/ui/Container';
 import PageHero from '@/components/ui/PageHero';
 import Image from 'next/image';
+import { Building2, HeartHandshake, MapPinned, Quote } from 'lucide-react';
 import FadeIn from '@/components/animations/FadeIn';
 import {
   corporateValues,
@@ -48,6 +49,12 @@ const valueIcons: { [key: string]: JSX.Element } = {
 };
 
 export default function QuienesSomosPage() {
+  const impactMetrics = [
+    { value: '26', label: 'años de experiencia', icon: Building2 },
+    { value: '111', label: 'sedes para acompañarte', icon: MapPinned },
+    { value: '15', label: 'departamentos', icon: HeartHandshake },
+  ];
+
   return (
     <>
       <PageHero
@@ -57,46 +64,76 @@ export default function QuienesSomosPage() {
         imageAlt="Quiénes somos Jardines del Renacer"
       />
 
-      <section className="py-20">
+      <section className="relative overflow-hidden py-16 sm:py-20">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_17%_35%,rgba(65,105,180,0.12),transparent_28%),radial-gradient(circle_at_85%_55%,rgba(103,155,215,0.12),transparent_32%)]" />
         <Container maxWidth="2xl">
           <FadeIn delay={0.1}>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
-              <div className="space-y-5 text-textLight leading-relaxed text-lg lg:pr-8">
-                {whoWeAreParagraphs.map((paragraph, index) => (
-                  <p key={index}>{paragraph}</p>
-                ))}
+            <div className="relative grid grid-cols-1 items-center gap-8 lg:grid-cols-[1.02fr_0.98fr] lg:gap-12">
+              <div className="relative overflow-hidden rounded-[2rem] border border-white/75 bg-white/65 p-7 shadow-[0_24px_70px_rgba(20,55,97,0.12)] backdrop-blur-xl sm:p-10">
+                <div className="pointer-events-none absolute -left-16 -top-20 h-48 w-48 rounded-full bg-primary/15 blur-3xl" />
+                <div className="relative">
+                  <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">Nuestra esencia</p>
+                  <div className="mt-5 border-l-4 border-primary pl-5"><p className="font-display text-2xl font-bold leading-tight text-text sm:text-3xl">Acompañamos con dignidad cada historia.</p></div>
+                  <div className="mt-6 space-y-5 text-base leading-8 text-textLight sm:text-lg">
+                    {whoWeAreParagraphs.map((paragraph, index) => <p key={index}>{paragraph}</p>)}
+                  </div>
+                  <div className="mt-7 flex items-start gap-3 rounded-2xl border border-primary/10 bg-primary/[0.06] p-4 text-sm leading-6 text-primary">
+                    <Quote className="mt-0.5 h-5 w-5 shrink-0" aria-hidden />
+                    <p>Respeto, cercanía y cuidado en cada momento que compartimos con las familias.</p>
+                  </div>
+                </div>
               </div>
-              <div className="flex flex-col gap-4 h-[500px]">
-                <div className="group/item1 relative w-full h-1/2 rounded-3xl overflow-hidden shadow-lg transition-all duration-500 ease-out hover:h-2/3">
+
+              <div className="relative h-[440px] sm:h-[500px]">
+                <div className="group/item1 absolute inset-x-0 top-0 h-[330px] overflow-hidden rounded-[2rem] border border-white/70 shadow-[0_22px_45px_rgba(20,55,97,0.2)] sm:h-[390px]">
                   <Image
-                    src="/images/images-baners/"
+                    src="/images/images-baners/equipo.webp"
                     alt="Equipo de Jardines del Renacer"
                     fill
-                    className="object-cover transition-transform duration-500 group-hover/item1:scale-105"
+                    className="object-cover object-center transition-transform duration-500 group-hover/item1:scale-105"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#071a31]/65 via-transparent to-transparent" />
+                  <div className="absolute left-5 top-5 rounded-2xl border border-white/30 bg-slate-950/45 px-4 py-3 text-white shadow-lg backdrop-blur-xl"><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/75">Cercanía humana</p><p className="mt-1 text-sm font-semibold">Un equipo que escucha y acompaña</p></div>
                 </div>
-                <div className="group/item2 relative w-full h-1/2 rounded-3xl overflow-hidden shadow-lg transition-all duration-500 ease-out hover:h-2/3">
+                <div className="group/item2 absolute bottom-0 right-0 h-[175px] w-[78%] overflow-hidden rounded-[1.75rem] border-4 border-white shadow-[0_22px_45px_rgba(20,55,97,0.24)] sm:h-[215px] sm:w-[72%]">
                   <Image
                     src="/images/carrusel_1.webp"
                     alt="Instalaciones de Jardines del Renacer"
                     fill
                     className="object-cover transition-transform duration-500 group-hover/item2:scale-105"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#071a31]/50 via-transparent to-transparent" />
+                  <div className="absolute bottom-4 left-4 rounded-xl border border-white/30 bg-white/15 px-3 py-2 text-xs font-semibold text-white backdrop-blur-xl">Presencia nacional</div>
                 </div>
+              </div>
+            </div>
+            <div className="relative mt-8 overflow-hidden rounded-[1.75rem] border border-white/80 bg-white/65 p-2 shadow-[0_18px_45px_rgba(20,55,97,0.1)] backdrop-blur-xl">
+              <div className="pointer-events-none absolute -left-10 top-0 h-24 w-40 rounded-full bg-primary/10 blur-3xl" />
+              <div className="relative grid grid-cols-1 divide-y divide-primary/10 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+              {impactMetrics.map(({ value, label, icon: Icon }) => (
+                <div key={label} className="group flex items-center gap-4 px-5 py-5 transition-colors duration-300 hover:bg-white/55 sm:px-6">
+                  <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-primary/10 bg-primary/10 text-primary transition-transform duration-300 group-hover:scale-105"><Icon className="h-5 w-5" aria-hidden /></span>
+                  <div><p className="font-display text-3xl font-bold leading-none text-text">{value}</p><p className="mt-1 text-sm font-medium text-textLight">{label}</p></div>
+                </div>
+              ))}
               </div>
             </div>
           </FadeIn>
         </Container>
       </section>
 
-      <section className="py-10">
+      <section className="relative overflow-hidden py-12 sm:py-16">
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-72 bg-[radial-gradient(ellipse_at_center,rgba(47,95,169,0.13),transparent_66%)]" />
         <Container>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="relative mx-auto mb-9 max-w-2xl text-center">
+            <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">Nuestro propósito</p>
+            <h2 className="mt-3 font-display text-3xl font-bold text-text sm:text-4xl">Un compromiso que nos guía</h2>
+          </div>
+          <div className="relative grid grid-cols-1 gap-6 lg:grid-cols-2">
             {principles.map((item, index) =>  (
               <FadeIn key={item.title} delay={index * 0.15}>
-                <div className="relative rounded-3xl p-8 h-full text-white overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 bg-gradient-to-br from-primary to-blue-700 group/wave">
+                <div className="group/wave relative h-full overflow-hidden rounded-[2rem] border border-white/25 bg-gradient-to-br from-[#153d70]/95 via-[#1c4b83]/92 to-[#0b2e59]/95 p-8 text-white shadow-[0_25px_55px_rgba(18,54,98,0.2)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_30px_65px_rgba(18,54,98,0.3)]">
+                  <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-white/10 blur-3xl" />
                   <div className="relative z-10">
                     <div className="flex items-center gap-4 mb-4">
                       <div className="flex-shrink-0 bg-white/20 p-3 rounded-2xl backdrop-blur-sm">

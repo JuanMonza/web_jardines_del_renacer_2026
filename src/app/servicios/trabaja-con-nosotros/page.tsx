@@ -62,7 +62,9 @@ function VacancyCard({ vacancy }: { vacancy: PublicVacancy }) {
         <p className="flex-1 text-sm leading-6 text-textLight">{vacancy.summary}</p>
 
         <div className="mt-6 flex flex-wrap gap-3">
-          <Link href={`/servicios/trabaja-con-nosotros/postulante?vacante=${vacancy.id}`}>
+          <Link
+            href={`/login/usuario-vacantes?next=${encodeURIComponent(`/servicios/trabaja-con-nosotros/postulante?vacante=${vacancy.id}`)}`}
+          >
             <Button variant="primary">Postularme</Button>
           </Link>
           <Link href="/login/usuario-vacantes">

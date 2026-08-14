@@ -17,10 +17,24 @@ function getSedeMapsQuery(sede: Sede): string {
   return encodeURIComponent(location);
 }
 
+function distanceInKm(latA: number, lngA: number, latB: number, lngB: number): number {
+  const earthRadiusKm = 6371;
+  const toRadians = (value: number) => (value * Math.PI) / 180;
+  const deltaLat = toRadians(latB - latA);
+  const deltaLng = toRadians(lngB - lngA);
+  const value = Math.sin(deltaLat / 2) ** 2
+    + Math.cos(toRadians(latA)) * Math.cos(toRadians(latB)) * Math.sin(deltaLng / 2) ** 2;
+  return earthRadiusKm * 2 * Math.atan2(Math.sqrt(value), Math.sqrt(1 - value));
+}
+
 export default function UbicacionesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [deptFilter, setDeptFilter] = useState('todos');
   const [selectedId, setSelectedId]   = useState<string | null>(null);
+  const [showHours, setShowHours] = useState(false);
+  const [isMapExpanded, setIsMapExpanded] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
+  const [nearestMessage, setNearestMessage] = useState('');
 
   const { sedes, departamentos } = useSedesData();
   const totalSedes = sedes.length;
@@ -40,7 +54,22 @@ export default function UbicacionesPage() {
     });
   }, [searchQuery, deptFilter, sedes]);
 
-  const selected = sedes.find((s) => s.id === selectedId) ?? null;
+  // La página abre con una sede real para que el panel derecho sea útil desde el inicio.
+  // Pereira es representativa de la operación; si no estuviera disponible usamos la primera sede.
+  const defaultSede = useMemo(
+    () => sedes.find((sede) => sede.ciudad.toLowerCase() === 'pereira') ?? sedes[0] ?? null,
+    [sedes],
+  );
+  const selected = sedes.find((s) => s.id === selectedId) ?? defaultSede;
+  const activeSedeId = selected?.id ?? null;
+  const visibleSedes = useMemo(() => {
+    if (!activeSedeId) return filtered;
+    return [...filtered].sort((first, second) => {
+      if (first.id === activeSedeId) return -1;
+      if (second.id === activeSedeId) return 1;
+      return 0;
+    });
+  }, [activeSedeId, filtered]);
   const mapsQuery = selected ? getSedeMapsQuery(selected) : null;
   const selectedCityImage = selected
     ? selected.fotoUrl || getCiudadImagePath(selected.departamento, selected.ciudad)
@@ -57,6 +86,43 @@ export default function UbicacionesPage() {
   const wazeUrl = mapsQuery
     ? `https://waze.com/ul?q=${mapsQuery}`
     : null;
+  const whatsappShareUrl = selected && mapsSearchUrl
+    ? `https://wa.me/?text=${encodeURIComponent(`Te comparto la ubicación de Jardines del Renacer: Sede ${selected.nombre}, ${selected.direccion || `${selected.ciudad}, ${selected.departamento}`}. ${mapsSearchUrl}`)}`
+    : null;
+
+  const handleFindNearest = () => {
+    if (!navigator.geolocation) {
+      setNearestMessage('Tu navegador no permite consultar ubicación. Usa el buscador para encontrar una sede.');
+      return;
+    }
+
+    setIsLocating(true);
+    setNearestMessage('Solicitando tu autorización para encontrar la sede más cercana…');
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        const candidates = sedes.filter((sede) => Number.isFinite(sede.lat) && Number.isFinite(sede.lng) && sede.lat !== 0 && sede.lng !== 0);
+        if (!candidates.length) {
+          setNearestMessage('Aún no hay coordenadas disponibles para calcular la sede más cercana.');
+          setIsLocating(false);
+          return;
+        }
+        const nearest = candidates.reduce((current, sede) => (
+          distanceInKm(coords.latitude, coords.longitude, sede.lat, sede.lng)
+          < distanceInKm(coords.latitude, coords.longitude, current.lat, current.lng) ? sede : current
+        ));
+        const distance = distanceInKm(coords.latitude, coords.longitude, nearest.lat, nearest.lng);
+        setSelectedId(nearest.id);
+        setShowHours(false);
+        setNearestMessage(`La sede más cercana es ${nearest.nombre}, a aproximadamente ${distance < 10 ? distance.toFixed(1) : Math.round(distance)} km.`);
+        setIsLocating(false);
+      },
+      () => {
+        setNearestMessage('No se usó tu ubicación. Puedes elegir una sede manualmente; no guardamos este dato.');
+        setIsLocating(false);
+      },
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 },
+    );
+  };
 
   return (
     <>
@@ -134,6 +200,18 @@ export default function UbicacionesPage() {
                   </button>
                 ))}
               </div>
+              <div className="flex flex-wrap items-center gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={handleFindNearest}
+                  disabled={isLocating}
+                  className="rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-primary/20 transition hover:bg-primary-hover disabled:cursor-wait disabled:opacity-70"
+                >
+                  {isLocating ? 'Buscando sede cercana…' : 'Encontrar sede cercana'}
+                </button>
+                <p className="text-xs text-textLight">Solo solicitamos tu ubicación si eliges esta opción; no la almacenamos.</p>
+              </div>
+              {nearestMessage && <p className="rounded-xl border border-primary/15 bg-primary/5 px-4 py-3 text-sm text-primary">{nearestMessage}</p>}
             </div>
           </FadeIn>
         </Container>
@@ -146,13 +224,23 @@ export default function UbicacionesPage() {
 
             {/* Lista de sedes */}
             <div className="space-y-4 lg:max-h-[800px] lg:overflow-y-auto lg:pr-4 custom-scrollbar">
+              <div className="flex flex-wrap items-end justify-between gap-3 px-1 pb-1">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.15em] text-primary">Directorio nacional</p>
+                  <h2 className="mt-1 text-xl font-bold text-text">{filtered.length} sedes disponibles</h2>
+                </div>
+                <p className="rounded-full border border-primary/15 bg-primary/5 px-3 py-1.5 text-xs font-semibold text-primary">
+                  {departamentos.length} departamentos
+                </p>
+              </div>
               {filtered.length === 0 && (
                 <div className="glass p-12 rounded-2xl text-center border border-border">
                   <p className="text-textLight text-lg">No se encontraron sedes</p>
                 </div>
               )}
 
-              {filtered.map((sede, index) => {
+              {visibleSedes.map((sede, index) => {
+                const isSelected = sede.id === activeSedeId;
                 const cityImage = sede.fotoUrl || getCiudadImagePath(sede.departamento, sede.ciudad);
                 const sedeMapsQuery = getSedeMapsQuery(sede);
                 const sedeDirectionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${sedeMapsQuery}`;
@@ -162,13 +250,14 @@ export default function UbicacionesPage() {
                 return (
                 <FadeIn key={sede.id} delay={Math.min(index * 0.05, 0.4)}>
                   <div
-                    onClick={() => setSelectedId(sede.id === selectedId ? null : sede.id)}
-                    className={`glass p-5 rounded-2xl border-2 cursor-pointer transition-all hover:scale-[1.01] hover:shadow-glass-lg ${
-                      selectedId === sede.id
-                        ? 'border-primary bg-primary/5'
+                    onClick={() => { setSelectedId(sede.id); setShowHours(false); }}
+                    className={`glass relative overflow-hidden p-5 rounded-2xl border-2 cursor-pointer transition-all duration-300 hover:scale-[1.01] hover:shadow-glass-lg ${
+                      isSelected
+                        ? 'border-primary border-l-4 border-l-primary bg-primary/5 shadow-[0_14px_30px_rgba(60,96,162,0.14)]'
                         : 'border-border hover:border-primary/40'
                     }`}
                   >
+                    {isSelected && <span className="absolute inset-y-0 left-0 w-1 bg-primary" aria-hidden="true" />}
                     <div className="flex gap-4">
                       {/* Imagen de la ciudad */}
                       <div className="relative w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-primary/10 border border-primary/20 flex items-center justify-center">
@@ -228,7 +317,7 @@ export default function UbicacionesPage() {
                         </div>
 
                         {/* Botones de acción */}
-                        {selectedId === sede.id && (
+                        {isSelected && (
                           <div className="flex gap-2 mt-3 pt-3 border-t border-primary/10">
                             <a
                               href={sedeMapsUrl}
@@ -241,7 +330,7 @@ export default function UbicacionesPage() {
                                 <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#EA4335" />
                                 <circle cx="12" cy="9" r="2.5" fill="white" />
                               </svg>
-                              Google Maps
+                              Cómo llegar
                             </a>
                             <a
                               href={sedeWazeUrl}
@@ -256,7 +345,7 @@ export default function UbicacionesPage() {
                                 <circle cx="15" cy="12" r="1.5" fill="#1a1a1a" />
                                 <path d="M9 15.5c1 1 5 1 6 0" stroke="#1a1a1a" strokeWidth="1.2" strokeLinecap="round" />
                               </svg>
-                              Waze
+                              Abrir Waze
                             </a>
                           </div>
                         )}
@@ -269,8 +358,8 @@ export default function UbicacionesPage() {
             </div>
 
             {/* Panel Mapa */}
-            <div className="lg:sticky lg:top-24 h-[560px] lg:h-[880px]">
-              <FadeIn delay={0.3}>
+            <div className="lg:sticky lg:top-24 h-[560px] lg:h-[800px]">
+              <FadeIn key={activeSedeId ?? 'sin-sede'} delay={0.15}>
                 <div className="glass p-4 rounded-2xl border border-border h-full">
                   {!selected || !mapsEmbedUrl || !mapsSearchUrl || !mapsDirectionsUrl || !wazeUrl ? (
                     <div className="relative w-full h-full rounded-xl overflow-hidden bg-gradient-to-br from-primary/10 to-blue-500/5">
@@ -288,9 +377,9 @@ export default function UbicacionesPage() {
                       </div>
                     </div>
                   ) : (
-                    <div className="grid grid-rows-[220px_minmax(0,1fr)] gap-4 h-full">
-                      <div className="glass rounded-xl border border-primary/20 overflow-hidden">
-                        <div className="h-full grid grid-cols-[220px_1fr]">
+                    <div className="grid h-full grid-rows-[220px_minmax(0,1fr)_auto] gap-4">
+                      <div className="overflow-hidden rounded-2xl border border-white/70 bg-white/55 shadow-[0_12px_30px_rgba(35,79,132,0.10)] backdrop-blur-xl">
+                        <div className="grid h-full grid-cols-1 sm:grid-cols-[220px_1fr]">
                           <div className="relative h-full bg-primary/10">
                             {selectedCityImage ? (
                               <Image
@@ -307,7 +396,7 @@ export default function UbicacionesPage() {
                               </div>
                             )}
                           </div>
-                          <div className="p-4 flex flex-col">
+                          <div className="flex flex-col p-5">
                             <p className="text-xs font-semibold text-primary mb-1 uppercase tracking-wider">
                               Sede seleccionada
                             </p>
@@ -333,29 +422,61 @@ export default function UbicacionesPage() {
                               </a>
                             )}
 
-                            <div className="flex gap-2 mt-auto pt-3">
+                            {showHours && (
+                              <p className="mt-2 rounded-lg border border-primary/15 bg-primary/5 px-3 py-2 text-xs leading-5 text-textLight">
+                                <strong className="text-primary">Atención y orientación:</strong>{' '}
+                                confirma el horario de esta sede por teléfono antes de visitarla. La línea de acompañamiento está disponible 24/7.
+                              </p>
+                            )}
+
+                            <div className="mt-4 grid grid-cols-2 gap-2">
                               <a
-                                href={mapsSearchUrl}
+                                href={mapsDirectionsUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex-1 text-center text-xs font-semibold py-2 rounded-lg bg-primary text-white hover:bg-[#2f4d82] transition-colors"
+                                className="rounded-xl bg-primary px-3 py-2.5 text-center text-sm font-bold text-white shadow-md shadow-primary/20 transition hover:bg-[#2f4d82]"
                               >
-                                Abrir Maps
+                                Cómo llegar
                               </a>
                               <a
-                                href={wazeUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex-1 text-center text-xs font-semibold py-2 rounded-lg border border-primary text-primary hover:bg-primary/10 transition-colors"
+                                href={`tel:+57${selected.telefono.replace(/\s/g, '')}`}
+                                className="rounded-xl border border-primary/25 bg-white/55 px-3 py-2.5 text-center text-sm font-bold text-primary backdrop-blur transition hover:bg-primary/10"
                               >
-                                Abrir Waze
+                                Llamar
                               </a>
+                              {whatsappShareUrl && (
+                                <a
+                                  href={whatsappShareUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="rounded-xl border border-emerald-500/25 bg-emerald-50/70 px-3 py-2.5 text-center text-sm font-bold text-emerald-700 backdrop-blur transition hover:bg-emerald-100"
+                                >
+                                  Compartir
+                                </a>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => setShowHours((value) => !value)}
+                                className="rounded-xl border border-primary/25 bg-white/55 px-3 py-2.5 text-center text-sm font-bold text-primary backdrop-blur transition hover:bg-primary/10"
+                              >
+                                Ver horarios
+                              </button>
                             </div>
                           </div>
                         </div>
                       </div>
 
-                      <div className="rounded-xl overflow-hidden border border-primary/20 bg-white">
+                      <div className="relative overflow-hidden rounded-xl border border-primary/20 bg-white">
+                        <div className="absolute left-3 top-3 z-10 rounded-lg border border-white/70 bg-white/95 px-3 py-2 text-xs font-bold text-primary shadow-lg backdrop-blur">
+                          {selected.ciudad}, {selected.departamento}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setIsMapExpanded(true)}
+                          className="absolute right-3 top-3 z-10 rounded-lg border border-white/70 bg-white/95 px-3 py-2 text-xs font-bold text-primary shadow-lg backdrop-blur transition hover:bg-primary hover:text-white"
+                        >
+                          Ampliar mapa
+                        </button>
                         <iframe
                           title={`Mapa de sede ${selected.nombre}`}
                           src={mapsEmbedUrl}
@@ -364,6 +485,11 @@ export default function UbicacionesPage() {
                           referrerPolicy="no-referrer-when-downgrade"
                           allowFullScreen
                         />
+                      </div>
+
+                      <div className="flex items-center gap-3 rounded-2xl border border-white/70 bg-white/55 px-4 py-3 text-sm text-textLight shadow-[0_10px_24px_rgba(35,79,132,0.08)] backdrop-blur-xl">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-primary/15 bg-primary/5 text-primary shadow-sm">24/7</span>
+                        <p><strong className="text-text">Atención inmediata.</strong> Equipo local de Jardines del Renacer disponible para orientarte en {selected.ciudad}.</p>
                       </div>
                     </div>
                   )}
@@ -374,6 +500,16 @@ export default function UbicacionesPage() {
           </div>
         </Container>
       </section>
+
+      {isMapExpanded && selected && mapsEmbedUrl && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#07182e]/70 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={`Mapa ampliado de ${selected.nombre}`}>
+          <div className="relative h-[86vh] w-full max-w-6xl overflow-hidden rounded-3xl border border-white/30 bg-white p-3 shadow-2xl">
+            <div className="absolute left-7 top-7 z-10 rounded-xl bg-white/95 px-4 py-2 text-sm font-bold text-primary shadow-lg">Sede {selected.nombre}</div>
+            <button type="button" onClick={() => setIsMapExpanded(false)} className="absolute right-7 top-7 z-10 rounded-xl bg-primary px-4 py-2 text-sm font-bold text-white shadow-lg">Cerrar</button>
+            <iframe title={`Mapa ampliado de ${selected.nombre}`} src={mapsEmbedUrl} className="h-full w-full rounded-2xl border-0" loading="lazy" referrerPolicy="no-referrer-when-downgrade" allowFullScreen />
+          </div>
+        </div>
+      )}
 
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }

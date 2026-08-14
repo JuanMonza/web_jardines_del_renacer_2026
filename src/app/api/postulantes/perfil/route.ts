@@ -61,6 +61,7 @@ export async function PUT(request: NextRequest) {
     const response = NextResponse.json({ success: true, data: updatedProfile });
     if (updatedProfile?.fullName) {
       const token = await signVacantesCandidateJwt({
+        candidateId: session.candidateId,
         documentNumber: session.documentNumber,
         email: session.email,
         name: updatedProfile.fullName,

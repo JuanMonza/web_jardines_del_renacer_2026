@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import ColombiaMap from '@/assets/maps/colombia.svg';
 import { coverageData, Department } from './coverageData';
@@ -24,25 +24,11 @@ export default function ColombiaSVG({
   onSelectSede,
 }: Props) {
   const svgRef = useRef<HTMLDivElement>(null);
-  const [coords, setCoords] = useState<{ x: number; y: number } | null>(null);
-  const [copied, setCopied] = useState(false);
-
   const clamp = (v: number) => Math.max(2, Math.min(98, v));
-
-  const copyCoords = useCallback(() => {
-    if (!coords) return;
-    const value = `{
-  id: 'nuevo-id',
-  name: 'Nueva sede',
-  slug: 'nueva-sede',
-  x: ${coords.x.toFixed(2)},
-  y: ${coords.y.toFixed(2)},
-  href: '/sedes/nueva-sede',
-}`;
-    navigator.clipboard?.writeText(value);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1500);
-  }, [coords]);
+  const focusScale = selected ? 1.28 : 1;
+  // Centra el departamento seleccionado después de aplicar el zoom.
+  const focusX = selected ? `${50 - selected.x * focusScale}%` : '0%';
+  const focusY = selected ? `${50 - selected.y * focusScale}%` : '0%';
 
   // Hover + Click
   useEffect(() => {
@@ -65,6 +51,13 @@ export default function ColombiaSVG({
 
       element.style.cursor = 'pointer';
       element.style.transition = 'all .3s ease';
+      // El mapa tiene departamentos contiguos: este borde claro conserva la lectura
+      // territorial sobre el azul corporativo, incluso cuando hay zoom.
+      element.style.stroke = '#FFFFFF';
+      element.style.strokeWidth = '2.2';
+      element.style.strokeOpacity = '0.92';
+      element.style.strokeLinejoin = 'round';
+      element.style.vectorEffect = 'non-scaling-stroke';
 
       const enter = () => {
         onHover(department);
@@ -117,6 +110,11 @@ export default function ColombiaSVG({
     departments.forEach((item) => {
       (item as SVGElement).style.fill = '#EAF4FF';
       (item as SVGElement).style.filter = 'none';
+      (item as SVGElement).style.stroke = '#FFFFFF';
+      (item as SVGElement).style.strokeWidth = '2.2';
+      (item as SVGElement).style.strokeOpacity = '0.92';
+      (item as SVGElement).style.strokeLinejoin = 'round';
+      (item as SVGElement).style.vectorEffect = 'non-scaling-stroke';
     });
 
     if (!selected) return;
@@ -132,36 +130,6 @@ export default function ColombiaSVG({
     active.style.filter =
       'drop-shadow(0 0 20px rgba(151,118,96,.65))';
   }, [selected]);
-
-  // Mouse move inspector para obtener coordenadas relativas (porcentaje)
-  useEffect(() => {
-    const container = svgRef.current;
-    if (!container) return;
-
-    const onMove = (e: MouseEvent) => {
-      const svg = container.querySelector('svg');
-      if (!svg) return;
-      const rect = svg.getBoundingClientRect();
-      const x = ((e.clientX - rect.left) / rect.width) * 100;
-      const y = ((e.clientY - rect.top) / rect.height) * 100;
-      setCoords({ x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) });
-    };
-
-    const onClick = (e: MouseEvent) => {
-      // Si presionas Shift al click, copia la entrada para coverageData.ts
-      if (e.shiftKey) {
-        copyCoords();
-      }
-    };
-
-    container.addEventListener('mousemove', onMove);
-    container.addEventListener('click', onClick);
-
-    return () => {
-      container.removeEventListener('mousemove', onMove);
-      container.removeEventListener('click', onClick);
-    };
-  }, [copyCoords]);
 
   return (
     <motion.div
@@ -201,15 +169,9 @@ export default function ColombiaSVG({
       {/* MAPA */}
 
       <motion.div
-        animate={{
-          scale: selected?.scale ?? 1,
-          x: selected?.translateX ?? 0,
-          y: selected?.translateY ?? 0,
-        }}
-        transition={{
-          duration: 0.8,
-        }}
         className="origin-center"
+        animate={{ scale: focusScale, x: focusX, y: focusY }}
+        transition={{ duration: 0.55, ease: 'easeOut' }}
       >
         <ColombiaMap
           className="
@@ -226,58 +188,46 @@ export default function ColombiaSVG({
 
       <motion.div
         className="absolute inset-0"
-        animate={{
-          scale: selected?.scale ?? 1,
-          x: selected?.translateX ?? 0,
-          y: selected?.translateY ?? 0,
-        }}
-        transition={{
-          duration: 0.8,
-        }}
+        animate={{ scale: focusScale, x: focusX, y: focusY }}
+        transition={{ duration: 0.55, ease: 'easeOut' }}
       >
         {(() => {
           const clamp = (v: number) => Math.max(2, Math.min(98, v));
 
-          return coverageData.map((item) => (
+          return coverageData.filter((item) => !selected || item.id === selected.id).map((item) => (
             <MapMarker
               key={item.id}
               x={clamp(item.x)}
               y={clamp(item.y)}
               active={selected?.id === item.id}
               label={item.name}
+              showLabel={false}
               onClick={() => onSelect(item)}
             />
           ));
         })()}
 
-        {/* Badges numerados por departamento (estilo infográfico) */}
-        {coverageData.map((item) => {
-          const n = item.sedes ?? 0;
-          const x = clamp(item.x);
-          const y = clamp(item.y - 4); // desplazar ligeramente hacia arriba para no solapar con marker
+        {selected && (
+          <div
+            className="pointer-events-none absolute z-50"
+            style={{ left: `${clamp(selected.x)}%`, top: `${clamp(selected.y)}%` }}
+          >
+            <span className="absolute bottom-2 left-1/2 h-10 w-0.5 -translate-x-1/2 rounded-full bg-[#2b6cb0] shadow-[0_0_12px_rgba(43,108,176,0.65)]" />
+            <div className="absolute bottom-11 left-1/2 flex -translate-x-1/2 items-center whitespace-nowrap rounded-full border border-[#2b6cb0]/30 bg-white/95 px-3 py-1.5 text-xs font-bold text-[#173861] shadow-[0_8px_22px_rgba(20,55,95,0.2)] backdrop-blur">
+              {selected.name}
+            </div>
+          </div>
+        )}
 
-          return (
-            <button
-              key={`badge-${item.id}`}
-              onClick={() => onSelect(item)}
-              onMouseEnter={() => onHover(item)}
-              onMouseLeave={() => onHover(null)}
-              style={{ left: `${x}%`, top: `${y}%` }}
-              className={`absolute -translate-x-1/2 -translate-y-1/2 z-40 flex items-center justify-center rounded-full bg-primary text-white ${n > 9 ? 'w-8 h-8 text-xs' : 'w-7 h-7 text-sm'} font-semibold shadow-sm`}
-            >
-              {n}
-            </button>
-          );
-        })}
-
-        {/* Sedes por ciudad del departamento seleccionado */}
-        {selected?.sedeList.map((sede) => (
+        {/* Una sola ciudad a la vez: evita puntos solapados y mantiene el mapa legible. */}
+        {selected?.sedeList.filter((sede) => sede.id === selectedSedeId).map((sede) => (
             <MapMarker
               key={sede.id}
               x={clamp(sede.x)}
               y={clamp(sede.y)}
               active={sede.id === selectedSedeId}
               label={sede.name}
+              compact
               onClick={() => {
                 // seleccionar departamento y sede, pero NO navegar automáticamente
                 onSelect(selected);
@@ -293,26 +243,6 @@ export default function ColombiaSVG({
           ))}
       </motion.div>
 
-      {/* Inspector de coordenadas (útil para calibrar x,y de sedes) */}
-      {coords && (
-        <div className="absolute left-4 bottom-4 z-50 pointer-events-auto">
-          <div className="glass px-3 py-3 rounded-2xl text-sm shadow-lg border border-primary/10">
-            <div className="text-xs text-textLight">Coordenadas (%, %)</div>
-            <div className="font-mono text-sm">{coords.x.toFixed(1)}%, {coords.y.toFixed(1)}%</div>
-            <div className="mt-2 flex items-center justify-between gap-3">
-              <button
-                type="button"
-                onClick={copyCoords}
-                className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-white transition hover:bg-primary-hover"
-              >
-                Copiar entrada
-              </button>
-              <span className="text-[10px] text-textLight">Shift+click también copia la entrada</span>
-            </div>
-            {copied && <div className="text-[10px] text-green-400 mt-2">Copiado</div>}
-          </div>
-        </div>
-      )}
     </motion.div>
   );
 }

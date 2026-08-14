@@ -11,6 +11,7 @@ import {
     ArrowRight,
     ChevronsDown,
     ChevronsUp,
+    RotateCcw,
 } from "lucide-react";
 import Link from "next/link";
 import { getDepartamentoSlug, getSedesByDepartamento } from '@/data/sedes';
@@ -20,9 +21,11 @@ import { Department } from "./coverageData";
 interface DepartmentCardProps {
     department: Department | null;
     selectedSedeId?: string | null;
+    onReset?: () => void;
+    onSelectCity?: (sedeId: string) => void;
 }
 
-export default function DepartmentCard({ department, selectedSedeId }: DepartmentCardProps) {
+export default function DepartmentCard({ department, selectedSedeId, onReset, onSelectCity }: DepartmentCardProps) {
     const [expanded, setExpanded] = useState(false);
 
     useEffect(() => {
@@ -73,7 +76,7 @@ export default function DepartmentCard({ department, selectedSedeId }: Departmen
                     transition={{
                         duration: 0.4,
                     }}
-                    className=" relative overflow-hidden glass rounded-[34px] border border-primary/10 p-10 shadow-[0_25px_70px_rgba(0,0,0,.12)]"
+                    className="relative min-w-0 overflow-hidden glass rounded-[28px] border border-primary/10 p-6 shadow-[0_25px_70px_rgba(0,0,0,.12)] sm:p-7"
                 >
                     {/* Glow */}
 
@@ -83,12 +86,14 @@ export default function DepartmentCard({ department, selectedSedeId }: Departmen
 
                     {/* Header */}
 
-                    <div className="relative flex items-center gap-5 mb-10">
+                    <div className="relative mb-7 flex min-w-0 items-start justify-between gap-3">
+                      <div className="flex min-w-0 items-center gap-3">
                         <div
                             className="
-                h-16
-                w-16
-                rounded-3xl
+                h-12
+                w-12
+                shrink-0
+                rounded-2xl
                 bg-primary/10
                 border
                 border-primary/20
@@ -97,34 +102,36 @@ export default function DepartmentCard({ department, selectedSedeId }: Departmen
                 justify-center
               "
                         >
-                            <MapPin className="h-8 w-8 text-primary" />
+                            <MapPin className="h-6 w-6 text-primary" />
                         </div>
 
-                        <div>
-                            <h3 className="text-4xl font-display">{department.name}</h3>
+                        <div className="min-w-0">
+                            <h3 className="break-words text-2xl font-display leading-tight sm:text-3xl">{department.name}</h3>
 
-                            <p className="text-textLight mt-1">
+                            <p className="mt-1 text-sm leading-6 text-textLight">
                                 Cobertura Jardines del Renacer
                             </p>
                         </div>
+                      </div>
+                      {onReset && <button type="button" onClick={onReset} aria-label="Restablecer mapa" className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-primary/20 bg-white/70 px-2.5 py-2 text-xs font-bold text-primary transition hover:bg-primary/10"><RotateCcw className="h-4 w-4" /><span className="hidden sm:inline">Mapa</span></button>}
                     </div>
 
                     {/* Estadísticas */}
 
-                    <div className="grid grid-cols-2 gap-5 mb-10">
+                    <div className="mb-8 grid grid-cols-2 gap-3 sm:gap-4">
                         <div
                             className="
                 glass
                 rounded-3xl
                 border
                 border-primary/10
-                p-6
+                p-4 sm:p-5
                 text-center
               "
                         >
-                            <Building2 className="mx-auto h-8 w-8 text-primary mb-3" />
+                            <Building2 className="mx-auto mb-2 h-7 w-7 text-primary" />
 
-                            <div className="text-4xl font-display">{department.sedes}</div>
+                            <div className="text-3xl font-display">{department.sedes}</div>
 
                             <p className="text-textLight mt-1">Sedes</p>
                         </div>
@@ -135,13 +142,13 @@ export default function DepartmentCard({ department, selectedSedeId }: Departmen
                 rounded-3xl
                 border
                 border-primary/10
-                p-6
+                p-4 sm:p-5
                 text-center
               "
                         >
-                            <MapPinned className="mx-auto h-8 w-8 text-primary mb-3" />
+                            <MapPinned className="mx-auto mb-2 h-7 w-7 text-primary" />
 
-                            <div className="text-4xl font-display">{department.ciudades.length}</div>
+                            <div className="text-3xl font-display">{department.ciudades.length}</div>
 
                             <p className="text-textLight mt-1">Ciudades</p>
                         </div>
@@ -151,11 +158,14 @@ export default function DepartmentCard({ department, selectedSedeId }: Departmen
 
                     <div className="mb-10">
                         <h4 className="font-semibold mb-4">Cobertura destacada</h4>
+                        <p className="mb-4 text-sm leading-6 text-textLight">Selecciona una ciudad para verla señalada en el mapa.</p>
 
                         <div className="flex flex-wrap gap-3">
-                            {department.ciudades.map((city) => (
-                                <span
-                                    key={city}
+                            {department.sedeList.map((city) => (
+                                <button
+                                    type="button"
+                                    key={city.id}
+                                    onClick={() => onSelectCity?.(city.id)}
                                     className="
                     rounded-full
                     bg-primary/10
@@ -164,10 +174,11 @@ export default function DepartmentCard({ department, selectedSedeId }: Departmen
                     px-4
                     py-2
                     text-sm
+                    transition hover:bg-primary hover:text-white focus:outline-none focus:ring-4 focus:ring-primary/15
                   "
                                 >
-                                    {city}
-                                </span>
+                                    {city.name}
+                                </button>
                             ))}
                         </div>
                     </div>

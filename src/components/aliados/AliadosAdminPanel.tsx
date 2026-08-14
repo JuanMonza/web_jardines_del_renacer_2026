@@ -298,11 +298,6 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
       return;
     }
 
-    if (!draft.logo.trim()) {
-      setFeedback('Agrega el logo del aliado (URL o archivo).');
-      return;
-    }
-
     const now = new Date().toISOString();
     const template =
       draft.whatsappTemplate.trim() ||
@@ -1179,12 +1174,29 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
           <article className="glass rounded-3xl border border-primary/15 p-6">
             <h3 className="text-lg font-semibold text-text mb-4">Vista previa CTA</h3>
             <div className="rounded-2xl border border-primary/15 bg-white/40 p-4">
-              <p className="text-xs uppercase tracking-[0.18em] text-primary mb-1">
-                {getCategoryLabel(previewAlly.categorySlug)} - {previewAlly.subcategory}
-              </p>
-              <p className="text-xs text-textLight mb-1">
-                Ubicacion: {previewAlly.municipio}, {previewAlly.departamento}
-              </p>
+              <div className="mb-3 flex items-start gap-3">
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-primary/20 bg-white/80 p-2 shadow-sm">
+                  {previewAlly.logo ? (
+                    <Image
+                      src={previewAlly.logo}
+                      alt={`Logo de ${previewAlly.name || 'aliado comercial'}`}
+                      width={64}
+                      height={64}
+                      className="h-full w-full object-contain"
+                    />
+                  ) : (
+                    <span className="px-1 text-center text-[10px] font-semibold leading-tight text-textLight">Vista del logo</span>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1 pt-0.5">
+                  <p className="text-xs uppercase tracking-[0.18em] text-primary mb-1">
+                    {getCategoryLabel(previewAlly.categorySlug)} - {previewAlly.subcategory}
+                  </p>
+                  <p className="text-xs text-textLight">
+                    Ubicación: {previewAlly.municipio}, {previewAlly.departamento}
+                  </p>
+                </div>
+              </div>
               <p className="inline-flex mb-2 text-xs font-semibold px-2.5 py-1 rounded-full border border-green-500/20 bg-green-500/10 text-green-700">
                 {previewAlly.discountLabel}
               </p>

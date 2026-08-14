@@ -39,7 +39,7 @@ function calculateProfileCompletion(profile: CandidateProfile) {
     profile.city,
     profile.professionalTitle,
     profile.about,
-    profile.resumeFileData,
+    profile.cvUrl || profile.resumeFileData,
   ];
   const done = checks.filter((item) => item.trim().length > 0).length;
   return Math.round((done / checks.length) * 100);
@@ -131,6 +131,7 @@ function PostulanteContent() {
   const [feedback, setFeedback] = useState('');
   const [saving, setSaving] = useState(false);
   const [applying, setApplying] = useState(false);
+  const [uploadingResume, setUploadingResume] = useState(false);
   const [trackingDocument, setTrackingDocument] = useState('');
   const [trackingEmail, setTrackingEmail] = useState('');
 
@@ -146,7 +147,17 @@ function PostulanteContent() {
       }
       if (profileResponse.ok) {
         const result = await profileResponse.json() as { success?: boolean; data?: CandidateProfile };
-        if (result.success && result.data) setProfile(result.data);
+        if (result.success && result.data) {
+          const loadedProfile = result.data;
+          setProfile((current) => ({
+            ...loadedProfile,
+            // Si el postulante acaba de adjuntar el CV, no permitimos que una
+            // respuesta inicial más lenta borre ese estado visual.
+            cvUrl: current.cvUrl || loadedProfile.cvUrl,
+            resumeFileName: current.resumeFileName || loadedProfile.resumeFileName,
+            resumeFileData: current.resumeFileData || loadedProfile.resumeFileData,
+          }));
+        }
       }
       if (applicationsResponse.ok) {
         const result = await applicationsResponse.json() as { success?: boolean; data?: JobApplication[] };
@@ -193,7 +204,7 @@ function PostulanteContent() {
     );
   }, [applications, trackingDocument, trackingEmail]);
 
-  const handleResumeUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleResumeUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) {
       return;
@@ -210,18 +221,38 @@ function PostulanteContent() {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      // Guardamos el CV en base64 para que el postulante no pierda datos al recargar.
-      const data = typeof reader.result === 'string' ? reader.result : '';
+    setUploadingResume(true);
+    setFeedback('Cargando tu hoja de vida de forma segura...');
+
+    try {
+      const fileData = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '');
+        reader.onerror = () => reject(new Error('No fue posible leer el archivo.'));
+        reader.readAsDataURL(file);
+      });
+      const response = await fetch('/api/postulantes/cv', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileName: file.name, fileData }),
+      });
+      const result = await response.json() as { success?: boolean; data?: { url?: string; fileName?: string }; message?: string };
+      if (!response.ok || !result.success || !result.data?.url) {
+        throw new Error(result.message || 'No fue posible cargar la hoja de vida.');
+      }
       setProfile((prev) => ({
         ...prev,
-        resumeFileName: file.name,
-        resumeFileData: data,
+        cvUrl: result.data?.url ?? '',
+        resumeFileName: result.data?.fileName || file.name,
+        resumeFileData: '',
       }));
-      setFeedback('Hoja de vida cargada correctamente.');
-    };
-    reader.readAsDataURL(file);
+      setFeedback('Hoja de vida cargada y guardada correctamente. Ya puedes postularte.');
+    } catch (error) {
+      setFeedback(error instanceof Error ? error.message : 'No fue posible cargar la hoja de vida.');
+      event.target.value = '';
+    } finally {
+      setUploadingResume(false);
+    }
   };
 
   const handleSaveProfile = async () => {
@@ -290,7 +321,13 @@ function PostulanteContent() {
       return;
     }
 
-    if (!profile.resumeFileData) {
+    if (uploadingResume) {
+      setFeedback('Espera a que termine la carga de tu hoja de vida.');
+      setApplying(false);
+      return;
+    }
+
+    if (!profile.cvUrl && !profile.resumeFileData) {
       setFeedback('Debes cargar tu hoja de vida para postularte.');
       setApplying(false);
       return;
@@ -338,7 +375,7 @@ function PostulanteContent() {
 
       setApplications((current) => [result.data!, ...current]);
 
-      setFeedback(`Postulacion enviada a "${selectedVacancy.title}". Ya puedes ingresar al portal.`);
+      setFeedback(`Postulación recibida para "${selectedVacancy.title}". Ya puedes consultar el estado en Tus postulaciones.`);
     } catch (error) {
       setFeedback(error instanceof Error ? error.message : 'No se pudo registrar la postulacion.');
     } finally {
@@ -522,11 +559,17 @@ function PostulanteContent() {
                       type="file"
                       accept=".pdf,.doc,.docx"
                       onChange={handleResumeUpload}
+                      disabled={uploadingResume}
                       className="w-full text-sm text-textLight file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-primary/15 file:text-primary file:font-semibold hover:file:bg-primary/25"
                     />
+                    {uploadingResume && (
+                      <p className="text-xs text-primary font-medium mt-2">
+                        Guardando tu hoja de vida de forma segura...
+                      </p>
+                    )}
                     {profile.resumeFileName && (
-                      <p className="text-xs text-textLight mt-2">
-                        Archivo cargado: <span className="text-text">{profile.resumeFileName}</span>
+                      <p className="text-xs text-emerald-700 mt-2">
+                        Hoja de vida guardada: <span className="font-medium">{profile.resumeFileName}</span>
                       </p>
                     )}
                   </div>
@@ -586,9 +629,13 @@ function PostulanteContent() {
                         variant="primary"
                         className="w-full"
                         onClick={handleApplyToVacancy}
-                        disabled={applying}
+                        disabled={applying || uploadingResume}
                       >
-                        {applying ? 'Enviando postulacion...' : 'Postularme a esta vacante'}
+                        {uploadingResume
+                          ? 'Guardando hoja de vida...'
+                          : applying
+                            ? 'Enviando postulación...'
+                            : 'Postularme a esta vacante'}
                       </Button>
                     </div>
                   ) : (

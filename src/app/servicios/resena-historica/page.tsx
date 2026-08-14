@@ -17,10 +17,6 @@ function relativePosition(index: number, activeIndex: number, total: number) {
   return position;
 }
 
-function timelineImage(item: TimelineItem) {
-  return item.id === 5 ? '/images/images-baners/equipo.webp' : item.image;
-}
-
 export default function ResenaHistoricaPage() {
   const timeline = historyTimeline.filter((item) => item.active).sort((a, b) => a.order - b.order);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -85,7 +81,7 @@ export default function ResenaHistoricaPage() {
                       style={{ transformStyle: 'preserve-3d' }}
                     >
                       <span className="absolute inset-0 block overflow-hidden rounded-[2rem]" style={{ backfaceVisibility: 'hidden' }}>
-                        <Image src={timelineImage(item)} alt={item.title} fill className="object-cover" sizes="(min-width: 640px) 380px, 78vw" priority={isActive} />
+                        <Image src={item.image} alt={item.title} fill className="object-cover" sizes="(min-width: 640px) 380px, 78vw" priority={isActive} />
                         <span className="absolute inset-0 bg-gradient-to-t from-[#071628]/60 via-transparent to-black/5" />
                         <span className="absolute bottom-8 left-0 right-0 px-7 text-center text-white drop-shadow-lg">
                           <span className="block text-xl font-bold leading-tight sm:text-2xl">{item.title}</span>

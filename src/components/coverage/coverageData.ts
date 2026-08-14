@@ -46,124 +46,135 @@ const COVERAGE_COLOR = '#977660';
 const departmentMapConfig: Record<string, DepartmentMapConfig> = {
   antioquia: {
     id: 'CO-ANT',
-    x: 32,
-    y: 22,
+    x: 42,
+    y: 32,
     translateX: 40,
     translateY: 35,
     scale: 1.45,
   },
   atlantico: {
     id: 'CO-ATL',
-    x: 64,
-    y: 10,
+    x: 45,
+    y: 12,
     translateX: 15,
     translateY: 80,
     scale: 1.45,
   },
   boyaca: {
     id: 'CO-BOY',
-    x: 53,
-    y: 29,
+    x: 57,
+    y: 40,
     translateX: -40,
     translateY: 25,
     scale: 1.45,
   },
   caldas: {
     id: 'CO-CAL',
-    x: 40,
-    y: 34,
+    x: 43,
+    y: 44,
     translateX: 20,
     translateY: 20,
     scale: 1.45,
   },
   cauca: {
     id: 'CO-CAU',
-    x: 34,
-    y: 48,
+    x: 33,
+    y: 62,
     translateX: 30,
     translateY: -20,
     scale: 1.45,
   },
   choco: {
     id: 'CO-CHO',
-    x: 22,
-    y: 30,
+    x: 32,
+    y: 37,
     translateX: 75,
     translateY: 20,
     scale: 1.45,
   },
   cundinamarca: {
     id: 'CO-CUN',
-    x: 53,
-    y: 38,
+    x: 52,
+    y: 47,
     translateX: -45,
     translateY: 5,
     scale: 1.45,
   },
   huila: {
     id: 'CO-HUI',
-    x: 48,
-    y: 52,
+    x: 42,
+    y: 59,
     translateX: -15,
     translateY: -35,
     scale: 1.45,
   },
   meta: {
     id: 'CO-MET',
-    x: 61,
-    y: 47,
+    x: 59,
+    y: 56,
     translateX: -65,
     translateY: -20,
     scale: 1.45,
   },
   putumayo: {
     id: 'CO-PUT',
-    x: 48,
-    y: 68,
+    x: 42,
+    y: 73,
     translateX: -10,
     translateY: -80,
     scale: 1.55,
   },
   quindio: {
     id: 'CO-QUI',
-    x: 38,
-    y: 38,
+    x: 41,
+    y: 49,
     translateX: 25,
     translateY: 5,
     scale: 1.55,
   },
   risaralda: {
     id: 'CO-RIS',
-    x: 36,
-    y: 36,
+    x: 39,
+    y: 45,
     translateX: 30,
     translateY: 15,
     scale: 1.55,
   },
   santander: {
     id: 'CO-SAN',
-    x: 60,
-    y: 26,
+    x: 55,
+    y: 34,
     translateX: -70,
     translateY: 30,
     scale: 1.45,
   },
   tolima: {
     id: 'CO-TOL',
-    x: 46,
-    y: 42,
+    x: 43,
+    y: 50,
     translateX: -15,
     translateY: -5,
     scale: 1.45,
   },
   'valle-del-cauca': {
     id: 'CO-VAC',
-    x: 31,
-    y: 43,
+    x: 35,
+    y: 51,
     translateX: 50,
     translateY: -5,
     scale: 1.55,
   },
+};
+
+// Las ciudades se registraron con la calibración anterior del SVG. Conservamos
+// sus distancias relativas y las desplazamos al nuevo centro geográfico de cada
+// departamento para no alterar datos de sedes ni concentrar los puntos.
+const legacyDepartmentPoints: Record<string, MapPoint> = {
+  antioquia: { x: 32, y: 22 }, atlantico: { x: 64, y: 10 }, boyaca: { x: 53, y: 29 },
+  caldas: { x: 40, y: 34 }, cauca: { x: 34, y: 48 }, choco: { x: 22, y: 30 },
+  cundinamarca: { x: 53, y: 38 }, huila: { x: 48, y: 52 }, meta: { x: 61, y: 47 },
+  putumayo: { x: 48, y: 68 }, quindio: { x: 38, y: 38 }, risaralda: { x: 36, y: 36 },
+  santander: { x: 60, y: 26 }, tolima: { x: 46, y: 42 }, 'valle-del-cauca': { x: 31, y: 43 },
 };
 
 function cityKey(department: string, city: string): string {
@@ -304,6 +315,12 @@ function fallbackPoint(config: DepartmentMapConfig, index: number, total: number
   };
 }
 
+function alignCityPoint(point: MapPoint, departmentSlug: string, config: DepartmentMapConfig): MapPoint {
+  const legacy = legacyDepartmentPoints[departmentSlug];
+  if (!legacy) return point;
+  return { x: point.x + config.x - legacy.x, y: point.y + config.y - legacy.y };
+}
+
 function buildSedeList(department: DepartamentoInfo, config: DepartmentMapConfig): SedeMapPoint[] {
   const sedesByCity = new Map<string, number>();
 
@@ -319,13 +336,14 @@ function buildSedeList(department: DepartamentoInfo, config: DepartmentMapConfig
   return cities.map((city, index) => {
     const slug = getDepartamentoSlug(city);
     const count = sedesByCity.get(slug) ?? 0;
-    const point =
-      cityMapCoordinates[cityKey(department.nombre, city)] ??
-      fallbackPoint(config, index, cities.length);
+    const savedPoint = cityMapCoordinates[cityKey(department.nombre, city)];
+    const point = savedPoint
+      ? alignCityPoint(savedPoint, department.slug, config)
+      : fallbackPoint(config, index, cities.length);
 
     return {
       id: `${department.slug}-${slug}`,
-      name: count > 1 ? `${city} (${count} sedes)` : city,
+      name: city,
       slug,
       x: point.x,
       y: point.y,

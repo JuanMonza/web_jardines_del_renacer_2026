@@ -36,6 +36,10 @@ export default function CoverageMap() {
         setSelectedSedeId(null);
     };
 
+    const handleSelectCity = (sedeId: string) => {
+        setSelectedSedeId(sedeId);
+    };
+
     // Escuchar selección de sede desde el mapa
     useEffect(() => {
         const handler = (e: any) => {
@@ -60,7 +64,7 @@ export default function CoverageMap() {
                 return;
             }
 
-            if (!sectionRef.current?.contains(target) || selectedDepartment) {
+            if (!sectionRef.current?.contains(target)) {
                 resetMap();
             }
         };
@@ -76,21 +80,11 @@ export default function CoverageMap() {
 
                 {/* Encabezado */}
 
-                <div className="relative left-1/2 w-screen -translate-x-1/2 mb-16 py-10 overflow-hidden bg-primary/5">
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/85 to-transparent" />
-                    <div className="absolute inset-y-0 left-1/2 w-[72%] -translate-x-1/2 bg-primary/35 blur-2xl" />
-                    <div className="relative z-10 mx-auto max-w-4xl text-center px-6 lg:px-8">
-                        <span className="uppercase tracking-[0.25em] text-primary text-sm">
-                            COBERTURA NACIONAL
-                        </span>
-                        <h2 className="text-4xl md:text-5xl font-display font-extrabold text-white mt-5 mb-6">
+                <div className="relative left-1/2 mb-16 w-screen -translate-x-1/2 border-y-4 border-[#5a7ec0] bg-primary py-9 shadow-[0_14px_34px_rgba(60,96,162,0.2)]">
+                    <div className="relative z-10 mx-auto max-w-4xl px-6 text-center lg:px-8">
+                        <h2 className="text-4xl font-display font-extrabold text-white md:text-5xl">
                             Estamos presentes donde más nos necesitan
                         </h2>
-                        <p className="text-xl text-white/90 leading-relaxed max-w-3xl mx-auto">
-                            Contamos con presencia en diferentes departamentos de Colombia,
-                            brindando atención inmediata, infraestructura propia y un
-                            acompañamiento humano permanente.
-                        </p>
                     </div>
                 </div>
 
@@ -104,11 +98,8 @@ export default function CoverageMap() {
 
                     <div
                         ref={mapRef}
-                        onPointerLeave={(event) => {
-                            if (event.pointerType === 'mouse') resetMap();
-                        }}
-                        className="lg:col-span-8 relative overflow-hidden rounded-[24px] border border-primary/10 bg-slate-950/5 w-full"
-                        style={{ aspectRatio: '3/4', maxHeight: '620px' }}
+                        className="lg:col-span-8 relative w-full max-w-[620px] overflow-hidden rounded-[24px] border border-primary/10 bg-slate-950/5 lg:mx-auto"
+                        style={{ aspectRatio: '612.82184 / 693.68036' }}
                     >
 
                         <ColombiaSVG
@@ -119,6 +110,36 @@ export default function CoverageMap() {
                             onSelect={handleSelectDepartment}
                         />
 
+                        {!selectedDepartment && (
+                            <div className="pointer-events-none absolute left-4 top-4 z-40 rounded-2xl border border-primary/15 bg-white/90 px-4 py-3 shadow-lg backdrop-blur-sm sm:left-6 sm:top-6">
+                                <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Mapa interactivo</p>
+                                <p className="mt-1 text-xs leading-5 text-textLight">Selecciona un departamento para ver sus ciudades y sedes.</p>
+                            </div>
+                        )}
+
+                        {selectedDepartment && (
+                            <div className="absolute bottom-4 left-4 right-4 z-40 max-h-36 overflow-y-auto rounded-2xl border border-primary/15 bg-white/95 p-3 shadow-xl backdrop-blur-md sm:bottom-5 sm:left-5 sm:right-auto sm:max-w-[calc(100%-2.5rem)]">
+                                <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.13em] text-primary">
+                                    Ciudades de {selectedDepartment.name}
+                                </p>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {selectedDepartment.sedeList.map((city) => (
+                                        <button
+                                            type="button"
+                                            key={city.id}
+                                            onClick={() => handleSelectCity(city.id)}
+                                            className={`rounded-full border px-2.5 py-1 text-xs font-medium transition focus:outline-none focus:ring-2 focus:ring-primary/30 ${selectedSedeId === city.id
+                                                ? 'border-primary bg-primary text-white'
+                                                : 'border-primary/15 bg-primary/5 text-primary hover:bg-primary/15'
+                                                }`}
+                                        >
+                                            {city.name}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
                         <DepartmentTooltip
                             department={hoverDepartment}
                         />
@@ -127,9 +148,9 @@ export default function CoverageMap() {
 
                     {/* PANEL DERECHO: tarjeta de departamento + lista numerada estilo infografía */}
 
-                    <aside ref={panelRef} className="lg:col-span-4">
+                    <aside ref={panelRef} className="-mt-2 lg:col-span-4 lg:mt-0">
                         <div className="lg:sticky lg:top-28 space-y-6">
-                            <DepartmentCard department={selectedDepartment} selectedSedeId={selectedSedeId} />
+                            <DepartmentCard department={selectedDepartment} selectedSedeId={selectedSedeId} onReset={resetMap} onSelectCity={handleSelectCity} />
 
                             <div className="glass rounded-[24px] p-6">
                                 <button

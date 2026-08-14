@@ -70,6 +70,7 @@ type CreateApplicationInput = Omit<
   candidateId?: string;
   candidateCity?: string;
   candidateDepartment?: string;
+  resumeUrl?: string;
 };
 
 export type CandidateRegistrationInput = {
@@ -191,6 +192,7 @@ function mapCandidateProfile(row: CandidateAccountRow): CandidateProfile {
     linkedinUrl: account.linkedinUrl,
     portfolioUrl: account.portfolioUrl,
     cvUrl: account.cvUrl,
+    resumeFileName: account.cvUrl ? account.cvUrl.split('/').pop() ?? '' : '',
     active: account.active,
     lastLoginAt: account.lastLoginAt,
     updatedAt: account.updatedAt,
@@ -458,16 +460,6 @@ export async function createCandidateAccountInDB(input: CandidateRegistrationInp
     input.cvUrl?.trim() ?? "",
   ]);
 
-  await execute(
-    `
-      UPDATE postulaciones
-      SET candidato_id = ?
-      WHERE candidato_id IS NULL
-        AND (candidate_document = ? OR LOWER(candidate_email) = ?)
-    `,
-    [String(result.insertId), documentNumber, email],
-  );
-
   return String(result.insertId);
 }
 
@@ -712,20 +704,18 @@ export async function createApplicationInDB(
     candidateDepartment,
     resumeFileName,
     resumeFileData, // Se espera en formato Base64
+    resumeUrl,
   } = applicationData;
-
-  // Convertir la hoja de vida de Base64 a Buffer para almacenarla como BLOB.
-  const resumeBuffer = decodeBase64File(resumeFileData);
 
   const sql = `
     INSERT INTO postulaciones (
-      candidato_id, vacante_id, estado, fuente, observaciones_candidato
+      candidato_id, vacante_id, estado, fuente, observaciones_candidato, cv_url
     )
-    VALUES (?, ?, 'Postulado', 'Portal Web', ?)
+    VALUES (?, ?, 'Postulado', 'Portal Web', ?, ?)
   `;
 
   const params = [
-    candidateId || null, vacancyId, `Postulación de ${candidateName.trim()}`,
+    candidateId || null, vacancyId, `Postulación de ${candidateName.trim()}`, resumeUrl || null,
   ];
 
   const result = await execute(sql, params); return String(result.insertId);
