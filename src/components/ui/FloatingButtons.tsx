@@ -2,14 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { CONTACT_INFO, buildWhatsAppUrl } from '@/config/contact';
+
+const WOMPI_CHECKOUT_URL = 'https://checkout.wompi.co/l/VPOS_BZBTG1';
 
 export default function FloatingButtons() {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [showTooltip, setShowTooltip] = useState(true);
   const [showDeathLabel, setShowDeathLabel] = useState(false);
+  const [showWompiLabel, setShowWompiLabel] = useState(true);
+  const [showWhatsAppLabel, setShowWhatsAppLabel] = useState(true);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -21,17 +25,21 @@ export default function FloatingButtons() {
   }, []);
 
   useEffect(() => {
-    // Ocultar el mensaje "¡Cotiza Ya!" después de 7 segundos
-    const timer = setTimeout(() => setShowTooltip(false), 7000);
-    return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
     setShowDeathLabel(true);
     const timer = setTimeout(() => {
       setShowDeathLabel(false);
     }, 15000);
 
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShowWompiLabel(false), 15000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShowWhatsAppLabel(false), 15000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -136,19 +144,35 @@ export default function FloatingButtons() {
         </button>
       </div>
 
-      <div className="fixed bottom-5 right-4 z-50 sm:bottom-6 sm:right-6">
-        {/* Tooltip de 7 segundos */}
-        <div 
-          className={cn(
-            "absolute bottom-full right-2 mb-4 bg-gradient-to-r from-primary to-primary-hover text-white px-5 py-2.5 rounded-2xl text-[15px] font-bold shadow-2xl whitespace-nowrap transition-all duration-1000 pointer-events-none origin-bottom-right",
-            showTooltip ? "opacity-100 scale-100 translate-y-0 animate-bounce" : "opacity-0 scale-50 translate-y-6"
-          )}
+      <div className="fixed bottom-[92px] right-4 z-50 sm:bottom-[104px] sm:right-6">
+        <a
+          href={WOMPI_CHECKOUT_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group relative flex items-center rounded-full border border-white/75 bg-white/90 p-2 shadow-[0_20px_45px_rgba(23,43,77,0.18)] backdrop-blur-xl transition-all duration-500 ease-out hover:-translate-y-2 hover:scale-105 hover:shadow-[0_24px_55px_rgba(23,43,77,0.28)] active:scale-[0.98]"
+          aria-label="Pagar de forma segura con Wompi"
         >
-          ¡ Cotiza Ya !
-          {/* Triangulito inferior del globo de diálogo */}
-          <div className="absolute -bottom-1.5 right-5 w-3.5 h-3.5 bg-primary transform rotate-45"></div>
-        </div>
+          <span aria-hidden="true" className="absolute left-2 top-1/2 h-16 w-16 -translate-y-1/2 rounded-full bg-primary/15 blur-sm" />
+          <span className="relative z-10 flex h-14 w-14 animate-payment-heartbeat items-center justify-center overflow-hidden rounded-full bg-white p-2 shadow-lg shadow-primary/15 ring-1 ring-primary/10 motion-reduce:animate-none">
+            <Image src="/images/Wompi_logo.jpg" alt="" width={56} height={56} className="h-auto w-full object-contain" />
+          </span>
+          <span
+            className={cn(
+              'relative z-10 hidden overflow-hidden transition-all duration-500 ease-out sm:block sm:group-hover:max-w-[220px] sm:group-hover:translate-x-0 sm:group-hover:opacity-100',
+              showWompiLabel
+                ? 'sm:max-w-[220px] sm:translate-x-0 sm:opacity-100'
+                : 'sm:max-w-0 sm:translate-x-[-6px] sm:opacity-0'
+            )}
+          >
+            <span className="block whitespace-nowrap pl-3 pr-4 text-left">
+              <span className="block text-[11px] font-semibold uppercase tracking-[0.24em] text-primary/70">Pago seguro</span>
+              <span className="block text-sm font-bold uppercase tracking-[0.08em] text-primary">Paga con Wompi</span>
+            </span>
+          </span>
+        </a>
+      </div>
 
+      <div className="fixed bottom-5 right-4 z-50 sm:bottom-6 sm:right-6">
         <button
           onClick={openWhatsApp}
           className="group relative flex items-center rounded-full bg-white/85 backdrop-blur-xl border border-white/70 shadow-[0_20px_45px_rgba(18,60,33,0.16)] hover:shadow-[0_24px_55px_rgba(18,60,33,0.25)] hover:-translate-y-2 hover:scale-105 transition-all duration-500 ease-out active:scale-[0.98] p-2"
@@ -159,7 +183,7 @@ export default function FloatingButtons() {
             className="absolute left-2 top-1/2 h-16 w-16 -translate-y-1/2 rounded-full bg-green-500/15 blur-sm"
           />
 
-          <div className="relative z-10 flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg shadow-green-500/30">
+          <div className="relative z-10 flex h-14 w-14 animate-whatsapp-heartbeat items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg shadow-green-500/30 motion-reduce:animate-none">
             <svg
               className="w-7 h-7"
               fill="currentColor"
@@ -169,7 +193,14 @@ export default function FloatingButtons() {
             </svg>
           </div>
 
-          <span className="relative z-10 hidden overflow-hidden transition-all duration-500 ease-out sm:block sm:max-w-0 sm:translate-x-[-6px] sm:opacity-0 sm:group-hover:max-w-[240px] sm:group-hover:translate-x-0 sm:group-hover:opacity-100">
+          <span
+            className={cn(
+              'relative z-10 hidden overflow-hidden transition-all duration-500 ease-out sm:block sm:group-hover:max-w-[240px] sm:group-hover:translate-x-0 sm:group-hover:opacity-100',
+              showWhatsAppLabel
+                ? 'sm:max-w-[240px] sm:translate-x-0 sm:opacity-100'
+                : 'sm:max-w-0 sm:translate-x-[-6px] sm:opacity-0'
+            )}
+          >
             <span className="block pl-3 pr-4 text-left whitespace-nowrap">
               <span className="block text-[11px] font-semibold uppercase tracking-[0.24em] text-green-700/70">
                 WhatsApp
