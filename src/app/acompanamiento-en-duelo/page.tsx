@@ -33,7 +33,7 @@ const serviciosDuelo = [
     ),
   },
   {
-    title: 'Talleres y Charlas',
+    title: 'Talleres y Conferencias',
     description: 'Actividades formativas y reflexivas sobre el manejo del duelo, la resiliencia y el crecimiento personal tras una pérdida.',
     icon: (
       <img width="94" height="94" src="https://img.icons8.com/3d-fluency/94/collaboration-female-male--v4.png" alt="collaboration-female-male--v4" />
