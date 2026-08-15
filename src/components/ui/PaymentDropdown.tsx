@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import Button from './Button';
 
@@ -65,6 +66,16 @@ export default function PaymentDropdown({ wompiUrl, className, buttonVariant = '
             </span>
             Pagar con Wompi
           </a>
+          <Link
+            href="/convenios"
+            onClick={() => setIsOpen(false)}
+            className="flex items-center gap-4 border-t border-primary/10 px-5 py-4 font-medium text-text transition-colors hover:bg-primary/10 hover:text-primary"
+          >
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-primary/15 bg-primary/5">
+              <img width="94" height="94" src="https://img.icons8.com/3d-fluency/94/receive-cash.png" alt="Convenios de pago" className="h-10 w-10 object-contain" />
+            </span>
+            Convenios de pago
+          </Link>
         </div>
       )}
     </div>
