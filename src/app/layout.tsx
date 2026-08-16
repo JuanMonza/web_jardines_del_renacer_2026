@@ -7,9 +7,9 @@ import AppShell from '@/components/layout/AppShell';
 const GOOGLE_TAG_MANAGER_ID = 'GTM-THR7J2P9';
 
 export const metadata: Metadata = {
-  title: 'Jardines del Renacer - Dignidad y Paz Eterna',
+  title: 'Jardines del Renacer | Dignidad, Sensibilidad y Confianza 💙',
   description:
-    'Servicios funerarios y de previsión con dignidad, respeto y paz eterna para tus seres queridos. Planes personalizados, recorrido 360° y homenajes digitales.',
+    'Servicios funerarios y de previsión exequial con dignidad, sensibilidad y confianza para acompañar a las familias colombianas.',
   icons: {
     icon: '/logos_jr_favico.png',
   },

@@ -153,8 +153,8 @@ export default function FloatingButtons() {
           aria-label="Pagar de forma segura con Wompi"
         >
           <span aria-hidden="true" className="absolute left-2 top-1/2 h-16 w-16 -translate-y-1/2 rounded-full bg-primary/15 blur-sm" />
-          <span className="relative z-10 flex h-14 w-14 animate-payment-heartbeat items-center justify-center overflow-hidden rounded-full bg-white p-2 shadow-lg shadow-primary/15 ring-1 ring-primary/10 motion-reduce:animate-none">
-            <Image src="/images/Wompi_logo.jpg" alt="" width={56} height={56} className="h-auto w-full object-contain" />
+          <span className="relative z-10 flex h-14 w-14 animate-payment-heartbeat items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-[#003b6e] via-[#013667] to-[#063d78] p-[3px] shadow-lg shadow-blue-900-primary/25 ring-1 ring-sky-600/[0.7] motion-reduce:animate-none">
+            <Image src="/images/logo-pse.png" alt="" width={56} height={56} className="h-full w-full rounded-full object-contain" />
           </span>
           <span
             className={cn(
