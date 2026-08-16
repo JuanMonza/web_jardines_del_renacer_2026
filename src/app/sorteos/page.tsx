@@ -11,6 +11,7 @@ import TitleBand from '@/components/ui/TitleBand';
 import { useCountdown } from '@/hooks/useCountdown';
 import Button from '@/components/ui/Button';
 import { buildWhatsAppUrl } from '@/config/contact';
+import Link from 'next/link';
 
 /**
  * Componente que renderiza la página estática de "Sorteos y Concursos".
@@ -173,6 +174,28 @@ export default function SorteosPage() {
                     </Container>
                 </section>
             )}
+
+            <section className="pb-20 pt-4">
+                <Container maxWidth="lg">
+                    <FadeIn>
+                        <article className="glass flex flex-col items-start justify-between gap-5 rounded-3xl border border-primary/15 p-6 md:flex-row md:items-center md:p-8">
+                            <div>
+                                <p className="mb-1 text-xs font-bold uppercase tracking-[0.18em] text-primary">Transparencia</p>
+                                <h2 className="text-xl font-bold text-text">Conoce las condiciones de nuestros incentivos</h2>
+                                <p className="mt-2 max-w-2xl text-sm leading-relaxed text-textLight md:text-base">
+                                    Consulta el proceso de selección, validación, comunicación y entrega de los incentivos para afiliados.
+                                </p>
+                            </div>
+                            <Link
+                                href="/legal/incentivos-afiliados"
+                                className="shrink-0 rounded-xl border border-primary/25 bg-primary/10 px-5 py-3 text-sm font-semibold text-primary transition-colors hover:bg-primary hover:text-white"
+                            >
+                                Ver T&C Incentivos Afiliados
+                            </Link>
+                        </article>
+                    </FadeIn>
+                </Container>
+            </section>
         </>
     );
 }

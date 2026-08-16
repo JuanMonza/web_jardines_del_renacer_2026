@@ -60,6 +60,7 @@ export default function Footer() {
       { label: "Política de Privacidad", href: "/legal/privacidad" },
       { label: "Política de Cookies", href: "/legal/cookies" },
       { label: "Sorteos", href: "/sorteos" },
+      { label: "T&C Incentivos Afiliados", href: "/legal/incentivos-afiliados" },
     ],
     redes: [
 
