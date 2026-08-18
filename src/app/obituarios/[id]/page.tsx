@@ -1,13 +1,14 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Container from '@/components/ui/Container';
 import Button from '@/components/ui/Button';
 import FadeIn from '@/components/animations/FadeIn';
 import Image from 'next/image';
 import Link from 'next/link';
-import { buildObituaryMapQuery, getObituaryById } from '@/data/obituaries';
+import { buildObituaryMapQuery } from '@/data/obituaries';
+import type { Obituary } from '@/types/obituary';
 
 const OBITUARIOS_PAGE_BACKGROUND_CLASS = "bg-[url('/images/fondo_obituarios.png')] bg-cover bg-center bg-fixed bg-no-repeat";
 
@@ -67,8 +68,38 @@ function CopyIcon() {
 export default function ObituarioDetallePage() {
   const params = useParams<{ id: string }>();
   const obituaryId = Array.isArray(params?.id) ? params.id[0] : params?.id || '';
+  const [obituario, setObituario] = useState<Obituary | null>(null);
+  const [cargando, setCargando] = useState(true);
 
-  const obituario = useMemo(() => getObituaryById(obituaryId), [obituaryId]);
+  useEffect(() => {
+    let activo = true;
+
+    const cargarObituario = async () => {
+      try {
+        const response = await fetch('/api/obituarios', { cache: 'no-store' });
+        const result = (await response.json()) as { success?: boolean; data?: Obituary[] };
+        const encontrado = response.ok && result.success && Array.isArray(result.data)
+          ? result.data.find((item) => item.id === obituaryId) || null
+          : null;
+
+        if (activo) setObituario(encontrado);
+      } catch {
+        if (activo) setObituario(null);
+      } finally {
+        if (activo) setCargando(false);
+      }
+    };
+
+    if (obituaryId) {
+      void cargarObituario();
+    } else {
+      setCargando(false);
+    }
+
+    return () => {
+      activo = false;
+    };
+  }, [obituaryId]);
 
   const mapQuery = useMemo(
     () => (obituario ? buildObituaryMapQuery(obituario) : ''),
@@ -135,6 +166,15 @@ export default function ObituarioDetallePage() {
     void navigator.clipboard.writeText(url);
     alert('Enlace copiado al portapapeles');
   };
+
+  if (cargando) {
+    return (
+      <main className={`relative min-h-screen overflow-hidden pt-28 pb-16 ${OBITUARIOS_PAGE_BACKGROUND_CLASS}`}>
+        <div className="absolute inset-0 bg-background/85 backdrop-blur-[2px]" />
+        <div className="relative z-10"><Container><div className="max-w-2xl mx-auto glass rounded-3xl border border-primary/15 p-8 text-center text-textLight">Cargando homenaje...</div></Container></div>
+      </main>
+    );
+  }
 
   if (!obituario) {
     return (

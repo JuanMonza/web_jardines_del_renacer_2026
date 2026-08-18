@@ -1,37 +1,72 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Search, X, MapPin, Wind } from 'lucide-react';
 import Container from '@/components/ui/Container';
 import PageHero from '@/components/ui/PageHero';
 import ObituaryCard from '@/components/cards/ObituaryCard';
 import FadeIn from '@/components/animations/FadeIn';
-import { OBITUARIOS_MOCK, getObituarySedeLabel } from '@/data/obituaries';
+import type { Obituary } from '@/types/obituary';
 
 export default function ObituariosPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sedeFilter, setSedeFilter] = useState('todas');
+  const [obituarios, setObituarios] = useState<Obituary[]>([]);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    let activo = true;
+
+    const cargarObituarios = async () => {
+      try {
+        const response = await fetch('/api/obituarios', { cache: 'no-store' });
+        const result = (await response.json()) as { success?: boolean; data?: Obituary[] };
+
+        if (!response.ok || !result.success || !Array.isArray(result.data)) {
+          throw new Error('No fue posible cargar los obituarios');
+        }
+
+        if (activo) {
+          setObituarios(result.data);
+          setError(false);
+        }
+      } catch {
+        if (activo) setError(true);
+      } finally {
+        if (activo) setCargando(false);
+      }
+    };
+
+    void cargarObituarios();
+    const intervalo = window.setInterval(() => void cargarObituarios(), 30000);
+
+    return () => {
+      activo = false;
+      window.clearInterval(intervalo);
+    };
+  }, []);
 
   const sedeOptions = useMemo(() => {
     const unique = new Map<string, string>();
-    for (const obituary of OBITUARIOS_MOCK) {
+    for (const obituary of obituarios) {
       if (!unique.has(obituary.sede)) {
-        unique.set(obituary.sede, getObituarySedeLabel(obituary));
+        unique.set(obituary.sede, obituary.ubicacionSala);
       }
     }
     return Array.from(unique.entries())
       .map(([value, label]) => ({ value, label }))
       .sort((a, b) => a.label.localeCompare(b.label, 'es'));
-  }, []);
+  }, [obituarios]);
 
   const filteredObituaries = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
-    return OBITUARIOS_MOCK.filter((obituary) => {
+    return obituarios.filter((obituary) => {
       const matchesName = obituary.nombre.toLowerCase().includes(query);
       const matchesSede = sedeFilter === 'todas' || obituary.sede === sedeFilter;
       return matchesName && matchesSede;
     });
-  }, [searchQuery, sedeFilter]);
+  }, [obituarios, searchQuery, sedeFilter]);
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-background-light">
@@ -99,7 +134,9 @@ export default function ObituariosPage() {
             </div>
           </FadeIn>
           {/* Resultados */}
-          {filteredObituaries.length > 0 ? (
+          {cargando ? (
+            <div className="mt-12 py-20 text-center text-textLight">Actualizando obituarios publicados...</div>
+          ) : filteredObituaries.length > 0 ? (
             <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {filteredObituaries.map((obituary, index) => (
                 <FadeIn key={obituary.id} delay={index * 0.05}>
@@ -114,9 +151,11 @@ export default function ObituariosPage() {
                 <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6 text-primary">
                   <Wind className="w-10 h-10" />
                 </div>
-                <h3 className="text-2xl font-display text-text">No se encontraron resultados</h3>
+                <h3 className="text-2xl font-display text-text">{error ? 'No fue posible actualizar los obituarios' : 'No se encontraron resultados'}</h3>
                 <p className="mt-2 text-textLight max-w-md mx-auto">
-                  Intenta ajustar los términos de búsqueda o selecciona "Todas las sedes" para ver todos los servicios activos.
+                  {error
+                    ? 'Intenta actualizar la página en unos minutos.'
+                    : 'Intenta ajustar los términos de búsqueda o selecciona "Todas las sedes" para ver todos los servicios activos.'}
                 </p>
               </div>
             </FadeIn>
