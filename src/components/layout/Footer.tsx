@@ -40,7 +40,7 @@ export default function Footer() {
     atencion: [
       { label: "Obituarios", href: "/obituarios" },
       { label: "Agendar Visita", href: "/agendar-visita" },
-      { label: "Medios de Pago", href: "https://checkout.wompi.co/l/VPOS_BZBTG1" },
+      { label: "Medios de Pago", href: "https://checkout.wompi.co/l/mjP6uJ" },
       { label: "Contacto", href: "/contacto" },
     ],
     recursos: [
@@ -258,7 +258,7 @@ export default function Footer() {
                   <div className="relative w-28 h-28 md:w-32 md:h-32">
                     <Image
                       src="/images/25años_since.png"
-                      alt="25 años Jardines del Renacer"
+                      alt="26 años Jardines del Renacer"
                       fill
                       className="object-contain group-hover:scale-110 transition-transform duration-500"
                     />
@@ -266,8 +266,8 @@ export default function Footer() {
                 </div>
               </Link>
               <p className="text-sm text-white/80 mb-8 leading-relaxed">
-                Brindamos servicios funerarios con dignidad, respeto y paz
-                eterna para tus seres queridos desde hace más de 30 años.
+                Brindamos servicios funerarios con dignidad, sensibilidad y confianza
+                para tus seres queridos desde hace 26 años.
               </p>
             </div>
 

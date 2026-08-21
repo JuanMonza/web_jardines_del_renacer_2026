@@ -11,14 +11,14 @@ const VISIT_MESSAGE =
 const steps = [
   {
     title: '1. Reserva',
-    description: 'Coordina fecha y ciudad por WhatsApp o linea telefonica.',
+    description: 'Coordina fecha y ciudad por WhatsApp o línea telefónica.',
   },
   {
-    title: '2. Confirmacion',
+    title: '2. Confirmación',
     description: 'Nuestro equipo valida disponibilidad y te confirma la visita.',
   },
   {
-    title: '3. Acompanamiento',
+    title: '3. Acompañamiento',
     description: 'Un asesor te recibe y responde todas tus preguntas en sitio.',
   },
 ];
@@ -30,8 +30,8 @@ export default function AgendarVisitaPage() {
         <Container>
           <FadeIn className="[&_h1]:text-white [&_h2]:text-white [&_p]:text-white/90">
             <SectionTitle
-              title="Agendar Visita"
-              subtitle="Conoce nuestras instalaciones y recibe asesoria personalizada."
+              title="Agendar visita"
+              subtitle="Conoce nuestras instalaciones y recibe asesoría personalizada."
             />
           </FadeIn>
         </Container>
@@ -58,7 +58,7 @@ export default function AgendarVisitaPage() {
                     WhatsApp: <span className="font-semibold">{CONTACT_INFO.whatsappDisplay}</span>
                   </p>
                   <p className="text-text">
-                    Linea principal: <span className="font-semibold">{CONTACT_INFO.primaryLine.number}</span>
+                    Línea principal: <span className="font-semibold">{CONTACT_INFO.primaryLine.number}</span>
                   </p>
                 </div>
               </article>
@@ -68,7 +68,7 @@ export default function AgendarVisitaPage() {
               <article className="glass rounded-3xl p-8 md:p-10 border border-primary/15 h-full">
                 <h3 className="text-2xl font-display text-text mb-4">Agenda ahora</h3>
                 <p className="text-textLight mb-6">
-                  Comparte ciudad, fecha tentativa y cantidad de asistentes. Te responderemos con la mejor opcion disponible.
+                  Comparte ciudad, fecha tentativa y cantidad de asistentes. Te responderemos con la mejor opción disponible.
                 </p>
 
                 <div className="space-y-3">

@@ -3,8 +3,8 @@
  * Utilizado principalmente en secciones tipo "Quiénes somos".
  */
 export const whoWeAreParagraphs = [
-  'Con más de 25 años de historia, Jardines del Renacer se ha consolidado dentro del gremio exequial por su acompañamiento a los hogares colombianos en sus momentos más difíciles, brindando a todos sus afiliados servicios exequiales con los más altos estándares de calidad, respeto y dignidad, priorizando la importancia y el valor de cada ser querido.',
-  'Nuestro compromiso va más allá de un servicio; buscamos ser un apoyo cercano y humano para las familias, brindando tranquilidad, orientación y respaldo en cada etapa del proceso. Por ello, nos sentimos orgullosos de contar con un equipo capacitado, empático y dispuesto a servir con vocación, asegurando que cada detalle se maneje con el cuidado y la sensibilidad que merece.',
+  'Con más de 26 años de historia, Jardines del Renacer se ha consolidado dentro del gremio exequial por su acompañamiento a los hogares colombianos en sus momentos más difíciles, brindando a todos sus afiliados servicios exequiales con los más altos estándares de calidad, respeto y dignidad, priorizando la importancia y el valor de cada ser querido.',
+  'Nuestro compromiso va más allá de un servicio; somos una gran familia que brinda apoyo cercano y humano, tranquilidad, orientación y respaldo en cada etapa del proceso. Nos sentimos orgullosos de contar con un equipo capacitado, empático y dispuesto a servir con vocación, asegurando que cada detalle se maneje con el cuidado y la sensibilidad que merece.',
 ];
 
 /**
@@ -43,7 +43,7 @@ export const historyTimeline = [
     id: 1,
     year: '2000',
     title: 'El nacimiento de un sueño',
-    description: 'Con la fe puesta en Dios, Richard Alexander Restrepo Piedrahita funda Jardines del Renacer en Pereira. El propósito fue ofrecer a las familias de la región una previsión exequial de calidad y a un precio justo. Los primeros planes de protección llegaron a Marsella, Alcalá y Cartago.',
+    description: 'Con la fe puesta en Dios, Richard Alexander Restrepo Piedrahita y Adriana Ospina Ocampo fundan Jardines del Renacer en Pereira. El propósito fue ofrecer a las familias de la región una previsión exequial de calidad y a un precio justo. Los primeros planes de protección llegaron a Marsella, Alcalá y Cartago.',
     image: '/images/2000.jpeg',
     iconType: 'flag',
     order: 1,
@@ -73,7 +73,7 @@ export const historyTimeline = [
     id: 4,
     year: '2007',
     title: 'Llegada a Cali y una alegría familiar',
-    description: 'Jardines del Renacer llega a Cali con la apertura de una nueva sede. Ese mismo año, en septiembre, nace Manuelita, primera hija de Richard y Adriana, reconocida por la familia como Presidenta Honorífica de la Junta Directiva.',
+    description: 'Jardines del Renacer llega a Cali con la apertura de una nueva sede. Ese mismo año, en septiembre, nace Manuela Restrepo Ospina, primera hija de Richard Restrepo Piedrahita y Adriana Ospina Ocampo, reconocida por la familia como Presidenta Honorífica de la Junta Directiva.',
     image: '/images/2000.jpeg',
     iconType: 'heart',
     order: 4,
@@ -138,6 +138,16 @@ export const historyTimeline = [
     iconType: 'map-pinned',
     order: 10,
     active: true,
+  },
+  {
+    id: 11,
+    year: '2023',
+    title: 'Apertura del Parque Conmemorativo Espiritual',
+    description: 'Jardines del Renacer abre su Parque Conmemorativo Espiritual, un espacio de tranquilidad, naturaleza y respeto para honrar la memoria de los seres queridos.',
+    image: '/images/parque-conmemorativo-2026.webp',
+    iconType: 'landmark',
+    order: 11,
+    active: true,
   }
 ];
 
@@ -163,7 +173,7 @@ export const corporateValues = [
     description: 'Nos comprometemos a cumplir nuestras promesas y a operar con los más altos estándares de calidad y profesionalismo.',
   },
   {
-    name: 'Responsabilidad social',
+    name: 'Responsabilidad Social',
     description: 'Contribuimos activamente al bienestar de la comunidad y al cuidado del medio ambiente en todas nuestras operaciones.',
   },
 ];

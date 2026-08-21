@@ -55,7 +55,7 @@ const services = [
     image: "/images/images-baners/salas_standar.webp",
   },
   {
-    title: 'Salas vip',
+    title: 'Salas VIP',
     description:
       "Nuestras salas VIP están diseñadas para ofrecer un ambiente de privacidad, confort y serenidad, brindando a las familias un espacio acogedor para reunirse, acompañarse y honrar la memoria de sus seres queridos. Disponibles en Cali, Palmira, Zarzal y Cartago.",
     bullets: [
@@ -95,7 +95,6 @@ const services = [
     description:
       "Contamos con una moderna flota de más de 70 vehículos especializados, preparados para ofrecer traslados oportunos, seguros y con los más altos estándares de calidad, garantizando una atención ágil y un acompañamiento digno a las familias en todo momento.",
     bullets: [
-      "Más de 70 vehículos",
       "Carrozas especializadas",
       "HH alargadas",
       "Vans comerciales",
@@ -136,21 +135,21 @@ const stats = [
     icon: Building2,
     number: totalSedes,
     suffix: '',
-    label: "Sedes Propias",
+    label: "Sedes propias",
     description: "Presencia nacional con atención cercana y oportuna.",
   },
   {
     icon: Users,
     number: 200,
     suffix: '+',
-    label: "Salas de Velación",
+    label: "Salas de velación",
     description: "Espacios cómodos y dignos para acompañar a las familias.",
   },
   {
     icon: Truck,
     number: 70,
     suffix: '+',
-    label: "Vehículos Especializados",
+    label: "Vehículos especializados",
     description: "Parque automotor distribuido estratégicamente en Colombia.",
   },
   {
@@ -173,7 +172,7 @@ const reasons = [
     icon: ShieldCheck,
     title: "Respaldo y experiencia",
     description:
-      "Más de 25 años ofreciendo servicios exequiales con altos estándares de calidad y atención permanente.",
+      "Más de 26 años ofreciendo servicios exequiales con altos estándares de calidad y atención permanente.",
   },
   {
     icon: Building2,
@@ -225,7 +224,7 @@ const faqs = [
   {
     question: "¿Tienen cobertura nacional?",
     answer:
-      "Sí. Contamos con más de 110 sedes propias y presencia en 14 departamentos del país.",
+      "Sí. Contamos con cobertura nacional y presencia en distintos departamentos del país.",
   },
   {
     question: "¿Puedo adquirir un plan de previsión?",
@@ -346,7 +345,7 @@ export default function ServiciosClient() {
         <Container>
           <FadeIn>
             <FullBleedBand
-              title="Más de 25 años acompañando a las familias colombianas"
+              title="26 años acompañando a las familias colombianas"
               className="mb-16"
             />
           </FadeIn>

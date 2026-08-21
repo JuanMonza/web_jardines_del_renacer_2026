@@ -99,7 +99,7 @@ export default function PQRPage() {
     return (
         <>
             <PageHero
-                title="Peticiones, Quejas y Reclamos"
+                title="Peticiones, quejas y reclamos"
                 subtitle="Tu opinión es fundamental. Déjanos tus inquietudes y te daremos respuesta a la mayor brevedad posible."
                 image="/images/images-baners/contacto.webp"
                 imageAlt="PQR - Jardines del Renacer"
@@ -109,11 +109,11 @@ export default function PQRPage() {
                 <Container maxWidth="md">
                     <FadeIn delay={0.1}>
                         <form onSubmit={handleSubmit} className="glass rounded-3xl p-8 md:p-12 border border-primary/15 shadow-xl">
-                            <h2 className="text-2xl font-display text-text mb-6">Formulario de Radicación</h2>
+                            <h2 className="text-2xl font-display text-text mb-6">Formulario de radicación</h2>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
                                 <Input
-                                    label="Nombres y Apellidos"
+                                    label="Nombres y apellidos"
                                     placeholder="Ej. Juan Pérez"
                                     value={formData.nombre}
                                     onChange={(e) => {
@@ -126,7 +126,7 @@ export default function PQRPage() {
                                     required
                                 />
                                 <div className="w-full">
-                                    <label className="block text-sm font-medium text-text mb-2">Documento de Identidad</label>
+                                    <label className="block text-sm font-medium text-text mb-2">Documento de identidad</label>
                                     <div className="flex gap-3 w-full">
                                         <select
                                             value={formData.tipoDocumento}
@@ -149,7 +149,7 @@ export default function PQRPage() {
                                     </div>
                                 </div>
                                 <Input
-                                    label="Correo Electrónico"
+                                    label="Correo electrónico"
                                     type="email"
                                     placeholder="ejemplo@correo.com"
                                     value={formData.email}
@@ -157,7 +157,7 @@ export default function PQRPage() {
                                     required
                                 />
                                 <Input
-                                    label="Teléfono de Contacto"
+                                    label="Teléfono de contacto"
                                     type="tel"
                                     placeholder="Ej. 300 123 4567"
                                     value={formData.telefono}
@@ -167,7 +167,7 @@ export default function PQRPage() {
                             </div>
 
                             <div className="mb-6">
-                                <label className="block text-sm font-medium text-text mb-2">Tipo de Solicitud</label>
+                                <label className="block text-sm font-medium text-text mb-2">Tipo de solicitud</label>
                                 <select
                                     value={formData.tipoSolicitud}
                                     onChange={(e) => setFormData({ ...formData, tipoSolicitud: e.target.value })}
@@ -184,7 +184,7 @@ export default function PQRPage() {
 
                             <div className="mb-8">
                                 <Textarea
-                                    label="Mensaje o Detalle (Solo letras)"
+                                    label="Mensaje o detalle (solo letras)"
                                     placeholder="Describe tu solicitud (no se permiten números ni símbolos)..."
                                     value={formData.mensaje}
                                     onChange={(e) => {
@@ -240,7 +240,7 @@ export default function PQRPage() {
                                             Procesando...
                                         </span>
                                     ) : (
-                                        'Enviar Solicitud PQR'
+                                        'Enviar solicitud PQR'
                                     )}
                                 </Button>
                             </div>

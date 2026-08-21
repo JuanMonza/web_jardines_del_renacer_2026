@@ -43,7 +43,7 @@ const valueIcons: { [key: string]: JSX.Element } = {
   Cumplimiento: (
     <Image width="32" height="32" src="https://img.icons8.com/3d-fluency/94/police-station.png" alt="Icono de cumplimiento"/>
   ),
-  'Responsabilidad social': (
+  'Responsabilidad Social': (
     <Image width="32" height="32" src="https://img.icons8.com/3d-fluency/94/user-group-man-woman--v4.png" alt="Icono de responsabilidad social"/>
   ),
 };
@@ -51,7 +51,7 @@ const valueIcons: { [key: string]: JSX.Element } = {
 export default function QuienesSomosPage() {
   const impactMetrics = [
     { value: '26', label: 'años de experiencia', icon: Building2 },
-    { value: '111', label: 'sedes para acompañarte', icon: MapPinned },
+    { value: 'Cobertura', label: 'nacional', icon: MapPinned },
     { value: '15', label: 'departamentos', icon: HeartHandshake },
   ];
 
@@ -72,39 +72,33 @@ export default function QuienesSomosPage() {
               <div className="relative overflow-hidden rounded-[2rem] border border-white/75 bg-white/65 p-7 shadow-[0_24px_70px_rgba(20,55,97,0.12)] backdrop-blur-xl sm:p-10">
                 <div className="pointer-events-none absolute -left-16 -top-20 h-48 w-48 rounded-full bg-primary/15 blur-3xl" />
                 <div className="relative">
-                  <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">Nuestra esencia</p>
+                  <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">Nuestra gran familia</p>
                   <div className="mt-5 border-l-4 border-primary pl-5"><p className="font-display text-2xl font-bold leading-tight text-text sm:text-3xl">Acompañamos con dignidad cada historia.</p></div>
                   <div className="mt-6 space-y-5 text-base leading-8 text-textLight sm:text-lg">
                     {whoWeAreParagraphs.map((paragraph, index) => <p key={index}>{paragraph}</p>)}
                   </div>
                   <div className="mt-7 flex items-start gap-3 rounded-2xl border border-primary/10 bg-primary/[0.06] p-4 text-sm leading-6 text-primary">
                     <Quote className="mt-0.5 h-5 w-5 shrink-0" aria-hidden />
-                    <p>Respeto, cercanía y cuidado en cada momento que compartimos con las familias.</p>
+                    <p>Somos una gran familia que acompaña con respeto, cercanía y cuidado cada momento compartido.</p>
                   </div>
                 </div>
               </div>
 
-              <div className="relative h-[440px] sm:h-[500px]">
-                <div className="group/item1 absolute inset-x-0 top-0 h-[330px] overflow-hidden rounded-[2rem] border border-white/70 shadow-[0_22px_45px_rgba(20,55,97,0.2)] sm:h-[390px]">
-                  <Image
-                    src="/images/images-baners/equipo.webp"
-                    alt="Equipo de Jardines del Renacer"
-                    fill
-                    className="object-cover object-center transition-transform duration-500 group-hover/item1:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#071a31]/65 via-transparent to-transparent" />
-                  <div className="absolute left-5 top-5 rounded-2xl border border-white/30 bg-slate-950/45 px-4 py-3 text-white shadow-lg backdrop-blur-xl"><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/75">Cercanía humana</p><p className="mt-1 text-sm font-semibold">Un equipo que escucha y acompaña</p></div>
-                </div>
-                <div className="group/item2 absolute bottom-0 right-0 h-[175px] w-[78%] overflow-hidden rounded-[1.75rem] border-4 border-white shadow-[0_22px_45px_rgba(20,55,97,0.24)] sm:h-[215px] sm:w-[72%]">
-                  <Image
-                    src="/images/carrusel_1.webp"
-                    alt="Instalaciones de Jardines del Renacer"
-                    fill
-                    className="object-cover transition-transform duration-500 group-hover/item2:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#071a31]/50 via-transparent to-transparent" />
-                  <div className="absolute bottom-4 left-4 rounded-xl border border-white/30 bg-white/15 px-3 py-2 text-xs font-semibold text-white backdrop-blur-xl">Presencia nacional</div>
-                </div>
+              <div className="grid gap-6">
+                {principles.map((item, index) => (
+                  <FadeIn key={item.title} delay={0.15 + index * 0.1}>
+                    <article className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#153d70] via-[#1c4b83] to-[#0b2e59] p-7 text-white shadow-[0_22px_45px_rgba(20,55,97,0.2)] sm:p-8">
+                      <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-white/10 blur-3xl" />
+                      <div className="relative">
+                        <div className="flex items-center gap-4">
+                          <span className="rounded-2xl bg-white/20 p-3">{principleIcons[item.title as keyof typeof principleIcons]}</span>
+                          <h2 className="text-xl font-bold uppercase tracking-wider">{item.title}</h2>
+                        </div>
+                        <p className="mt-5 leading-relaxed text-white/90">{item.content}</p>
+                      </div>
+                    </article>
+                  </FadeIn>
+                ))}
               </div>
             </div>
             <div className="relative mt-8 overflow-hidden rounded-[1.75rem] border border-white/80 bg-white/65 p-2 shadow-[0_18px_45px_rgba(20,55,97,0.1)] backdrop-blur-xl">
@@ -122,43 +116,6 @@ export default function QuienesSomosPage() {
         </Container>
       </section>
 
-      <section className="relative overflow-hidden py-12 sm:py-16">
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-72 bg-[radial-gradient(ellipse_at_center,rgba(47,95,169,0.13),transparent_66%)]" />
-        <Container>
-          <div className="relative mx-auto mb-9 max-w-2xl text-center">
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">Nuestro propósito</p>
-            <h2 className="mt-3 font-display text-3xl font-bold text-text sm:text-4xl">Un compromiso que nos guía</h2>
-          </div>
-          <div className="relative grid grid-cols-1 gap-6 lg:grid-cols-2">
-            {principles.map((item, index) =>  (
-              <FadeIn key={item.title} delay={index * 0.15}>
-                <div className="group/wave relative h-full overflow-hidden rounded-[2rem] border border-white/25 bg-gradient-to-br from-[#153d70]/95 via-[#1c4b83]/92 to-[#0b2e59]/95 p-8 text-white shadow-[0_25px_55px_rgba(18,54,98,0.2)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_30px_65px_rgba(18,54,98,0.3)]">
-                  <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-white/10 blur-3xl" />
-                  <div className="relative z-10">
-                    <div className="flex items-center gap-4 mb-4">
-                      <div className="flex-shrink-0 bg-white/20 p-3 rounded-2xl backdrop-blur-sm">
-                        {principleIcons[item.title as keyof typeof principleIcons]}
-                      </div>
-                      <h3 className="text-xl font-bold uppercase tracking-wider">
-                        {item.title}
-                      </h3>
-                    </div>
-                    <p className="leading-relaxed text-white/90">{item.content}</p>
-                  </div>
-                  {/* Wave Effect */}
-                  <div className="absolute bottom-0 left-0 w-[200%] h-24 animate-wave">
-                    <div className="absolute bottom-0 left-0 right-0 h-full bg-repeat-x" style={{ backgroundImage: "url(\"data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M0 64 C240 128 480 64 720 64 C960 64 1200 128 1440 64 L1440 120 L0 120 Z' fill='rgba(255,255,255,0.1)'%3e%3c/path%3e%3c/svg%3e\")" }}></div>
-                  </div>
-                  <div className="absolute bottom-0 left-0 w-[200%] h-24 animate-wave-reverse">
-                    <div className="absolute bottom-0 left-0 right-0 h-full bg-repeat-x" style={{ backgroundImage: "url(\"data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M0 80 C288 32 576 128 864 80 C1152 32 1440 80 1440 80 L1440 120 L0 120 Z' fill='rgba(255,255,255,0.05)'%3e%3c/path%3e%3c/svg%3e\")" }}></div>
-                  </div>
-                </div>
-              </FadeIn>
-            ))}
-          </div>
-        </Container>
-      </section>
-
       <section className="pb-20">
         <Container maxWidth="2xl">
           <FadeIn>
@@ -167,11 +124,11 @@ export default function QuienesSomosPage() {
                 Cultura institucional
               </p>
               <h2 className="text-4xl md:text-5xl font-display font-extrabold text-text">
-                Nuestros Valores
+                Nuestros valores
               </h2>
               <div className="mx-auto mt-5 h-1.5 w-28 rounded-full bg-primary" />
               <p className="mx-auto mt-5 max-w-2xl text-lg font-medium text-textLight">
-                Los pilares que guían cada una de nuestras acciones y decisiones.
+                Los valores que representan a nuestra gran familia y guían cada una de nuestras acciones y decisiones.
               </p>
             </div>
           </FadeIn>

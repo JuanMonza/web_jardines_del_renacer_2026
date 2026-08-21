@@ -8,21 +8,21 @@ import Button from '@/components/ui/Button';
 import { CONTACT_INFO, buildWhatsAppUrl } from '@/config/contact';
 
 const REPATRIATION_MESSAGE =
-  'Hola, necesito informacion sobre los servicios de repatriacion y expatriacion de Jardines del Renacer.';
+  'Hola, necesito información sobre los servicios de repatriación y expatriación de Jardines del Renacer.';
 
 const services = [
-  'Repatriacion (traslado hacia Colombia) y Expatriacion (traslado desde Colombia al exterior)',
-  'Gestion documental y permisos',
-  'Coordinacion directa con embajadas, consulados y aerolineas',
-  'Tramites aduaneros y sanitarios internacionales',
-  'Acompanamiento integral bilingue a la familia en todo el proceso',
+  'Repatriación (traslado hacia Colombia) y expatriación (traslado desde Colombia al exterior)',
+  'Gestión documental y permisos',
+  'Coordinación directa con embajadas, consulados y aerolíneas',
+  'Trámites aduaneros y sanitarios internacionales',
+  'Acompañamiento integral bilingüe a la familia en todo el proceso',
 ];
 
 const processSteps = [
-  ['1', 'Activacion inmediata', 'Recibimos el caso y reunimos la informacion inicial.'],
-  ['2', 'Gestion documental', 'Coordinamos permisos, consulados, aerolineas y requisitos sanitarios.'],
-  ['3', 'Traslado internacional', 'Acompanamos el proceso logistico hasta el destino definido.'],
-  ['4', 'Entrega y cierre', 'Mantenemos comunicacion con la familia hasta finalizar el servicio.'],
+  ['1', 'Activación inmediata', 'Recibimos el caso y reunimos la información inicial.'],
+  ['2', 'Gestión documental', 'Coordinamos permisos, consulados, aerolíneas y requisitos sanitarios.'],
+  ['3', 'Traslado internacional', 'Acompañamos el proceso logístico hasta el destino definido.'],
+  ['4', 'Entrega y cierre', 'Mantenemos comunicación con la familia hasta finalizar el servicio.'],
 ];
 
 export default function RepatriacionesPage() {
@@ -106,12 +106,12 @@ export default function RepatriacionesPage() {
                 </div>
                 <div className="relative p-8">
                   <div className="absolute inset-x-0 -top-4 -z-10 h-32 bg-gradient-to-r from-transparent via-primary/10 to-transparent blur-2xl"></div>
-                  <h3 className="text-2xl font-display text-text mb-4">
+                  <h3 className="mb-4 text-2xl font-display font-extrabold text-text">
                     Cobertura internacional sin fronteras
                   </h3>
-                  <p className="text-textLight leading-relaxed mb-5">
-                    Entendemos la complejidad y la urgencia de trasladar a un ser querido entre diferentes paises. 
-                    Nuestro equipo experto se encarga de coordinar cada detalle legal, logistico, sanitario y consular, 
+                  <p className="mb-5 text-base leading-relaxed text-textLight">
+                    Entendemos la complejidad y la urgencia de trasladar a un ser querido entre diferentes países.
+                    Nuestro equipo experto se encarga de coordinar cada detalle legal, logístico, sanitario y consular,
                     garantizando un proceso transparente y eficiente para que la familia pueda enfocarse en su proceso de duelo.
                   </p>
 
@@ -132,15 +132,15 @@ export default function RepatriacionesPage() {
                 <p className="mb-3 text-sm font-bold uppercase tracking-[0.22em] text-white/70">
                   Canal prioritario
                 </p>
-                <h3 className="text-2xl font-display mb-4">Atencion Especializada 24/7</h3>
+                <h3 className="text-2xl font-display mb-4">Atención especializada 24/7</h3>
                 <p className="text-white/90 mb-6">
-                  Actuamos con inmediatez y precision en situaciones de urgencia. Nuestro equipo esta disponible para brindar asesoria y soluciones oportunas.
+                  Actuamos con inmediatez y precisión en situaciones de urgencia. Nuestro equipo está disponible para brindar asesoría y soluciones oportunas.
                 </p>
 
                 <div className="flex flex-col gap-3 rounded-2xl border border-white/15 bg-white/10 p-3 backdrop-blur-sm md:gap-4 md:p-4">
                   <a href={buildWhatsAppUrl(REPATRIATION_MESSAGE)} target="_blank" rel="noopener noreferrer" className="block transition-transform duration-300 hover:-translate-y-1">
                     <Button variant="secondary" className="w-full bg-white/95 transition-all duration-300 hover:shadow-lg">
-                      Solicitar orientacion por WhatsApp
+                      Solicitar orientación por WhatsApp
                     </Button>
                   </a>
 

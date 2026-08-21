@@ -48,7 +48,7 @@ export default function SorteosPage() {
     return (
         <>
             <PageHero
-                title="Nuestros Sorteos Mensuales"
+                title="Nuestros sorteos mensuales"
                 subtitle="Mantén tus datos actualizados y participa para ganar."
                 description="En Jardines del Renacer premiamos tu fidelidad. Cada mes tienes una nueva oportunidad de ganar premios increíbles."
                 image="/images/images-baners/sorteos.webp"

@@ -103,7 +103,7 @@ export default function TrabajaConNosotrosPage() {
   return (
     <>
       <PageHero
-        title="Trabaja con Nosotros"
+        title="Trabaja con nosotros"
         subtitle="Únete a un equipo comprometido con la dignidad, el servicio y el crecimiento humano."
         image="/images/images-baners/Trabaja_con_nosotros.webp"
       />

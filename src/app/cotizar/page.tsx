@@ -13,6 +13,25 @@ type CotizarPageProps = {
   };
 };
 
+const planCategories = [
+  {
+    title: 'Planes familiares',
+    description: 'Protección para tu núcleo familiar, con respaldo y acompañamiento en los momentos más importantes.',
+  },
+  {
+    title: 'Planes corporativos',
+    description: 'Alternativas para empresas que desean ofrecer bienestar y protección a sus colaboradores.',
+  },
+  {
+    title: 'Planes especiales',
+    description: 'Opciones de previsión inmediata y otras soluciones adaptadas a necesidades particulares.',
+  },
+  {
+    title: 'Planes exclusivos',
+    description: 'Coberturas para grupos específicos, como comunidades de fe, docentes y otros convenios.',
+  },
+];
+
 function isValidPlanId(value: string): value is PlanId {
   return value in PLANS_CONFIG;
 }
@@ -24,13 +43,13 @@ export default function CotizarPage({ searchParams }: CotizarPageProps) {
 
   const whatsappMessage = selectedPlan
     ? `Hola, quiero cotizar el plan ${selectedPlan.name} de Jardines del Renacer.`
-    : 'Hola, quiero recibir una cotizacion de planes de Jardines del Renacer.';
+    : 'Hola, quiero recibir una cotización de planes de Jardines del Renacer.';
 
   return (
     <>
       <PageHero
         title="Afíliate Ya"
-        subtitle="Te ayudamos a elegir la opción ideal para proteger a tu familia con asesoría clara y acompañamiento humano."
+        subtitle="Te ayudamos a elegir el plan ideal para proteger a tu familia, con asesoría clara y acompañamiento humano."
         image="/images/images-baners/afiliateya.webp"
         imageAlt="Afiliación a planes Jardines del Renacer"
       >
@@ -56,11 +75,11 @@ export default function CotizarPage({ searchParams }: CotizarPageProps) {
                 <div className="space-y-8">
                   <header>
                     <h3 className="text-2xl md:text-3xl font-display text-text mb-3">
-                  {selectedPlan ? `Plan seleccionado: ${selectedPlan.name}` : 'Solicita tu cotizacion personalizada'}
+                  {selectedPlan ? `Plan seleccionado: ${selectedPlan.name}` : 'Solicita tu cotización personalizada'}
                     </h3>
 
                     <p className="text-textLight leading-relaxed max-w-3xl">
-                      Comparte tus datos por WhatsApp y uno de nuestros asesores te contactara
+                      Comparte tus datos por WhatsApp y uno de nuestros asesores te contactará
                       para presentarte la mejor alternativa de cobertura.
                     </p>
                   </header>
@@ -92,10 +111,17 @@ export default function CotizarPage({ searchParams }: CotizarPageProps) {
                     </div>
                   ) : (
                     <div className="rounded-3xl border border-primary/15 bg-white/50 p-6 md:p-7">
-                      <p className="text-textLight leading-relaxed">
-                        Puedes escoger un plan especifico desde la pagina de planes o hablar con un asesor
-                        para recomendarte la opcion mas conveniente.
+                      <p className="leading-relaxed text-textLight">
+                        Conoce las alternativas que tenemos para ti. Puedes elegir un plan desde la página de planes o hablar con un asesor para encontrar la cobertura más conveniente.
                       </p>
+                      <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                        {planCategories.map((category) => (
+                          <div key={category.title} className="rounded-2xl border border-primary/10 bg-white/70 p-4">
+                            <h4 className="font-display text-base text-text">{category.title}</h4>
+                            <p className="mt-1 text-sm leading-6 text-textLight">{category.description}</p>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
 
@@ -135,9 +161,9 @@ export default function CotizarPage({ searchParams }: CotizarPageProps) {
 
             <FadeIn delay={0.1}>
               <article className="glass rounded-[2rem] p-6 md:p-8 border border-primary/15 h-fit xl:sticky xl:top-24">
-                <h3 className="text-2xl font-display text-text mb-2">Atencion inmediata</h3>
+                <h3 className="text-2xl font-display text-text mb-2">Atención inmediata</h3>
                 <p className="text-sm text-textLight leading-relaxed mb-6">
-                  Si prefieres una gestion directa, usa estos canales y te orientamos en minutos.
+                  Si prefieres una gestión directa, usa estos canales y te orientamos en minutos.
                 </p>
 
                 <div className="space-y-4 mb-7">
@@ -146,7 +172,7 @@ export default function CotizarPage({ searchParams }: CotizarPageProps) {
                     className="flex items-center justify-between rounded-2xl border border-primary/20 bg-white/50 px-5 py-4 hover:border-primary/40 transition-colors"
                   >
                     <div>
-                      <p className="text-xs uppercase tracking-[0.18em] text-primary mb-1">Linea principal</p>
+                      <p className="text-xs uppercase tracking-[0.18em] text-primary mb-1">Línea principal</p>
                       <p className="text-text font-semibold">{CONTACT_INFO.primaryLine.number}</p>
                     </div>
                     <span className="text-primary text-sm font-medium">Llamar</span>
@@ -167,7 +193,7 @@ export default function CotizarPage({ searchParams }: CotizarPageProps) {
                 </div>
 
                 <p className="text-sm text-textLight leading-relaxed">
-                  Horario de atencion: {CONTACT_INFO.supportHours}. También puedes agendar una visita presencial para
+                  Horario de atención: {CONTACT_INFO.supportHours}. También puedes agendar una visita presencial para
                   resolver dudas y conocer nuestras instalaciones.
                 </p>
 

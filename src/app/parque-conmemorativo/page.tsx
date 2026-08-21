@@ -10,8 +10,8 @@ const PARQUE_CONMEMORATIVO_IMAGE = '/images/commemorativo.jpeg';
 
 const highlights = [
   'Espacios naturales para homenaje y recuerdo',
-  'Acompanamiento en ceremonias de despedida',
-  'Atencion con enfoque humano y respetuoso',
+  'Acompañamiento en ceremonias de despedida',
+  'Atención con enfoque humano y respetuoso',
 ];
 
 export default function ParqueConmemorativoPage() {
@@ -65,9 +65,9 @@ export default function ParqueConmemorativoPage() {
 
             <FadeIn delay={0.1}>
               <article className="glass rounded-3xl p-8 md:p-10 border border-primary/15 h-full">
-                <h3 className="text-2xl font-display text-text mb-4">Mas informacion</h3>
+                <h3 className="text-2xl font-display text-text mb-4">Más información</h3>
                 <p className="text-textLight mb-6">
-                  Puedes conocer el detalle del parque, servicios asociados y ubicacion oficial en nuestro sitio aliado.
+                  Puedes conocer el detalle del parque, los servicios asociados y la ubicación oficial en nuestro sitio aliado.
                 </p>
 
                 <div className="space-y-3">
@@ -79,7 +79,7 @@ export default function ParqueConmemorativoPage() {
 
                   <Link href="/contacto">
                     <Button variant="secondary" className="w-full">
-                      Solicitar asesoria
+                      Solicitar asesoría
                     </Button>
                   </Link>
                 </div>

@@ -8,21 +8,21 @@ import Button from '@/components/ui/Button';
 import { CONTACT_INFO, buildWhatsAppUrl } from '@/config/contact';
 
 const ALWAYS_WITH_YOU_MESSAGE =
-  'Hola, deseo activar Siempre Contigo para una transmision en vivo 360 del servicio de velacion.';
+  'Hola, deseo activar Siempre Contigo para una transmisión en vivo 360 del servicio de velación.';
 
 const steps = [
   {
-    title: '1. Activacion del servicio',
+    title: '1. Activación del servicio',
     description:
-      'La familia solicita Siempre Contigo y nuestro equipo agenda la transmision para el servicio de velacion.',
+      'La familia solicita Siempre Contigo y nuestro equipo agenda la transmisión para el servicio de velación.',
   },
   {
     title: '2. Enlace privado para invitados',
     description:
-      'Compartimos un enlace seguro para familiares y amigos autorizados, incluso si estan en otra ciudad o pais.',
+      'Compartimos un enlace seguro para familiares y amigos autorizados, incluso si están en otra ciudad o país.',
   },
   {
-    title: '3. Acompanamiento en vivo 360',
+    title: '3. Acompañamiento en vivo 360',
     description:
       'Durante la ceremonia, los asistentes remotos pueden conectarse y seguir el homenaje en tiempo real.',
   },
@@ -42,8 +42,8 @@ export default function SiempreContigoPage() {
         <Container maxWidth="2xl">
           <FadeIn>
             <SectionTitle
-              title="Como lo hacemos"
-              subtitle="Flujo recomendado para operar la transmision en vivo 360."
+              title="Cómo lo hacemos"
+              subtitle="Flujo recomendado para operar la transmisión en vivo 360."
               align="left"
             />
           </FadeIn>
@@ -62,7 +62,7 @@ export default function SiempreContigoPage() {
           <FadeIn delay={0.2}>
             <div className="mt-8 grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-6">
               <article className="glass rounded-3xl border border-primary/15 p-6 md:p-8">
-                <h3 className="text-2xl font-display text-text mb-3">Vista previa del modulo 360</h3>
+                <h3 className="text-2xl font-display text-text mb-3">Vista previa del módulo 360</h3>
                 <div className="relative overflow-hidden rounded-2xl border border-primary/15 bg-black/70 h-64 md:h-80">
                   <Image
                     src="/img_1 (21).webp"
@@ -72,17 +72,17 @@ export default function SiempreContigoPage() {
                   />
                   <div className="absolute inset-0 flex items-center justify-center p-6 text-center">
                     <p className="text-white text-lg max-w-md">
-                      Aqui se mostrara la transmision en vivo 360 cuando el servicio este activo.
+                      Aquí se mostrará la transmisión en vivo 360 cuando el servicio esté activo.
                     </p>
                   </div>
                 </div>
               </article>
 
               <article className="glass rounded-3xl border border-primary/15 p-6 md:p-8">
-                <h3 className="text-2xl font-display text-text mb-3">Solicitar activacion</h3>
+                <h3 className="text-2xl font-display text-text mb-3">Solicitar activación</h3>
                 <p className="text-textLight mb-5">
                   Si necesitas activar Siempre Contigo para un homenaje, nuestro equipo te ayuda a
-                  configurar camara, acceso privado y acompanamiento tecnico.
+                  configurar cámara, acceso privado y acompañamiento técnico.
                 </p>
 
                 <div className="space-y-3">

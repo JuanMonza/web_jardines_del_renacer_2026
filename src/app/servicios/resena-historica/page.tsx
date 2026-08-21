@@ -40,7 +40,7 @@ export default function ResenaHistoricaPage() {
             <p className="mt-4 text-sm leading-relaxed text-white/75 sm:text-base">Explora cada momento y acompáñanos en el recorrido que ha dado forma a Jardines del Renacer.</p>
           </div>
 
-          <div className="relative mx-auto h-[470px] max-w-[1200px] sm:h-[530px] lg:h-[580px]" aria-roledescription="carrusel" aria-label="Hitos de la historia de Jardines del Renacer">
+          <div className="relative mx-auto h-[570px] max-w-[1200px] sm:h-[630px] lg:h-[680px]" aria-roledescription="carrusel" aria-label="Hitos de la historia de Jardines del Renacer">
             {timeline.map((item, index) => {
               const position = relativePosition(index, activeIndex, timeline.length);
               const visible = Math.abs(position) <= 2;
@@ -52,7 +52,7 @@ export default function ResenaHistoricaPage() {
               return (
                 <div
                   key={item.id}
-                  className={`absolute left-1/2 top-0 h-[410px] w-[78vw] max-w-[430px] -translate-x-1/2 sm:h-[470px] sm:w-[380px] ${visible ? 'pointer-events-auto' : 'pointer-events-none'}`}
+                  className={`absolute left-1/2 top-0 h-[510px] w-[78vw] max-w-[430px] -translate-x-1/2 sm:h-[570px] sm:w-[380px] ${visible ? 'pointer-events-auto' : 'pointer-events-none'}`}
                   style={{ zIndex: 20 - Math.abs(position) }}
                 >
                   <motion.button
@@ -92,10 +92,10 @@ export default function ResenaHistoricaPage() {
                         <span className="absolute -right-14 -top-14 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
                         <span className="relative block text-xs font-semibold uppercase tracking-[0.28em] text-white/60">{item.year}</span>
                         <span className="relative mt-5 block text-2xl font-bold leading-tight sm:text-3xl">{item.title}</span>
-                        <span tabIndex={isActive && isFlipped ? 0 : -1} className="relative mt-5 min-h-0 flex-1 overflow-y-auto pr-3 text-sm leading-7 text-white/90 [scrollbar-color:rgba(255,255,255,0.55)_transparent] [scrollbar-width:thin] sm:text-base">
+                        <span className="relative mt-5 block text-[13px] leading-6 text-white/90 sm:text-sm sm:leading-7">
                           {item.description}
                         </span>
-                        <span className="relative mt-4 block border-t border-white/15 pt-3 text-xs font-semibold uppercase tracking-[0.14em] text-white/65">Desliza el texto para leer · toca para volver</span>
+                        <span className="relative mt-4 block border-t border-white/15 pt-3 text-xs font-semibold uppercase tracking-[0.14em] text-white/65">Toca para volver</span>
                       </span>
                     </motion.span>
                     <span className="absolute -bottom-6 left-1/2 z-10 -translate-x-1/2 rounded-full border border-white/40 bg-[#0b2340] px-5 py-2 text-sm font-bold tracking-[0.14em] text-white shadow-xl">{item.year}</span>

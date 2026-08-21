@@ -22,7 +22,7 @@ const heroImages = [
 // Agrega más imágenes según sea necesario
 // Variable preparada para actualizar el texto de años de experiencia fácilmente, sin buscar en el HTML
 
-const YEARS_OF_EXPERIENCE = "Más de +25 años"; // Cambiar a "26 años" según confirmación definitiva
+const YEARS_OF_EXPERIENCE = "26 años";
 
 export default function HomePage() {
   const [currentImage, setCurrentImage] = useState(0);
@@ -91,7 +91,7 @@ export default function HomePage() {
           </FadeIn>
           <FadeIn delay={0.6}>
             <div className="flex flex-col sm:flex-row gap-4 justify-center animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-500">
-              <a href={buildWhatsAppUrl('Hola jardines, quisiera mas informacion sobre planes')} target="_blank" rel="noopener noreferrer">
+              <a href={buildWhatsAppUrl('Hola, Jardines del Renacer. Quisiera más información sobre planes.')} target="_blank" rel="noopener noreferrer">
                 <Button variant="primary" size="lg">
                   ¡ Afíliate Ya !
                 </Button>

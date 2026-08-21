@@ -133,7 +133,7 @@ export default function AcompanamientoDueloPage() {
     const correo = String(formData.get('correo') || '').trim();
     const selectedTaller = proximosTalleres[selectedTallerIndex];
     const message = [
-      'Hola, deseo inscribirme o recibir informacion sobre acompanamiento en duelo.',
+      'Hola, deseo inscribirme o recibir información sobre acompañamiento en duelo.',
       `Taller: ${selectedTaller?.titulo ?? 'Solicito talleres disponibles'}`,
       `Nombre: ${nombre}`,
       `Teléfono: ${telefono}`,
@@ -263,7 +263,7 @@ export default function AcompanamientoDueloPage() {
                       <div className="flex items-start md:items-center gap-5">
                         <div className="bg-primary/10 text-primary font-bold px-5 py-4 rounded-2xl text-center min-w-[130px] flex flex-col items-center justify-center">
                           <span className="text-3xl leading-none">{selectedTaller?.fecha.split(' ')[0] ?? '--'}</span>
-                          <span className="text-xs uppercase tracking-wider">{selectedTaller?.fecha.split(' ').slice(1).join(' ') ?? 'PROXIMAMENTE'}</span>
+                          <span className="text-xs uppercase tracking-wider">{selectedTaller?.fecha.split(' ').slice(1).join(' ') ?? 'PRÓXIMAMENTE'}</span>
                         </div>
                         <div>
                           <h4 className="font-bold text-text text-lg">{selectedTaller?.titulo ?? 'Acompañamiento disponible'}</h4>

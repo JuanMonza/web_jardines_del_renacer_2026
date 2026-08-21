@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { CONTACT_INFO, buildWhatsAppUrl } from '@/config/contact';
 
-const WOMPI_CHECKOUT_URL = 'https://checkout.wompi.co/l/VPOS_BZBTG1';
+const WOMPI_CHECKOUT_URL = 'https://checkout.wompi.co/l/mjP6uJ';
 
 export default function FloatingButtons() {
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -126,9 +126,9 @@ export default function FloatingButtons() {
 
           <span
             className={cn(
-              "relative z-10 hidden overflow-hidden transition-all duration-500 ease-out sm:block sm:group-hover:max-w-[260px] sm:group-hover:translate-x-0 sm:group-hover:opacity-100",
+              "relative z-10 hidden overflow-hidden transition-all duration-500 ease-out sm:block sm:group-hover:max-w-[320px] sm:group-hover:translate-x-0 sm:group-hover:opacity-100",
               deathButtonExpanded
-                ? "sm:max-w-[260px] sm:translate-x-0 sm:opacity-100"
+                ? "sm:max-w-[320px] sm:translate-x-0 sm:opacity-100"
                 : "sm:max-w-0 sm:translate-x-[-6px] sm:opacity-0"
             )}
           >

@@ -64,7 +64,7 @@ export default function IncentivosAfiliadosPage() {
               <p className="text-sm leading-relaxed text-textLight md:text-base">
                 Este documento aplica a los incentivos promocionales comunicados por Jardines del Renacer. Para conocer los sorteos vigentes visita{' '}
                 <Link href="/sorteos" className="font-semibold text-primary hover:underline">
-                  Nuestros Sorteos Mensuales
+                  Nuestros sorteos mensuales
                 </Link>
                 .
               </p>

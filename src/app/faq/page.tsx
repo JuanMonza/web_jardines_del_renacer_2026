@@ -10,22 +10,22 @@ const faqs = [
   {
     question: '¿Atienden casos de urgencia las 24 horas?',
     answer:
-      'Si. Nuestro equipo de atencion opera 24/7 para reportes de fallecimiento y orientacion inmediata.',
+      'Sí. Nuestro equipo de atención opera 24/7 para reportes de fallecimiento y orientación inmediata.',
   },
   {
     question: '¿Puedo cotizar un plan sin compromiso?',
     answer:
-      'Si. Puedes solicitar una cotizacion por WhatsApp, telefono o formulario para comparar opciones segun tu necesidad.',
+      'Sí. Puedes solicitar una cotización por WhatsApp, teléfono o formulario para comparar opciones según tu necesidad.',
   },
   {
     question: '¿Tienen cobertura nacional?',
     answer:
-      'Contamos con presencia en diferentes ciudades del pais y red de aliados para brindar atencion oportuna.',
+      'Contamos con presencia en diferentes ciudades del país y una red de aliados para brindar atención oportuna.',
   },
   {
     question: '¿Cómo funciona el servicio de repatriaciones?',
     answer:
-      'Incluye coordinacion logistico-documental y acompanamiento para traslados nacionales e internacionales.',
+      'Incluye coordinación logístico-documental y acompañamiento para traslados nacionales e internacionales.',
   },
   {
     question: '¿Puedo agendar una visita antes de contratar?',
@@ -44,10 +44,10 @@ export default function FaqPage() {
   return (
     <>
       <PageHero
-        title="Preguntas Frecuentes"
+        title="Preguntas frecuentes"
         subtitle="Respuestas rápidas para ayudarte a tomar decisiones con tranquilidad."
         image="/images/images-baners/contacto.webp"
-        imageAlt="Preguntas Frecuentes - Jardines del Renacer"
+        imageAlt="Preguntas frecuentes - Jardines del Renacer"
       />
 
       <section className="py-20">
