@@ -217,25 +217,6 @@ p {
 }
 
 /* ============================================
-   CONTENT PROTECTION
-   ============================================ */
-
-body.content-protection :not(input):not(textarea):not([contenteditable="true"]):not([data-allow-select="true"]) {
-  -webkit-user-select: none;
-  user-select: none;
-  -webkit-touch-callout: none;
-}
-
-body.content-protection img {
-  -webkit-user-drag: none;
-  user-drag: none;
-}
-
-body.content-protection ::selection {
-  background: transparent;
-}
-
-/* ============================================
    FOCUS STYLES
    ============================================ */
 
@@ -265,19 +246,6 @@ body.content-protection ::selection {
    ============================================ */
 
 @media print {
-  body.content-protection * {
-    display: none !important;
-  }
-
-  body.content-protection::before {
-    content: 'Impresion deshabilitada';
-    display: block;
-    color: #2b2b2b;
-    font-size: 18px;
-    text-align: center;
-    margin-top: 40px;
-  }
-
   .glass {
     background: white;
     border: 1px solid #e5e5e5;
