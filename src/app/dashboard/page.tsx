@@ -1,187 +1,54 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { buildAdminGreeting } from '@/lib/adminGreeting';
-import {
-  BookHeart,
-  Users,
-  BarChart3,
-  TrendingUp,
-  ArrowUpRight,
-} from 'lucide-react';
+import { ArrowRight, BadgeCheck, BriefcaseBusiness, Building2, Handshake, Loader2, ShieldCheck, UserCog, UsersRound } from 'lucide-react';
+
+type AdminUser = { id: number; nombres: string; apellidos: string; email: string; activo: number; ultimo_login: string | null; roles: string | null };
+type SessionUser = { name: string; email: string; permissions?: string[] };
+type Module = { title: string; role: string; description: string; icon: typeof ShieldCheck; tone: string; href: string; permission?: string };
+
+const modules: Module[] = [
+  { title: 'Administración general', role: 'Administrador General', description: 'Gobierno del sitio, usuarios, homenajes y operación transversal.', icon: ShieldCheck, tone: 'bg-[#e5efff] text-[#315fa8]', href: '/dashboard' },
+  { title: 'Homenajes y obituarios', role: 'Administrador General', description: 'Publicación, consulta y administración de homenajes.', icon: BadgeCheck, tone: 'bg-[#eef2ff] text-[#5262a5]', href: '/dashboard/obituarios' },
+  { title: 'Talleres de duelo', role: 'Administrador de Talleres', description: 'Programación, galerías fotográficas e imágenes de acompañamiento.', icon: UsersRound, tone: 'bg-[#f1ebff] text-[#7555ae]', href: '/dashboard-talleres', permission: 'dashboard.talleres.view' },
+  { title: 'Sorteos e incentivos', role: 'Administrador de Sorteos', description: 'Participantes habilitados, selección aleatoria y publicación de ganadores.', icon: BadgeCheck, tone: 'bg-[#fff0d6] text-[#a86708]', href: '/dashboard-sorteos', permission: 'dashboard.sorteos.view' },
+  { title: 'Aliados comerciales', role: 'Administrador de Aliados', description: 'Convenios, accesos de aliados, descuentos y trazabilidad comercial.', icon: Handshake, tone: 'bg-[#e6f7f0] text-[#12815b]', href: '/dashboard-aliados', permission: 'dashboard.aliados.view' },
+  { title: 'Sedes', role: 'Administrador de Sedes', description: 'Puntos de atención, cobertura territorial y operación local.', icon: Building2, tone: 'bg-[#fff2dc] text-[#b86b12]', href: '/dashboard-sedes', permission: 'dashboard.sedes.view' },
+  { title: 'Vacantes y postulaciones', role: 'Administrador de Vacantes', description: 'Vacantes publicadas, candidatos y seguimiento de selección.', icon: BriefcaseBusiness, tone: 'bg-[#eee9ff] text-[#6e54ac]', href: '/dashboard-vacantes', permission: 'dashboard.vacantes.view' },
+  { title: 'Cotizaciones', role: 'Coordinador de Cotizaciones', description: 'Prospectos, asignación de asesores y seguimiento comercial.', icon: UsersRound, tone: 'bg-[#ffeaf0] text-[#b74464]', href: '/dashboard/cotizaciones', permission: 'quotes.view' },
+];
+
+function roleMatch(user: AdminUser, role: string) { return user.roles?.split('|').map((item) => item.trim()).includes(role); }
 
 export default function DashboardPage() {
-  const router = useRouter();
-  const [user, setUser] = useState<any>(null);
+  const [session, setSession] = useState<SessionUser | null>(null);
+  const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    fetch('/api/iam/admin/session')
-      .then(async (response) => {
-        if (!response.ok) throw new Error('No autorizado');
-        return response.json() as Promise<{ user: { name: string; email: string } }>;
+    Promise.all([fetch('/api/iam/admin/session'), fetch('/api/iam/admin/users', { cache: 'no-store' })])
+      .then(async ([sessionResponse, usersResponse]) => {
+        const sessionPayload = await sessionResponse.json() as { user?: SessionUser; message?: string };
+        const usersPayload = await usersResponse.json() as { data?: AdminUser[]; message?: string };
+        if (!sessionResponse.ok || !usersResponse.ok) throw new Error(usersPayload.message || sessionPayload.message || 'No fue posible cargar el panel administrativo.');
+        setSession(sessionPayload.user || null);
+        setUsers(usersPayload.data || []);
       })
-      .then(({ user: authenticatedUser }) => {
-        setUser(authenticatedUser);
-        setLoading(false);
-      })
-      .catch(() => router.replace('/login/admin'));
-  }, [router]);
+      .catch((requestError) => setError(requestError instanceof Error ? requestError.message : 'No fue posible cargar el panel administrativo.'))
+      .finally(() => setLoading(false));
+  }, []);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
+  const activeUsers = useMemo(() => users.filter((user) => Boolean(user.activo)).length, [users]);
+  const activeRoles = useMemo(() => new Set(users.filter((user) => user.activo).flatMap((user) => user.roles?.split('|').map((role) => role.trim()) || [])).size, [users]);
+  const canOpenModule = (module: Module) => !module.permission || Boolean(session?.permissions?.includes(module.permission));
+  if (loading) return <div className="flex min-h-[70vh] items-center justify-center gap-3 text-sm font-semibold text-textLight"><Loader2 className="h-5 w-5 animate-spin text-primary" /> Preparando centro de control...</div>;
 
-  const stats = [
-    {
-      label: 'Total Homenajes',
-      value: '1,254',
-      icon: BookHeart,
-      href: '/dashboard/obituarios',
-      change: '+12.5%',
-      changeType: 'increase',
-    },
-    {
-      label: 'Sedes Activas',
-      value: '72',
-      icon: Users,
-      href: '/dashboard/sedes',
-      change: '+2',
-      changeType: 'increase',
-    },
-    {
-      label: 'Visitas al Sitio',
-      value: '28,791',
-      icon: BarChart3,
-      href: '#',
-      change: '+21.3%',
-      changeType: 'increase',
-    },
-    {
-      label: 'Nuevos Afiliados (Mes)',
-      value: '186',
-      icon: TrendingUp,
-      href: '#',
-      change: '-3.1%',
-      changeType: 'decrease',
-    },
-  ];
-  return (
-    <div className="min-h-screen p-5 md:p-8">
-      <div className="mb-8 flex flex-col gap-4 border-b border-[#a9c2df]/45 pb-6 md:flex-row md:items-end md:justify-between">
-        <div>
-          <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.2em] text-[#54759e]">Centro de operaciones</p>
-          <h1 className="font-display text-3xl text-[#163861] md:text-4xl">Panel de control</h1>
-          <p className="mt-2 max-w-2xl text-sm text-[#57718f] md:text-base">Vista general de métricas y operaciones de Jardines del Renacer.</p>
-        </div>
-        <div className="rounded-2xl border border-white/80 bg-white/45 px-4 py-3 text-sm text-[#3e608a] shadow-sm backdrop-blur">Información protegida por rol</div>
-      </div>
-
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {stats.map((stat) => {
-            const StatIcon = stat.icon;
-            return (
-              <Link key={stat.label} href={stat.href}>
-                <div className="group rounded-2xl border border-white/70 bg-white/50 p-5 shadow-[0_16px_35px_-28px_rgba(8,37,88,0.65)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-[#7fa7d6] hover:bg-white/70">
-                  <div className="flex justify-between items-start">
-                    <h3 className="text-sm font-medium text-textLight uppercase tracking-wider">
-                      {stat.label}
-                    </h3>
-                    <StatIcon className="w-6 h-6 text-primary/70 group-hover:text-primary transition-colors" />
-                  </div>
-                  <div className="mt-4">
-                    <p className="text-3xl font-bold text-text md:text-4xl">{stat.value}</p>
-                    <div
-                      className={`text-xs flex items-center gap-1 mt-1 ${
-                        stat.changeType === 'increase'
-                          ? 'text-green-600'
-                          : 'text-red-500'
-                      }`}
-                    >
-                      <TrendingUp className="w-4 h-4" />
-                      <span>{stat.change} desde el mes pasado</span>
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-
-        <div className="mt-8 grid grid-cols-1 gap-5 lg:grid-cols-3">
-          {/* Columna Izquierda: Accesos Rápidos */}
-          <div className="space-y-3 lg:col-span-1">
-            <h2 className="text-lg font-semibold text-[#23476f]">Accesos rápidos</h2>
-            <QuickAccessCard
-              href="/dashboard/obituarios"
-              icon={BookHeart}
-              title="Gestionar Homenajes"
-              subtitle="Crear, editar y buscar por cédula"
-            />
-            <QuickAccessCard
-              href="/dashboard/sedes"
-              icon={Users}
-              title="Administrar Sedes"
-              subtitle="Editar puntos de atención y administradores"
-            />
-          </div>
-
-          {/* Columna Derecha: Actividad Reciente */}
-          <div className="rounded-2xl border border-white/70 bg-white/48 p-5 shadow-[0_16px_35px_-28px_rgba(8,37,88,0.65)] backdrop-blur-xl md:p-6 lg:col-span-2">
-            <h2 className="mb-5 text-lg font-semibold text-[#23476f]">
-              Actividad reciente
-            </h2>
-            <div className="space-y-4">
-              {[
-                { action: 'Nuevo homenaje creado', time: 'Hace 2 horas', user: 'Admin', icon: BookHeart },
-                { action: 'Sede "Cali" actualizada', time: 'Hace 5 horas', user: 'Admin', icon: Users },
-                { action: 'Taller de duelo "Cometa" activado', time: 'Ayer', user: 'Admin', icon: TrendingUp },
-              ].map((activity, index) => {
-                const ActivityIcon = activity.icon;
-                return (
-                  <div key={index} className="flex flex-col items-start justify-between gap-3 border-b border-border/60 py-3 last:border-0 sm:flex-row sm:items-center">
-                    <div className="flex items-center gap-4">
-                      <div className="bg-primary/10 p-2 rounded-full">
-                        <ActivityIcon className="w-5 h-5 text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-text font-medium">{activity.action}</p>
-                        <p className="text-sm text-textLight">{activity.user}</p>
-                      </div>
-                    </div>
-                    <span className="text-sm text-textLight">{activity.time}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-    </div>
-  );
+  return <div className="p-5 md:p-8">
+    <header className="relative overflow-hidden rounded-[28px] border border-white/80 bg-white/55 px-6 py-7 shadow-[0_22px_56px_-38px_rgba(13,54,109,.8)] backdrop-blur-xl md:px-8"><div className="pointer-events-none absolute -right-12 -top-16 h-56 w-56 rounded-full bg-[#bbd4f3]/55 blur-3xl" /><div className="relative flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between"><div><p className="text-xs font-bold uppercase tracking-[.18em] text-primary">Jardines del Renacer · administración</p><h1 className="mt-2 text-3xl font-bold tracking-tight text-text md:text-4xl">Centro de control</h1><p className="mt-2 max-w-2xl text-sm leading-6 text-textLight md:text-base">{session?.name ? `Bienvenido, ${session.name}. ` : ''}Consulta en un solo lugar los responsables y el estado de los módulos administrativos.</p></div><Link href="/dashboard/usuarios" className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-white shadow-[0_12px_24px_-14px_rgba(29,78,157,.9)] transition hover:-translate-y-0.5 hover:bg-[#254e92]">Gestionar usuarios <ArrowRight className="h-4 w-4" /></Link></div></header>
+    {error ? <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-medium text-red-700">{error}</div> : <><section className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><Summary icon={UsersRound} label="Administradores registrados" value={String(users.length)} tone="blue" /><Summary icon={BadgeCheck} label="Cuentas activas" value={String(activeUsers)} tone="green" /><Summary icon={ShieldCheck} label="Roles operativos" value={String(activeRoles)} tone="violet" /><Summary icon={UserCog} label="Módulos administrados" value={String(modules.length)} tone="amber" /></section><section className="mt-5 rounded-[26px] border border-white/80 bg-white/50 p-5 shadow-[0_20px_54px_-38px_rgba(13,54,109,.72)] backdrop-blur-xl md:p-6"><div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between"><div><p className="text-xs font-bold uppercase tracking-[.16em] text-primary">Mapa administrativo</p><h2 className="mt-1 text-2xl font-bold text-text">Responsables por módulo</h2></div><p className="text-sm text-textLight">Los accesos se conservan aislados por rol y permiso.</p></div><div className="mt-5 grid gap-3 xl:grid-cols-2">{modules.map((module) => { const Icon = module.icon; const owners = users.filter((user) => roleMatch(user, module.role)); const enabled = canOpenModule(module); return <article key={module.title} className="rounded-2xl border border-[#dae6f4] bg-white/70 p-4 transition hover:-translate-y-0.5 hover:border-[#a9c6ea] hover:shadow-[0_18px_38px_-28px_rgba(13,54,109,.9)]"><div className="flex gap-3"><div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${module.tone}`}><Icon className="h-5 w-5" /></div><div className="min-w-0 flex-1"><div className="flex flex-wrap items-start justify-between gap-2"><div><h3 className="font-bold text-text">{module.title}</h3><p className="mt-1 text-sm leading-5 text-textLight">{module.description}</p></div><span className={`rounded-full px-2.5 py-1 text-xs font-bold ${owners.some((owner) => owner.activo) ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-800'}`}>{owners.some((owner) => owner.activo) ? 'Operativo' : 'Sin asignar'}</span></div><div className="mt-4 flex flex-wrap items-end justify-between gap-3 border-t border-[#e5edf6] pt-3"><div><p className="text-xs font-bold uppercase tracking-[.12em] text-[#6380a2]">Responsable</p>{owners.length ? <div className="mt-2 flex flex-wrap gap-2">{owners.map((owner) => <span key={owner.id} className="rounded-lg bg-[#edf3fc] px-2.5 py-1 text-xs font-semibold text-[#42658d]">{owner.nombres} {owner.apellidos}</span>)}</div> : <p className="mt-2 text-sm text-textLight">No hay una cuenta vinculada a este rol.</p>}</div>{enabled ? <Link href={module.href} className="inline-flex items-center gap-1.5 rounded-lg bg-[#edf3fc] px-3 py-2 text-xs font-bold text-primary transition hover:bg-primary hover:text-white">Abrir panel <ArrowRight className="h-3.5 w-3.5" /></Link> : <span className="text-xs font-medium text-amber-700">Acceso de consulta pendiente</span>}</div></div></div></article>; })}</div></section><section className="mt-5 grid gap-4 lg:grid-cols-[1.2fr_.8fr]"><div className="rounded-[24px] border border-white/80 bg-white/55 p-5 shadow-[0_18px_44px_-36px_rgba(13,54,109,.75)] backdrop-blur-xl"><p className="text-xs font-bold uppercase tracking-[.16em] text-primary">Seguridad operativa</p><h2 className="mt-1 text-xl font-bold text-text">Accesos protegidos por IAM</h2><p className="mt-2 text-sm leading-6 text-textLight">La gestión de cuentas se realiza desde la base de datos. Cada administrador ve únicamente los módulos que su rol tiene autorizados.</p></div><Link href="/dashboard/usuarios" className="group rounded-[24px] border border-[#cfe0f4] bg-[#eaf2ff]/70 p-5 shadow-[0_18px_44px_-36px_rgba(13,54,109,.75)] transition hover:bg-white/80"><p className="text-xs font-bold uppercase tracking-[.16em] text-primary">Acción recomendada</p><p className="mt-2 text-lg font-bold text-text">Revisar usuarios y roles</p><p className="mt-1 text-sm text-textLight">Mantén actualizado quién administra cada área.</p><span className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-primary">Abrir directorio <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" /></span></Link></section></>}
+  </div>;
 }
 
-function QuickAccessCard({ href, icon: Icon, title, subtitle }: any) {
-  return (
-    <Link href={href}>
-      <div className="group flex items-center gap-4 rounded-2xl border border-white/70 bg-white/45 p-4 shadow-sm backdrop-blur-sm transition-all hover:border-[#7fa7d6] hover:bg-white/70">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 transition-colors group-hover:bg-primary/20">
-          <Icon className="w-6 h-6 text-primary" />
-        </div>
-        <div className="min-w-0">
-          <h3 className="text-base font-semibold text-text transition-colors group-hover:text-primary md:text-lg">
-            {title}
-          </h3>
-          <p className="text-sm leading-snug text-textLight">{subtitle}</p>
-        </div>
-        <ArrowUpRight className="ml-auto h-5 w-5 shrink-0 text-textLight transition-all group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-primary" />
-      </div>
-    </Link>
-  );
-}
+function Summary({ icon: Icon, label, value, tone }: { icon: typeof UsersRound; label: string; value: string; tone: 'blue' | 'green' | 'violet' | 'amber' }) { const tones = { blue: 'bg-[#e4efff] text-[#315fa8]', green: 'bg-[#e5f8ef] text-[#12815b]', violet: 'bg-[#eee9ff] text-[#7154b8]', amber: 'bg-[#fff2d9] text-[#bd7114]' }; return <div className="rounded-2xl border border-white/80 bg-white/60 p-4 shadow-[0_14px_30px_-26px_rgba(13,54,109,.9)] backdrop-blur-xl"><div className={`flex h-10 w-10 items-center justify-center rounded-xl ${tones[tone]}`}><Icon className="h-5 w-5" /></div><p className="mt-4 text-xs font-bold uppercase tracking-[.14em] text-textLight">{label}</p><p className="mt-1 text-3xl font-bold text-text">{value}</p></div>; }

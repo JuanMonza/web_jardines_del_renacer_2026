@@ -192,22 +192,51 @@ CREATE TABLE pagos (
 CREATE TABLE cotizaciones (
   id                 CHAR(36)     PRIMARY KEY DEFAULT (UUID()),
   nombre             VARCHAR(150) NOT NULL,
+  apellido           VARCHAR(150) NOT NULL,
   telefono           VARCHAR(30)  NOT NULL,
   ciudad             VARCHAR(80)  NOT NULL,
   email              VARCHAR(150),
+  cargo              VARCHAR(120),
   plan_id            VARCHAR(60)  NOT NULL,
   plan_nombre        VARCHAR(120),
   cobertura          ENUM('individual','familiar','segmentado','especial','corporativo','independiente') NOT NULL,
   num_beneficiarios  TINYINT UNSIGNED DEFAULT 1,
   contacto_preferido ENUM('WhatsApp','Llamada') NOT NULL DEFAULT 'WhatsApp',
+  hora_contacto      CHAR(5),
   estado             ENUM('nuevo','contactado','en_negociacion','convertido','descartado') NOT NULL DEFAULT 'nuevo',
   notas_asesor       TEXT,
+  motivo_perdida     VARCHAR(200),
+  proximo_contacto   DATETIME NULL,
   asesor_id          INT REFERENCES admin_users(id),
+  primer_contacto_en TIMESTAMP NULL,
   creado_en          TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
   actualizado_en     TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX idx_estado   (estado),
   INDEX idx_plan     (plan_id),
   INDEX idx_ciudad   (ciudad)
+  ,INDEX idx_proximo_contacto (proximo_contacto),
+  INDEX idx_asesor_estado (asesor_id, estado)
+);
+
+CREATE TABLE cotizacion_historial (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  cotizacion_id CHAR(36) NOT NULL,
+  admin_user_id INT NULL,
+  tipo ENUM('creada','estado','nota','asignacion','seguimiento') NOT NULL,
+  detalle VARCHAR(500) NOT NULL,
+  creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_cotizacion_fecha (cotizacion_id, creado_en)
+);
+
+CREATE TABLE cotizacion_notificaciones (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  admin_user_id INT NOT NULL,
+  cotizacion_id CHAR(36) NULL,
+  tipo ENUM('nueva_cotizacion','seguimiento_hoy','seguimiento_vencido') NOT NULL,
+  mensaje VARCHAR(500) NOT NULL,
+  leida_en TIMESTAMP NULL,
+  creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_notificacion_usuario (admin_user_id, leida_en, creado_en)
 );
 
 --

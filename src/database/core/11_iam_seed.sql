@@ -8,6 +8,17 @@ VALUES
   ('DASHBOARD', 'dashboard.admin.view', 'Acceder al dashboard administrativo', 'Acceso al panel administrativo general.', 'VIEW', TRUE, TRUE),
   ('DASHBOARD', 'dashboard.aliados.view', 'Acceder al dashboard de aliados', 'Acceso al panel administrativo de aliados.', 'VIEW', TRUE, TRUE),
   ('DASHBOARD', 'dashboard.vacantes.view', 'Acceder al dashboard de vacantes', 'Acceso al panel administrativo de vacantes.', 'VIEW', TRUE, TRUE)
+  ,('DASHBOARD', 'dashboard.talleres.view', 'Acceder al dashboard de talleres', 'Acceso al panel administrativo de talleres de duelo.', 'VIEW', TRUE, TRUE)
+  ,('DASHBOARD', 'dashboard.sorteos.view', 'Acceder al dashboard de sorteos', 'Acceso al panel administrativo de sorteos.', 'VIEW', TRUE, TRUE)
+  ,('TALLERES', 'workshops.view', 'Consultar talleres', 'Consultar talleres, álbumes e imágenes.', 'VIEW', TRUE, TRUE)
+  ,('TALLERES', 'workshops.create', 'Crear talleres', 'Crear talleres y álbumes.', 'CREATE', TRUE, TRUE)
+  ,('TALLERES', 'workshops.update', 'Actualizar talleres', 'Editar talleres, galerías e imágenes.', 'UPDATE', TRUE, TRUE)
+  ,('TALLERES', 'workshops.delete', 'Desactivar talleres', 'Desactivar talleres y álbumes.', 'DELETE', TRUE, TRUE)
+  ,('SORTEOS', 'giveaways.view', 'Consultar sorteos', 'Consultar sorteos, participantes y ganadores.', 'VIEW', TRUE, TRUE)
+  ,('SORTEOS', 'giveaways.create', 'Crear sorteos', 'Crear sorteos y cargar participantes.', 'CREATE', TRUE, TRUE)
+  ,('SORTEOS', 'giveaways.update', 'Gestionar sorteos', 'Actualizar sorteos y validar ganadores.', 'UPDATE', TRUE, TRUE)
+  ,('SORTEOS', 'giveaways.draw', 'Ejecutar selección aleatoria', 'Seleccionar ganadores de forma auditable.', 'UPDATE', TRUE, TRUE)
+  ,('SORTEOS', 'giveaways.delete', 'Cancelar sorteos', 'Cancelar sorteos.', 'DELETE', TRUE, TRUE)
   ,('DASHBOARD', 'dashboard.sedes.view', 'Acceder al dashboard de sedes', 'Acceso al panel administrativo de sedes.', 'VIEW', TRUE, TRUE)
   ,('VACANTES', 'vacancies.create', 'Crear vacantes', 'Crear nuevas vacantes laborales.', 'CREATE', TRUE, TRUE)
   ,('VACANTES', 'vacancies.update', 'Actualizar vacantes', 'Modificar vacantes laborales.', 'UPDATE', TRUE, TRUE)
@@ -26,4 +37,5 @@ VALUES
   ,('SEDES', 'sites.delete', 'Desactivar sedes', 'Desactivar puntos de atención.', 'DELETE', TRUE, TRUE)
   ,('COTIZACIONES', 'quotes.view', 'Consultar cotizaciones', 'Consultar prospectos y cotizaciones.', 'VIEW', TRUE, TRUE)
   ,('COTIZACIONES', 'quotes.update', 'Gestionar cotizaciones', 'Actualizar el estado de cotizaciones.', 'UPDATE', TRUE, TRUE)
+  ,('COTIZACIONES', 'quotes.view.all', 'Ver todas las cotizaciones', 'Consultar y asignar cotizaciones de todo el equipo.', 'VIEW', TRUE, TRUE)
 ON DUPLICATE KEY UPDATE nombre = VALUES(nombre), descripcion = VALUES(descripcion), activo = TRUE, deleted_at = NULL;

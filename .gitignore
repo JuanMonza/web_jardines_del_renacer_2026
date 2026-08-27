@@ -9,6 +9,8 @@
 # next.js
 /.next/
 /out/
+.next-cache-incompatible-*/
+.next-validation-backup/
 
 # production
 /build
@@ -16,6 +18,9 @@
 # misc
 .DS_Store
 *.pem
+public/uploads/
+docs/*Credenciales*.xlsx
+docs/~$*
 
 # debug
 npm-debug.log*

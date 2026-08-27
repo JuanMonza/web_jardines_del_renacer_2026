@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Container from '@/components/ui/Container';
 import FadeIn from '@/components/animations/FadeIn';
@@ -18,9 +18,16 @@ import Link from 'next/link';
  * Muestra el próximo sorteo, una lista de futuros sorteos y ganadores anteriores.
  */
 export default function SorteosPage() {
+    const [managedGiveaways, setManagedGiveaways] = useState<readonly Giveaway[]>(giveawaysData);
+    useEffect(() => {
+        fetch('/api/sorteos/public')
+            .then(async (response) => response.ok ? response.json() : null)
+            .then((payload) => { if (payload?.data?.length) setManagedGiveaways(payload.data as Giveaway[]); })
+            .catch(() => undefined);
+    }, []);
     const { upcoming, next, past } = useMemo(() => {
         const now = new Date();
-        const upcomingGiveaways = giveawaysData
+        const upcomingGiveaways = managedGiveaways
             .filter((g) => new Date(g.date) > now)
             .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
@@ -33,7 +40,7 @@ export default function SorteosPage() {
             next: upcomingGiveaways[0] || null,
             past: pastGiveaways.slice(0, 6), // Los últimos 6 ganadores
         };
-    }, []);
+    }, [managedGiveaways]);
 
     const timeRemaining = useCountdown(next?.date);
 

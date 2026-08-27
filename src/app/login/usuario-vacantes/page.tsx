@@ -1,80 +1,116 @@
-'use client';
+"use client";
 
-import { Suspense, useState } from 'react';
-import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
-import AuthLoginLayout from '@/components/login/AuthLoginLayout';
-import LoginTextField from '@/components/login/LoginTextField';
+import { Suspense, useEffect, useState } from "react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import AuthLoginLayout from "@/components/login/AuthLoginLayout";
+import LoginTextField from "@/components/login/LoginTextField";
 
 function normalizeDocumentNumber(value: string) {
-  return value.replace(/\D/g, '');
+  return value.replace(/\D/g, "");
 }
 
 function resolveNextPath(value: string | null) {
-  if (value && value.startsWith('/')) {
+  if (value && value.startsWith("/")) {
     return value;
   }
-  return '/servicios/trabaja-con-nosotros/postulante/dashboard';
+  return "/servicios/trabaja-con-nosotros/postulante/dashboard";
 }
 
 function VacantesUserLoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const nextPath = resolveNextPath(searchParams.get('next'));
+  const nextPath = resolveNextPath(searchParams.get("next"));
 
-  const [documentNumber, setDocumentNumber] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [documentNumber, setDocumentNumber] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [rememberUser, setRememberUser] = useState(false);
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const savedAccess = window.localStorage.getItem(
+      "jdr.remember.vacantes.user",
+    );
+    if (!savedAccess) return;
+    try {
+      const parsed = JSON.parse(savedAccess) as {
+        documentNumber?: string;
+        email?: string;
+      };
+      if (parsed.documentNumber && parsed.email) {
+        setDocumentNumber(parsed.documentNumber);
+        setEmail(parsed.email);
+        setRememberUser(true);
+      }
+    } catch {
+      window.localStorage.removeItem("jdr.remember.vacantes.user");
+    }
+  }, []);
 
   const handleLoginSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    setError('');
+    setError("");
     setLoading(true);
 
     const normalizedDocument = normalizeDocumentNumber(documentNumber);
     const normalizedEmail = email.trim().toLowerCase();
 
     if (normalizedDocument.length < 6 || normalizedDocument.length > 15) {
-      setError('Ingresa un documento valido.');
+      setError("Ingresa un documento valido.");
       setLoading(false);
       return;
     }
 
-    if (!normalizedEmail || !normalizedEmail.includes('@')) {
-      setError('Ingresa el correo usado en tu postulacion.');
+    if (!normalizedEmail || !normalizedEmail.includes("@")) {
+      setError("Ingresa el correo usado en tu postulacion.");
       setLoading(false);
       return;
     }
 
     if (password.length < 8) {
-      setError('Ingresa tu contraseña de al menos 8 caracteres.');
+      setError("Ingresa tu contraseña de al menos 8 caracteres.");
       setLoading(false);
       return;
     }
 
     try {
-      const response = await fetch('/api/postulantes/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/postulantes/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           documentNumber: normalizedDocument,
           email: normalizedEmail,
           password,
         }),
       });
-      const result = (await response.json()) as { success: boolean; message?: string };
+      const result = (await response.json()) as {
+        success: boolean;
+        message?: string;
+      };
 
       if (!response.ok || !result.success) {
-        setError(result.message || 'No pudimos validar tus datos.');
+        setError(result.message || "No pudimos validar tus datos.");
         return;
+      }
+
+      if (rememberUser) {
+        window.localStorage.setItem(
+          "jdr.remember.vacantes.user",
+          JSON.stringify({
+            documentNumber: normalizedDocument,
+            email: normalizedEmail,
+          }),
+        );
+      } else {
+        window.localStorage.removeItem("jdr.remember.vacantes.user");
       }
 
       router.push(nextPath);
       router.refresh();
     } catch {
-      setError('No pudimos iniciar sesion. Intenta nuevamente.');
+      setError("No pudimos iniciar sesion. Intenta nuevamente.");
     } finally {
       setLoading(false);
     }
@@ -83,10 +119,22 @@ function VacantesUserLoginContent() {
   const handlePasswordRecovery = async () => {
     const normalizedDocument = normalizeDocumentNumber(documentNumber);
     const normalizedEmail = email.trim().toLowerCase();
-    if (normalizedDocument.length < 6 || !normalizedEmail.includes('@')) { setError('Escribe tu documento y correo para recuperar la contraseña.'); return; }
-    const response = await fetch('/api/postulantes/recuperar-password', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ documentNumber: normalizedDocument, email: normalizedEmail }) });
-    const result = await response.json() as { message?: string };
-    setError(result.message || 'Revisa tu correo para continuar con la recuperación.');
+    if (normalizedDocument.length < 6 || !normalizedEmail.includes("@")) {
+      setError("Escribe tu documento y correo para recuperar la contraseña.");
+      return;
+    }
+    const response = await fetch("/api/postulantes/recuperar-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        documentNumber: normalizedDocument,
+        email: normalizedEmail,
+      }),
+    });
+    const result = (await response.json()) as { message?: string };
+    setError(
+      result.message || "Revisa tu correo para continuar con la recuperación.",
+    );
   };
 
   return (
@@ -102,13 +150,23 @@ function VacantesUserLoginContent() {
           value={documentNumber}
           onChange={(event) => {
             setDocumentNumber(event.target.value);
-            setError('');
+            setError("");
           }}
           placeholder="Ingresa tu documento"
           required
           icon={
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A13.937 13.937 0 0112 16c2.42 0 4.696.607 6.688 1.68M15 10a3 3 0 11-6 0 3 3 0 016 0z" />
+            <svg
+              className="h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M5.121 17.804A13.937 13.937 0 0112 16c2.42 0 4.696.607 6.688 1.68M15 10a3 3 0 11-6 0 3 3 0 016 0z"
+              />
             </svg>
           }
         />
@@ -119,13 +177,23 @@ function VacantesUserLoginContent() {
           value={email}
           onChange={(event) => {
             setEmail(event.target.value);
-            setError('');
+            setError("");
           }}
           placeholder="correo@ejemplo.com"
           required
           icon={
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+            <svg
+              className="h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"
+              />
             </svg>
           }
         />
@@ -136,11 +204,21 @@ function VacantesUserLoginContent() {
           value={password}
           onChange={(event) => {
             setPassword(event.target.value);
-            setError('');
+            setError("");
           }}
           placeholder="Ingresa tu contraseña"
           required
         />
+
+        <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-white/80">
+          <input
+            type="checkbox"
+            checked={rememberUser}
+            onChange={(event) => setRememberUser(event.target.checked)}
+            className="h-4 w-4 accent-white"
+          />
+          Recordar mis datos de acceso en este dispositivo
+        </label>
 
         {error && (
           <p className="rounded-xl border border-red-400/40 bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -148,14 +226,28 @@ function VacantesUserLoginContent() {
           </p>
         )}
 
-        <div className="flex items-center justify-between gap-3 text-sm"><Link href={`/login/usuario-vacantes/registro?next=${encodeURIComponent(nextPath)}`} className="font-semibold text-white underline decoration-white/50 underline-offset-4 transition hover:text-white/75">Crear cuenta</Link><button type="button" onClick={() => void handlePasswordRecovery()} className="font-semibold text-white underline decoration-white/50 underline-offset-4 transition hover:text-white/75">¿Olvidaste tu contraseña?</button></div>
+        <div className="flex items-center justify-between gap-3 text-sm">
+          <Link
+            href={`/login/usuario-vacantes/registro?next=${encodeURIComponent(nextPath)}`}
+            className="font-semibold text-white underline decoration-white/50 underline-offset-4 transition hover:text-white/75"
+          >
+            Crear cuenta
+          </Link>
+          <button
+            type="button"
+            onClick={() => void handlePasswordRecovery()}
+            className="font-semibold text-white underline decoration-white/50 underline-offset-4 transition hover:text-white/75"
+          >
+            ¿Olvidaste tu contraseña?
+          </button>
+        </div>
 
         <button
           type="submit"
           disabled={loading}
           className="w-full rounded-xl bg-black text-white py-3.5 text-lg font-semibold hover:bg-black/85 transition-colors disabled:opacity-60"
         >
-          {loading ? 'Validando...' : 'Ingresar al portal'}
+          {loading ? "Validando..." : "Ingresar al portal"}
         </button>
 
         <div className="text-center text-sm text-white/90 space-y-2">
@@ -165,7 +257,10 @@ function VacantesUserLoginContent() {
           >
             Ver vacantes disponibles
           </Link>
-          <Link href="/" className="block hover:text-[#2f5bd6] transition-colors">
+          <Link
+            href="/"
+            className="block hover:text-[#2f5bd6] transition-colors"
+          >
             Volver al inicio
           </Link>
         </div>

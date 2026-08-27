@@ -97,6 +97,19 @@ export default function AcompanamientoDueloPage() {
     };
 
     syncData();
+    fetch('/api/talleres-duelo/public')
+      .then(async (response) => response.ok ? response.json() : null)
+      .then((payload) => {
+        if (!payload?.data?.talleres?.length) return;
+        const serverTalleres = payload.data.talleres as TallerDuelo[];
+        const serverAlbums = (payload.data.albums as DueloGalleryAlbum[]).filter((album) => album.activo);
+        const serverActive = serverTalleres.filter((taller) => taller.activo && (!taller.fechaISO || taller.fechaISO >= todayISO)).sort(sortByDateAsc);
+        setAllTalleres(serverTalleres);
+        setProximosTalleres(serverActive);
+        setSelectedTallerIndex((current) => serverActive[current] ? current : 0);
+        setAlbumes(serverAlbums);
+      })
+      .catch(() => undefined);
     window.addEventListener(TALLERES_DUELO_UPDATED_EVENT, syncData);
     return () => window.removeEventListener(TALLERES_DUELO_UPDATED_EVENT, syncData);
   }, [todayISO]);

@@ -11,12 +11,14 @@ VALUES
   ('Administrador de Vacantes', 'Gestión exclusiva del módulo de vacantes.', 40, TRUE, TRUE),
   ('Administrador de Aliados', 'Gestión exclusiva del módulo de aliados.', 40, TRUE, TRUE),
   ('Administrador de Sedes', 'Gestión exclusiva de sedes y cobertura.', 40, TRUE, TRUE)
+  ,('Administrador de Talleres', 'Gestión exclusiva de talleres de duelo y galerías.', 40, TRUE, TRUE)
+  ,('Administrador de Sorteos', 'Gestión exclusiva de sorteos, participantes y ganadores.', 40, TRUE, TRUE)
 ON DUPLICATE KEY UPDATE descripcion = VALUES(descripcion), prioridad = VALUES(prioridad), activo = TRUE, deleted_at = NULL;
 
 INSERT IGNORE INTO role_permissions (role_id, permission_id)
 SELECT r.id, p.id
 FROM roles r
-INNER JOIN permissions p ON p.codigo IN ('dashboard.admin.view', 'quotes.view', 'quotes.update', 'sites.view', 'sites.create', 'sites.update', 'sites.delete')
+INNER JOIN permissions p ON p.codigo IN ('dashboard.admin.view', 'quotes.view', 'quotes.update', 'quotes.view.all', 'sites.view', 'sites.create', 'sites.update', 'sites.delete')
 WHERE r.nombre = 'Administrador General';
 
 INSERT IGNORE INTO role_permissions (role_id, permission_id)
@@ -36,6 +38,12 @@ SELECT r.id, p.id
 FROM roles r
 INNER JOIN permissions p ON p.codigo IN ('dashboard.sedes.view', 'sites.view', 'sites.create', 'sites.update', 'sites.delete')
 WHERE r.nombre = 'Administrador de Sedes';
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r INNER JOIN permissions p ON p.codigo IN ('dashboard.talleres.view','workshops.view','workshops.create','workshops.update','workshops.delete') WHERE r.nombre = 'Administrador de Talleres';
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r INNER JOIN permissions p ON p.codigo IN ('dashboard.sorteos.view','giveaways.view','giveaways.create','giveaways.update','giveaways.draw','giveaways.delete') WHERE r.nombre = 'Administrador de Sorteos';
 
 -- Las contraseñas se almacenan únicamente como BCrypt. Estas credenciales son
 -- temporales y documentadas para que el equipo pueda probar los tres dashboards.

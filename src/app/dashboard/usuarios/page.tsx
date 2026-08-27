@@ -1,398 +1,109 @@
-"use client";
+'use client';
 
-import { FormEvent, useMemo, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import Link from 'next/link';
-import { Edit3, Eye, EyeOff, Plus, ShieldCheck, Trash2, UserCog } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import Container from '@/components/ui/Container';
-import Input from '@/components/ui/Input';
-import SectionTitle from '@/components/ui/SectionTitle';
-import {
-  ADMIN_ROLE_LABELS,
-  loadAdminUsers,
-  saveAdminUsers,
-  type AdminUserRole,
-  type ManagedAdminUser,
-} from '@/lib/adminUsersStorage';
+import { CheckCircle2, Edit3, Eye, EyeOff, KeyRound, Loader2, Mail, Plus, Search, ShieldCheck, Trash2, UserCog, UsersRound, X } from 'lucide-react';
 
-type UserFormData = {
-  cedula: string;
-  nombre: string;
-  rol: AdminUserRole;
-  password: string;
-  activo: boolean;
-};
+type AdminUser = { id: number; cedula: string; nombres: string; apellidos: string; email: string; activo: number; ultimo_login: string | null; bloqueado_hasta: string | null; roles: string | null };
+type Role = { id: number; nombre: string; descripcion: string | null; color: string | null };
+type AdminForm = { cedula: string; nombres: string; apellidos: string; email: string; password: string; roleId: string; activo: boolean };
+const emptyForm: AdminForm = { cedula: '', nombres: '', apellidos: '', email: '', password: '', roleId: '', activo: true };
 
-const EMPTY_FORM: UserFormData = {
-  cedula: '',
-  nombre: '',
-  rol: 'admin',
-  password: '',
-  activo: true,
-};
-
-const ROLE_OPTIONS: AdminUserRole[] = ['admin', 'admin_aliados', 'admin_vacantes'];
-
-function cleanCedula(value: string) {
-  return value.replace(/\D/g, '');
+function formatDate(value: string | null) {
+  if (!value) return 'Sin ingreso registrado';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? 'Sin ingreso registrado' : date.toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
 export default function DashboardUsuariosPage() {
-  const [users, setUsers] = useState<ManagedAdminUser[]>(() => loadAdminUsers());
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState<AdminForm>(emptyForm);
+  const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [editingUser, setEditingUser] = useState<ManagedAdminUser | null>(null);
-  const [formData, setFormData] = useState<UserFormData>(EMPTY_FORM);
   const [showPassword, setShowPassword] = useState(false);
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const [toast, setToast] = useState<{ ok: boolean; msg: string } | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<AdminUser | null>(null);
+  const [feedback, setFeedback] = useState<{ ok: boolean; message: string } | null>(null);
 
-  const activeUsers = useMemo(() => users.filter((user) => user.activo).length, [users]);
+  const loadUsers = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await fetch('/api/iam/admin/users', { cache: 'no-store' });
+      const payload = await response.json() as { data?: AdminUser[]; roles?: Role[]; message?: string };
+      if (!response.ok) throw new Error(payload.message || 'No fue posible cargar los administradores.');
+      setUsers(payload.data || []);
+      setRoles(payload.roles || []);
+    } catch (error) {
+      setFeedback({ ok: false, message: error instanceof Error ? error.message : 'No fue posible cargar los administradores.' });
+    } finally { setLoading(false); }
+  }, []);
 
-  const roleSummary = useMemo(
-    () => ROLE_OPTIONS.map((role) => ({
-      role,
-      count: users.filter((user) => user.rol === role).length,
-    })),
-    [users],
-  );
+  useEffect(() => { void loadUsers(); }, [loadUsers]);
+  const notify = (ok: boolean, message: string) => { setFeedback({ ok, message }); window.setTimeout(() => setFeedback(null), 4200); };
+  const filteredUsers = useMemo(() => {
+    const term = search.trim().toLocaleLowerCase();
+    if (!term) return users;
+    return users.filter((user) => [user.nombres, user.apellidos, user.cedula, user.email, user.roles || ''].join(' ').toLocaleLowerCase().includes(term));
+  }, [search, users]);
+  const activeUsers = useMemo(() => users.filter((user) => Boolean(user.activo)).length, [users]);
+  const recentUsers = useMemo(() => users.filter((user) => user.ultimo_login).length, [users]);
 
-  const showToast = (ok: boolean, msg: string) => {
-    setToast({ ok, msg });
-    setTimeout(() => setToast(null), 3000);
-  };
-
-  const persistUsers = (nextUsers: ManagedAdminUser[]) => {
-    setUsers(nextUsers);
-    saveAdminUsers(nextUsers);
-  };
-
-  const resetForm = () => {
-    setFormData(EMPTY_FORM);
-    setEditingUser(null);
-    setShowPassword(false);
-  };
-
-  const openCreateForm = () => {
-    resetForm();
-    setShowForm(true);
-  };
-
-  const openEditForm = (user: ManagedAdminUser) => {
+  const openCreate = () => { setEditingUser(null); setForm({ ...emptyForm, roleId: roles[0] ? String(roles[0].id) : '' }); setShowPassword(false); setShowForm(true); };
+  const openEdit = (user: AdminUser) => {
+    const primaryRole = roles.find((role) => user.roles?.split('|').map((name) => name.trim()).includes(role.nombre));
     setEditingUser(user);
-    setFormData({
-      cedula: user.cedula,
-      nombre: user.nombre,
-      rol: user.rol,
-      password: user.password,
-      activo: user.activo,
-    });
-    setShowPassword(false);
-    setShowForm(true);
+    setForm({ cedula: user.cedula, nombres: user.nombres, apellidos: user.apellidos, email: user.email, password: '', roleId: primaryRole ? String(primaryRole.id) : '', activo: Boolean(user.activo) });
+    setShowPassword(false); setShowForm(true);
+  };
+  const saveUser = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault(); setSaving(true);
+    try {
+      const response = await fetch(editingUser ? `/api/iam/admin/users/${editingUser.id}` : '/api/iam/admin/users', { method: editingUser ? 'PATCH' : 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ...form, roleId: Number(form.roleId) }) });
+      const payload = await response.json() as { message?: string };
+      if (!response.ok) throw new Error(payload.message || 'No fue posible guardar el administrador.');
+      setShowForm(false); notify(true, payload.message || 'Administrador guardado correctamente.'); await loadUsers();
+    } catch (error) { notify(false, error instanceof Error ? error.message : 'No fue posible guardar el administrador.'); } finally { setSaving(false); }
+  };
+  const deleteUser = async () => {
+    if (!confirmDelete) return; setSaving(true);
+    try {
+      const response = await fetch(`/api/iam/admin/users/${confirmDelete.id}`, { method: 'DELETE' });
+      const payload = await response.json() as { message?: string };
+      if (!response.ok) throw new Error(payload.message || 'No fue posible desactivar el administrador.');
+      setConfirmDelete(null); notify(true, payload.message || 'Administrador desactivado correctamente.'); await loadUsers();
+    } catch (error) { notify(false, error instanceof Error ? error.message : 'No fue posible desactivar el administrador.'); } finally { setSaving(false); }
   };
 
-  const handleSave = (event: FormEvent) => {
-    event.preventDefault();
-
-    const cedula = cleanCedula(formData.cedula);
-    const nombre = formData.nombre.trim();
-    const password = formData.password.trim();
-
-    if (cedula.length < 6 || cedula.length > 10) {
-      showToast(false, 'La cedula debe tener entre 6 y 10 digitos.');
-      return;
-    }
-
-    if (!nombre) {
-      showToast(false, 'Ingresa el nombre del usuario.');
-      return;
-    }
-
-    if (!editingUser && password.length < 4) {
-      showToast(false, 'La contrasena debe tener al menos 4 caracteres.');
-      return;
-    }
-
-    if (password && password.length < 4) {
-      showToast(false, 'La nueva contrasena debe tener al menos 4 caracteres.');
-      return;
-    }
-
-    const duplicatedCedula = users.some((user) => user.cedula === cedula && user.id !== editingUser?.id);
-    if (duplicatedCedula) {
-      showToast(false, 'Ya existe un usuario con esa cedula.');
-      return;
-    }
-
-    const now = new Date().toISOString();
-    const payload: ManagedAdminUser = {
-      id: editingUser?.id ?? `admin-${Date.now()}`,
-      cedula,
-      nombre,
-      rol: formData.rol,
-      password: password || editingUser?.password || '',
-      activo: formData.activo,
-      createdAt: editingUser?.createdAt ?? now,
-      updatedAt: now,
-    };
-
-    if (editingUser) {
-      persistUsers(users.map((user) => (user.id === editingUser.id ? payload : user)));
-      showToast(true, 'Usuario actualizado.');
-    } else {
-      persistUsers([payload, ...users]);
-      showToast(true, 'Usuario creado.');
-    }
-
-    resetForm();
-    setShowForm(false);
-  };
-
-  const toggleActive = (id: string) => {
-    const user = users.find((item) => item.id === id);
-    if (!user) return;
-
-    const wouldDisableLastGeneralAdmin =
-      user.activo &&
-      user.rol === 'admin' &&
-      users.filter((item) => item.rol === 'admin' && item.activo).length === 1;
-
-    if (wouldDisableLastGeneralAdmin) {
-      showToast(false, 'Debe quedar al menos un admin general activo.');
-      return;
-    }
-
-    persistUsers(users.map((item) => (item.id === id ? { ...item, activo: !item.activo, updatedAt: new Date().toISOString() } : item)));
-    showToast(true, 'Estado actualizado.');
-  };
-
-  const handleDeleteConfirmed = () => {
-    if (!confirmDeleteId) return;
-
-    const user = users.find((item) => item.id === confirmDeleteId);
-    const wouldDeleteLastGeneralAdmin =
-      user?.rol === 'admin' &&
-      user.activo &&
-      users.filter((item) => item.rol === 'admin' && item.activo).length === 1;
-
-    if (wouldDeleteLastGeneralAdmin) {
-      showToast(false, 'No puedes eliminar el ultimo admin general activo.');
-      setConfirmDeleteId(null);
-      return;
-    }
-
-    persistUsers(users.filter((item) => item.id !== confirmDeleteId));
-    setConfirmDeleteId(null);
-    showToast(true, 'Usuario eliminado.');
-  };
-
-  return (
-    <>
-      <Container className="py-10">
-        <div className="flex flex-col justify-between gap-4 md:flex-row md:items-start">
-          <SectionTitle
-            title="Usuarios Administrativos"
-            subtitle="Control maestro para crear, editar, activar y eliminar usuarios de los paneles."
-            align="left"
-            className="mb-0"
-          />
-          <Button variant="primary" onClick={openCreateForm} className="gap-2">
-            <Plus className="h-4 w-4" />
-            Nuevo Usuario
-          </Button>
-        </div>
-
-        <div className="mt-6 grid grid-cols-1 gap-3 rounded-2xl border border-primary/15 bg-primary/5 p-4 text-sm text-textLight md:grid-cols-3">
-          <p>
-            <span className="font-semibold text-text">Admin general:</span> entra por /login/admin y gestiona el master.
-          </p>
-          <p>
-            <span className="font-semibold text-text">Admin aliados:</span> entra por /login/admin-aliados.
-          </p>
-          <p>
-            <span className="font-semibold text-text">Admin vacantes:</span> entra por{' '}
-            <Link href="/login/admin-vacantes" className="font-semibold text-primary hover:underline">
-              /login/admin-vacantes
-            </Link>{' '}
-            y ve sus vacantes en /dashboard-vacantes.
-          </p>
-        </div>
-
-        <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-4">
-          <div className="rounded-2xl border border-primary/20 bg-white/75 p-5 shadow-sm">
-            <UserCog className="mb-3 h-6 w-6 text-primary" />
-            <p className="text-sm text-textLight">Usuarios totales</p>
-            <p className="text-3xl font-bold text-text">{users.length}</p>
-          </div>
-          <div className="rounded-2xl border border-green-500/20 bg-white/75 p-5 shadow-sm">
-            <ShieldCheck className="mb-3 h-6 w-6 text-green-600" />
-            <p className="text-sm text-textLight">Activos</p>
-            <p className="text-3xl font-bold text-text">{activeUsers}</p>
-          </div>
-          {roleSummary.slice(1).map((item) => (
-            <div key={item.role} className="rounded-2xl border border-border bg-white/75 p-5 shadow-sm">
-              <p className="text-sm text-textLight">{ADMIN_ROLE_LABELS[item.role]}</p>
-              <p className="mt-3 text-3xl font-bold text-text">{item.count}</p>
-            </div>
-          ))}
-        </div>
-
-        {showForm && (
-          <div className="mt-8 rounded-2xl border border-border bg-white/80 p-6 shadow-sm">
-            <h2 className="mb-5 text-xl font-bold text-text">{editingUser ? 'Editar usuario' : 'Crear usuario'}</h2>
-            <form onSubmit={handleSave} className="space-y-5">
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <Input
-                  label="Cedula"
-                  value={formData.cedula}
-                  onChange={(event) => setFormData((prev) => ({ ...prev, cedula: event.target.value }))}
-                  required
-                />
-                <Input
-                  label="Nombre"
-                  value={formData.nombre}
-                  onChange={(event) => setFormData((prev) => ({ ...prev, nombre: event.target.value }))}
-                  required
-                />
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-text">Rol</label>
-                  <select
-                    value={formData.rol}
-                    onChange={(event) => setFormData((prev) => ({ ...prev, rol: event.target.value as AdminUserRole }))}
-                    className="w-full rounded-xl border border-border bg-white px-4 py-3 text-text focus:outline-none focus:ring-2 focus:ring-primary"
-                  >
-                    {ROLE_OPTIONS.map((role) => (
-                      <option key={role} value={role}>{ADMIN_ROLE_LABELS[role]}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-text">
-                    Contrasena
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      value={formData.password}
-                      onChange={(event) => setFormData((prev) => ({ ...prev, password: event.target.value }))}
-                      required={!editingUser}
-                      className="w-full rounded-xl border border-border bg-white/80 px-4 py-3 pr-12 text-text placeholder:text-textLight transition-all duration-300 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword((prev) => !prev)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-2 text-textLight transition-colors hover:bg-primary/10 hover:text-primary"
-                      aria-label={showPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'}
-                      title={showPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'}
-                    >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
-                  {editingUser && (
-                    <p className="mt-1 text-xs text-textLight">
-                      Puedes verla, copiarla o reemplazarla antes de guardar.
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <label className="flex items-center gap-2 rounded-xl border border-border bg-slate-50 px-3 py-2 text-sm text-text">
-                <input
-                  type="checkbox"
-                  checked={formData.activo}
-                  onChange={(event) => setFormData((prev) => ({ ...prev, activo: event.target.checked }))}
-                />
-                Usuario activo
-              </label>
-
-              <div className="flex justify-end gap-2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => {
-                    resetForm();
-                    setShowForm(false);
-                  }}
-                >
-                  Cancelar
-                </Button>
-                <Button type="submit" variant="primary">
-                  Guardar
-                </Button>
-              </div>
-            </form>
-          </div>
-        )}
-
-        <div className="mt-8 overflow-x-auto rounded-2xl border border-border bg-white/80 shadow-sm">
-          <table className="min-w-[920px] w-full divide-y divide-border">
-            <thead className="bg-black/5">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-textLight">Usuario</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-textLight">Cedula</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-textLight">Rol</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-textLight">Estado</th>
-                <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-textLight">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {users.map((user) => (
-                <tr key={user.id}>
-                  <td className="px-6 py-4 text-sm font-semibold text-text">{user.nombre}</td>
-                  <td className="px-6 py-4 text-sm text-textLight">{user.cedula}</td>
-                  <td className="px-6 py-4 text-sm text-textLight">{ADMIN_ROLE_LABELS[user.rol]}</td>
-                  <td className="px-6 py-4">
-                    <button
-                      type="button"
-                      onClick={() => toggleActive(user.id)}
-                      className={`rounded-full px-3 py-1 text-xs font-semibold ${user.activo ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}`}
-                    >
-                      {user.activo ? 'Activo' : 'Inactivo'}
-                    </button>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button size="sm" variant="ghost" onClick={() => openEditForm(user)} className="gap-2">
-                        <Edit3 className="h-4 w-4" />
-                        Editar
-                      </Button>
-                      <Button size="sm" variant="ghost" onClick={() => setConfirmDeleteId(user.id)} className="gap-2 text-red-600 hover:bg-red-50">
-                        <Trash2 className="h-4 w-4" />
-                        Eliminar
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Container>
-
-      {confirmDeleteId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100 text-red-600">
-              <Trash2 className="h-6 w-6" />
-            </div>
-            <h3 className="mb-1 text-lg font-bold text-text">Eliminar usuario</h3>
-            <p className="mb-6 text-sm text-textLight">Esta accion no se puede deshacer.</p>
-            <div className="flex justify-end gap-3">
-              <button type="button" onClick={() => setConfirmDeleteId(null)} className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-text hover:bg-slate-50">
-                Cancelar
-              </button>
-              <button type="button" onClick={handleDeleteConfirmed} className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700">
-                Si, eliminar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {toast && (
-        <div className={`fixed right-6 top-6 z-[70] rounded-2xl px-5 py-3.5 text-sm font-semibold text-white shadow-xl ${toast.ok ? 'bg-green-600' : 'bg-red-600'}`}>
-          {toast.msg}
-        </div>
-      )}
-    </>
-  );
+  return <div className="p-5 md:p-8">
+    <header className="relative overflow-hidden rounded-[28px] border border-white/80 bg-white/55 px-6 py-7 shadow-[0_22px_56px_-38px_rgba(13,54,109,0.8)] backdrop-blur-xl md:px-8">
+      <div className="pointer-events-none absolute -right-16 -top-20 h-52 w-52 rounded-full bg-[#b8d4f4]/55 blur-3xl" />
+      <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between"><div><p className="text-xs font-bold uppercase tracking-[.18em] text-primary">Identidad y acceso</p><h1 className="mt-2 text-3xl font-bold tracking-tight text-text md:text-4xl">Usuarios administrativos</h1><p className="mt-2 max-w-2xl text-sm leading-6 text-textLight md:text-base">Gestiona las cuentas reales de los administradores, sus roles y el acceso seguro a cada operación.</p></div><button onClick={openCreate} disabled={loading || !roles.length} className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-white shadow-[0_12px_24px_-14px_rgba(29,78,157,0.9)] transition hover:-translate-y-0.5 hover:bg-[#254e92] disabled:cursor-not-allowed disabled:opacity-50"><Plus className="h-4 w-4" /> Nuevo administrador</button></div>
+    </header>
+    <section className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><Metric icon={UsersRound} label="Administradores" value={String(users.length)} tone="blue" /><Metric icon={CheckCircle2} label="Cuentas activas" value={String(activeUsers)} tone="green" /><Metric icon={ShieldCheck} label="Roles configurados" value={String(roles.length)} tone="violet" /><Metric icon={KeyRound} label="Con actividad" value={String(recentUsers)} tone="amber" /></section>
+    <section className="mt-5 rounded-[26px] border border-white/80 bg-white/50 p-4 shadow-[0_20px_54px_-38px_rgba(13,54,109,0.72)] backdrop-blur-xl md:p-6">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"><div><p className="text-xs font-bold uppercase tracking-[.16em] text-primary">Directorio IAM</p><h2 className="mt-1 text-xl font-bold text-text">Equipo con acceso a la plataforma</h2></div><label className="flex min-w-0 items-center gap-2 rounded-xl border border-[#d7e4f6] bg-white/75 px-3 py-2.5 text-[#557190] md:w-[22rem]"><Search className="h-4 w-4 shrink-0" /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar por nombre, rol o cédula" className="min-w-0 flex-1 bg-transparent text-sm text-text outline-none placeholder:text-[#91a5be]" /></label></div>
+      {loading ? <div className="flex min-h-64 items-center justify-center gap-3 text-sm font-medium text-textLight"><Loader2 className="h-5 w-5 animate-spin text-primary" /> Cargando administradores...</div> : filteredUsers.length === 0 ? <div className="flex min-h-64 flex-col items-center justify-center text-center"><UserCog className="h-9 w-9 text-primary/60" /><p className="mt-3 font-bold text-text">No encontramos administradores</p><p className="mt-1 text-sm text-textLight">Cambia la búsqueda o crea una nueva cuenta.</p></div> : <div className="mt-5 grid gap-3 xl:grid-cols-2">{filteredUsers.map((user) => <UserCard key={user.id} user={user} onEdit={() => openEdit(user)} onDelete={() => setConfirmDelete(user)} />)}</div>}
+    </section>
+    {showForm && <div className="fixed inset-0 z-[70] flex items-center justify-center bg-[#102e55]/45 p-4 backdrop-blur-md"><form onSubmit={saveUser} className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-[28px] border border-white/80 bg-[#f8fbff]/95 p-6 shadow-[0_28px_80px_-28px_rgba(8,37,88,0.85)] md:p-7"><div className="flex items-start justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-[.16em] text-primary">Administración segura</p><h2 className="mt-1 text-2xl font-bold text-text">{editingUser ? 'Editar administrador' : 'Crear administrador'}</h2><p className="mt-1 text-sm text-textLight">Las credenciales se guardan cifradas en IAM; nunca en el navegador.</p></div><button type="button" onClick={() => setShowForm(false)} className="rounded-xl border border-[#d6e2f2] bg-white/80 p-2 text-textLight hover:text-primary"><X className="h-5 w-5" /></button></div><div className="mt-6 grid gap-4 md:grid-cols-2"><Field label="Nombres"><input required value={form.nombres} onChange={(event) => setForm((current) => ({ ...current, nombres: event.target.value }))} className="field" /></Field><Field label="Apellidos"><input required value={form.apellidos} onChange={(event) => setForm((current) => ({ ...current, apellidos: event.target.value }))} className="field" /></Field><Field label="Cédula"><input required disabled={Boolean(editingUser)} inputMode="numeric" value={form.cedula} onChange={(event) => setForm((current) => ({ ...current, cedula: event.target.value.replace(/\D/g, '') }))} className="field disabled:cursor-not-allowed disabled:bg-slate-100" /></Field><Field label="Correo corporativo"><div className="relative"><Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#7891af]" /><input required type="email" value={form.email} onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))} className="field pl-10" /></div></Field><Field label="Rol principal"><select required value={form.roleId} onChange={(event) => setForm((current) => ({ ...current, roleId: event.target.value }))} className="field">{roles.map((role) => <option key={role.id} value={role.id}>{role.nombre}</option>)}</select></Field><Field label={editingUser ? 'Nueva contraseña (opcional)' : 'Contraseña temporal'}><div className="relative"><input required={!editingUser} type={showPassword ? 'text' : 'password'} value={form.password} onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))} className="field pr-11" /><button type="button" onClick={() => setShowPassword((current) => !current)} className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-2 text-[#6683a6] hover:bg-primary/10 hover:text-primary">{showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button></div><p className="mt-1 text-xs text-textLight">Mínimo 12 caracteres.</p></Field></div>{editingUser && <label className="mt-5 flex items-center gap-3 rounded-xl border border-[#dce8f6] bg-white/75 px-4 py-3 text-sm font-semibold text-text"><input type="checkbox" checked={form.activo} onChange={(event) => setForm((current) => ({ ...current, activo: event.target.checked }))} className="h-4 w-4 accent-[#315fa8]" /> Mantener cuenta activa</label>}<div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"><button type="button" onClick={() => setShowForm(false)} className="rounded-xl border border-[#cfddef] bg-white px-4 py-3 text-sm font-bold text-[#42658d]">Cancelar</button><button disabled={saving} type="submit" className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-white disabled:opacity-60">{saving && <Loader2 className="h-4 w-4 animate-spin" />}{editingUser ? 'Guardar cambios' : 'Crear administrador'}</button></div></form></div>}
+    {confirmDelete && <div className="fixed inset-0 z-[80] flex items-center justify-center bg-[#102e55]/45 p-4 backdrop-blur-md"><div className="w-full max-w-md rounded-[28px] border border-white/80 bg-[#f8fbff]/95 p-6 shadow-2xl"><div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-100 text-red-600"><Trash2 className="h-5 w-5" /></div><h2 className="mt-4 text-xl font-bold text-text">Desactivar administrador</h2><p className="mt-2 text-sm leading-6 text-textLight">{confirmDelete.nombres} dejará de acceder a la plataforma. El historial y la trazabilidad se conservarán.</p><div className="mt-6 flex justify-end gap-2"><button onClick={() => setConfirmDelete(null)} className="rounded-xl border border-[#cfddef] bg-white px-4 py-2.5 text-sm font-bold text-[#42658d]">Cancelar</button><button disabled={saving} onClick={() => void deleteUser()} className="rounded-xl bg-red-600 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60">Desactivar</button></div></div></div>}
+    {feedback && <div className={`fixed bottom-6 left-1/2 z-[90] flex w-[calc(100%-2rem)] max-w-md -translate-x-1/2 items-center gap-3 rounded-2xl px-5 py-4 text-sm font-semibold text-white shadow-2xl ${feedback.ok ? 'bg-[#12795c]' : 'bg-[#ba3551]'}`}>{feedback.ok ? <CheckCircle2 className="h-5 w-5 shrink-0" /> : <X className="h-5 w-5 shrink-0" />}{feedback.message}</div>}
+    <style jsx>{`.field { width: 100%; border-radius: .75rem; border: 1px solid #d6e2f2; background: rgba(255,255,255,.82); padding: .75rem 1rem; color: #1d3553; outline: none; transition: box-shadow .2s, border-color .2s; } .field:focus { border-color: #3f6fb4; box-shadow: 0 0 0 3px rgba(63,111,180,.14); }`}</style>
+  </div>;
 }
+
+function Field({ label, children }: { label: string; children: ReactNode }) { return <label className="block text-sm font-semibold text-[#294a70]"><span className="mb-2 block">{label}</span>{children}</label>; }
+function Metric({ icon: Icon, label, value, tone }: { icon: typeof UsersRound; label: string; value: string; tone: 'blue' | 'green' | 'violet' | 'amber' }) { const tones = { blue: 'bg-[#e4efff] text-[#315fa8]', green: 'bg-[#e5f8ef] text-[#12815b]', violet: 'bg-[#eee9ff] text-[#7154b8]', amber: 'bg-[#fff2d9] text-[#bd7114]' }; return <div className="rounded-2xl border border-white/80 bg-white/60 p-4 shadow-[0_14px_30px_-26px_rgba(13,54,109,.9)] backdrop-blur-xl"><div className={`flex h-10 w-10 items-center justify-center rounded-xl ${tones[tone]}`}><Icon className="h-5 w-5" /></div><p className="mt-4 text-xs font-bold uppercase tracking-[.14em] text-textLight">{label}</p><p className="mt-1 text-3xl font-bold text-text">{value}</p></div>; }
+function getPanelHref(roles: string | null) {
+  if (roles?.includes('Administrador de Talleres')) return '/dashboard-talleres';
+  if (roles?.includes('Administrador de Sorteos')) return '/dashboard-sorteos';
+  const assigned = roles?.split('|').map((role) => role.trim()) || [];
+  if (assigned.includes('Administrador de Aliados')) return '/dashboard-aliados';
+  if (assigned.includes('Administrador de Sedes')) return '/dashboard-sedes';
+  if (assigned.includes('Administrador de Vacantes')) return '/dashboard-vacantes';
+  if (assigned.includes('Coordinador de Cotizaciones') || assigned.includes('Gestor de Cotizaciones')) return '/dashboard/cotizaciones';
+  return '/dashboard';
+}
+function UserCard({ user, onEdit, onDelete }: { user: AdminUser; onEdit: () => void; onDelete: () => void }) { const active = Boolean(user.activo); return <article className="group rounded-2xl border border-[#dce7f4] bg-white/70 p-4 transition duration-200 hover:-translate-y-0.5 hover:border-[#a9c6ea] hover:shadow-[0_18px_38px_-28px_rgba(13,54,109,.9)]"><div className="flex gap-3"><div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#eaf2ff] font-bold text-[#315fa8]">{`${user.nombres.charAt(0)}${user.apellidos.charAt(0)}`.toUpperCase()}</div><div className="min-w-0 flex-1"><div className="flex flex-wrap items-start justify-between gap-2"><div><h3 className="font-bold text-text">{user.nombres} {user.apellidos}</h3><p className="mt-0.5 truncate text-sm text-textLight">{user.email}</p></div><span className={`rounded-full px-2.5 py-1 text-xs font-bold ${active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>{active ? 'Activo' : 'Inactivo'}</span></div><div className="mt-3 flex flex-wrap gap-2"><span className="rounded-lg bg-[#edf3fc] px-2.5 py-1 text-xs font-semibold text-[#42658d]">{user.roles || 'Sin rol'}</span><span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs text-slate-600">CC {user.cedula}</span></div><div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-[#e4ebf5] pt-3"><p className="text-xs text-textLight">Último ingreso: {formatDate(user.ultimo_login)}</p><div className="flex items-center gap-1"><Link href={getPanelHref(user.roles)} className="rounded-lg bg-[#edf3fc] px-2.5 py-2 text-xs font-bold text-primary hover:bg-primary hover:text-white">Ver panel</Link><button onClick={onEdit} className="rounded-lg p-2 text-[#42658d] hover:bg-[#eaf2ff] hover:text-primary" title="Editar administrador"><Edit3 className="h-4 w-4" /></button><button onClick={onDelete} className="rounded-lg p-2 text-[#a3475b] hover:bg-red-50 hover:text-red-600" title="Desactivar administrador"><Trash2 className="h-4 w-4" /></button></div></div></div></div></article>; }

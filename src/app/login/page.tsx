@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import AuthLoginLayout from '@/components/login/AuthLoginLayout';
-import LoginTextField from '@/components/login/LoginTextField';
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import AuthLoginLayout from "@/components/login/AuthLoginLayout";
+import LoginTextField from "@/components/login/LoginTextField";
 
 /**
  * Componente que representa la página de inicio de sesión exclusiva para Clientes.
@@ -13,24 +13,35 @@ import LoginTextField from '@/components/login/LoginTextField';
  */
 export default function ClientLoginPage() {
   const router = useRouter();
-  
+
   // Estado para capturar los datos que ingresa el usuario
   const [formData, setFormData] = useState({
-    cedula: '',
-    password: '',
+    cedula: "",
+    password: "",
   });
-  
+
   // Estado para manejar los mensajes de error mostrados en pantalla
-  const [error, setError] = useState('');
-  
+  const [error, setError] = useState("");
+
   // Estado para prevenir múltiples envíos y mostrar indicador de carga
   const [loading, setLoading] = useState(false);
+  const [rememberUser, setRememberUser] = useState(false);
+
+  useEffect(() => {
+    const savedCedula = window.localStorage.getItem(
+      "jdr.remember.client.cedula",
+    );
+    if (savedCedula) {
+      setFormData((current) => ({ ...current, cedula: savedCedula }));
+      setRememberUser(true);
+    }
+  }, []);
 
   /**
    * Valida si el formato de la cédula es correcto (entre 6 y 10 números, sin espacios ni guiones)
    */
   const validateCedula = (cedula: string): boolean => {
-    const cleanCedula = cedula.replace(/[\s-]/g, '');
+    const cleanCedula = cedula.replace(/[\s-]/g, "");
     return /^\d{6,10}$/.test(cleanCedula);
   };
 
@@ -40,36 +51,45 @@ export default function ClientLoginPage() {
    */
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    setError('');
+    setError("");
     setLoading(true);
 
     // Validación de integridad de la cédula
     if (!validateCedula(formData.cedula)) {
-      setError('Por favor ingresa una cedula valida (6-10 digitos).');
+      setError("Por favor ingresa una cedula valida (6-10 digitos).");
       setLoading(false);
       return;
     }
 
     if (formData.password.length < 8) {
-      setError('La contraseña debe tener al menos 8 caracteres.');
+      setError("La contraseña debe tener al menos 8 caracteres.");
       setLoading(false);
       return;
     }
 
     try {
-      const response = await fetch('/api/iam/client/login', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ cedula: formData.cedula, password: formData.password }),
+      const response = await fetch("/api/iam/client/login", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          cedula: formData.cedula,
+          password: formData.password,
+        }),
       });
-      const payload = await response.json() as { message?: string };
+      const payload = (await response.json()) as { message?: string };
       if (!response.ok) {
-        setError(payload.message ?? 'Cédula o contraseña incorrectas.');
+        setError(payload.message ?? "Cédula o contraseña incorrectas.");
         return;
       }
-      router.push('/cliente/dashboard');
+      if (rememberUser)
+        window.localStorage.setItem(
+          "jdr.remember.client.cedula",
+          formData.cedula.replace(/\D/g, ""),
+        );
+      else window.localStorage.removeItem("jdr.remember.client.cedula");
+      router.push("/cliente/dashboard");
     } catch {
-      setError('Error al iniciar sesion. Por favor intenta nuevamente.');
+      setError("Error al iniciar sesion. Por favor intenta nuevamente.");
     } finally {
       // Ocultar estado de carga independientemente del resultado
       setLoading(false);
@@ -85,7 +105,7 @@ export default function ClientLoginPage() {
       [event.target.name]: event.target.value,
     }));
     // Limpiar errores si el usuario comienza a modificar el campo
-    setError('');
+    setError("");
   };
 
   return (
@@ -104,8 +124,18 @@ export default function ClientLoginPage() {
           placeholder="Ingresa tu cedula"
           required
           icon={
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            <svg
+              className="h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+              />
             </svg>
           }
         />
@@ -119,18 +149,36 @@ export default function ClientLoginPage() {
           placeholder="••••••••••"
           required
           icon={
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 10-8 0v4h8z" />
+            <svg
+              className="h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 10-8 0v4h8z"
+              />
             </svg>
           }
         />
 
         <div className="flex items-center justify-between text-sm text-black/70">
           <label className="inline-flex items-center gap-2">
-            <input type="checkbox" className="accent-[#2f5bd6]" />
-            Recordarme
+            <input
+              type="checkbox"
+              checked={rememberUser}
+              onChange={(event) => setRememberUser(event.target.checked)}
+              className="accent-[#2f5bd6]"
+            />
+            Recordar mi cédula
           </label>
-          <Link href="/contacto" className="hover:text-[#2f5bd6] transition-colors">
+          <Link
+            href="/contacto"
+            className="hover:text-[#2f5bd6] transition-colors"
+          >
             Olvide mi contrasena
           </Link>
         </div>
@@ -146,12 +194,15 @@ export default function ClientLoginPage() {
           disabled={loading}
           className="w-full rounded-xl bg-black text-white py-3.5 text-lg font-semibold hover:bg-black/85 transition-colors disabled:opacity-60"
         >
-          {loading ? 'Ingresando...' : 'Login'}
+          {loading ? "Ingresando..." : "Login"}
         </button>
 
         <div className="rounded-xl border border-black/10 bg-black/5 px-4 py-3 text-sm text-black/75">
           <p className="font-semibold text-black mb-1">Acceso seguro</p>
-          <p>Tu sesión se valida de forma segura con la información registrada en Jardines del Renacer.</p>
+          <p>
+            Tu sesión se valida de forma segura con la información registrada en
+            Jardines del Renacer.
+          </p>
         </div>
 
         <div className="text-center text-sm text-black/70 pt-1">

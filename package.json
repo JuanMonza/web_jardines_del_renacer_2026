@@ -34,7 +34,9 @@
     "react-intersection-observer": "^10.0.3",
     "recharts": "^3.9.2",
     "shiki": "^4.0.2",
-    "tailwind-merge": "^2.2.1"
+    "tailwind-merge": "^2.2.1",
+    "xlsx": "^0.18.5",
+    "xlsx-js-style": "^1.2.0"
   },
   "devDependencies": {
     "@svgr/webpack": "^8.1.0",

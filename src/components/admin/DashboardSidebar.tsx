@@ -3,13 +3,14 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { ElementType } from 'react';
-import { LayoutDashboard, Building2, ClipboardList, BookHeart, LogOut, UserCog, ArrowUpRight } from 'lucide-react';
+import { LayoutDashboard, Building2, ClipboardList, BookHeart, LogOut, UserCog, ArrowUpRight, MessageSquare } from 'lucide-react';
 
 export type AdminNavigationItem = {
   href: string;
   label: string;
   icon: ElementType;
   external?: boolean;
+  permission?: string;
 };
 
 const defaultNavigation: AdminNavigationItem[] = [
@@ -17,6 +18,7 @@ const defaultNavigation: AdminNavigationItem[] = [
   { href: '/dashboard/obituarios', label: 'Homenajes', icon: BookHeart },
   { href: '/dashboard/sedes', label: 'Sedes', icon: Building2 },
   { href: '/dashboard/talleres', label: 'Talleres', icon: ClipboardList },
+  { href: '/dashboard/cotizaciones', label: 'Cotizaciones', icon: MessageSquare },
   { href: '/dashboard/usuarios', label: 'Usuarios', icon: UserCog },
 ];
 
