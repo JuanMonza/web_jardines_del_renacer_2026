@@ -31,7 +31,7 @@ type DbApplicationRow = {
 };
 
 type VacancyApplicationCountRow = {
-  vacancy_id: string;
+  vacante_id: string;
   count: number | string;
 };
 
@@ -907,14 +907,14 @@ export async function getVacancyApplicationCounts(): Promise<
 > {
   try {
     const sql = `
-      SELECT vacancy_id, COUNT(id) as count
+      SELECT vacante_id, COUNT(id) as count
       FROM postulaciones
-      GROUP BY vacancy_id
+      GROUP BY vacante_id
     `;
     const rows = await query<VacancyApplicationCountRow>(sql, []);
     const counts: Record<string, number> = {};
     for (const row of rows) {
-      counts[row.vacancy_id] = Number(row.count);
+      counts[row.vacante_id] = Number(row.count);
     }
     return counts;
   } catch (error) {
