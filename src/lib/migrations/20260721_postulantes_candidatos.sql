@@ -68,6 +68,10 @@ PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
+-- Las bases creadas antes del portal podían tener esta columna como obligatoria.
+-- La relación usa ON DELETE SET NULL, por lo que debe admitir valores nulos.
+ALTER TABLE postulaciones MODIFY COLUMN candidato_id CHAR(36) NULL;
+
 SET @has_candidato_index := (
   SELECT COUNT(*)
   FROM INFORMATION_SCHEMA.STATISTICS
