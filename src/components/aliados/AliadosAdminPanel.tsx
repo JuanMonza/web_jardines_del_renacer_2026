@@ -363,6 +363,9 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
           method: editingId ? 'PATCH' : 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(patch),
         });
         payload = await response.json() as { data?: CommercialAlly; message?: string };
+        if (response.status === 403) {
+          throw new Error('Tu sesión no tiene permiso para guardar aliados. Cierra sesión e ingresa nuevamente con el Administrador de Aliados.');
+        }
         if (!response.ok || !payload.data) throw new Error(payload.message);
       }
       setAllies((current) => editingId ? current.map((ally) => ally.id === editingId ? payload.data! : ally) : [...current, payload.data!]);
@@ -975,9 +978,9 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
 
       {session?.role === 'admin_aliados' && (
       <>
-      {editingId && <button type="button" aria-label="Cerrar edición" onClick={resetDraft} className="fixed inset-0 z-[199] cursor-default bg-[#07182e]/55 backdrop-blur-sm" />}
+      {editingId && <button type="button" aria-label="Cerrar edición" onClick={resetDraft} className="fixed inset-0 z-[2147483600] cursor-default bg-[#0f2748]/50" />}
       <div className="grid grid-cols-1 xl:grid-cols-[1.05fr_0.95fr] gap-8">
-        <section className={editingId ? 'fixed left-1/2 top-1/2 z-[200] max-h-[86vh] w-[min(92vw,44rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-[26px] border border-white/85 bg-[#f8fbff]/96 p-5 shadow-[0_30px_90px_rgba(4,22,52,0.38)] backdrop-blur-xl sm:p-6' : 'glass rounded-3xl border border-primary/15 p-6 md:p-8'}>
+        <section className={editingId ? 'fixed left-1/2 top-1/2 z-[2147483601] max-h-[86vh] w-[min(92vw,44rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-[26px] border border-[#d4e1f0] bg-white p-5 shadow-[0_30px_90px_rgba(4,22,52,0.38)] sm:p-6' : 'glass rounded-3xl border border-primary/15 p-6 md:p-8'}>
           <div className="mb-4 flex items-start justify-between gap-4">
             <div>
               {editingId && <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Edición de aliado</p>}
