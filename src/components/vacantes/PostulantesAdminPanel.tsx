@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 
 type Application = {
     id: string;
@@ -21,6 +22,7 @@ export default function PostulantesAdminPanel() {
     const [note, setNote] = useState('');
     const [candidateDetail, setCandidateDetail] = useState<Record<string, string> | null>(null);
     const [candidateHistory, setCandidateHistory] = useState<Array<{ accion:string; descripcion:string; created_at:string }>>([]);
+    const [notice, setNotice] = useState<{ title: string; description: string; variant: 'success' | 'error' } | null>(null);
 
     const updateStatus = async (id: string, status: string, notes?: string) => {
         setUpdatingId(id);
@@ -28,6 +30,9 @@ export default function PostulantesAdminPanel() {
             const response = await fetch(`/api/vacantes/postulaciones/${id}`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ status, notes }) });
             if (!response.ok) throw new Error();
             setApplications((current) => current.map((item) => item.id === id ? { ...item, status } : item));
+            setNotice({ title: 'Proceso actualizado', description: 'La modificación quedó registrada en la postulación del candidato.', variant: 'success' });
+        } catch {
+            setNotice({ title: 'No fue posible guardar', description: 'Intenta nuevamente. Si el problema continúa, verifica la conexión con la base de datos.', variant: 'error' });
         } finally { setUpdatingId(null); }
     };
 
@@ -65,6 +70,8 @@ export default function PostulantesAdminPanel() {
     });
     const statusCount = (status: string) => applications.filter((item) => item.status === status).length;
     return (
+        <>
+        <ConfirmDialog open={Boolean(notice)} title={notice?.title ?? ''} description={notice?.description ?? ''} confirmLabel="Entendido" showCancel={false} variant={notice?.variant} onConfirm={() => setNotice(null)} onCancel={() => setNotice(null)} />
         <div className="space-y-6">
             <div className="overflow-hidden rounded-[28px] border border-white/70 bg-gradient-to-br from-[#163c70] via-[#285a96] to-[#6e94c2] p-7 text-white shadow-[0_20px_50px_rgba(20,57,106,0.22)]">
                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-100">Talento humano</p><h1 className="mt-2 text-3xl font-bold">Gestión de Postulantes</h1><p className="mt-2 text-blue-50">Centraliza candidatos, etapas y decisiones del proceso de selección.</p>
@@ -163,5 +170,6 @@ export default function PostulantesAdminPanel() {
             <details className="rounded-2xl border border-white/80 bg-white/60 p-4 shadow-sm backdrop-blur-xl"><summary className="cursor-pointer list-none text-sm font-bold text-primary">Ver embudo visual por etapas</summary><section className="mt-4 grid gap-3 md:grid-cols-3">{[['Recibida','bg-blue-50 border-blue-100'],['En revision','bg-amber-50 border-amber-100'],['Seleccionado','bg-emerald-50 border-emerald-100']].map(([stage,style])=><article key={stage} className={`rounded-2xl border p-4 ${style}`}><div className="flex items-center justify-between"><h2 className="text-sm font-bold text-text">{stage}</h2><span className="rounded-full bg-white px-2 py-1 text-xs font-bold text-primary">{applications.filter(a=>a.status===stage).length}</span></div><div className="mt-3 space-y-2">{applications.filter(a=>a.status===stage).slice(0,3).map(a=><button type="button" onClick={()=>setSelectedApplication(a)} key={a.id} className="block w-full rounded-xl bg-white p-3 text-left text-xs shadow-sm"><span className="block font-bold text-text">{a.candidateName}</span><span className="mt-1 block truncate text-textLight">{a.vacancyTitle}</span></button>)}{applications.filter(a=>a.status===stage).length===0&&<p className="py-3 text-xs text-textLight">Sin candidatos</p>}</div></article>)}</section></details>
             {selectedApplication && <div className="fixed inset-0 z-[2147483647] flex justify-end bg-[#07182e]/45 backdrop-blur-sm" onClick={() => setSelectedApplication(null)}><aside className="h-full w-full max-w-md overflow-y-auto bg-[#f8fbff] p-7 shadow-[-20px_0_60px_rgba(4,22,52,.3)]" onClick={(event) => event.stopPropagation()}><div className="flex items-start justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-wider text-primary">Ficha de candidato</p><h2 className="mt-1 text-2xl font-bold text-text">{selectedApplication.candidateName}</h2></div><button type="button" onClick={() => setSelectedApplication(null)} className="rounded-xl border border-border bg-white px-3 py-2 text-sm font-bold">Cerrar</button></div><div className="mt-6 space-y-4 rounded-2xl border border-border bg-white p-5 text-sm"><div><p className="text-xs font-bold uppercase text-textLight">Correo</p><p className="mt-1 font-semibold text-text">{selectedApplication.candidateEmail}</p></div><div><p className="text-xs font-bold uppercase text-textLight">Vacante</p><p className="mt-1 font-semibold text-text">{selectedApplication.vacancyTitle}</p></div><div><p className="text-xs font-bold uppercase text-textLight">Estado</p><p className="mt-1 font-semibold text-primary">{selectedApplication.status}</p></div>{candidateDetail&&<><div><p className="text-xs font-bold uppercase text-textLight">Perfil profesional</p><p className="mt-1 font-semibold text-text">{candidateDetail.profesion||'No registrado'}</p></div><div><p className="text-xs font-bold uppercase text-textLight">Ubicación</p><p className="mt-1 font-semibold text-text">{candidateDetail.ciudad||''}, {candidateDetail.departamento||''}</p></div>{candidateDetail.cv_url&&<a href={candidateDetail.cv_url} target="_blank" className="block rounded-xl bg-primary px-4 py-3 text-center text-sm font-bold text-white">Abrir hoja de vida</a>}</>}</div><textarea value={note} onChange={e=>setNote(e.target.value)} placeholder="Nota interna para el proceso" className="mt-4 w-full rounded-xl border border-border bg-white p-3 text-sm" rows={3}/><button type="button" onClick={() => void updateStatus(selectedApplication.id, selectedApplication.status, note)} className="mt-3 w-full rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white">Guardar nota en trazabilidad</button></aside></div>}
         </div>
+        </>
     );
 }

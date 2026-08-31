@@ -200,7 +200,7 @@ export const ALLY_CATEGORIES: AllyCategoryConfig[] = [
 ];
 
 const ISO_NOW = new Date().toISOString();
-const DEFAULT_TEMPLATE = 'Hola, quiero mas informacion de "{{nombre}}".';
+const DEFAULT_TEMPLATE = 'Hola, quiero conocer los descuentos y beneficios de "{{nombre}}".';
 
 export const DEFAULT_COMMERCIAL_ALLIES: CommercialAlly[] = [
   {
@@ -346,13 +346,13 @@ export function resolveAllyDepartment(value: string | undefined) {
 
 export function getDefaultAllyTemplate(categorySlug: string, subcategory: string) {
   if (categorySlug === 'salud' && subcategory.toLowerCase().includes('especialista')) {
-    return 'Hola, necesito mas informacion de "{{nombre}}" este especialista.';
+    return 'Hola, quiero conocer los descuentos y beneficios de "{{nombre}}" con este especialista.';
   }
   const categoryLabel = getCategoryLabel(categorySlug);
   if (!subcategory) {
-    return `Hola, quiero mas informacion de "{{nombre}}" en ${categoryLabel}.`;
+    return `Hola, quiero conocer los descuentos y beneficios de "{{nombre}}" en ${categoryLabel}.`;
   }
-  return `Hola, quiero mas informacion de "{{nombre}}" en ${categoryLabel} - ${subcategory}.`;
+  return `Hola, quiero conocer los descuentos y beneficios de "{{nombre}}" en ${categoryLabel} - ${subcategory}.`;
 }
 
 export function sanitizeWhatsAppNumber(value: string) {
@@ -402,7 +402,7 @@ export function createEmptyAlly(): CommercialAlly {
     whatsappTemplate: DEFAULT_TEMPLATE,
     actionLabel: 'Mas informacion',
     featured: true,
-    loginId: '',
+    loginId: 'JDR-',
     loginPassword: '',
     description: '',
     createdAt: '',

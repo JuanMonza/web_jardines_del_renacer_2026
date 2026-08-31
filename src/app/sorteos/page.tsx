@@ -14,8 +14,8 @@ import { buildWhatsAppUrl } from '@/config/contact';
 import Link from 'next/link';
 
 /**
- * Componente que renderiza la página estática de "Sorteos y Concursos".
- * Muestra el próximo sorteo, una lista de futuros sorteos y ganadores anteriores.
+ * Componente que renderiza el programa de incentivos por fidelización.
+ * Muestra los próximos incentivos, las actividades futuras y los beneficiarios anteriores.
  */
 export default function SorteosPage() {
     const [managedGiveaways, setManagedGiveaways] = useState<readonly Giveaway[]>(giveawaysData);
@@ -47,7 +47,7 @@ export default function SorteosPage() {
     const whatsappUrl = useMemo(
         () =>
             buildWhatsAppUrl(
-                'Hola, quiero actualizar mis datos para participar en los sorteos de Jardines del Renacer.'
+                'Hola, quiero actualizar mis datos para participar en el programa de incentivos por fidelización de Jardines del Renacer.'
             ),
         []
     );
@@ -55,18 +55,18 @@ export default function SorteosPage() {
     return (
         <>
             <PageHero
-                title="Nuestros sorteos mensuales"
+                title="Programa incentivos por fidelización"
                 subtitle="Mantén tus datos actualizados y participa para ganar."
-                description="En Jardines del Renacer premiamos tu fidelidad. Cada mes tienes una nueva oportunidad de ganar premios increíbles."
+                description="En Jardines del Renacer incentivamos la fidelidad y puntualidad. Cada mes tienes una nueva oportunidad de ganar."
                 image="/images/images-baners/sorteos.webp"
-                imageAlt="Sorteos y Concursos - Jardines del Renacer"
+                imageAlt="Programa de incentivos por fidelización - Jardines del Renacer"
             />
 
-            {/* Próximo Sorteo */}
+            {/* Próximos incentivos */}
             {next && (
                 <section className="pb-20">
                     <TitleBand
-                        title="Próximo Sorteo"
+                        title="Próximos incentivos"
                         subtitle={`¡Prepárate! El ${new Date(next.date).toLocaleDateString('es-CO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} las 7:00pm estaremos anunciando al ganador.`}
                     />
                     <Container>
@@ -94,7 +94,7 @@ export default function SorteosPage() {
                                             <CountdownUnit value={timeRemaining.seconds} label="Seg" />
                                         </div>
                                     ) : (
-                                        <p className="text-lg font-semibold text-primary mb-8">¡El sorteo es hoy!</p>
+                                        <p className="text-lg font-semibold text-primary mb-8">¡El incentivo se anuncia hoy!</p>
                                     )}
 
                                     <Button as="a" href={whatsappUrl} target="_blank" size="lg" variant="primary">
@@ -107,10 +107,10 @@ export default function SorteosPage() {
                 </section>
             )}
 
-            {/* Siguientes Sorteos */}
+            {/* Siguientes incentivos */}
             {upcoming.length > 0 && (
                 <section className="py-20 bg-background-light">
-                    <TitleBand title="Siguientes Sorteos" subtitle="Estos son los premios que podrías ganar en los próximos meses." />
+                    <TitleBand title="Siguientes incentivos" subtitle="Conoce los incentivos que podrás recibir durante los próximos meses por hacer parte de nuestros afiliados Jardines del Renacer." />
                     <Container>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {upcoming.map((giveaway, index) => (
@@ -122,7 +122,7 @@ export default function SorteosPage() {
                                             {new Date(giveaway.date).toLocaleDateString('es-CO', { month: 'short', year: 'numeric' })}
                                         </span>
                                         <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
-                                            <p className="text-xs text-white/70 mb-1">Próximo sorteo</p>
+                                            <p className="text-xs text-white/70 mb-1">Próximo incentivo</p>
                                             <h4 className="text-xl font-bold leading-tight">{giveaway.title}</h4>
                                         </div>
                                     </div>
@@ -163,7 +163,7 @@ export default function SorteosPage() {
                 </section>
             )}
 
-            {/* Mensaje por si no hay sorteos configurados */}
+            {/* Mensaje por si no hay incentivos configurados */}
             {!next && upcoming.length === 0 && (
                 <section className="py-16">
                     <Container maxWidth="lg">
@@ -174,7 +174,7 @@ export default function SorteosPage() {
                                 </div>
                                 <h3 className="text-xl font-semibold text-text mb-3">Próximamente</h3>
                                 <p className="text-textLight leading-relaxed max-w-xl mx-auto">
-                                    Estamos preparando nuevos sorteos para ti. Te invitamos a seguirnos en nuestras redes sociales y a visitar esta página regularmente para no perderte futuras oportunidades.
+                                    Estamos preparando nuevos incentivos para ti. Te invitamos a seguirnos en nuestras redes sociales y a visitar esta página regularmente para no perderte futuras oportunidades.
                                 </p>
                             </article>
                         </FadeIn>

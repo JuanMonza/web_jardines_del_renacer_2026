@@ -12,7 +12,7 @@ const sections = [
   {
     title: '2. Participantes habilitados',
     content:
-      'Participan únicamente los afiliados habilitados por el área de Cartera de acuerdo con las condiciones vigentes de cada sorteo. Antes de cada selección se revisa el cumplimiento de los requisitos y se excluyen registros duplicados, incompletos o que no cumplan las condiciones comunicadas.',
+      'Participan únicamente los afiliados habilitados por el área de Cartera de acuerdo con las condiciones vigentes de cada incentivo. Antes de cada selección se revisa el cumplimiento de los requisitos y se excluyen registros duplicados, incompletos o que no cumplan las condiciones comunicadas.',
   },
   {
     title: '3. Identificación y trazabilidad',
@@ -22,12 +22,12 @@ const sections = [
   {
     title: '4. Selección aleatoria',
     content:
-      'El listado de participantes habilitados es cargado en una herramienta digital interna desarrollada para apoyar el proceso de sorteos. El sistema asigna un identificador único a cada registro y realiza una selección aleatoria, sin intervención manual en la elección del ganador.',
+      'El listado de participantes habilitados es cargado en una herramienta digital interna desarrollada para apoyar el programa de incentivos. El sistema asigna un identificador único a cada registro y realiza una selección aleatoria, sin intervención manual en la elección del ganador.',
   },
   {
     title: '5. Validación del ganador',
     content:
-      'Una vez seleccionado el número de contrato, Jardines del Renacer verifica nuevamente que el afiliado continúe cumpliendo las condiciones aplicables. Si no las cumple, se aplicará el procedimiento definido para el sorteo, que puede incluir la selección de un suplente.',
+      'Una vez seleccionado el número de contrato, Jardines del Renacer verifica nuevamente que el afiliado continúe cumpliendo las condiciones aplicables. Si no las cumple, se aplicará el procedimiento definido para el incentivo, que puede incluir la selección de un suplente.',
   },
   {
     title: '6. Comunicación y publicación',
@@ -40,7 +40,7 @@ const sections = [
       'La entrega se coordina directamente con el ganador. Para dejar constancia, podrá requerirse un acta de entrega a satisfacción y un registro fotográfico, respetando la autorización y el tratamiento de datos personales aplicable.',
   },
   {
-    title: '8. Información de cada sorteo',
+    title: '8. Información de cada incentivo',
     content:
       'La fecha, incentivo, requisitos particulares, vigencia y demás condiciones de cada actividad se informarán en la publicación correspondiente. Jardines del Renacer podrá actualizar estas condiciones cuando sea necesario, informándolo por sus canales oficiales.',
   },
@@ -52,7 +52,7 @@ export default function IncentivosAfiliadosPage() {
       <PageHero
         title="T&C Incentivos Afiliados"
         subtitle="Procedimiento de selección, validación y comunicación de ganadores."
-        description="Conoce cómo cuidamos la transparencia y trazabilidad de nuestros sorteos promocionales mensuales."
+        description="Conoce cómo cuidamos la transparencia y trazabilidad del programa de incentivos por fidelización."
         image="/images/images-baners/sorteos.webp"
         imageAlt="Incentivos para afiliados de Jardines del Renacer"
       />
@@ -62,9 +62,9 @@ export default function IncentivosAfiliadosPage() {
           <FadeIn>
             <article className="glass mb-6 rounded-3xl border border-primary/15 p-6 md:p-8">
               <p className="text-sm leading-relaxed text-textLight md:text-base">
-                Este documento aplica a los incentivos promocionales comunicados por Jardines del Renacer. Para conocer los sorteos vigentes visita{' '}
-                <Link href="/sorteos" className="font-semibold text-primary hover:underline">
-                  Nuestros sorteos mensuales
+                Este documento aplica a los incentivos promocionales comunicados por Jardines del Renacer. Para conocer los incentivos vigentes visita{' '}
+                <Link href="/incentivos" className="font-semibold text-primary hover:underline">
+                  Programa incentivos por fidelización
                 </Link>
                 .
               </p>

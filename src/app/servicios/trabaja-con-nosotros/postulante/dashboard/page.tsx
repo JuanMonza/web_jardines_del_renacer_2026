@@ -11,6 +11,7 @@ import Container from '@/components/ui/Container';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import Textarea from '@/components/ui/Textarea';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { formatDate } from '@/lib/utils';
 
 type ApiResponse<T> = {
@@ -41,6 +42,7 @@ export default function PostulanteDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState('');
+  const [notice, setNotice] = useState<{ title: string; description: string; variant: 'success' | 'error' } | null>(null);
 
   useEffect(() => {
     async function refreshApplications() {
@@ -129,8 +131,11 @@ export default function PostulanteDashboardPage() {
 
       setProfile(result.data);
       setFeedback('Perfil actualizado correctamente.');
+      setNotice({ title: 'Perfil actualizado', description: 'Tus datos profesionales quedaron guardados correctamente.', variant: 'success' });
     } catch (error) {
-      setFeedback(error instanceof Error ? error.message : 'No se pudo guardar el perfil.');
+      const message = error instanceof Error ? error.message : 'No se pudo guardar el perfil.';
+      setFeedback(message);
+      setNotice({ title: 'No fue posible guardar el perfil', description: message, variant: 'error' });
     } finally {
       setSaving(false);
     }
@@ -146,6 +151,7 @@ export default function PostulanteDashboardPage() {
 
   return (
     <>
+      <ConfirmDialog open={Boolean(notice)} title={notice?.title ?? ''} description={notice?.description ?? ''} confirmLabel="Entendido" showCancel={false} variant={notice?.variant} onConfirm={() => setNotice(null)} onCancel={() => setNotice(null)} />
       <section className="bg-gradient-to-b from-[#eef5ff] to-white py-12">
         <Container maxWidth="2xl">
           <section className="mb-8 flex flex-wrap items-center justify-between gap-5 rounded-[28px] border border-white/80 bg-white/70 p-6 shadow-[0_14px_36px_rgba(35,79,132,0.12)] backdrop-blur-xl"><div className="flex items-center gap-4"><div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-primary to-[#7ca5d4] text-2xl font-bold text-white shadow-lg">{profile.photoUrl ? <img src={profile.photoUrl} alt="Foto de perfil" className="h-full w-full object-cover" /> : (profile.fullName || 'P').trim().charAt(0).toUpperCase()}</div><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Portal de postulantes</p><h1 className="mt-1 text-2xl font-bold text-text">Hola, {profile.fullName?.split(' ')[0] || 'postulante'}</h1><p className="mt-1 text-sm text-textLight">Mantén tu perfil listo para nuevas oportunidades.</p></div></div><div className="rounded-2xl border border-primary/10 bg-primary/5 px-5 py-3"><p className="text-xs font-semibold text-textLight">Postulaciones</p><p className="mt-1 text-3xl font-bold text-primary">{applications.length}</p></div></section>
@@ -235,7 +241,7 @@ export default function PostulanteDashboardPage() {
                 <Textarea label="Perfil profesional" value={profile.about} onChange={(event) => setProfile((prev) => ({ ...prev, about: event.target.value }))} />
                 </div></details>
                 <details className="group rounded-2xl border border-primary/10 bg-white/55 p-4"><summary className="cursor-pointer list-none font-bold text-text">Hoja de vida <span className="float-right text-xs font-semibold text-primary">{profile.resumeFileName ? 'Cargada' : 'Pendiente'}</span></summary><div className="mt-4">
-                <div className="rounded-2xl border border-dashed border-primary/25 bg-primary/[0.03] p-4"><label className="block text-sm font-bold text-text">Hoja de vida / CV</label><p className="mt-1 text-xs text-textLight">PDF o documento de máximo 5 MB.</p><input type="file" accept=".pdf,.doc,.docx" className="mt-3 block w-full text-sm text-textLight file:mr-3 file:rounded-lg file:border-0 file:bg-primary file:px-3 file:py-2 file:text-xs file:font-bold file:text-white" onChange={(event) => { const file = event.target.files?.[0]; if (!file || file.size > 5 * 1024 * 1024) return; const reader = new FileReader(); reader.onload = async () => { const fileData = String(reader.result || ''); const response = await fetch('/api/postulantes/cv', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fileName: file.name, fileData }) }); const result = await response.json() as { success?: boolean; data?: { url: string } }; if (response.ok && result.success && result.data) { setProfile((prev) => ({ ...prev, resumeFileName: file.name, resumeFileData: '', cvUrl: result.data!.url })); setFeedback('Hoja de vida cargada y guardada correctamente.'); } else setFeedback('No fue posible guardar la hoja de vida.'); }; reader.readAsDataURL(file); }} />{profile.resumeFileName && <p className="mt-2 text-xs font-semibold text-emerald-700">CV disponible: {profile.resumeFileName}</p>}</div>
+                <div className="rounded-2xl border border-dashed border-primary/25 bg-primary/[0.03] p-4"><label className="block text-sm font-bold text-text">Hoja de vida / CV</label><p className="mt-1 text-xs text-textLight">PDF o documento de máximo 5 MB.</p><input type="file" accept=".pdf,.doc,.docx" className="mt-3 block w-full text-sm text-textLight file:mr-3 file:rounded-lg file:border-0 file:bg-primary file:px-3 file:py-2 file:text-xs file:font-bold file:text-white" onChange={(event) => { const file = event.target.files?.[0]; if (!file || file.size > 5 * 1024 * 1024) return; const reader = new FileReader(); reader.onload = async () => { const fileData = String(reader.result || ''); const response = await fetch('/api/postulantes/cv', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fileName: file.name, fileData }) }); const result = await response.json() as { success?: boolean; data?: { url: string } }; if (response.ok && result.success && result.data) { setProfile((prev) => ({ ...prev, resumeFileName: file.name, resumeFileData: '', cvUrl: result.data!.url })); setFeedback('Hoja de vida cargada y guardada correctamente.'); setNotice({ title: 'Hoja de vida cargada', description: 'Tu CV quedó asociado a tu perfil y estará disponible para el proceso de selección.', variant: 'success' }); } else { setFeedback('No fue posible guardar la hoja de vida.'); setNotice({ title: 'No fue posible cargar la hoja de vida', description: 'Verifica el archivo e intenta nuevamente.', variant: 'error' }); } }; reader.readAsDataURL(file); }} />{profile.resumeFileName && <p className="mt-2 text-xs font-semibold text-emerald-700">CV disponible: {profile.resumeFileName}</p>}</div>
                 </div></details></div>
 
               <Button type="submit" className="mt-6 w-full" disabled={saving}>

@@ -11,8 +11,8 @@ const POPUP_DELAY_MS = 500;
 const AUTO_CLOSE_MS = 20000;
 
 /**
- * Encuentra el próximo sorteo disponible basándose en la fecha actual.
- * @returns El objeto del próximo sorteo o null si no hay futuros.
+ * Encuentra el próximo incentivo disponible basándose en la fecha actual.
+ * @returns El objeto del próximo incentivo o null si no hay futuros.
  */
 function getNextGiveaway() {
   const now = Date.now();
@@ -41,7 +41,7 @@ export default function MonthlyGiveawayPopup() {
   const [isVisible, setIsVisible] = useState(false);
   const [progress, setProgress] = useState(100);
 
-  // Obtiene dinámicamente el próximo sorteo
+  // Obtiene dinámicamente el próximo incentivo
   const nextGiveaway = useMemo(() => getNextGiveaway(), []);
 
   const [timeRemaining, setTimeRemaining] = useState(() =>
@@ -56,7 +56,7 @@ export default function MonthlyGiveawayPopup() {
   const actionUrl = useMemo(
     () =>
       buildWhatsAppUrl(
-        'Hola, quiero actualizar mis datos para participar en los sorteos de Jardines del Renacer.'
+        'Hola, quiero actualizar mis datos para participar en el programa de incentivos por fidelización de Jardines del Renacer.'
       ),
     []
   );
@@ -95,7 +95,7 @@ export default function MonthlyGiveawayPopup() {
     return () => window.clearInterval(countdownTimer);
   }, [nextGiveaway]);
 
-  // Si no hay próximos sorteos o el popup no es visible, no se muestra nada
+  // Si no hay próximos incentivos o el popup no es visible, no se muestra nada
   if (!nextGiveaway || !isVisible) return null;
 
   if (!isVisible) {
@@ -121,7 +121,7 @@ export default function MonthlyGiveawayPopup() {
             <div className="relative aspect-[4/5] w-full overflow-hidden rounded-[1.25rem] bg-slate-100 shadow-[0_20px_45px_rgba(15,23,42,0.18)]">
               <Image
                 src={nextGiveaway.image}
-                alt="Sorteos mensuales de Jardines del Renacer"
+                alt="Programa de incentivos por fidelización de Jardines del Renacer"
                 fill
                 sizes="(max-width: 640px) 72vw, (max-width: 768px) 18.5rem, 20.5rem"
                 className="object-contain object-center"
@@ -137,7 +137,7 @@ export default function MonthlyGiveawayPopup() {
         <div className="border-t border-primary/10 bg-white p-4 sm:p-5">
           <div className="rounded-[1.35rem] border border-primary/10 bg-gradient-to-br from-white to-sky-50/80 p-4 shadow-[0_14px_35px_rgba(37,99,235,0.08)]">
             <p className="text-center text-[11px] font-semibold uppercase tracking-[0.24em] text-primary/70">
-              Proximo sorteo
+              Próximo incentivo
             </p>
             <p className="mt-2 text-center text-sm font-semibold text-slate-700">
               {nextGiveawayLabel}
@@ -152,7 +152,7 @@ export default function MonthlyGiveawayPopup() {
               </div>
             ) : (
               <p className="mt-4 rounded-2xl bg-primary px-4 py-3 text-center text-sm font-semibold text-white">
-                El sorteo ya inicio o la fecha configurada ya paso.
+                El incentivo ya inició o la fecha configurada ya pasó.
               </p>
             )}
           </div>

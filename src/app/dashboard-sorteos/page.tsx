@@ -62,7 +62,7 @@ export default function DashboardSorteosPage() {
       setSorteos(p.data);
     } catch (e) {
       setMessage(
-        e instanceof Error ? e.message : "No fue posible cargar los sorteos.",
+        e instanceof Error ? e.message : "No fue posible cargar los incentivos.",
       );
     } finally {
       setLoading(false);
@@ -99,7 +99,7 @@ export default function DashboardSorteosPage() {
       setShowForm(false);
       setEditing(null);
       setForm(empty);
-      setMessage("Sorteo guardado correctamente.");
+      setMessage("Incentivo guardado correctamente.");
     }
   };
   const saveWinner = async (event: FormEvent) => {
@@ -132,7 +132,7 @@ export default function DashboardSorteosPage() {
         <div className="mt-3 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <h1 className="text-3xl font-black tracking-tight text-[#173c70] md:text-5xl">
-              Sorteos e incentivos
+              Programa de incentivos
             </h1>
             <p className="mt-2 max-w-2xl text-[#5d7698]">
               Administra la programación, registro directo, validación y
@@ -148,11 +148,11 @@ export default function DashboardSorteosPage() {
             className="rounded-xl bg-[#234d8d] px-5 py-3 font-bold text-white shadow-lg shadow-[#234d8d]/25"
           >
             <Plus className="mr-2 inline h-4 w-4" />
-            Nuevo sorteo
+            Nuevo incentivo
           </button>
         </div>
         <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <Metric label="Sorteos activos" value={active} />
+          <Metric label="Incentivos activos" value={active} />
           <Metric label="Registros de participación" value={participants} />
           <Metric
             label="Ganadores publicados"
@@ -274,7 +274,7 @@ export default function DashboardSorteosPage() {
           ))}
           {!sorteos.length && (
             <div className="col-span-full rounded-2xl border border-dashed border-[#a7c1e7] bg-white/55 p-12 text-center text-[#5d7698]">
-              Aún no hay sorteos. Crea el primero para comenzar.
+              Aún no hay incentivos. Crea el primero para comenzar.
             </div>
           )}
         </div>
@@ -293,11 +293,11 @@ export default function DashboardSorteosPage() {
               <X />
             </button>
             <h2 className="text-2xl font-black text-[#173c70]">
-              {editing ? "Editar sorteo" : "Nuevo sorteo"}
+              {editing ? "Editar incentivo" : "Nuevo incentivo"}
             </h2>
             <div className="mt-5 grid gap-4 md:grid-cols-2">
               <Field
-                label="Nombre del sorteo"
+                label="Nombre del incentivo"
                 value={form.titulo}
                 onChange={(v) => setForm({ ...form, titulo: v })}
                 required
@@ -375,18 +375,18 @@ export default function DashboardSorteosPage() {
                   </div>
                   <img
                     src={form.imagen}
-                    alt="Vista previa del premio del sorteo"
+                    alt="Vista previa del premio del incentivo"
                     className="h-52 w-full rounded-xl border border-white object-cover shadow-sm"
                   />
                   <p className="mt-2 text-xs text-[#607a9d]">
                     La imagen se guardará en la base de datos al presionar
-                    “Guardar sorteo”.
+                    “Guardar incentivo”.
                   </p>
                 </div>
               )}
             </div>
             <button className="mt-5 rounded-xl bg-[#234d8d] px-5 py-3 font-bold text-white">
-              Guardar sorteo
+              Guardar incentivo
             </button>
           </form>
         </div>

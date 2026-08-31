@@ -34,7 +34,8 @@ export default function Navbar() {
   const conocenosSubmenu: NavSubmenuItem[] = [
     { href: '/servicios/quienes-somos', label: 'Quiénes Somos' },
     { href: '/servicios/resena-historica', label: 'Reseña Histórica' },
-    { href: '/sorteos', label: 'Sorteos' },
+    { href: '/incentivos', label: 'Incentivos' },
+    { href: '/etica-empresarial', label: 'Ética Empresarial' },
   ];
 
   const serviciosFunerariosSubmenu: NavSubmenuItem[] = [

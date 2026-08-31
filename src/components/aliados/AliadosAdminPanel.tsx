@@ -55,7 +55,7 @@ type AllyActivityEntry = {
 const ACTIVITY_LABELS: Record<string, string> = {
   ALLY_CREATED: 'Aliado creado',
   ALLY_UPDATED: 'Datos actualizados',
-  ALLY_DEACTIVATED: 'Aliado desactivado',
+  ALLY_DEACTIVATED: 'Aliado eliminado',
   ALLY_ACCESS_RESET: 'Credenciales restablecidas',
   DISCOUNT_REDEEMED: 'Descuento aplicado',
   DISCOUNT_VOIDED: 'Código anulado',
@@ -82,6 +82,11 @@ function slugify(value: string) {
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
+}
+
+function normalizeAllyLoginId(value: string) {
+  const suffix = value.toUpperCase().replace(/^JDR-?/, '').replace(/[^A-Z0-9-]/g, '');
+  return `JDR-${suffix}`;
 }
 
 function createTemporaryAllyFromDraft(draft: CommercialAlly): CommercialAlly {
@@ -128,6 +133,7 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
   const [formTab, setFormTab] = useState<'commercial' | 'access' | 'content'>('commercial');
   const [accessStatuses, setAccessStatuses] = useState<Record<string, AllyAccessStatus>>({});
   const [activity, setActivity] = useState<AllyActivityEntry[]>([]);
+  const [savingAlly, setSavingAlly] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -322,11 +328,12 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
       whatsappNumber: sanitizeWhatsAppNumber(draft.whatsappNumber),
       whatsappTemplate: template,
       actionLabel: draft.actionLabel.trim() || 'Mas informacion',
-      loginId: draft.loginId?.trim() || `${slugify(draft.name).slice(0, 3).toUpperCase()}${Date.now().toString().slice(-4)}`,
+      loginId: normalizeAllyLoginId(draft.loginId || `JDR-${slugify(draft.name).slice(0, 3).toUpperCase()}${Date.now().toString().slice(-4)}`),
       createdAt: existing?.createdAt || now,
       updatedAt: now,
     };
 
+    setSavingAlly(true);
     try {
       const editableFields = ['name', 'loginId', 'categorySlug', 'subcategory', 'discountLabel', 'departamento', 'municipio', 'address', 'url', 'logo', 'whatsappNumber', 'whatsappTemplate', 'featured', 'email', 'telefono', 'description'] as const;
       const patch = editingId && existing ? Object.fromEntries(editableFields.filter((field) => allyRecord[field] !== existing[field]).map((field) => [field, allyRecord[field]])) : allyRecord;
@@ -352,31 +359,32 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
       const message = error instanceof Error && error.message ? error.message : 'No fue posible guardar el aliado.';
       setFeedback(message);
       setNotice({ title: 'No fue posible guardar los cambios', description: message, variant: 'error' });
+    } finally {
+      setSavingAlly(false);
     }
   };
 
   const deactivateAlly = async (ally: CommercialAlly) => {
     try {
       const response = await fetch(`/api/aliados/${ally.id}`, { method: 'DELETE' });
-      if (!response.ok) throw new Error('No fue posible desactivar el aliado.');
+      if (!response.ok) throw new Error('No fue posible eliminar el aliado.');
       setAllies((current) => current.filter((item) => item.id !== ally.id));
       if (editingId === ally.id) resetDraft();
-      setFeedback('Aliado desactivado correctamente.');
-      setNotice({ title: 'Aliado desactivado', description: 'El aliado ya no aparece en el catálogo público y puede recuperarse desde MySQL.', variant: 'success' });
+      setFeedback('Aliado eliminado correctamente.');
+      setNotice({ title: 'Aliado eliminado', description: 'El aliado ya no aparece en el catálogo público y puede recuperarse desde MySQL.', variant: 'success' });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'No fue posible desactivar el aliado.';
+      const message = error instanceof Error ? error.message : 'No fue posible eliminar el aliado.';
       setFeedback(message);
-      setNotice({ title: 'No fue posible desactivar el aliado', description: message, variant: 'error' });
+      setNotice({ title: 'No fue posible eliminar el aliado', description: message, variant: 'error' });
     }
   };
 
-  const handleDelete = (ally: CommercialAlly) => setConfirmation({ title: '¿Desactivar aliado?', description: `“${ally.name}” dejará de aparecer en el catálogo público. No se borrará definitivamente y podrá recuperarse desde MySQL.`, confirmLabel: 'Sí, desactivar', action: () => deactivateAlly(ally) });
+  const handleDelete = (ally: CommercialAlly) => setConfirmation({ title: '¿Eliminar aliado?', description: `“${ally.name}” dejará de aparecer en el catálogo público. No se borrará definitivamente y podrá recuperarse desde MySQL.`, confirmLabel: 'Sí, eliminar', action: () => deactivateAlly(ally) });
 
   const handleEdit = (ally: CommercialAlly) => {
     setDraft({ ...ally });
     setEditingId(ally.id);
     setAccessPassword('');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
     setFeedback(`Editando: ${ally.name}`);
   };
 
@@ -442,6 +450,10 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
   };
 
   const handleRedeemDiscount = async () => {
+    if (!isAllyUser) {
+      setVerificationFeedback('La administración puede consultar códigos, pero solo el aliado puede aplicar descuentos.');
+      return;
+    }
     if (!activeRequest) {
       return;
     }
@@ -618,7 +630,9 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
               <div><p className="text-xs font-bold uppercase tracking-[0.18em] text-[#6283aa]">Operación</p><h3 className="mt-1 text-2xl font-bold text-[#173861]">Verificar descuento</h3></div>
             </div>
             <p className="text-sm leading-6 text-textLight mb-6">
-              Consulta la cedula y el codigo generado por el cliente. Al aplicar el descuento se registra el consumo.
+              {isAllyUser
+                ? 'Consulta la cedula y el codigo generado por el cliente. Al aplicar el descuento se registra el consumo.'
+                : 'Consulta la cedula y el codigo generado por el cliente. La aplicación del descuento solo está disponible para el aliado autorizado.'}
             </p>
 
             <form onSubmit={handleFindDiscount} className="space-y-4">
@@ -657,31 +671,38 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
                 </p>
                 <p className="text-xs text-green-700 mt-1">{hasFlexibleDiscount ? 'Beneficio sujeto a condiciones: define el valor autorizado para este consumo.' : `Descuento calculado: ${activeRequest.discountPercent}% sobre el valor consumido.`}</p>
 
-                <div className={`mt-4 grid grid-cols-1 gap-3 items-end ${hasFlexibleDiscount ? 'md:grid-cols-[1fr_1fr_auto]' : 'md:grid-cols-[1fr_auto]'}`}>
-                  <Input
-                    label="Valor consumido"
-                    type="number"
-                    min="0"
-                    value={consumedValue}
-                    onChange={(event) => setConsumedValue(event.target.value)}
-                    placeholder="Ej: 85000"
-                  />
-                  {canSetManualDiscount && (
+                {isAllyUser ? (
+                  <div className={`mt-4 grid grid-cols-1 gap-3 items-end ${hasFlexibleDiscount ? 'md:grid-cols-[1fr_1fr_auto]' : 'md:grid-cols-[1fr_auto]'}`}>
                     <Input
-                      label="Valor a descontar"
+                      label="Valor consumido"
                       type="number"
                       min="0"
-                      max={consumedValue || undefined}
-                      value={manualDiscountValue}
-                      onChange={(event) => setManualDiscountValue(event.target.value)}
-                      placeholder="Ej: 15000"
+                      value={consumedValue}
+                      onChange={(event) => setConsumedValue(event.target.value)}
+                      placeholder="Ej: 85000"
                     />
-                  )}
-                  <Button type="button" variant="primary" onClick={handleRedeemDiscount}>
-                    Aplicar descuento
-                  </Button>
-                </div>
-                {Number(consumedValue) > 0 && (
+                    {canSetManualDiscount && (
+                      <Input
+                        label="Valor a descontar"
+                        type="number"
+                        min="0"
+                        max={consumedValue || undefined}
+                        value={manualDiscountValue}
+                        onChange={(event) => setManualDiscountValue(event.target.value)}
+                        placeholder="Ej: 15000"
+                      />
+                    )}
+                    <Button type="button" variant="primary" onClick={handleRedeemDiscount}>
+                      Aplicar descuento
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="mt-4 rounded-2xl border border-[#c9d9ed] bg-[#eef5fc]/75 p-4 text-sm leading-6 text-[#42668f]">
+                    <p className="font-bold text-[#244f8a]">Consulta de administración</p>
+                    <p className="mt-1">El código está activo. Solo el usuario del aliado puede registrar el consumo y aplicar el descuento.</p>
+                  </div>
+                )}
+                {isAllyUser && Number(consumedValue) > 0 && (
                   <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
                     <div className="rounded-xl bg-white/70 p-3">
                       <p className="text-textLight">Consumo</p>
@@ -933,8 +954,10 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
       )}
 
       {session?.role === 'admin_aliados' && (
+      <>
+      {editingId && <button type="button" aria-label="Cerrar edición" onClick={resetDraft} className="fixed inset-0 z-[199] cursor-default bg-[#07182e]/55 backdrop-blur-sm" />}
       <div className="grid grid-cols-1 xl:grid-cols-[1.05fr_0.95fr] gap-8">
-        <section className="glass rounded-3xl border border-primary/15 p-6 md:p-8">
+        <section className={editingId ? 'fixed left-1/2 top-1/2 z-[200] max-h-[92vh] w-[calc(100%-2rem)] max-w-3xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-3xl border border-white/80 bg-[#f8fbff]/95 p-6 shadow-2xl backdrop-blur-xl md:p-8' : 'glass rounded-3xl border border-primary/15 p-6 md:p-8'}>
           <h3 className="text-2xl font-display text-text mb-6">
             {editingId ? 'Editar aliado' : 'Crear nuevo aliado'}
           </h3>
@@ -1077,14 +1100,19 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
             />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 rounded-2xl border border-primary/15 bg-primary/5 p-4">
-              <Input
-                label="Usuario / ID de ingreso"
-                value={draft.loginId ?? ''}
-                onChange={(event) =>
-                  setDraft((prev) => ({ ...prev, loginId: event.target.value.toUpperCase() }))
-                }
-                placeholder="Ej: AMM1234"
-              />
+              <div>
+                <label className="mb-2 block text-sm font-medium text-text">Usuario / ID de ingreso</label>
+                <div className="flex overflow-hidden rounded-xl border border-border bg-white focus-within:border-transparent focus-within:ring-2 focus-within:ring-primary">
+                  <span className="flex items-center border-r border-border bg-primary/10 px-3 text-sm font-bold text-primary">JDR-</span>
+                  <input
+                    value={(draft.loginId ?? 'JDR-').replace(/^JDR-?/, '')}
+                    onChange={(event) => setDraft((prev) => ({ ...prev, loginId: normalizeAllyLoginId(event.target.value) }))}
+                    placeholder="Ej: ALIADO1234"
+                    className="min-w-0 flex-1 bg-transparent px-3 py-3 text-text outline-none"
+                  />
+                </div>
+                <p className="mt-1 text-xs text-textLight">El prefijo JDR- es fijo y se agrega automáticamente.</p>
+              </div>
               <div>
                 <div className="relative">
                   <Input label="Contraseña provisional o nueva" type={showAccessPassword ? 'text' : 'password'} value={accessPassword} onChange={(event) => setAccessPassword(event.target.value)} placeholder="Mínimo 10 caracteres" />
@@ -1125,7 +1153,7 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
               onChange={(event) =>
                 setDraft((prev) => ({ ...prev, whatsappTemplate: event.target.value }))
               }
-              placeholder='Hola, quiero mas informacion de "{{nombre}}".'
+              placeholder='Hola, quiero conocer los descuentos y beneficios de "{{nombre}}".'
               rows={3}
             />
 
@@ -1153,15 +1181,15 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
             </div>}
 
             <div className="flex flex-wrap gap-3 pt-2">
-              <Button type="submit" variant="primary">
-                {editingId ? 'Guardar cambios' : 'Crear aliado'}
+              <Button type="submit" variant="primary" disabled={savingAlly}>
+                {savingAlly ? 'Guardando...' : editingId ? 'Guardar cambios' : 'Crear aliado'}
               </Button>
               <Button type="button" variant="secondary" onClick={resetDraft}>
                 Limpiar formulario
               </Button>
               {editingId && (
-                <Button type="button" variant="ghost" onClick={() => setEditingId(null)}>
-                  Cancelar edicion
+                <Button type="button" variant="ghost" onClick={resetDraft} disabled={savingAlly}>
+                  Cancelar edición
                 </Button>
               )}
             </div>
@@ -1299,6 +1327,8 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
           </article>
         </section>
       </div>
+      {savingAlly && <div className="fixed inset-0 z-[250] grid place-items-center bg-[#07182e]/45 p-4 backdrop-blur-sm"><div className="rounded-3xl border border-white/80 bg-white/95 px-7 py-6 text-center shadow-2xl"><span className="mx-auto block h-10 w-10 animate-spin rounded-full border-4 border-primary/20 border-t-primary" /><p className="mt-4 font-bold text-text">Guardando información del aliado</p><p className="mt-1 text-sm text-textLight">Por favor espera la confirmación.</p></div></div>}
+      </>
       )}
     </div>
   );
