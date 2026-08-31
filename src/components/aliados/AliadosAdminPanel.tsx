@@ -280,6 +280,26 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
     }
   }, [availableSubcategories, draft.subcategory]);
 
+  useEffect(() => {
+    if (!editingId) return;
+
+    // El panel administrativo aplica backdrop-filter y por CSS convierte los
+    // elementos fixed en relativos al contenido. Al abrir la edición se
+    // desactiva temporalmente para que el modal quede centrado en la ventana.
+    const adminCard = document.querySelector<HTMLElement>('.admin-liquid-main-card');
+    if (!adminCard) return;
+
+    const backdropFilter = adminCard.style.backdropFilter;
+    const webkitBackdropFilter = adminCard.style.getPropertyValue('-webkit-backdrop-filter');
+    adminCard.style.backdropFilter = 'none';
+    adminCard.style.setProperty('-webkit-backdrop-filter', 'none');
+
+    return () => {
+      adminCard.style.backdropFilter = backdropFilter;
+      adminCard.style.setProperty('-webkit-backdrop-filter', webkitBackdropFilter);
+    };
+  }, [editingId]);
+
   const resetDraft = () => {
     setDraft(createEmptyAlly());
     setEditingId(null);
@@ -957,12 +977,18 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
       <>
       {editingId && <button type="button" aria-label="Cerrar edición" onClick={resetDraft} className="fixed inset-0 z-[199] cursor-default bg-[#07182e]/55 backdrop-blur-sm" />}
       <div className="grid grid-cols-1 xl:grid-cols-[1.05fr_0.95fr] gap-8">
-        <section className={editingId ? 'fixed left-1/2 top-1/2 z-[200] max-h-[92vh] w-[calc(100%-2rem)] max-w-3xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-3xl border border-white/80 bg-[#f8fbff]/95 p-6 shadow-2xl backdrop-blur-xl md:p-8' : 'glass rounded-3xl border border-primary/15 p-6 md:p-8'}>
-          <h3 className="text-2xl font-display text-text mb-6">
-            {editingId ? 'Editar aliado' : 'Crear nuevo aliado'}
-          </h3>
+        <section className={editingId ? 'fixed left-1/2 top-1/2 z-[200] max-h-[86vh] w-[min(92vw,44rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-[26px] border border-white/85 bg-[#f8fbff]/96 p-5 shadow-[0_30px_90px_rgba(4,22,52,0.38)] backdrop-blur-xl sm:p-6' : 'glass rounded-3xl border border-primary/15 p-6 md:p-8'}>
+          <div className="mb-4 flex items-start justify-between gap-4">
+            <div>
+              {editingId && <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Edición de aliado</p>}
+              <h3 className="mt-1 text-xl font-display text-text sm:text-2xl">
+                {editingId ? 'Editar aliado' : 'Crear nuevo aliado'}
+              </h3>
+            </div>
+            {editingId && <button type="button" onClick={resetDraft} className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-[#d6e2f2] bg-white/85 text-xl leading-none text-[#58718f] transition hover:border-primary/30 hover:text-primary" aria-label="Cerrar edición">×</button>}
+          </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-3">
             <div className="grid grid-cols-3 rounded-2xl border border-[#d4e0ee] bg-[#eef4fa]/80 p-1">
               {([
                 ['commercial', 'Comercial'],
