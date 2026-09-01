@@ -8,10 +8,6 @@ function asText(value: unknown) {
   return typeof value === 'string' ? value.trim() : '';
 }
 
-function normalizeDocumentNumber(value: string) {
-  return value.replace(/\D/g, '');
-}
-
 function createResetToken() {
   return crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '');
 }
@@ -19,12 +15,11 @@ function createResetToken() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const documentNumber = normalizeDocumentNumber(asText(body.documentNumber));
     const email = asText(body.email).toLowerCase();
 
-    if (documentNumber.length < 6 || !email.includes('@')) {
+    if (!email.includes('@')) {
       return NextResponse.json(
-        { success: false, message: 'Documento y correo validos son requeridos.' },
+        { success: false, message: 'Ingresa un correo valido.' },
         { status: 400 },
       );
     }
@@ -32,7 +27,7 @@ export async function POST(request: NextRequest) {
     const token = createResetToken();
     const tokenHash = await hashCandidateResetToken(token);
     const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
-    await setCandidatePasswordResetToken({ documentNumber, email, tokenHash, expiresAt });
+    await setCandidatePasswordResetToken({ email, tokenHash, expiresAt });
 
     if (process.env.RESEND_API_KEY) {
       const url = `${request.nextUrl.origin}/login/usuario-vacantes/restablecer?token=${token}`;

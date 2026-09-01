@@ -63,6 +63,13 @@ type CandidateAccountRow = {
   updated_at: string | Date;
 };
 
+type CandidateEmailAccessCodeRow = {
+  id: number;
+  email: string;
+  code_hash: string;
+  attempts: number;
+};
+
 type CreateApplicationInput = Omit<
   JobApplication,
   "id" | "trackingCode" | "appliedAt" | "status"
@@ -499,23 +506,77 @@ export async function getCandidateAccountByDocumentOrEmail(input: {
 }
 
 export async function getCandidateAccountForLogin(input: {
-  documentNumber: string;
+  documentNumber?: string;
   email: string;
 }) {
+  const documentNumber = normalizeDocumentNumber(input.documentNumber ?? "");
+  const email = normalizeEmail(input.email);
+  const documentCondition = documentNumber ? "AND documento = ?" : "";
+  const params = documentNumber ? [email, documentNumber] : [email];
   const rows = await query<CandidateAccountRow>(
     `
       SELECT ${CANDIDATE_ACCOUNT_COLUMNS}
       FROM candidatos
-      WHERE documento = ?
-        AND LOWER(email) = ?
+      WHERE LOWER(email) = ?
+        ${documentCondition}
         AND activo = 1
         AND deleted_at IS NULL
       LIMIT 1
     `,
-    [normalizeDocumentNumber(input.documentNumber), normalizeEmail(input.email)],
+    params,
   );
 
   return rows[0] ?? null;
+}
+
+export async function canRequestCandidateEmailAccessCode(email: string) {
+  const rows = await query<{ id: number }>(
+    `SELECT id FROM postulante_access_codes
+     WHERE LOWER(email) = ? AND created_at > DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 60 SECOND)
+     ORDER BY id DESC LIMIT 1`,
+    [normalizeEmail(email)],
+  );
+  return rows.length === 0;
+}
+
+export async function createCandidateEmailAccessCode(input: {
+  email: string;
+  codeHash: string;
+  expiresAt: Date;
+}) {
+  const email = normalizeEmail(input.email);
+  await execute('DELETE FROM postulante_access_codes WHERE LOWER(email) = ?', [email]);
+  await execute(
+    `INSERT INTO postulante_access_codes (email, code_hash, expires_at)
+     VALUES (?, ?, ?)`,
+    [email, input.codeHash, input.expiresAt],
+  );
+}
+
+export async function getCandidateEmailAccessCode(email: string) {
+  const rows = await query<CandidateEmailAccessCodeRow>(
+    `SELECT id, email, code_hash, attempts
+     FROM postulante_access_codes
+     WHERE LOWER(email) = ? AND used_at IS NULL AND expires_at > CURRENT_TIMESTAMP
+     ORDER BY id DESC LIMIT 1`,
+    [normalizeEmail(email)],
+  );
+  return rows[0] ?? null;
+}
+
+export async function registerFailedCandidateEmailAccessCodeAttempt(id: number) {
+  await execute(
+    'UPDATE postulante_access_codes SET attempts = attempts + 1 WHERE id = ? AND used_at IS NULL',
+    [id],
+  );
+}
+
+export async function consumeCandidateEmailAccessCode(id: number) {
+  const result = await execute(
+    'UPDATE postulante_access_codes SET used_at = CURRENT_TIMESTAMP WHERE id = ? AND used_at IS NULL',
+    [id],
+  );
+  return result.affectedRows > 0;
 }
 
 export async function getCandidateProfileFromDB(input: {
@@ -613,7 +674,6 @@ export async function updateCandidatePasswordInDB(input: {
 }
 
 export async function setCandidatePasswordResetToken(input: {
-  documentNumber: string;
   email: string;
   tokenHash: string;
   expiresAt: Date;
@@ -623,15 +683,13 @@ export async function setCandidatePasswordResetToken(input: {
       UPDATE candidatos
       SET reset_token_hash = ?,
           reset_expires_at = ?
-      WHERE documento = ?
-        AND LOWER(email) = ?
+      WHERE LOWER(email) = ?
         AND activo = 1
         AND deleted_at IS NULL
     `,
     [
       input.tokenHash,
       input.expiresAt,
-      normalizeDocumentNumber(input.documentNumber),
       normalizeEmail(input.email),
     ],
   );

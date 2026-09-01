@@ -6,10 +6,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import AuthLoginLayout from "@/components/login/AuthLoginLayout";
 import LoginTextField from "@/components/login/LoginTextField";
 
-function normalizeDocumentNumber(value: string) {
-  return value.replace(/\D/g, "");
-}
-
 function resolveNextPath(value: string | null) {
   if (value && value.startsWith("/")) {
     return value;
@@ -22,11 +18,12 @@ function VacantesUserLoginContent() {
   const searchParams = useSearchParams();
   const nextPath = resolveNextPath(searchParams.get("next"));
 
-  const [documentNumber, setDocumentNumber] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [code, setCode] = useState("");
+  const [step, setStep] = useState<"email" | "code">("email");
   const [rememberUser, setRememberUser] = useState(false);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -36,11 +33,9 @@ function VacantesUserLoginContent() {
     if (!savedAccess) return;
     try {
       const parsed = JSON.parse(savedAccess) as {
-        documentNumber?: string;
         email?: string;
       };
-      if (parsed.documentNumber && parsed.email) {
-        setDocumentNumber(parsed.documentNumber);
+      if (parsed.email) {
         setEmail(parsed.email);
         setRememberUser(true);
       }
@@ -49,41 +44,25 @@ function VacantesUserLoginContent() {
     }
   }, []);
 
-  const handleLoginSubmit = async (event: React.FormEvent) => {
+  const handleRequestCode = async (event: React.FormEvent) => {
     event.preventDefault();
     setError("");
+    setNotice("");
     setLoading(true);
 
-    const normalizedDocument = normalizeDocumentNumber(documentNumber);
     const normalizedEmail = email.trim().toLowerCase();
 
-    if (normalizedDocument.length < 6 || normalizedDocument.length > 15) {
-      setError("Ingresa un documento valido.");
-      setLoading(false);
-      return;
-    }
-
     if (!normalizedEmail || !normalizedEmail.includes("@")) {
-      setError("Ingresa el correo usado en tu postulacion.");
-      setLoading(false);
-      return;
-    }
-
-    if (password.length < 8) {
-      setError("Ingresa tu contraseña de al menos 8 caracteres.");
+      setError("Ingresa el correo de tu cuenta.");
       setLoading(false);
       return;
     }
 
     try {
-      const response = await fetch("/api/postulantes/login", {
+      const response = await fetch("/api/postulantes/acceso-correo/solicitar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          documentNumber: normalizedDocument,
-          email: normalizedEmail,
-          password,
-        }),
+        body: JSON.stringify({ email: normalizedEmail }),
       });
       const result = (await response.json()) as {
         success: boolean;
@@ -91,95 +70,60 @@ function VacantesUserLoginContent() {
       };
 
       if (!response.ok || !result.success) {
-        setError(result.message || "No pudimos validar tus datos.");
+        setError(result.message || "No pudimos enviar el código.");
         return;
       }
 
-      if (rememberUser) {
-        window.localStorage.setItem(
-          "jdr.remember.vacantes.user",
-          JSON.stringify({
-            documentNumber: normalizedDocument,
-            email: normalizedEmail,
-          }),
-        );
-      } else {
-        window.localStorage.removeItem("jdr.remember.vacantes.user");
-      }
-
-      router.push(nextPath);
-      router.refresh();
+      setEmail(normalizedEmail);
+      setStep("code");
+      setNotice(result.message || "Te enviamos un código temporal a tu correo.");
     } catch {
-      setError("No pudimos iniciar sesion. Intenta nuevamente.");
+      setError("No pudimos enviar el código. Intenta nuevamente.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handlePasswordRecovery = async () => {
-    const normalizedDocument = normalizeDocumentNumber(documentNumber);
+  const handleVerifyCode = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setError("");
     const normalizedEmail = email.trim().toLowerCase();
-    if (normalizedDocument.length < 6 || !normalizedEmail.includes("@")) {
-      setError("Escribe tu documento y correo para recuperar la contraseña.");
+    if (code.replace(/\D/g, "").length !== 6) {
+      setError("Ingresa el código de 6 dígitos que enviamos a tu correo.");
       return;
     }
-    const response = await fetch("/api/postulantes/recuperar-password", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        documentNumber: normalizedDocument,
-        email: normalizedEmail,
-      }),
-    });
-    const result = (await response.json()) as { message?: string };
-    setError(
-      result.message || "Revisa tu correo para continuar con la recuperación.",
-    );
+    setLoading(true);
+    try {
+      const response = await fetch("/api/postulantes/acceso-correo/verificar", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: normalizedEmail, code }) });
+      const result = (await response.json()) as { success?: boolean; message?: string };
+      if (!response.ok || !result.success) { setError(result.message || "No pudimos validar el código."); return; }
+      if (rememberUser) window.localStorage.setItem("jdr.remember.vacantes.user", JSON.stringify({ email: normalizedEmail }));
+      else window.localStorage.removeItem("jdr.remember.vacantes.user");
+      router.push(nextPath);
+      router.refresh();
+    } catch { setError("No pudimos validar el código. Intenta nuevamente."); }
+    finally { setLoading(false); }
   };
 
   return (
     <AuthLoginLayout
       title="Portal de postulantes"
-      subtitle="Ingresa con el documento y correo registrados en tu postulacion."
+      subtitle="Recibe un código temporal en tu correo para ingresar de forma segura."
       sectionLabel="Ingreso Usuarios Vacantes"
     >
-      <form onSubmit={handleLoginSubmit} className="space-y-6">
+      {step === "email" ? <form onSubmit={handleRequestCode} className="space-y-6">
+        <div className="rounded-2xl border border-white/20 bg-white/10 p-4 text-sm leading-relaxed text-white/85">
+          No necesitas recordar una contraseña. Te enviaremos una clave temporal de un solo uso.
+        </div>
         <LoginTextField
-          label="Documento"
-          type="text"
-          value={documentNumber}
-          onChange={(event) => {
-            setDocumentNumber(event.target.value);
-            setError("");
-          }}
-          placeholder="Ingresa tu documento"
-          required
-          icon={
-            <svg
-              className="h-5 w-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M5.121 17.804A13.937 13.937 0 0112 16c2.42 0 4.696.607 6.688 1.68M15 10a3 3 0 11-6 0 3 3 0 016 0z"
-              />
-            </svg>
-          }
-        />
-
-        <LoginTextField
-          label="Correo de postulacion"
+          label="Correo electrónico"
           type="email"
           value={email}
           onChange={(event) => {
             setEmail(event.target.value);
             setError("");
           }}
-          placeholder="correo@ejemplo.com"
+          placeholder="tucorreo@ejemplo.com"
           required
           icon={
             <svg
@@ -198,18 +142,6 @@ function VacantesUserLoginContent() {
           }
         />
 
-        <LoginTextField
-          label="Contraseña"
-          type="password"
-          value={password}
-          onChange={(event) => {
-            setPassword(event.target.value);
-            setError("");
-          }}
-          placeholder="Ingresa tu contraseña"
-          required
-        />
-
         <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-white/80">
           <input
             type="checkbox"
@@ -217,7 +149,7 @@ function VacantesUserLoginContent() {
             onChange={(event) => setRememberUser(event.target.checked)}
             className="h-4 w-4 accent-white"
           />
-          Recordar mis datos de acceso en este dispositivo
+          Recordar mi correo en este dispositivo
         </label>
 
         {error && (
@@ -226,20 +158,15 @@ function VacantesUserLoginContent() {
           </p>
         )}
 
-        <div className="flex items-center justify-between gap-3 text-sm">
+        {notice && <p className="rounded-xl border border-emerald-300/40 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">{notice}</p>}
+
+        <div className="text-center text-sm">
           <Link
             href={`/login/usuario-vacantes/registro?next=${encodeURIComponent(nextPath)}`}
             className="font-semibold text-white underline decoration-white/50 underline-offset-4 transition hover:text-white/75"
           >
-            Crear cuenta
+            Crear cuenta con correo
           </Link>
-          <button
-            type="button"
-            onClick={() => void handlePasswordRecovery()}
-            className="font-semibold text-white underline decoration-white/50 underline-offset-4 transition hover:text-white/75"
-          >
-            ¿Olvidaste tu contraseña?
-          </button>
         </div>
 
         <button
@@ -247,7 +174,7 @@ function VacantesUserLoginContent() {
           disabled={loading}
           className="w-full rounded-xl bg-black text-white py-3.5 text-lg font-semibold hover:bg-black/85 transition-colors disabled:opacity-60"
         >
-          {loading ? "Validando..." : "Ingresar al portal"}
+          {loading ? "Enviando código..." : "Continuar con correo"}
         </button>
 
         <div className="text-center text-sm text-white/90 space-y-2">
@@ -264,7 +191,16 @@ function VacantesUserLoginContent() {
             Volver al inicio
           </Link>
         </div>
-      </form>
+      </form> : <form onSubmit={handleVerifyCode} className="space-y-6">
+        <div className="rounded-2xl border border-emerald-300/40 bg-emerald-50 p-4 text-sm leading-relaxed text-emerald-900">
+          <p className="font-bold">Código enviado</p><p className="mt-1">Revisa <strong>{email}</strong>. El código vence en 10 minutos.</p>
+        </div>
+        <LoginTextField label="Código temporal" type="text" value={code} onChange={(event) => { setCode(event.target.value.replace(/\D/g, "").slice(0, 6)); setError(""); }} placeholder="000000" required />
+        <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-white/80"><input type="checkbox" checked={rememberUser} onChange={(event) => setRememberUser(event.target.checked)} className="h-4 w-4 accent-white" />Recordar mi correo en este dispositivo</label>
+        {error && <p className="rounded-xl border border-red-400/40 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+        <button type="submit" disabled={loading} className="w-full rounded-xl bg-black py-3.5 text-lg font-semibold text-white transition hover:bg-black/85 disabled:opacity-60">{loading ? "Verificando..." : "Ingresar al portal"}</button>
+        <div className="flex items-center justify-between gap-3 text-sm"><button type="button" onClick={() => { setStep("email"); setCode(""); setError(""); }} className="font-semibold text-white underline decoration-white/50 underline-offset-4">Cambiar correo</button><button type="button" onClick={() => void handleRequestCode({ preventDefault() {} } as React.FormEvent)} disabled={loading} className="font-semibold text-white underline decoration-white/50 underline-offset-4 disabled:opacity-60">Reenviar código</button></div>
+      </form>}
     </AuthLoginLayout>
   );
 }

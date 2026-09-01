@@ -16,32 +16,27 @@ function asText(value: unknown) {
   return typeof value === 'string' ? value.trim() : '';
 }
 
-function normalizeDocumentNumber(value: string) {
-  return value.replace(/\D/g, '');
-}
-
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const documentNumber = normalizeDocumentNumber(asText(body.documentNumber));
     const email = asText(body.email).toLowerCase();
     const password = asText(body.password);
 
-    if (documentNumber.length < 6 || !email.includes('@') || password.length < 8) {
+    if (!email.includes('@') || password.length < 8) {
       return NextResponse.json(
-        { success: false, message: 'Documento, correo y contrasena validos son requeridos.' },
+        { success: false, message: 'Correo y contrasena validos son requeridos.' },
         { status: 400 },
       );
     }
 
-    const candidate = await getCandidateAccountForLogin({ documentNumber, email });
+    const candidate = await getCandidateAccountForLogin({ email });
     const passwordOk = candidate
       ? await verifyCandidatePasswordForDB(password, candidate.password_hash)
       : false;
 
     if (!candidate || !passwordOk) {
       return NextResponse.json(
-        { success: false, message: 'Documento, correo o contrasena incorrectos.' },
+        { success: false, message: 'Correo o contrasena incorrectos.' },
         { status: 401 },
       );
     }
