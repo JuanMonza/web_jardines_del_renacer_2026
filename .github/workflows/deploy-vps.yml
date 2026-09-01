@@ -43,11 +43,6 @@ jobs:
           git fetch origin main
           git checkout main
           git reset --hard origin/main
-          # Una compilación manual puede dejar .next propiedad de otro usuario.
-          # Conservamos el servicio activo y devolvemos el control al usuario de despliegue.
-          if [ -d .next ]; then
-            sudo chown -R "$(id -u):$(id -g)" .next
-          fi
           npm ci
           npm run type-check
           npm run build
