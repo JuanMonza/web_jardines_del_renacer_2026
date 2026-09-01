@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Button from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
@@ -30,6 +30,15 @@ export default function Navbar() {
   const [mobileContactoOpen, setMobileContactoOpen] = useState(false);
   const [mobileServiciosOpen, setMobileServiciosOpen] = useState(false);
   const [mobileVisitanosOpen, setMobileVisitanosOpen] = useState(false);
+
+  useEffect(() => {
+    setIsOpen(false);
+    setMobileConocenosOpen(false);
+    setMobileAliadosOpen(false);
+    setMobileContactoOpen(false);
+    setMobileServiciosOpen(false);
+    setMobileVisitanosOpen(false);
+  }, [pathname]);
 
   const conocenosSubmenu: NavSubmenuItem[] = [
     { href: '/servicios/quienes-somos', label: 'Quiénes Somos' },
@@ -76,7 +85,7 @@ export default function Navbar() {
         {/* Barra continua con recorte circular para el logo */}
         <div className="bg-[#3C60A2]/95 backdrop-blur-md shadow-lg h-16 relative">
           {/* Recorte circular en el centro */}
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-36 h-36 lg:w-40 lg:h-40 rounded-full bg-transparent border-8 border-background z-20"></div>
+          <div className="absolute left-1/2 top-[calc(50%+8px)] -translate-x-1/2 -translate-y-1/2 w-36 h-36 lg:w-40 lg:h-40 rounded-full bg-transparent border-8 border-background z-20"></div>
 
           <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
             <div className="relative flex items-center justify-between h-full">
@@ -190,7 +199,7 @@ export default function Navbar() {
               {/* Logo CIRCULAR - MÁS GRANDE y CENTRADO */}
               <Link
                 href="/"
-                className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-30"
+                className="absolute left-1/2 top-[calc(50%+8px)] -translate-x-1/2 -translate-y-1/2 z-30"
               >
                 {/* Halo azul */}
                 <div className="absolute inset-0 scale-[1.18] rounded-full bg-[#4F7BFF]/30 blur-2xl"></div>

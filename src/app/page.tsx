@@ -11,6 +11,7 @@ import AlliesMarquee from '@/components/animations/AlliesMarquee';
 import FadeIn from '@/components/animations/FadeIn';
 import { PLANS_CONFIG } from '@/config/plans';
 import { CONTACT_INFO, buildWhatsAppUrl } from '@/config/contact';
+import { CalendarDays, ChevronRight, MapPinned, MessageCircle, Phone, Send } from 'lucide-react';
 
 // NOTA: Preparado para utilizar una única imagen corporativa y limpia (Suministrada por Hugo).
 const heroImages = [
@@ -346,52 +347,68 @@ export default function HomePage() {
       </section>
 
       {/* Contacto Final */}
-      <section className="py-20 glass">
+      <section className="relative overflow-hidden py-20 glass">
+        <div className="pointer-events-none absolute left-1/2 top-0 h-72 w-2/3 -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
         <Container>
-          <div className="text-center max-w-3xl mx-auto">
+          <div className="relative mx-auto max-w-5xl text-center">
             <FadeIn>
-              <h2 className="text-3xl md:text-4xl font-display mb-6 text-text">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/15 bg-white/70 px-4 py-2 text-xs font-bold tracking-[0.16em] text-primary shadow-sm backdrop-blur">
+                <span className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
+                DISPONIBLES 24/7
+              </div>
+              <h2 className="mb-4 text-3xl font-display font-extrabold text-text md:text-4xl">
                 ¿Necesitas más información?
               </h2>
-              <p className="text-lg text-textLight mb-8">
+              <p className="mb-9 text-lg text-textLight">
                 Nuestro equipo está disponible 24/7 para atenderte con profesionalismo y calidez
               </p>
 
-              <div className="glass rounded-3xl p-6 md:p-8 border border-primary/15 text-left">
-                <div className="grid grid-cols-1 md:grid-cols-[1.1fr,0.9fr] gap-6 items-center">
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.22em] text-primary mb-2">
-                      Contacto inmediato
-                    </p>
-                    <p className="text-2xl font-display text-text mb-2">
-                      {CONTACT_INFO.primaryLine.number}
-                    </p>
-                    <p className="text-textLight">
-                      {CONTACT_INFO.primaryLine.detail}. También puedes escribirnos por WhatsApp o encontrar la sede más cercana.
-                    </p>
+              <div className="overflow-hidden rounded-[32px] border border-primary/15 bg-white/80 text-left shadow-[0_28px_70px_-42px_rgba(28,70,130,0.7)] backdrop-blur-xl">
+                <div className="grid grid-cols-1 lg:grid-cols-[1fr,1.15fr]">
+                  <div className="relative overflow-hidden bg-gradient-to-br from-[#244f91] via-primary to-[#6289c3] p-7 text-white sm:p-9">
+                    <div className="absolute -right-10 -top-12 h-40 w-40 rounded-full border border-white/20 bg-white/10" />
+                    <div className="relative">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15 backdrop-blur-sm">
+                        <Phone className="h-6 w-6" />
+                      </div>
+                      <p className="mt-6 text-xs font-bold uppercase tracking-[0.2em] text-white/75">Contacto inmediato</p>
+                      <a href={CONTACT_INFO.primaryLine.href} className="mt-2 inline-flex text-3xl font-display font-extrabold transition hover:text-white/80 sm:text-4xl">
+                        {CONTACT_INFO.primaryLine.number}
+                      </a>
+                      <p className="mt-3 max-w-sm leading-relaxed text-white/85">
+                        {CONTACT_INFO.primaryLine.detail}. Llámanos ahora y recibe orientación de nuestro equipo.
+                      </p>
+                      <a href={CONTACT_INFO.primaryLine.href} className="mt-6 inline-flex items-center rounded-xl border border-white/35 bg-white/10 px-4 py-2.5 text-sm font-bold transition hover:bg-white hover:text-primary">
+                        Llamar ahora <ChevronRight className="ml-1 h-4 w-4" />
+                      </a>
+                    </div>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="p-5 sm:p-7">
+                    <p className="mb-4 text-sm font-semibold text-text">Elige la forma más cómoda de contactarnos</p>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <a
                       href={buildWhatsAppUrl()}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="rounded-2xl bg-green-500 text-white px-5 py-4 text-center font-semibold hover:bg-green-600 transition-colors"
+                      className="group flex items-center justify-between rounded-2xl bg-[#22c55e] px-5 py-4 font-bold text-white shadow-lg shadow-green-500/20 transition-all hover:-translate-y-1 hover:bg-[#16a34a]"
                     >
-                      WhatsApp
+                      <span className="flex items-center gap-2"><MessageCircle className="h-5 w-5" /> WhatsApp</span><ChevronRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
                     </a>
                     <Link
                       href={CONTACT_INFO.locationsHref}
-                      className="rounded-2xl glass border border-primary/20 px-5 py-4 text-center font-semibold text-primary hover:bg-primary/5 transition-colors"
+                      className="group flex items-center justify-between rounded-2xl border border-primary/15 bg-primary/5 px-5 py-4 font-bold text-primary transition-all hover:-translate-y-1 hover:bg-primary/10"
                     >
-                      Ver sedes
+                      <span className="flex items-center gap-2"><MapPinned className="h-5 w-5" /> Ver sedes</span><ChevronRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
                     </Link>
-                    <Link href="/contacto" className="rounded-2xl glass border border-primary/20 px-5 py-4 text-center font-semibold text-text hover:bg-primary/5 transition-colors">
-                      Formulario
+                    <Link href="/contacto" className="group flex items-center justify-between rounded-2xl border border-primary/15 bg-white px-5 py-4 font-bold text-text transition-all hover:-translate-y-1 hover:border-primary/30 hover:bg-primary/5">
+                      <span className="flex items-center gap-2"><Send className="h-5 w-5 text-primary" /> Formulario</span><ChevronRight className="h-5 w-5 text-primary transition-transform group-hover:translate-x-1" />
                     </Link>
-                    <Link href="/agendar-visita" className="rounded-2xl glass border border-primary/20 px-5 py-4 text-center font-semibold text-text hover:bg-primary/5 transition-colors">
-                      Agendar visita
+                    <Link href="/agendar-visita" className="group flex items-center justify-between rounded-2xl border border-primary/15 bg-white px-5 py-4 font-bold text-text transition-all hover:-translate-y-1 hover:border-primary/30 hover:bg-primary/5">
+                      <span className="flex items-center gap-2"><CalendarDays className="h-5 w-5 text-primary" /> Agendar visita</span><ChevronRight className="h-5 w-5 text-primary transition-transform group-hover:translate-x-1" />
                     </Link>
+                    </div>
+                    <p className="mt-5 flex items-center gap-2 text-xs text-textLight"><span className="h-2 w-2 rounded-full bg-green-500" /> Atención humana, inmediata y confidencial.</p>
                   </div>
                 </div>
               </div>

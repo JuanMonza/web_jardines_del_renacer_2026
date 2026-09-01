@@ -350,6 +350,7 @@ export default function ServiciosClient() {
             />
           </FadeIn>
 
+          {/* Indicadores ocultos temporalmente a solicitud de contenido.
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
             {stats.map((item, index) => {
               const Icon = item.icon;
@@ -374,6 +375,7 @@ export default function ServiciosClient() {
               );
             })}
           </div>
+          */}
         </Container>
       </section>
 
@@ -383,7 +385,7 @@ export default function ServiciosClient() {
             {services.map((service, index) => (
               <FadeIn key={service.title} delay={index * 0.07}>
                 <article className="group relative rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-1">
-                  {/* Imagen full-height con overlay */}
+                  {/* Imagen de portada */}
                   <div className="relative h-72 overflow-hidden">
                     <Image
                       src={service.image}
@@ -428,36 +430,53 @@ export default function ServiciosClient() {
       <section className="py-28">
         <Container>
           <FadeIn delay={0.3}>
-            <div className="mt-24 grid lg:grid-cols-2 gap-14 items-center">
-              <div>
-                <TitleBand
-                  title="Mucho más que un servicio funerario"
-                  subtitle="Nuestro propósito es acompañar a las familias con respeto, empatía y compromiso, ofreciendo una atención integral respaldada por infraestructura propia, cobertura nacional y un equipo humano preparado para brindar apoyo en cada etapa."
-                />
-                <Link href="/servicios/resena-historica" className="mt-8 inline-block">
-                  <Button>
-                    Conocer nuestra historia
-                    <ArrowRight className="ml-2 w-5 h-5" />
-                  </Button>
-                </Link>
+            <div className="mt-24 grid items-stretch gap-10 lg:grid-cols-2 lg:gap-14">
+              <div className="relative isolate overflow-hidden rounded-[36px] bg-gradient-to-br from-[#204a87] via-primary to-[#7197ce] p-8 text-white shadow-[0_30px_65px_-35px_rgba(28,70,130,0.9)] sm:p-11">
+                <div className="absolute -right-16 -top-20 h-56 w-56 rounded-full border border-white/20 bg-white/10" />
+                <div className="absolute -bottom-24 -left-16 h-64 w-64 rounded-full bg-[#97b7e7]/25 blur-2xl" />
+                <div className="relative flex h-full flex-col">
+                  <p className="text-xs font-bold tracking-[0.22em] text-white/75">NUESTRO COMPROMISO</p>
+                  <div className="mt-6 border-l-4 border-white/85 pl-5">
+                    <h2 className="max-w-lg text-4xl font-display font-extrabold leading-[1.08] sm:text-5xl">
+                      Mucho más que un servicio funerario
+                    </h2>
+                  </div>
+                  <p className="mt-7 max-w-xl text-base font-medium leading-8 text-white/90 sm:text-lg">
+                    Nuestro propósito es acompañar a las familias con respeto, empatía y compromiso, ofreciendo una atención integral respaldada por infraestructura propia, cobertura nacional y un equipo humano preparado para brindar apoyo en cada etapa.
+                  </p>
+
+                  <div className="mt-9 grid grid-cols-3 gap-3 border-y border-white/20 py-5">
+                    <div><strong className="block text-2xl font-display">26</strong><span className="text-xs text-white/75">años de experiencia</span></div>
+                    <div><strong className="block text-2xl font-display">111</strong><span className="text-xs text-white/75">sedes de atención</span></div>
+                    <div><strong className="block text-2xl font-display">15</strong><span className="text-xs text-white/75">departamentos</span></div>
+                  </div>
+
+                  <Link href="/servicios/resena-historica" className="mt-8 w-fit">
+                    <span className="inline-flex items-center rounded-xl border border-white/35 bg-white/15 px-5 py-3 text-sm font-bold shadow-lg backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:bg-white hover:text-primary">
+                      Conocer nuestra historia
+                      <ArrowRight className="ml-2 h-5 w-5" />
+                    </span>
+                  </Link>
+                </div>
               </div>
-              <div className="space-y-6">
+              <div className="relative space-y-4 py-1 before:absolute before:bottom-8 before:left-8 before:top-8 before:w-px before:bg-gradient-to-b before:from-primary/10 before:via-primary/45 before:to-primary/10 sm:space-y-5">
                 {reasons.map((item, index) => {
                   const Icon = item.icon;
                   return (
                     <div
                       key={item.title}
-                      className="glass rounded-3xl border border-primary/10 p-8 hover:border-primary/30 hover:shadow-md transition-all duration-300"
+                      className="group relative rounded-3xl border border-primary/10 bg-white/75 p-6 shadow-[0_16px_35px_-30px_rgba(27,71,132,0.65)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-primary/35 hover:bg-white hover:shadow-[0_20px_40px_-25px_rgba(27,71,132,0.45)] sm:p-7"
                     >
-                      <div className="flex gap-5">
-                        <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                          <Icon className="w-7 h-7 text-primary" />
+                      <span className="absolute right-6 top-5 text-xs font-bold tracking-[0.16em] text-primary/35 sm:right-7">0{index + 1}</span>
+                      <div className="relative flex gap-5">
+                        <div className="z-10 flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-primary/10 bg-gradient-to-br from-primary/15 to-[#dbe9fb] transition-transform duration-300 group-hover:scale-110">
+                          <Icon className="h-7 w-7 text-primary" />
                         </div>
-                        <div>
-                          <h3 className="text-2xl font-display text-text mb-3">
+                        <div className="pr-8">
+                          <h3 className="mb-2 text-2xl font-display font-bold text-text">
                             {item.title}
                           </h3>
-                          <p className="text-textLight leading-relaxed">
+                          <p className="leading-relaxed text-textLight">
                             {item.description}
                           </p>
                         </div>

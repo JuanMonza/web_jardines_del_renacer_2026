@@ -10,6 +10,12 @@ const PDF_RENDER_SCALE = 2.0;
 const CONTENT_WIDTH_RATIO = 0.98;
 const CONTENT_HEIGHT_RATIO = 0.97;
 
+type SecurePdfViewerProps = {
+  pdfSrc?: string;
+  documentLabel?: string;
+  documentYear?: string;
+};
+
 type ContentBounds = {
   x: number;
   y: number;
@@ -44,7 +50,11 @@ function getContentBounds(canvas: HTMLCanvasElement): ContentBounds {
   };
 }
 
-export default function SecurePdfViewer() {
+export default function SecurePdfViewer({
+  pdfSrc = PDF_SRC,
+  documentLabel = 'Documento oficial',
+  documentYear = '2026',
+}: SecurePdfViewerProps) {
   const pagesRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -69,7 +79,7 @@ export default function SecurePdfViewer() {
         const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
         pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 
-        const loadingTask = pdfjsLib.getDocument({ url: PDF_SRC });
+        const loadingTask = pdfjsLib.getDocument({ url: pdfSrc });
         const pdf = (await loadingTask.promise) as unknown as PdfDocument;
         activePdf = pdf;
 
@@ -165,17 +175,33 @@ export default function SecurePdfViewer() {
       cleanupPagesContainer?.replaceChildren();
       void activePdf?.destroy();
     };
-  }, []);
+  }, [pdfSrc]);
+
+  const preventDocumentCopy = (event: React.ClipboardEvent<HTMLDivElement> | React.DragEvent<HTMLDivElement> | React.MouseEvent<HTMLDivElement>) => {
+    event.preventDefault();
+  };
+
+  const preventDocumentShortcuts = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if ((event.ctrlKey || event.metaKey) && ['c', 'p', 's', 'u'].includes(event.key.toLowerCase())) {
+      event.preventDefault();
+    }
+  };
 
   return (
     <>
       <div
         className="relative mx-auto overflow-hidden rounded-2xl border border-border bg-white shadow-2xl shadow-primary/10"
         style={{ maxWidth: `${VIEWER_MAX_WIDTH}px` }}
+        onContextMenu={preventDocumentCopy}
+        onCopy={preventDocumentCopy}
+        onCut={preventDocumentCopy}
+        onDragStart={preventDocumentCopy}
+        onKeyDown={preventDocumentShortcuts}
+        tabIndex={0}
       >
         <div className="flex items-center justify-between border-b border-border bg-[#3C60A2] px-4 py-3 sm:px-6">
-          <p className="text-sm font-medium uppercase tracking-wide text-white">Documento oficial</p>
-          <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-medium text-white">2026</span>
+          <p className="text-sm font-medium uppercase tracking-wide text-white">{documentLabel}</p>
+          <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-medium text-white">{documentYear}</span>
         </div>
 
         <div className="h-[74vh] min-h-[480px] max-h-[840px] overflow-y-auto bg-[#f6f4f2] px-2 py-5 sm:px-4">
@@ -199,7 +225,7 @@ export default function SecurePdfViewer() {
           <div
             ref={pagesRef}
             className={hasError ? 'hidden select-none' : 'mx-auto flex max-w-full select-none flex-col items-center'}
-            aria-label="Cláusulas Jardines del Renacer 2026"
+            aria-label={documentLabel}
           />
         </div>
 
