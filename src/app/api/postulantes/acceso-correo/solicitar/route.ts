@@ -43,9 +43,11 @@ export async function POST(request: NextRequest) {
     }
 
     const candidate = await getCandidateAccountForLogin({ email });
-    // Evita revelar si un correo está o no registrado.
     if (!candidate) {
-      return NextResponse.json({ success: true, message: 'Si el correo está registrado, recibirás un código de acceso.' });
+      return NextResponse.json(
+        { success: false, message: 'No encontramos una cuenta registrada con este correo. Verifica la dirección o crea una cuenta para continuar.' },
+        { status: 404 },
+      );
     }
 
     if (!(await canRequestCandidateEmailAccessCode(email))) {
