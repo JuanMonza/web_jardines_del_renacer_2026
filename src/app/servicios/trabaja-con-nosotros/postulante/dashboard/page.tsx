@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { Briefcase, Calendar, Loader2, LogOut, Save, User } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Briefcase, Calendar, Loader2, LogOut, MapPin, Save, User } from 'lucide-react';
 import type { CandidateProfile, JobApplication } from '@/config/candidates';
 import { createEmptyCandidateProfile } from '@/config/candidates';
-import { VACANCY_DEPARTMENTS } from '@/config/vacancies';
+import { VACANCY_DEPARTMENTS, type JobVacancy } from '@/config/vacancies';
 import Container from '@/components/ui/Container';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
@@ -37,12 +37,23 @@ function StatusBadge({ status }: { status: JobApplication['status'] }) {
 
 export default function PostulanteDashboardPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const requestedVacancyId = searchParams.get('vacante') ?? '';
   const [profile, setProfile] = useState<CandidateProfile>(createEmptyCandidateProfile());
   const [applications, setApplications] = useState<JobApplication[]>([]);
+  const [vacancies, setVacancies] = useState<JobVacancy[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [applying, setApplying] = useState(false);
   const [feedback, setFeedback] = useState('');
   const [notice, setNotice] = useState<{ title: string; description: string; variant: 'success' | 'error' } | null>(null);
+  const selectedVacancy = useMemo(
+    () => vacancies.find((vacancy) => vacancy.id === requestedVacancyId) ?? null,
+    [requestedVacancyId, vacancies],
+  );
+  const alreadyApplied = selectedVacancy
+    ? applications.some((application) => application.vacancyId === selectedVacancy.id)
+    : false;
 
   useEffect(() => {
     async function refreshApplications() {
@@ -62,14 +73,15 @@ export default function PostulanteDashboardPage() {
 
     async function fetchPortalData() {
       try {
-        const [profileResponse, applicationsResponse] = await Promise.all([
+        const [profileResponse, applicationsResponse, vacanciesResponse] = await Promise.all([
           fetch('/api/postulantes/perfil', { cache: 'no-store' }),
           fetch('/api/postulantes/mis-postulaciones', { cache: 'no-store' }),
+          fetch('/api/vacantes', { cache: 'no-store' }),
         ]);
 
         if (profileResponse.status === 401 || applicationsResponse.status === 401) {
           router.replace(
-            '/login/usuario-vacantes?next=/servicios/trabaja-con-nosotros/postulante/dashboard',
+            `/login/usuario-vacantes?next=${encodeURIComponent(`/servicios/trabaja-con-nosotros/postulante/dashboard${requestedVacancyId ? `?vacante=${requestedVacancyId}` : ''}`)}`,
           );
           return;
         }
@@ -87,6 +99,10 @@ export default function PostulanteDashboardPage() {
 
         setProfile(profileResult.data);
         setApplications(applicationsResult.data);
+        if (vacanciesResponse.ok) {
+          const vacanciesResult = await vacanciesResponse.json() as JobVacancy[];
+          if (Array.isArray(vacanciesResult)) setVacancies(vacanciesResult);
+        }
       } catch (error) {
         setFeedback(error instanceof Error ? error.message : 'No se pudo cargar el portal.');
       } finally {
@@ -104,7 +120,7 @@ export default function PostulanteDashboardPage() {
       window.clearInterval(refreshInterval);
       window.removeEventListener('focus', refreshApplications);
     };
-  }, [router]);
+  }, [requestedVacancyId, router]);
 
   const handleLogout = async () => {
     await fetch('/api/postulantes/logout', { method: 'POST' });
@@ -138,6 +154,36 @@ export default function PostulanteDashboardPage() {
       setNotice({ title: 'No fue posible guardar el perfil', description: message, variant: 'error' });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleApplyToSelectedVacancy = async () => {
+    if (!selectedVacancy || alreadyApplied) return;
+    setApplying(true);
+    try {
+      const response = await fetch('/api/postulantes/mis-postulaciones', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          vacancyId: selectedVacancy.id,
+          vacancyTitle: selectedVacancy.title,
+          resumeFileName: profile.resumeFileName,
+          resumeFileData: profile.resumeFileData,
+        }),
+      });
+      const result = await response.json() as ApiResponse<JobApplication>;
+      if (!response.ok || !result.success || !result.data) {
+        throw new Error(result.message || 'No fue posible registrar tu postulación.');
+      }
+      setApplications((current) => [result.data!, ...current]);
+      setNotice({ title: 'Postulación recibida', description: `Tu postulación para ${selectedVacancy.title} fue registrada correctamente.`, variant: 'success' });
+      router.replace('/servicios/trabaja-con-nosotros/postulante/dashboard');
+      router.refresh();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'No fue posible registrar tu postulación.';
+      setNotice({ title: 'No fue posible postularte', description: message, variant: 'error' });
+    } finally {
+      setApplying(false);
     }
   };
 
@@ -250,6 +296,8 @@ export default function PostulanteDashboardPage() {
               </Button>
             </form>
 
+            <div className="space-y-6">
+            {selectedVacancy && <section className="rounded-[24px] border border-primary/20 bg-gradient-to-br from-white to-[#eef5ff] p-5 shadow-[0_14px_36px_rgba(35,79,132,0.12)] md:p-6"><div className="flex items-start gap-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary text-white shadow-sm"><Briefcase className="h-5 w-5" /></span><div className="min-w-0"><p className="text-xs font-bold uppercase tracking-wider text-primary">Vacante seleccionada</p><h2 className="mt-1 text-xl font-display text-text">{selectedVacancy.title}</h2><p className="mt-2 flex items-center gap-2 text-sm text-textLight"><MapPin size={15} />{selectedVacancy.city}, {selectedVacancy.department}</p></div></div><p className="mt-4 text-sm leading-6 text-textLight">{selectedVacancy.summary}</p>{alreadyApplied ? <div className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">Ya registraste una postulación para esta vacante.</div> : <button type="button" onClick={() => void handleApplyToSelectedVacancy()} disabled={applying} className="mt-5 w-full rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60">{applying ? 'Registrando postulación...' : 'Postularme a esta vacante'}</button>}</section>}
             <section className="h-fit rounded-[24px] border border-white/80 bg-white/70 p-5 shadow-[0_14px_36px_rgba(35,79,132,0.12)] backdrop-blur-xl md:p-6">
               <div className="mb-6 flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10"><Briefcase className="h-5 w-5 text-primary" /></span><div><p className="text-xs font-bold uppercase tracking-wider text-primary">Seguimiento</p><h2 className="text-xl font-display text-text">Mis postulaciones</h2></div>
               </div>
@@ -284,6 +332,7 @@ export default function PostulanteDashboardPage() {
                 </div>
               )}
             </section>
+            </div>
           </div>
         </Container>
       </section>
