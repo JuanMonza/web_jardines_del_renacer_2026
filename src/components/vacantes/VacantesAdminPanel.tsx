@@ -74,9 +74,9 @@ function StatsCard({
 }) {
   const cardContent = (
     <>
-      <Icon className={`w-8 h-8 ${color} mb-2`} />
-      <p className="text-3xl font-bold text-text">{value}</p>
-      <p className="text-xs text-textLight mt-1">{title}</p>
+      <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-50"><Icon className={`h-6 w-6 ${color}`} /></span>
+      <p className="mt-5 text-3xl font-bold tracking-tight text-text">{value}</p>
+      <p className="mt-1 text-xs font-bold uppercase tracking-[.12em] text-textLight">{title}</p>
     </>
   );
 
@@ -85,7 +85,7 @@ function StatsCard({
       <button
         type="button"
         onClick={onClick}
-        className="glass rounded-2xl border border-primary/10 p-4 flex flex-col items-center justify-center text-center h-full w-full transition-all hover:border-primary/30 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-primary"
+        className="group rounded-2xl border border-[#dbe5f3] bg-white p-5 text-left shadow-[0_8px_22px_rgba(32,69,113,.07)] transition-all hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary"
       >
         {cardContent}
       </button>
@@ -93,7 +93,7 @@ function StatsCard({
   }
 
   return (
-    <div className="glass rounded-2xl border border-primary/10 p-4 flex flex-col items-center justify-center text-center h-full">
+    <div className="rounded-2xl border border-[#dbe5f3] bg-white p-5 text-left shadow-[0_8px_22px_rgba(32,69,113,.07)]">
       {cardContent}
     </div>
   );
@@ -218,9 +218,9 @@ function VacanciesMetrics({
   const PIE_COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f97316', '#22c55e', '#ef4444'];
 
   return (
-    <div className="mb-6">
-      <h3 className="text-xl font-display text-text mb-4">Métricas Generales</h3>
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+    <div className="mb-7">
+      <div className="mb-5 flex flex-wrap items-end justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[.16em] text-primary">Pulso del proceso</p><h3 className="mt-1 text-2xl font-bold text-text">Métricas generales</h3></div><p className="text-sm text-textLight">Haz clic en una tarjeta para profundizar.</p></div>
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
         <StatsCard
           icon={Briefcase}
           title="Vacantes Activas"
@@ -262,21 +262,21 @@ function VacanciesMetrics({
         />
       </div>
 
-      <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="glass rounded-2xl border border-primary/10 p-4">
-          <h4 className="text-lg font-display text-text mb-4 text-center">Postulaciones por Mes</h4>
+      <div className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-2">
+        <div className="rounded-3xl border border-[#dbe5f3] bg-[#fbfdff] p-5 shadow-[0_8px_22px_rgba(32,69,113,.06)]">
+          <p className="text-xs font-bold uppercase tracking-[.14em] text-primary">Tendencia</p><h4 className="mt-1 text-lg font-bold text-text">Postulaciones por mes</h4>
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={applicationsByMonth}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e6eef8" vertical={false} />
               <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} />
               <YAxis stroke="#94a3b8" fontSize={12} allowDecimals={false} />
-              <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(139, 92, 246, 0.1)' }} />
-              <Bar dataKey="Postulaciones" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(49, 93, 152, 0.08)' }} />
+              <Bar dataKey="Postulaciones" fill="#315d98" radius={[7, 7, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
-        <div className="glass rounded-2xl border border-primary/10 p-4">
-          <h4 className="text-lg font-display text-text mb-4 text-center">Distribución de Estados</h4>
+        <div className="rounded-3xl border border-[#dbe5f3] bg-[#fbfdff] p-5 shadow-[0_8px_22px_rgba(32,69,113,.06)]">
+          <p className="text-xs font-bold uppercase tracking-[.14em] text-primary">Embudo</p><h4 className="mt-1 text-lg font-bold text-text">Distribución de estados</h4>
           <ResponsiveContainer width="100%" height={250}>
             <PieChart>
               <Pie
@@ -517,18 +517,19 @@ function RegisteredUsersList() {
 
   if (error) {
     return (
-      <div className="p-10 text-center text-red-600">
-        <AlertCircle className="mx-auto h-8 w-8 mb-2" />
-        {error}
+      <div className="rounded-3xl border border-red-100 bg-red-50/70 p-10 text-center text-red-700">
+        <AlertCircle className="mx-auto h-9 w-9 mb-3" />
+        <p className="font-bold">No pudimos cargar los usuarios</p><p className="mt-1 text-sm">{error}</p>
+        <Button className="mt-5" variant="primary" onClick={() => window.location.reload()}>Reintentar</Button>
       </div>
     );
   }
 
   return (
-    <div>
+    <div className="rounded-3xl border border-[#dbe5f3] bg-[#fbfdff] p-5">
       <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
         <div>
-          <h3 className="text-xl font-display text-text">Usuarios Registrados</h3>
+          <p className="text-xs font-bold uppercase tracking-[.16em] text-primary">Base de talento</p><h3 className="mt-1 text-xl font-bold text-text">Usuarios registrados</h3>
           <p className="text-sm text-textLight mt-1">
             Lista de todos los candidatos que han aplicado a una vacante en el sistema.
           </p>
@@ -550,8 +551,8 @@ function RegisteredUsersList() {
       </div>
 
       <div className="mt-4 overflow-y-auto max-h-[60vh] custom-scrollbar pr-2">
-        <table className="w-full text-left">
-          <thead className="border-b bg-white/30 sticky top-0 backdrop-blur-sm">
+        <table className="w-full text-left overflow-hidden rounded-2xl bg-white">
+          <thead className="sticky top-0 border-b bg-[#f5f8fd]">
             <tr>
               <th className="p-4 font-semibold text-gray-600 cursor-pointer hover:bg-primary/5" onClick={() => requestSort('candidateName')}>
                 <div className="flex items-center">Nombre {getSortIcon('candidateName')}</div>
@@ -569,7 +570,7 @@ function RegisteredUsersList() {
           </thead>
           <tbody>
             {processedUsers.map((user) => (
-              <tr key={user.candidateDocument} className="border-b border-primary/10 hover:bg-primary/5">
+              <tr key={user.candidateDocument} className="border-b border-[#edf2f8] transition hover:bg-[#f7faff]">
                 <td className="p-4"><div className="flex items-center gap-3"><User size={16} className="text-gray-400" /><div><p className="font-semibold text-text">{user.candidateName}</p><p className="text-xs text-textLight">C.C. {user.candidateDocument}</p></div></div></td>
                 <td className="p-4"><div className="flex flex-col gap-1"><div className="flex items-center gap-2 text-sm"><Mail size={14} className="text-gray-400" /><a href={`mailto:${user.candidateEmail}`} className="text-blue-600 hover:underline">{user.candidateEmail}</a></div><div className="flex items-center gap-2 text-sm"><Phone size={14} className="text-gray-400" />{user.candidatePhone || 'No registrado'}</div></div></td>
                 <td className="p-4"><div className="flex items-center gap-2 text-sm"><Calendar size={14} className="text-gray-400" />{user.appliedAt ? formatDate(user.appliedAt) : 'N/A'}</div></td>
@@ -581,7 +582,7 @@ function RegisteredUsersList() {
                 </td>
               </tr>
             ))}
-          </tbody>
+            {processedUsers.length === 0 && <tr><td colSpan={4} className="p-12 text-center text-textLight">No hay usuarios registrados que coincidan con la búsqueda.</td></tr>}</tbody>
         </table>
       </div>
       {selectedUser && (
