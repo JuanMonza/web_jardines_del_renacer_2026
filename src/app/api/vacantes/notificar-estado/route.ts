@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { ApplicationStatus } from '@/config/candidates';
 import { ADMIN_SESSION_COOKIE, requireAdminPermission } from '@/lib/iam/admin-session';
+import { recordVacancyAudit } from '@/lib/vacancy-audit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -11,6 +12,7 @@ type NotifyStatusPayload = {
   candidateDocument?: string;
   vacancyTitle?: string;
   trackingCode?: string;
+  applicationId?: string;
   status?: ApplicationStatus;
 };
 
@@ -102,6 +104,7 @@ export async function POST(request: NextRequest) {
     const candidateDocument = asText(payload.candidateDocument);
     const vacancyTitle = asText(payload.vacancyTitle);
     const trackingCode = asText(payload.trackingCode);
+    const applicationId = asText(payload.applicationId);
     const status = payload.status;
 
     if (!candidateEmail || !vacancyTitle || !status) {
@@ -180,6 +183,11 @@ export async function POST(request: NextRequest) {
       to: candidateEmail,
       subject: copy.subject,
       html,
+    });
+
+    await recordVacancyAudit({
+      action: 'POSTULANTE_NOTIFICADO', table: 'postulaciones', recordId: applicationId || 0,
+      description: `Administrador ${session.name} (ID ${session.userId}) notificó por correo a ${candidateName || candidateEmail} (${candidateEmail}) sobre “${vacancyTitle}”. Estado informado: ${status}.`,
     });
 
     return NextResponse.json({

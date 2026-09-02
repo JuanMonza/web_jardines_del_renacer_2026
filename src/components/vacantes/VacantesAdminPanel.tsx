@@ -917,10 +917,6 @@ export default function VacantesAdminPanel() {
     status: JobApplication['status'],
   ) => {
     const target = applications.find((application) => application.id === applicationId);
-    const next = applications.map((application) =>
-      application.id === applicationId ? { ...application, status } : application,
-    );
-    setApplications(next);
     const toastId = toast.loading('Actualizando estado y enviando notificación...');
 
     if (!target || !target.candidateEmail) {
@@ -930,12 +926,23 @@ export default function VacantesAdminPanel() {
 
     void (async () => {
       try {
+        const updateResponse = await fetch(`/api/vacantes/postulaciones/${applicationId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status }),
+        });
+        if (!updateResponse.ok) {
+          const updateResult = await updateResponse.json().catch(() => ({}));
+          throw new Error(updateResult.message || 'No se pudo actualizar el seguimiento.');
+        }
+        setApplications((current) => current.map((application) => application.id === applicationId ? { ...application, status } : application));
         const response = await fetch('/api/vacantes/notificar-estado', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
+            applicationId: target.id,
             candidateName: target.candidateName,
             candidateEmail: target.candidateEmail,
             candidateDocument: target.candidateDocument,

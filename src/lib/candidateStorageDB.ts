@@ -400,13 +400,13 @@ export async function getAllApplicationsFromDB() {
   return query(sql);
 }
 
-export async function updateApplicationStatusInDB(input: { id: string; status: JobApplication['status']; notes?: string }) {
+export async function updateApplicationStatusInDB(input: { id: string; status: JobApplication['status']; notes?: string; adminName?: string; adminUserId?: number }) {
   const corporateStatus = { Recibida: 'Postulado', 'En revision': 'En revisión', Entrevista: 'Entrevista RH', 'Prueba tecnica': 'Prueba técnica', Seleccionado: 'Contratado', 'No continua': 'No seleccionado' }[input.status];
   const result = await execute(
     'UPDATE postulaciones SET estado = ?, observaciones_rh = ? WHERE id = ?',
     [corporateStatus, input.notes?.trim() || null, input.id],
   );
-  if (result.affectedRows > 0) await execute('INSERT INTO activity_logs (usuario_tipo, accion, modulo, tabla_afectada, registro_id, descripcion) VALUES (?,?,?,?,?,?)', ['Admin', 'POSTULACION_ESTADO_ACTUALIZADO', 'Vacantes', 'postulaciones', input.id, `Estado actualizado a ${corporateStatus}. ${input.notes?.trim() || ''}`]);
+  if (result.affectedRows > 0) await execute('INSERT INTO activity_logs (usuario_tipo, accion, modulo, tabla_afectada, registro_id, descripcion) VALUES (?,?,?,?,?,?)', ['Admin', 'POSTULACION_ESTADO_ACTUALIZADO', 'Vacantes', 'postulaciones', input.id, `Administrador ${input.adminName || 'no identificado'}${input.adminUserId ? ` (ID ${input.adminUserId})` : ''} actualizó el estado a ${corporateStatus}. ${input.notes?.trim() || ''}`]);
   return result.affectedRows > 0;
 }
 

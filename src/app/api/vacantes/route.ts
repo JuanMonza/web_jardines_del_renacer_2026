@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {getVacanciesFromDB,createVacancyInDB,} from "@/lib/vacanciesStorageDB";
 import { getVacancyApplicationCounts } from "@/lib/candidateStorageDB";
 import { ADMIN_SESSION_COOKIE, requireAdminPermission } from '@/lib/iam/admin-session';
+import { recordVacancyAudit } from '@/lib/vacancy-audit';
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +33,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     const id = await createVacancyInDB(body);
+    await recordVacancyAudit({ action: 'VACANTE_CREADA', table: 'vacantes', recordId: id, description: `Administrador ${session.name} (ID ${session.userId}) creó la vacante “${body.title || 'Sin título'}”.` });
 
     return NextResponse.json(
       {

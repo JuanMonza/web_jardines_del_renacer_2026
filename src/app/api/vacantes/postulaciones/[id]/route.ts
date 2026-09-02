@@ -11,7 +11,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const body = await request.json() as { status?: ApplicationStatus; notes?: string };
     if (!body.status || !APPLICATION_STATUS_OPTIONS.includes(body.status)) return NextResponse.json({ success: false, message: 'Estado de postulación inválido.' }, { status: 422 });
     const { id } = await params;
-    if (!await updateApplicationStatusInDB({ id, status: body.status, notes: body.notes })) return NextResponse.json({ success: false, message: 'Postulación no encontrada.' }, { status: 404 });
+    if (!await updateApplicationStatusInDB({ id, status: body.status, notes: body.notes, adminName: session.name, adminUserId: session.userId })) return NextResponse.json({ success: false, message: 'Postulación no encontrada.' }, { status: 404 });
     return NextResponse.json({ success: true });
   } catch { return NextResponse.json({ success: false, message: 'No fue posible actualizar la postulación.' }, { status: 500 }); }
 }
