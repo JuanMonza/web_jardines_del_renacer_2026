@@ -53,16 +53,13 @@ export async function POST(request: NextRequest) {
     }
 
     const code = createCandidateEmailAccessCode();
-    await saveCandidateEmailAccessCode({
-      email,
-      codeHash: hashCandidateEmailAccessCode(email, code),
-      expiresAt: new Date(Date.now() + 10 * 60 * 1000),
-    });
-
     const nodemailer = require('nodemailer') as {
       createTransport: (options: {
         host: string; port: number; secure: boolean; auth: { user: string; pass: string };
-      }) => { sendMail: (options: { from: string; to: string; subject: string; html: string }) => Promise<unknown> };
+      }) => {
+        verify: () => Promise<void>;
+        sendMail: (options: { from: string; to: string; subject: string; html: string }) => Promise<{ messageId?: string; accepted?: string[]; rejected?: string[] }>;
+      };
     };
     const transporter = nodemailer.createTransport({
       host: smtp.host,
@@ -70,12 +67,22 @@ export async function POST(request: NextRequest) {
       secure: smtp.secure,
       auth: { user: smtp.user, pass: smtp.pass },
     });
-    await transporter.sendMail({
+    await transporter.verify();
+    const delivery = await transporter.sendMail({
       from: smtp.from,
       to: email,
       subject: 'Tu código de acceso | Jardines del Renacer',
       html: `<div style="font-family:Arial,sans-serif;color:#24344d;max-width:540px;margin:auto;padding:28px"><p style="color:#3c60a2;font-weight:700;letter-spacing:1.5px;font-size:12px">PORTAL DE POSTULANTES</p><h1 style="font-size:24px">Tu código de acceso</h1><p>Usa este código para ingresar de forma segura a tu portal de postulante:</p><p style="font-size:32px;letter-spacing:8px;font-weight:800;color:#244f91;background:#edf3fc;padding:18px 22px;border-radius:14px;text-align:center">${code}</p><p>El código vence en 10 minutos y solo puede utilizarse una vez.</p><p style="font-size:13px;color:#667085">Si no solicitaste este acceso, puedes ignorar este mensaje.</p></div>`,
     });
+    if (!delivery.accepted?.some((recipient) => recipient.toLowerCase() === email) || delivery.rejected?.length) {
+      throw new Error('El servidor SMTP no confirmó la aceptación del destinatario.');
+    }
+    await saveCandidateEmailAccessCode({
+      email,
+      codeHash: hashCandidateEmailAccessCode(email, code),
+      expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+    });
+    console.info(`Código de acceso aceptado por SMTP. Destinatario: ${email}; mensaje: ${delivery.messageId || 'sin ID'}`);
 
     return NextResponse.json({ success: true, message: 'Te enviamos un código temporal. Revisa también la carpeta de spam.' });
   } catch (error) {
