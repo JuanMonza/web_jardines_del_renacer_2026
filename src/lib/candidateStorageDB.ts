@@ -377,7 +377,7 @@ export function readCandidateApplications() {
 export async function getAllApplicationsFromDB() {
   const sql = `
     SELECT CAST(p.id AS CHAR) AS id, CAST(p.vacante_id AS CHAR) AS vacancyId, CONCAT(c.nombres, ' ', c.apellidos) AS candidateName,
-      c.email AS candidateEmail, v.titulo AS vacancyTitle,
+      c.email AS candidateEmail, c.ciudad AS city, v.titulo AS vacancyTitle,
       CASE p.estado
         WHEN 'Postulado' THEN 'Recibida'
         WHEN 'Recibido' THEN 'Recibida'
