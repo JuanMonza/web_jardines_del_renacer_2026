@@ -27,9 +27,11 @@ function styleTableSheet(sheet: XLSX.WorkSheet, range: string, widths: number[])
 }
 
 function auditRow(item: AuditItem) {
-  const responsible = item.description.match(/Administrador\s+(.+?)\s+\(ID\s+(\d+)\)/i);
-  const quotedItem = item.description.match(/“([^”]+)”/);
-  const candidate = item.description.match(/postulante\s+(.+?)\s+\(/i);
+  const description = typeof item.description === 'string' ? item.description : '';
+  const action = typeof item.action === 'string' ? item.action : 'MOVIMIENTO_HISTÓRICO';
+  const responsible = description.match(/Administrador\s+(.+?)\s+\(ID\s+(\d+)\)/i);
+  const quotedItem = description.match(/“([^”]+)”/);
+  const candidate = description.match(/postulante\s+(.+?)\s+\(/i);
   const actionLabels: Record<string, string> = {
     VACANTE_CREADA: 'Creó una vacante',
     VACANTE_ACTUALIZADA: 'Editó una vacante',
@@ -40,10 +42,10 @@ function auditRow(item: AuditItem) {
   };
   return {
     Fecha: formatDate(item.createdAt),
-    Movimiento: actionLabels[item.action] || item.action.replaceAll('_', ' '),
+    Movimiento: actionLabels[action] || action.replaceAll('_', ' '),
     'Usuario responsable': responsible ? `${responsible[1]} (ID ${responsible[2]})` : 'No disponible (registro histórico)',
     'Elemento afectado': quotedItem?.[1] || candidate?.[1] || 'Ver detalle',
-    'Detalle completo': item.description,
+    'Detalle completo': description || 'Sin detalle disponible para este movimiento histórico.',
   };
 }
 
