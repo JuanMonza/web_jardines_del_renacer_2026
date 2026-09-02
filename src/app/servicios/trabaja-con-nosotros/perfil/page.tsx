@@ -9,7 +9,7 @@ import Container from '@/components/ui/Container';
 import PageHero from '@/components/ui/PageHero';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
-import { Loader2, Save } from 'lucide-react';
+import { Loader2, LogOut, Save } from 'lucide-react';
 import Link from 'next/link';
 
 export default function PerfilPostulantePage() {
@@ -73,6 +73,12 @@ export default function PerfilPostulantePage() {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleLogout = async () => {
+    await fetch('/api/postulantes/logout', { method: 'POST' });
+    router.replace('/login/usuario-vacantes');
+    router.refresh();
   };
 
   if (isLoading) {
@@ -146,6 +152,14 @@ export default function PerfilPostulantePage() {
               </div>
 
               <div className="flex justify-end gap-4 pt-6 border-t border-primary/10">
+                <button
+                  type="button"
+                  onClick={() => void handleLogout()}
+                  className="inline-flex items-center gap-2 rounded-xl border border-primary/20 px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary/5"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Cerrar sesión
+                </button>
                 <Link
                   href="/servicios/trabaja-con-nosotros/postulante/dashboard"
                   className="btn btn-secondary"

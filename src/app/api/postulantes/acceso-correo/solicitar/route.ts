@@ -80,7 +80,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, message: 'Te enviamos un código temporal. Revisa también la carpeta de spam.' });
   } catch (error) {
     console.error('Error en POST /api/postulantes/acceso-correo/solicitar:', error);
-    return NextResponse.json({ success: false, message: 'No fue posible enviar el código. Intenta nuevamente.' }, { status: 500 });
+    const detail = error instanceof Error ? error.message.replace(/\s+/g, ' ').slice(0, 180) : '';
+    const message = process.env.NODE_ENV === 'production'
+      ? 'No fue posible enviar el código. Intenta nuevamente.'
+      : `No fue posible enviar el código. Diagnóstico SMTP: ${detail || 'revisa la terminal local.'}`;
+    return NextResponse.json({ success: false, message }, { status: 500 });
   }
 }
-

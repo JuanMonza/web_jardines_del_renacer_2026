@@ -11,6 +11,7 @@ import {
   getCandidateByResetToken,
   updateCandidatePasswordInDB,
 } from '@/lib/candidateStorageDB';
+import { sendCandidatePasswordChangedEmail } from '@/lib/candidateMailer';
 
 export const dynamic = 'force-dynamic';
 
@@ -51,12 +52,21 @@ export async function POST(request: NextRequest) {
         email: candidate.email,
         passwordHash,
       });
+      try {
+        await sendCandidatePasswordChangedEmail({
+          email: candidate.email,
+          name: [candidate.nombre, candidate.apellido ?? ''].filter(Boolean).join(' '),
+        });
+      } catch (emailError) {
+        console.error('No se pudo enviar la notificación de cambio de contraseña:', emailError);
+      }
       return NextResponse.json({ success: true });
     }
 
     const session = await readSession(request);
     const currentPassword = asText(body.currentPassword);
-    if (!session || !currentPassword) {
+    const canResetWithEmailCode = session?.passwordResetAuthorized === true;
+    if (!session || (!currentPassword && !canResetWithEmailCode)) {
       return NextResponse.json({ success: false, message: 'No autorizado.' }, { status: 401 });
     }
 
@@ -64,9 +74,9 @@ export async function POST(request: NextRequest) {
       documentNumber: session.documentNumber,
       email: session.email,
     });
-    const passwordOk = candidate
+    const passwordOk = canResetWithEmailCode || (candidate
       ? await verifyCandidatePasswordForDB(currentPassword, candidate.password_hash)
-      : false;
+      : false);
     if (!candidate || !passwordOk) {
       return NextResponse.json(
         { success: false, message: 'La contrasena actual no es correcta.' },
@@ -80,6 +90,14 @@ export async function POST(request: NextRequest) {
       email: session.email,
       passwordHash,
     });
+    try {
+      await sendCandidatePasswordChangedEmail({
+        email: candidate.email,
+        name: [candidate.nombre, candidate.apellido ?? ''].filter(Boolean).join(' '),
+      });
+    } catch (emailError) {
+      console.error('No se pudo enviar la notificación de cambio de contraseña:', emailError);
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

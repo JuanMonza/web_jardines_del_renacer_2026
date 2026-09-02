@@ -4,6 +4,7 @@ export interface VacantesCandidateSession {
   email: string;
   name: string;
   role: 'vacantes_usuario';
+  passwordResetAuthorized?: boolean;
   createdAt: string;
 }
 
@@ -46,6 +47,7 @@ export async function signVacantesCandidateJwt(
     email,
     name: session.name,
     role: 'vacantes_usuario',
+    passwordResetAuthorized: session.passwordResetAuthorized === true,
   })
     .setProtectedHeader({ alg: 'HS256' })
     .setSubject(documentNumber)
@@ -69,6 +71,7 @@ export async function verifyVacantesCandidateJwt(token: string) {
     const email = typeof payload.email === 'string' ? normalizeEmail(payload.email) : '';
     const name = typeof payload.name === 'string' ? payload.name : '';
     const role = payload.role === 'vacantes_usuario' ? 'vacantes_usuario' : null;
+    const passwordResetAuthorized = payload.passwordResetAuthorized === true;
     const issuedAt = typeof payload.iat === 'number'
       ? new Date(payload.iat * 1000).toISOString()
       : new Date().toISOString();
@@ -83,6 +86,7 @@ export async function verifyVacantesCandidateJwt(token: string) {
       email,
       name,
       role,
+      passwordResetAuthorized,
       createdAt: issuedAt,
     };
   } catch {

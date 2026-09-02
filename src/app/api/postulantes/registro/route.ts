@@ -9,8 +9,10 @@ import {
   createCandidateAccountInDB,
   getCandidateAccountByDocumentOrEmail,
 } from '@/lib/candidateStorageDB';
+import { sendCandidateWelcomeEmail } from '@/lib/candidateMailer';
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 function asText(value: unknown) {
   return typeof value === 'string' ? value.trim() : '';
@@ -64,6 +66,12 @@ export async function POST(request: NextRequest) {
     });
 
     const fullName = [firstName, lastName].filter(Boolean).join(' ');
+    try {
+      await sendCandidateWelcomeEmail({ email, name: fullName });
+    } catch (emailError) {
+      // El registro no debe fallar si el servicio de correo está temporalmente indisponible.
+      console.error('No se pudo enviar el correo de bienvenida del postulante:', emailError);
+    }
     const token = await signVacantesCandidateJwt({
       candidateId,
       documentNumber,

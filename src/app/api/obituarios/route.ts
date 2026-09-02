@@ -32,7 +32,11 @@ const AURA_PUBLIC_URL = (
 ).replace(/\/$/, '');
 
 function toIsoDate(value?: string | null) {
-  return value && /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : null;
+  if (!value) return null;
+  const isoMatch = value.trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (isoMatch) return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
+  const colombiaMatch = value.trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  return colombiaMatch ? `${colombiaMatch[3]}-${colombiaMatch[2]}-${colombiaMatch[1]}` : null;
 }
 
 function toDateTime(date: string | null, time?: string | null) {
@@ -72,6 +76,7 @@ function toWebsiteObituary(obituary: AuraObituary) {
     inicioVelacion: toDateTime(toIsoDate(obituary.dod), obituary.timeStart),
     cierreVelacion: toDateTime(toIsoDate(obituary.endDate) || toIsoDate(obituary.dod), obituary.timeEnd),
     sede: obituary.sede?.id || sedeNombre,
+    ciudad: obituary.sede?.ciudad || '',
     mensajeFamilia: 'La familia agradece sus palabras de apoyo.',
     horarios: [obituary.timeStart, obituary.timeEnd].filter(Boolean).join(' - ') || 'Horario por confirmar',
     estado: 'active',

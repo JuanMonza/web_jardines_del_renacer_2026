@@ -16,6 +16,7 @@ import {
 } from '@/config/candidates';
 import { APPLICATION_PROGRESS_STEPS, getApplicationProgress } from '@/lib/applicationProgress';
 import { VACANCY_DEPARTMENTS, type JobVacancy } from '@/config/vacancies';
+import { LogOut } from 'lucide-react';
 
 const MAX_RESUME_SIZE = 5 * 1024 * 1024;
 
@@ -181,6 +182,12 @@ function PostulanteContent() {
   );
 
   const profileCompletion = useMemo(() => calculateProfileCompletion(profile), [profile]);
+
+  const handleLogout = async () => {
+    await fetch('/api/postulantes/logout', { method: 'POST' });
+    router.replace('/login/usuario-vacantes');
+    router.refresh();
+  };
   const trackedApplications = useMemo(() => {
     const normalizedDoc = trackingDocument.replace(/\D/g, '');
     const normalizedEmail = trackingEmail.trim().toLowerCase();
@@ -392,6 +399,16 @@ function PostulanteContent() {
               title="Perfil del Postulante"
               subtitle="Completa tu informacion profesional, sube tu hoja de vida y postulate en linea."
             />
+            <div className="mt-5 flex justify-center">
+              <button
+                type="button"
+                onClick={() => void handleLogout()}
+                className="inline-flex items-center gap-2 rounded-xl border border-primary/20 bg-white px-4 py-2 text-sm font-semibold text-primary shadow-sm transition hover:bg-primary/5"
+              >
+                <LogOut size={16} />
+                Cerrar sesión
+              </button>
+            </div>
           </FadeIn>
         </Container>
       </section>

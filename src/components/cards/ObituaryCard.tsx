@@ -15,8 +15,14 @@ const OBITUARIO_BACKGROUND_IMAGE = '/images/fondo_obituarios.png';
 
 
 export default function ObituaryCard({ obituary, index = 0 }: ObituaryCardProps) {
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('es-ES', {
+  const formatDate = (value: string) => {
+    // Aura entrega fechas de calendario. Construirlas como fecha local evita que
+    // el navegador las desplace un día al interpretarlas como UTC.
+    const match = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    const date = match
+      ? new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]))
+      : new Date(value);
+    return date.toLocaleDateString('es-CO', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -24,8 +30,8 @@ export default function ObituaryCard({ obituary, index = 0 }: ObituaryCardProps)
   };
 
   const getLifeYears = () => {
-    const birth = new Date(obituary.fechaNacimiento).getFullYear();
-    const death = new Date(obituary.fechaFallecimiento).getFullYear();
+    const birth = obituary.fechaNacimiento.slice(0, 4);
+    const death = obituary.fechaFallecimiento.slice(0, 4);
     return `${birth} - ${death}`;
   };
 
@@ -52,7 +58,7 @@ export default function ObituaryCard({ obituary, index = 0 }: ObituaryCardProps)
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
-                <span>{obituary.sala}</span>
+                <span>{[obituary.ciudad, obituary.sala].filter(Boolean).join(' · ')}</span>
               </div>
               
               <div className="flex items-center">
@@ -72,7 +78,7 @@ export default function ObituaryCard({ obituary, index = 0 }: ObituaryCardProps)
           
           <div className="flex items-center justify-between mt-auto">
             <span className="text-sm text-textLight">
-              {formatDate(new Date(obituary.fechaFallecimiento))}
+              {formatDate(obituary.fechaFallecimiento)}
             </span>
             
             <span className={cn(

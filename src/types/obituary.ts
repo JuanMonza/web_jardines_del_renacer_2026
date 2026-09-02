@@ -17,6 +17,7 @@ export interface Obituary {
   inicioVelacion: string;
   cierreVelacion: string;
   sede: string;
+  ciudad?: string;
   fotoPrincipal?: string;
   mensajeFamilia?: string;
   horarios?: string;

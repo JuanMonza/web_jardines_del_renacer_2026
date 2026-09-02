@@ -28,6 +28,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const email = asText(body.email).toLowerCase();
     const code = asText(body.code).replace(/\D/g, '');
+    const purpose = asText(body.purpose);
     if (!email.includes('@') || code.length !== 6) {
       return NextResponse.json({ success: false, message: 'Ingresa el correo y el código de 6 dígitos.' }, { status: 400 });
     }
@@ -48,8 +49,9 @@ export async function POST(request: NextRequest) {
     if (!candidate) return NextResponse.json({ success: false, message: 'No encontramos una cuenta activa con ese correo.' }, { status: 401 });
     await updateCandidateLastLogin(candidate.documento);
     const name = [candidate.nombre, candidate.apellido ?? ''].filter(Boolean).join(' ') || 'Postulante';
-    const token = await signVacantesCandidateJwt({ candidateId: candidate.id, documentNumber: candidate.documento, email: candidate.email, name, role: 'vacantes_usuario' });
-    const response = NextResponse.json({ success: true, data: { email: candidate.email, name } });
+    const passwordResetAuthorized = purpose === 'password_reset';
+    const token = await signVacantesCandidateJwt({ candidateId: candidate.id, documentNumber: candidate.documento, email: candidate.email, name, role: 'vacantes_usuario', passwordResetAuthorized });
+    const response = NextResponse.json({ success: true, data: { email: candidate.email, name, passwordResetAuthorized } });
     response.cookies.set(CANDIDATE_SESSION_COOKIE_NAME, token, { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', path: '/', maxAge: CANDIDATE_SESSION_MAX_AGE_SECONDS });
     return response;
   } catch (error) {
@@ -57,4 +59,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, message: 'No fue posible validar el código.' }, { status: 500 });
   }
 }
-

@@ -112,12 +112,17 @@ export default function ObituarioDetallePage() {
     mapQuery,
   )}`;
 
-  const formatearFecha = (fecha: string) =>
-    new Date(fecha).toLocaleDateString('es-CO', {
+  const formatearFecha = (fecha: string) => {
+    const match = fecha.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    const date = match
+      ? new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]))
+      : new Date(fecha);
+    return date.toLocaleDateString('es-CO', {
       day: '2-digit',
       month: 'long',
       year: 'numeric',
     });
+  };
 
   const formatearHora = (fecha: string) =>
     new Date(fecha).toLocaleTimeString('es-CO', {
