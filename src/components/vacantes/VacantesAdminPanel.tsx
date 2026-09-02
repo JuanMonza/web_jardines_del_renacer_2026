@@ -962,13 +962,13 @@ export default function VacantesAdminPanel() {
           }),
         });
 
-        const result = (await response.json()) as { ok: boolean; message?: string };
+        const result = (await response.json()) as { ok: boolean; sent?: boolean; message?: string };
         if (!response.ok || !result.ok) {
           toast.error(`No se pudo notificar por correo: ${result.message || 'Error de envío'}`, { id: toastId });
           return;
         }
 
-        toast.success('Estado actualizado y notificado por correo.', { id: toastId });
+        toast.success(result.sent === false ? (result.message || 'Estado actualizado. El correo automático está desactivado para esta etapa.') : 'Estado actualizado y notificado por correo.', { id: toastId });
       } catch {
         toast.error('Falló la notificación por correo.', { id: toastId });
       }
