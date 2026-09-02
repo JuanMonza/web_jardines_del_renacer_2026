@@ -529,6 +529,36 @@ export async function getCandidateAccountForLogin(input: {
   return rows[0] ?? null;
 }
 
+export async function deactivateCandidateFromApplicationInDB(input: {
+  applicationId: string;
+  adminUserId: number;
+  adminName: string;
+  ip?: string | null;
+  userAgent?: string | null;
+}) {
+  const candidates = await query<{ id: number; documento: string; email: string; name: string }>(
+    `SELECT c.id, c.documento, c.email, CONCAT(c.nombres, ' ', c.apellidos) AS name
+     FROM postulaciones p INNER JOIN candidatos c ON c.id = p.candidato_id
+     WHERE p.id = ? AND p.deleted_at IS NULL AND c.deleted_at IS NULL LIMIT 1`,
+    [input.applicationId],
+  );
+  const candidate = candidates[0];
+  if (!candidate) return null;
+
+  await execute('UPDATE postulaciones SET deleted_at = NOW() WHERE candidato_id = ? AND deleted_at IS NULL', [candidate.id]);
+  await execute('UPDATE candidatos SET activo = FALSE, deleted_at = NOW() WHERE id = ? AND deleted_at IS NULL', [candidate.id]);
+  await execute(
+    `INSERT INTO activity_logs (usuario_tipo, usuario_id, accion, modulo, tabla_afectada, registro_id, descripcion, ip_address, user_agent)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      'Admin', input.adminUserId, 'POSTULANTE_ELIMINADO', 'Vacantes', 'candidatos', candidate.id,
+      `El administrador ${input.adminName} eliminó lógicamente al postulante ${candidate.name} (${candidate.documento}) y sus postulaciones activas.`,
+      input.ip?.slice(0, 100) ?? null, input.userAgent?.slice(0, 2000) ?? null,
+    ],
+  );
+  return candidate;
+}
+
 export async function canRequestCandidateEmailAccessCode(email: string) {
   const rows = await query<{ id: number }>(
     `SELECT id FROM postulante_access_codes

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Briefcase, Calendar, Loader2, LogOut, MapPin, Save, User } from 'lucide-react';
@@ -35,7 +35,7 @@ function StatusBadge({ status }: { status: JobApplication['status'] }) {
   );
 }
 
-export default function PostulanteDashboardPage() {
+function PostulanteDashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const requestedVacancyId = searchParams.get('vacante') ?? '';
@@ -338,4 +338,8 @@ export default function PostulanteDashboardPage() {
       </section>
     </>
   );
+}
+
+export default function PostulanteDashboardPage() {
+  return <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>}><PostulanteDashboardContent /></Suspense>;
 }

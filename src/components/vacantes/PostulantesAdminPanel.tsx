@@ -23,6 +23,9 @@ export default function PostulantesAdminPanel() {
     const [candidateDetail, setCandidateDetail] = useState<Record<string, string> | null>(null);
     const [candidateHistory, setCandidateHistory] = useState<Array<{ accion:string; descripcion:string; created_at:string }>>([]);
     const [notice, setNotice] = useState<{ title: string; description: string; variant: 'success' | 'error' } | null>(null);
+    const [candidateToDelete, setCandidateToDelete] = useState<Application | null>(null);
+    const [deletePassword, setDeletePassword] = useState('');
+    const [deleting, setDeleting] = useState(false);
 
     const updateStatus = async (id: string, status: string, notes?: string) => {
         setUpdatingId(id);
@@ -34,6 +37,24 @@ export default function PostulantesAdminPanel() {
         } catch {
             setNotice({ title: 'No fue posible guardar', description: 'Intenta nuevamente. Si el problema continúa, verifica la conexión con la base de datos.', variant: 'error' });
         } finally { setUpdatingId(null); }
+    };
+
+    const deleteCandidate = async () => {
+        if (!candidateToDelete || !deletePassword) return;
+        setDeleting(true);
+        try {
+            const response = await fetch(`/api/vacantes/postulaciones/${candidateToDelete.id}`, { method: 'DELETE', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ password: deletePassword }) });
+            const result = await response.json() as { success?: boolean; message?: string; data?: { email?: string } };
+            if (!response.ok || !result.success) throw new Error(result.message || 'No fue posible eliminar el postulante.');
+            const email = result.data?.email ?? candidateToDelete.candidateEmail;
+            setApplications((current) => current.filter((application) => application.candidateEmail !== email));
+            setSelectedApplication(null);
+            setCandidateToDelete(null);
+            setDeletePassword('');
+            setNotice({ title: 'Postulante eliminado', description: 'La cuenta y sus postulaciones fueron desactivadas. La acción quedó registrada en auditoría.', variant: 'success' });
+        } catch (error) {
+            setNotice({ title: 'No fue posible eliminar', description: error instanceof Error ? error.message : 'Verifica la contraseña e intenta nuevamente.', variant: 'error' });
+        } finally { setDeleting(false); }
     };
 
     useEffect(() => {
@@ -155,11 +176,7 @@ export default function PostulantesAdminPanel() {
                                                 ? new Date(application.appliedAt).toLocaleDateString()
                                                 : '-'}
                                         </td>
-                                        <td className="p-4 text-center">
-                                            <button type="button" onClick={() => { setSelectedApplication(application); setCandidateDetail(null); setCandidateHistory([]); void fetch(`/api/vacantes/postulaciones/${application.id}/candidate`).then(r=>r.json()).then(j=>{setCandidateDetail(j.data||null);setCandidateHistory(j.history||[])}); }} className="rounded-xl bg-primary px-4 py-2 text-white hover:bg-primary-hover transition-colors">
-                                                Ver
-                                            </button>
-                                        </td>
+                                        <td className="p-4 text-center"><div className="flex justify-center gap-2"><button type="button" onClick={() => { setSelectedApplication(application); setCandidateDetail(null); setCandidateHistory([]); void fetch(`/api/vacantes/postulaciones/${application.id}/candidate`).then(r=>r.json()).then(j=>{setCandidateDetail(j.data||null);setCandidateHistory(j.history||[])}); }} className="rounded-xl bg-primary px-4 py-2 text-white hover:bg-primary-hover transition-colors">Ver</button><button type="button" onClick={() => { setCandidateToDelete(application); setDeletePassword(''); }} className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-bold text-red-700 transition hover:bg-red-100">Eliminar</button></div></td>
                                     </tr>
                                 ))
                             )}
@@ -168,6 +185,7 @@ export default function PostulantesAdminPanel() {
                 )}
             </div>
             <details className="rounded-2xl border border-white/80 bg-white/60 p-4 shadow-sm backdrop-blur-xl"><summary className="cursor-pointer list-none text-sm font-bold text-primary">Ver embudo visual por etapas</summary><section className="mt-4 grid gap-3 md:grid-cols-3">{[['Recibida','bg-blue-50 border-blue-100'],['En revision','bg-amber-50 border-amber-100'],['Seleccionado','bg-emerald-50 border-emerald-100']].map(([stage,style])=><article key={stage} className={`rounded-2xl border p-4 ${style}`}><div className="flex items-center justify-between"><h2 className="text-sm font-bold text-text">{stage}</h2><span className="rounded-full bg-white px-2 py-1 text-xs font-bold text-primary">{applications.filter(a=>a.status===stage).length}</span></div><div className="mt-3 space-y-2">{applications.filter(a=>a.status===stage).slice(0,3).map(a=><button type="button" onClick={()=>setSelectedApplication(a)} key={a.id} className="block w-full rounded-xl bg-white p-3 text-left text-xs shadow-sm"><span className="block font-bold text-text">{a.candidateName}</span><span className="mt-1 block truncate text-textLight">{a.vacancyTitle}</span></button>)}{applications.filter(a=>a.status===stage).length===0&&<p className="py-3 text-xs text-textLight">Sin candidatos</p>}</div></article>)}</section></details>
+            {candidateToDelete && <div className="fixed inset-0 z-[2147483647] flex items-center justify-center bg-[#07182e]/55 p-4 backdrop-blur-sm" onClick={() => !deleting && setCandidateToDelete(null)}><section className="w-full max-w-md rounded-[28px] border border-white/80 bg-[#f8fbff] p-6 shadow-2xl" onClick={(event) => event.stopPropagation()}><div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-red-100 text-xl font-bold text-red-700">!</div><p className="mt-4 text-xs font-bold uppercase tracking-[.16em] text-red-600">Acción restringida</p><h2 className="mt-1 text-xl font-bold text-text">Eliminar postulante</h2><p className="mt-3 text-sm leading-6 text-textLight">Eliminarás la cuenta de <strong>{candidateToDelete.candidateName}</strong> y todas sus postulaciones activas. Los datos no se borran físicamente: la acción queda registrada para auditoría.</p><label className="mt-5 block text-sm font-bold text-text">Confirma tu contraseña de administrador<input autoFocus type="password" value={deletePassword} onChange={(event) => setDeletePassword(event.target.value)} className="mt-2 w-full rounded-xl border border-border bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-red-300" placeholder="Tu contraseña" /></label><div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"><button type="button" disabled={deleting} onClick={() => { setCandidateToDelete(null); setDeletePassword(''); }} className="rounded-xl border border-border bg-white px-4 py-3 text-sm font-bold text-textLight">Cancelar</button><button type="button" disabled={deleting || !deletePassword} onClick={() => void deleteCandidate()} className="rounded-xl bg-red-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60">{deleting ? 'Eliminando...' : 'Eliminar y registrar acción'}</button></div></section></div>}
             {selectedApplication && <div className="fixed inset-0 z-[2147483647] flex justify-end bg-[#07182e]/45 backdrop-blur-sm" onClick={() => setSelectedApplication(null)}><aside className="h-full w-full max-w-md overflow-y-auto bg-[#f8fbff] p-7 shadow-[-20px_0_60px_rgba(4,22,52,.3)]" onClick={(event) => event.stopPropagation()}><div className="flex items-start justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-wider text-primary">Ficha de candidato</p><h2 className="mt-1 text-2xl font-bold text-text">{selectedApplication.candidateName}</h2></div><button type="button" onClick={() => setSelectedApplication(null)} className="rounded-xl border border-border bg-white px-3 py-2 text-sm font-bold">Cerrar</button></div><div className="mt-6 space-y-4 rounded-2xl border border-border bg-white p-5 text-sm"><div><p className="text-xs font-bold uppercase text-textLight">Correo</p><p className="mt-1 font-semibold text-text">{selectedApplication.candidateEmail}</p></div><div><p className="text-xs font-bold uppercase text-textLight">Vacante</p><p className="mt-1 font-semibold text-text">{selectedApplication.vacancyTitle}</p></div><div><p className="text-xs font-bold uppercase text-textLight">Estado</p><p className="mt-1 font-semibold text-primary">{selectedApplication.status}</p></div>{candidateDetail&&<><div><p className="text-xs font-bold uppercase text-textLight">Perfil profesional</p><p className="mt-1 font-semibold text-text">{candidateDetail.profesion||'No registrado'}</p></div><div><p className="text-xs font-bold uppercase text-textLight">Ubicación</p><p className="mt-1 font-semibold text-text">{candidateDetail.ciudad||''}, {candidateDetail.departamento||''}</p></div>{candidateDetail.cv_url&&<a href={candidateDetail.cv_url} target="_blank" className="block rounded-xl bg-primary px-4 py-3 text-center text-sm font-bold text-white">Abrir hoja de vida</a>}</>}</div><textarea value={note} onChange={e=>setNote(e.target.value)} placeholder="Nota interna para el proceso" className="mt-4 w-full rounded-xl border border-border bg-white p-3 text-sm" rows={3}/><button type="button" onClick={() => void updateStatus(selectedApplication.id, selectedApplication.status, note)} className="mt-3 w-full rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white">Guardar nota en trazabilidad</button></aside></div>}
         </div>
         </>

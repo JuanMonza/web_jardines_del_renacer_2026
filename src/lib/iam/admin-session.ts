@@ -62,3 +62,15 @@ export async function getActiveAdminSession(token: string | undefined) {
   );
   return active[0] ? session : null;
 }
+
+/** Confirma la identidad del administrador antes de una operación sensible. */
+export async function verifyAdminPassword(session: AdminSession, password: unknown) {
+  const value = typeof password === 'string' ? password : '';
+  if (!value || value.length > 512) return false;
+  const users = await query<{ password_hash: string; activo: number }>(
+    'SELECT password_hash, activo FROM admin_users WHERE id = ? AND deleted_at IS NULL LIMIT 1',
+    [session.userId],
+  );
+  const user = users[0];
+  return Boolean(user?.activo && user.password_hash && await bcrypt.compare(value, user.password_hash));
+}
