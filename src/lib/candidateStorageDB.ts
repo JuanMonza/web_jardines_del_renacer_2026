@@ -7,7 +7,8 @@ import {
   type CandidateProfile,
   type JobApplication,
 } from "@/config/candidates";
-import { query, execute } from "./db";
+import mysql from "mysql2/promise";
+import db, { query, execute } from "./db";
 
 type DbApplicationRow = {
   id: string;
@@ -533,30 +534,40 @@ export async function deactivateCandidateFromApplicationInDB(input: {
   applicationId: string;
   adminUserId: number;
   adminName: string;
-  ip?: string | null;
-  userAgent?: string | null;
 }) {
-  const candidates = await query<{ id: number; documento: string; email: string; name: string }>(
-    `SELECT c.id, c.documento, c.email, CONCAT(c.nombres, ' ', c.apellidos) AS name
-     FROM postulaciones p INNER JOIN candidatos c ON c.id = p.candidato_id
-     WHERE p.id = ? AND p.deleted_at IS NULL AND c.deleted_at IS NULL LIMIT 1`,
-    [input.applicationId],
-  );
-  const candidate = candidates[0];
-  if (!candidate) return null;
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+    const [rows] = await connection.query<mysql.RowDataPacket[]>(
+      `SELECT c.id, c.documento, c.email, CONCAT(c.nombres, ' ', c.apellidos) AS name
+       FROM postulaciones p INNER JOIN candidatos c ON c.id = p.candidato_id
+       WHERE p.id = ? AND p.deleted_at IS NULL AND c.deleted_at IS NULL LIMIT 1`,
+      [input.applicationId],
+    );
+    const candidate = rows[0] as { id: number; documento: string; email: string; name: string } | undefined;
+    if (!candidate) {
+      await connection.rollback();
+      return null;
+    }
 
-  await execute('UPDATE postulaciones SET deleted_at = NOW() WHERE candidato_id = ? AND deleted_at IS NULL', [candidate.id]);
-  await execute('UPDATE candidatos SET activo = FALSE, deleted_at = NOW() WHERE id = ? AND deleted_at IS NULL', [candidate.id]);
-  await execute(
-    `INSERT INTO activity_logs (usuario_tipo, usuario_id, accion, modulo, tabla_afectada, registro_id, descripcion, ip_address, user_agent)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      'Admin', input.adminUserId, 'POSTULANTE_ELIMINADO', 'Vacantes', 'candidatos', candidate.id,
-      `El administrador ${input.adminName} eliminó lógicamente al postulante ${candidate.name} (${candidate.documento}) y sus postulaciones activas.`,
-      input.ip?.slice(0, 100) ?? null, input.userAgent?.slice(0, 2000) ?? null,
-    ],
-  );
-  return candidate;
+    await connection.execute('UPDATE postulaciones SET deleted_at = NOW() WHERE candidato_id = ? AND deleted_at IS NULL', [candidate.id]);
+    await connection.execute('UPDATE candidatos SET activo = FALSE, deleted_at = NOW() WHERE id = ? AND deleted_at IS NULL', [candidate.id]);
+    // Estas columnas existen tanto en la base actual como en la de producción.
+    await connection.execute(
+      'INSERT INTO activity_logs (usuario_tipo, accion, modulo, tabla_afectada, registro_id, descripcion) VALUES (?,?,?,?,?,?)',
+      [
+        'Admin', 'POSTULANTE_ELIMINADO', 'Vacantes', 'candidatos', candidate.id,
+        `Administrador ${input.adminName} (ID ${input.adminUserId}) eliminó lógicamente al postulante ${candidate.name} (${candidate.documento}) y sus postulaciones activas.`,
+      ],
+    );
+    await connection.commit();
+    return candidate;
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
 }
 
 export async function canRequestCandidateEmailAccessCode(email: string) {

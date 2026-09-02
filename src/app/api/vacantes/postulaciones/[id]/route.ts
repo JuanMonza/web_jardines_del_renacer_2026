@@ -29,8 +29,6 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       applicationId: id,
       adminUserId: session.userId,
       adminName: session.name,
-      ip: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? request.headers.get('x-real-ip'),
-      userAgent: request.headers.get('user-agent'),
     });
     if (!candidate) return NextResponse.json({ success: false, message: 'Postulante no encontrado o ya eliminado.' }, { status: 404 });
     return NextResponse.json({ success: true, data: { email: candidate.email, name: candidate.name } });
