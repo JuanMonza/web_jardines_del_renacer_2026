@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useEffect, useMemo, useState, useRef } from 'react';
-import { createPortal } from 'react-dom';
-import { useSearchParams } from 'next/navigation';
-import { Toaster, toast } from 'react-hot-toast';
+import { useEffect, useMemo, useState, useRef } from "react";
+import { createPortal } from "react-dom";
+import { useSearchParams } from "next/navigation";
+import { Toaster, toast } from "react-hot-toast";
 import {
   BarChart,
   Bar,
@@ -16,7 +16,7 @@ import {
   PieChart,
   Pie,
   Cell,
-} from 'recharts';
+} from "recharts";
 import {
   User,
   Users,
@@ -41,27 +41,30 @@ import {
   Pencil,
   Trash2,
   ChevronDown,
-} from 'lucide-react';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import Textarea from '@/components/ui/Textarea';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import { formatDate } from '@/lib/utils';
+} from "lucide-react";
+import Button from "@/components/ui/Button";
+import Input from "@/components/ui/Input";
+import Textarea from "@/components/ui/Textarea";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import { formatDate } from "@/lib/utils";
 import {
   APPLICATION_STATUS_OPTIONS,
   type JobApplication,
-} from '@/config/candidates';
+} from "@/config/candidates";
 import {
   VACANCY_DEPARTMENTS,
   createEmptyVacancy,
   type JobVacancy,
-} from '@/config/vacancies';
-import { APPLICATION_PROGRESS_STEPS, getApplicationProgress } from '@/lib/applicationProgress';
+} from "@/config/vacancies";
+import {
+  APPLICATION_PROGRESS_STEPS,
+  getApplicationProgress,
+} from "@/lib/applicationProgress";
 import {
   // Eliminados: readJobVacancies y writeJobVacancies
   removeJobVacancy,
   upsertJobVacancy,
-} from '@/lib/vacanciesStorage';
+} from "@/lib/vacanciesStorage";
 
 type CandidateUser = Partial<JobApplication>;
 
@@ -69,7 +72,7 @@ function StatsCard({
   icon: Icon,
   title,
   value,
-  color = 'text-primary',
+  color = "text-primary",
   onClick,
 }: {
   icon: React.ElementType;
@@ -80,9 +83,15 @@ function StatsCard({
 }) {
   const cardContent = (
     <>
-      <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-50"><Icon className={`h-6 w-6 ${color}`} /></span>
-      <p className="mt-5 text-3xl font-bold tracking-tight text-text">{value}</p>
-      <p className="mt-1 text-xs font-bold uppercase tracking-[.12em] text-textLight">{title}</p>
+      <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-50">
+        <Icon className={`h-6 w-6 ${color}`} />
+      </span>
+      <p className="mt-5 text-3xl font-bold tracking-tight text-text">
+        {value}
+      </p>
+      <p className="mt-1 text-xs font-bold uppercase tracking-[.12em] text-textLight">
+        {title}
+      </p>
     </>
   );
 
@@ -138,7 +147,7 @@ const renderCustomizedLabel = ({
       x={x}
       y={y}
       fill="white"
-      textAnchor={x > cx ? 'start' : 'end'}
+      textAnchor={x > cx ? "start" : "end"}
       dominantBaseline="central"
       className="text-xs font-bold"
     >
@@ -154,17 +163,23 @@ function VacanciesMetrics({
 }: {
   applications: JobApplication[];
   vacancies: JobVacancy[];
-  onMetricClick: (metric: 'vacancies' | 'users' | 'applications') => void;
+  onMetricClick: (metric: "vacancies" | "users" | "applications") => void;
 }) {
   const metrics = useMemo(() => {
     const totalApplications = applications.length;
     const uniqueCandidates = new Set(
       applications.map((app) => app.candidateDocument).filter(Boolean),
     ).size;
-    const selected = applications.filter((app) => app.status === 'Seleccionado').length;
-    const rejected = applications.filter((app) => app.status === 'No continua').length;
+    const selected = applications.filter(
+      (app) => app.status === "Seleccionado",
+    ).length;
+    const rejected = applications.filter(
+      (app) => app.status === "No continua",
+    ).length;
     const inProcess = applications.filter((app) =>
-      ['Recibida', 'En revision', 'Entrevista', 'Prueba tecnica'].includes(app.status),
+      ["Recibida", "En revision", "Entrevista", "Prueba tecnica"].includes(
+        app.status,
+      ),
     ).length;
 
     return {
@@ -178,7 +193,20 @@ function VacanciesMetrics({
   }, [applications, vacancies]);
 
   const applicationsByMonth = useMemo(() => {
-    const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    const monthNames = [
+      "Ene",
+      "Feb",
+      "Mar",
+      "Abr",
+      "May",
+      "Jun",
+      "Jul",
+      "Ago",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dic",
+    ];
     const monthlyData: { name: string; Postulaciones: number }[] = [];
     const today = new Date();
 
@@ -190,11 +218,11 @@ function VacanciesMetrics({
 
     const sixMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 5, 1);
 
-    applications.forEach(app => {
+    applications.forEach((app) => {
       const appDate = new Date(app.appliedAt);
       if (appDate >= sixMonthsAgo) {
         const monthName = monthNames[appDate.getMonth()];
-        const monthEntry = monthlyData.find(m => m.name === monthName);
+        const monthEntry = monthlyData.find((m) => m.name === monthName);
         if (monthEntry) {
           monthEntry.Postulaciones++;
         }
@@ -206,11 +234,11 @@ function VacanciesMetrics({
 
   const statusDistribution = useMemo(() => {
     const statusCounts: { [key: string]: number } = {};
-    APPLICATION_STATUS_OPTIONS.forEach(status => {
+    APPLICATION_STATUS_OPTIONS.forEach((status) => {
       statusCounts[status] = 0;
     });
 
-    applications.forEach(app => {
+    applications.forEach((app) => {
       if (statusCounts[app.status] !== undefined) {
         statusCounts[app.status]++;
       }
@@ -218,71 +246,111 @@ function VacanciesMetrics({
 
     return Object.entries(statusCounts)
       .map(([name, value]) => ({ name, value }))
-      .filter(item => item.value > 0);
+      .filter((item) => item.value > 0);
   }, [applications]);
 
-  const PIE_COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f97316', '#22c55e', '#ef4444'];
+  const PIE_COLORS = [
+    "#3b82f6",
+    "#8b5cf6",
+    "#ec4899",
+    "#f97316",
+    "#22c55e",
+    "#ef4444",
+  ];
 
   return (
     <div className="mb-7">
-      <div className="mb-5 flex flex-wrap items-end justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[.16em] text-primary">Pulso del proceso</p><h3 className="mt-1 text-2xl font-bold text-text">Métricas generales</h3></div><p className="text-sm text-textLight">Haz clic en una tarjeta para profundizar.</p></div>
+      <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[.16em] text-primary">
+            Pulso del proceso
+          </p>
+          <h3 className="mt-1 text-2xl font-bold text-text">
+            Métricas generales
+          </h3>
+        </div>
+        <p className="text-sm text-textLight">
+          Haz clic en una tarjeta para profundizar.
+        </p>
+      </div>
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
         <StatsCard
           icon={Briefcase}
           title="Vacantes Activas"
           value={metrics.totalVacancies}
-          onClick={() => onMetricClick('vacancies')}
+          onClick={() => onMetricClick("vacancies")}
         />
         <StatsCard
           icon={Users}
           title="Candidatos Únicos"
           value={metrics.uniqueCandidates}
-          onClick={() => onMetricClick('users')}
+          onClick={() => onMetricClick("users")}
         />
         <StatsCard
           icon={FileTextIcon}
           title="Postulaciones"
           value={metrics.totalApplications}
-          onClick={() => onMetricClick('applications')}
+          onClick={() => onMetricClick("applications")}
         />
         <StatsCard
           icon={Clock}
           title="En Proceso"
           value={metrics.inProcess}
           color="text-blue-500"
-          onClick={() => onMetricClick('applications')}
+          onClick={() => onMetricClick("applications")}
         />
         <StatsCard
           icon={UserCheck}
           title="Seleccionados"
           value={metrics.selected}
           color="text-green-500"
-          onClick={() => onMetricClick('applications')}
+          onClick={() => onMetricClick("applications")}
         />
         <StatsCard
           icon={UserX}
           title="No Continúan"
           value={metrics.rejected}
           color="text-red-500"
-          onClick={() => onMetricClick('applications')}
+          onClick={() => onMetricClick("applications")}
         />
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-2">
         <div className="rounded-3xl border border-[#dbe5f3] bg-[#fbfdff] p-5 shadow-[0_8px_22px_rgba(32,69,113,.06)]">
-          <p className="text-xs font-bold uppercase tracking-[.14em] text-primary">Tendencia</p><h4 className="mt-1 text-lg font-bold text-text">Postulaciones por mes</h4>
+          <p className="text-xs font-bold uppercase tracking-[.14em] text-primary">
+            Tendencia
+          </p>
+          <h4 className="mt-1 text-lg font-bold text-text">
+            Postulaciones por mes
+          </h4>
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={applicationsByMonth}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e6eef8" vertical={false} />
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="#e6eef8"
+                vertical={false}
+              />
               <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} />
               <YAxis stroke="#94a3b8" fontSize={12} allowDecimals={false} />
-              <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(49, 93, 152, 0.08)' }} />
-              <Bar dataKey="Postulaciones" fill="#315d98" radius={[7, 7, 0, 0]} />
+              <Tooltip
+                content={<CustomTooltip />}
+                cursor={{ fill: "rgba(49, 93, 152, 0.08)" }}
+              />
+              <Bar
+                dataKey="Postulaciones"
+                fill="#315d98"
+                radius={[7, 7, 0, 0]}
+              />
             </BarChart>
           </ResponsiveContainer>
         </div>
         <div className="rounded-3xl border border-[#dbe5f3] bg-[#fbfdff] p-5 shadow-[0_8px_22px_rgba(32,69,113,.06)]">
-          <p className="text-xs font-bold uppercase tracking-[.14em] text-primary">Embudo</p><h4 className="mt-1 text-lg font-bold text-text">Distribución de estados</h4>
+          <p className="text-xs font-bold uppercase tracking-[.14em] text-primary">
+            Embudo
+          </p>
+          <h4 className="mt-1 text-lg font-bold text-text">
+            Distribución de estados
+          </h4>
           <ResponsiveContainer width="100%" height={250}>
             <PieChart>
               <Pie
@@ -297,16 +365,19 @@ function VacanciesMetrics({
                 nameKey="name"
               >
                 {statusDistribution.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={PIE_COLORS[index % PIE_COLORS.length]}
+                  />
                 ))}
               </Pie>
               <Tooltip content={<CustomTooltip />} />
               <Legend
                 iconSize={10}
                 wrapperStyle={{
-                  fontSize: '12px',
-                  color: '#94a3b8',
-                  paddingTop: '20px',
+                  fontSize: "12px",
+                  color: "#94a3b8",
+                  paddingTop: "20px",
                 }}
               />
             </PieChart>
@@ -317,68 +388,262 @@ function VacanciesMetrics({
   );
 }
 
-function CandidateApplicationsModal({ user, onClose }: { user: CandidateUser; onClose: () => void }) {
+type CandidateDetail = {
+  documentNumber: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  birthDate?: string | null;
+  address?: string | null;
+  city?: string | null;
+  department?: string | null;
+  professionalTitle?: string | null;
+  yearsExperience?: string | null;
+  education?: string | null;
+  linkedinUrl?: string | null;
+  portfolioUrl?: string | null;
+  cvUrl?: string | null;
+  createdAt?: string;
+  lastLoginAt?: string | null;
+};
+
+function CandidateApplicationsModal({
+  user,
+  onClose,
+}: {
+  user: CandidateUser;
+  onClose: () => void;
+}) {
+  const [profile, setProfile] = useState<CandidateDetail | null>(null);
   const [applications, setApplications] = useState<JobApplication[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user.candidateDocument) {
+    const documentNumber = user.candidateDocument;
+    if (documentNumber) {
       const fetchApplications = async () => {
         setLoading(true);
         try {
-          const response = await fetch(`/api/applications/by-candidate/${user.candidateDocument}`);
+          const response = await fetch(
+            `/api/users/${encodeURIComponent(documentNumber)}`,
+          );
           const result = await response.json();
           if (result.success) {
-            setApplications(result.data);
+            setProfile(result.data);
+            setApplications(result.applications || []);
           }
         } finally {
           setLoading(false);
         }
       };
       void fetchApplications();
+    } else {
+      setLoading(false);
     }
   }, [user.candidateDocument]);
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="glass rounded-2xl border border-primary/20 w-full max-w-2xl max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="fixed inset-0 z-[2147483647] flex items-center justify-center bg-[#07182e]/55 p-4 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="flex w-full max-w-5xl max-h-[90vh] flex-col overflow-hidden rounded-[30px] border border-[#dbe5f3] bg-[#f8fbff] shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="p-6 border-b border-primary/10 flex justify-between items-center">
           <div>
-            <h3 className="text-xl font-display text-text">Postulaciones de {user.candidateName}</h3>
-            <p className="text-sm text-textLight">C.C. {user.candidateDocument}</p>
+            <p className="text-xs font-bold uppercase tracking-[.16em] text-primary">
+              Ficha de talento · solo consulta
+            </p>
+            <h3 className="mt-1 text-2xl font-bold text-text">
+              {user.candidateName}
+            </h3>
+            <p className="text-sm text-textLight">
+              C.C. {user.candidateDocument} · La edición se administra
+              únicamente desde Administración general.
+            </p>
           </div>
-          <Button onClick={onClose} variant="ghost" size="sm" className="h-9 w-9 p-0">
+          <Button
+            onClick={onClose}
+            variant="ghost"
+            size="sm"
+            className="h-9 w-9 p-0"
+          >
             <XIcon className="h-5 w-5" />
           </Button>
         </div>
-        <div className="p-6 overflow-y-auto custom-scrollbar">
+        <div className="grid gap-5 overflow-y-auto p-6 custom-scrollbar md:grid-cols-[1.05fr_.95fr]">
           {loading ? (
-            <div className="flex items-center justify-center p-10">
+            <div className="col-span-full flex items-center justify-center p-10">
               <Loader2 className="animate-spin h-8 w-8 text-primary" />
             </div>
-          ) : applications.length > 0 ? (
-            <ul className="space-y-4">
-              {applications.map(app => (
-                <li key={app.id} className="p-4 rounded-lg border border-primary/10 bg-white/10 transition-all hover:border-primary/20 hover:bg-white/20">
-                  <p className="font-semibold text-text">{app.vacancyTitle}</p>
-                  <p className="text-sm text-textLight">Postuló el: {formatDate(app.appliedAt)}</p>
-                  <div className="flex items-center justify-between mt-2">
-                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${app.status === 'Seleccionado' ? 'bg-green-100 text-green-800' : app.status === 'No continua' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'}`}>
-                      Estado: {app.status}
-                    </span>
-                    <a href={`/dashboard/vacantes/${app.id}`} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-primary hover:underline flex items-center gap-1">
-                      <Eye size={14} /> Ver Detalles
-                    </a>
-                  </div>
-                </li>
-              ))}
-            </ul>
           ) : (
-            <p className="text-center text-textLight">No se encontraron postulaciones para este usuario.</p>
+            <>
+              <section className="rounded-2xl border border-[#dbe5f3] bg-white p-5">
+                <p className="text-xs font-bold uppercase tracking-[.14em] text-primary">
+                  Información del postulante
+                </p>
+                <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <p className="text-xs font-bold text-textLight">Correo</p>
+                    <p className="mt-1 break-all font-semibold text-text">
+                      {profile?.email || user.candidateEmail || "No registrado"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-textLight">Teléfono</p>
+                    <p className="mt-1 font-semibold text-text">
+                      {profile?.phone || user.candidatePhone || "No registrado"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-textLight">
+                      Ubicación
+                    </p>
+                    <p className="mt-1 font-semibold text-text">
+                      {[profile?.city, profile?.department]
+                        .filter(Boolean)
+                        .join(", ") || "No registrada"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-textLight">
+                      Dirección
+                    </p>
+                    <p className="mt-1 font-semibold text-text">
+                      {profile?.address || "No registrada"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-textLight">
+                      Fecha de nacimiento
+                    </p>
+                    <p className="mt-1 font-semibold text-text">
+                      {profile?.birthDate
+                        ? formatDate(profile.birthDate)
+                        : "No registrada"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-textLight">
+                      Perfil profesional
+                    </p>
+                    <p className="mt-1 font-semibold text-text">
+                      {profile?.professionalTitle || "No registrado"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-textLight">
+                      Experiencia
+                    </p>
+                    <p className="mt-1 font-semibold text-text">
+                      {profile?.yearsExperience || "No registrada"}
+                    </p>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <p className="text-xs font-bold text-textLight">
+                      Formación académica
+                    </p>
+                    <p className="mt-1 font-semibold text-text">
+                      {profile?.education || "No registrada"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-textLight">
+                      Cuenta creada
+                    </p>
+                    <p className="mt-1 font-semibold text-text">
+                      {profile?.createdAt
+                        ? formatDate(profile.createdAt)
+                        : "No registrado"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-textLight">
+                      Último acceso
+                    </p>
+                    <p className="mt-1 font-semibold text-text">
+                      {profile?.lastLoginAt
+                        ? formatDate(profile.lastLoginAt)
+                        : "No registrado"}
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-5 flex flex-wrap gap-2">
+                  {profile?.cvUrl && (
+                    <a
+                      href={profile.cvUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white"
+                    >
+                      Abrir hoja de vida
+                    </a>
+                  )}
+                  {profile?.linkedinUrl && (
+                    <a
+                      href={profile.linkedinUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="rounded-xl border border-primary px-4 py-2.5 text-sm font-bold text-primary"
+                    >
+                      LinkedIn
+                    </a>
+                  )}
+                  {profile?.portfolioUrl && (
+                    <a
+                      href={profile.portfolioUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="rounded-xl border border-primary px-4 py-2.5 text-sm font-bold text-primary"
+                    >
+                      Portafolio
+                    </a>
+                  )}
+                </div>
+              </section>
+              <section className="rounded-2xl border border-[#dbe5f3] bg-white p-5">
+                <p className="text-xs font-bold uppercase tracking-[.14em] text-primary">
+                  Historial de postulaciones
+                </p>
+                {applications.length > 0 ? (
+                  <ul className="mt-4 space-y-3">
+                    {applications.map((app) => (
+                      <li
+                        key={app.id}
+                        className="p-4 rounded-lg border border-primary/10 bg-white/10 transition-all hover:border-primary/20 hover:bg-white/20"
+                      >
+                        <p className="font-semibold text-text">
+                          {app.vacancyTitle}
+                        </p>
+                        <p className="text-sm text-textLight">
+                          Postuló el: {formatDate(app.appliedAt)}
+                        </p>
+                        <div className="flex items-center justify-between mt-2">
+                          <span
+                            className={`px-2 py-1 text-xs font-semibold rounded-full ${app.status === "Seleccionado" ? "bg-green-100 text-green-800" : app.status === "No continua" ? "bg-red-100 text-red-800" : "bg-blue-100 text-blue-800"}`}
+                          >
+                            Estado: {app.status}
+                          </span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="mt-4 text-sm text-textLight">
+                    No se encontraron postulaciones para este usuario.
+                  </p>
+                )}
+              </section>
+            </>
           )}
         </div>
         <div className="p-4 border-t border-primary/10 text-right">
-          <Button onClick={onClose} variant="secondary">Cerrar</Button>
+          <Button onClick={onClose} variant="secondary">
+            Cerrar
+          </Button>
         </div>
       </div>
     </div>
@@ -390,7 +655,7 @@ function CandidateApplicationsModal({ user, onClose }: { user: CandidateUser; on
  * que se han registrado en el sistema al postularse a una vacante.
  */
 function RegisteredUsersList() {
-  type SortDirection = 'asc' | 'desc';
+  type SortDirection = "asc" | "desc";
   type SortConfig = {
     key: keyof CandidateUser;
     direction: SortDirection;
@@ -398,26 +663,29 @@ function RegisteredUsersList() {
 
   const [users, setUsers] = useState<CandidateUser[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'appliedAt', direction: 'desc' });
+  const [error, setError] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortConfig, setSortConfig] = useState<SortConfig>({
+    key: "appliedAt",
+    direction: "desc",
+  });
   const [selectedUser, setSelectedUser] = useState<CandidateUser | null>(null);
 
   useEffect(() => {
     const fetchUsers = async () => {
       setLoading(true);
-      setError('');
+      setError("");
       try {
-        const response = await fetch('/api/users');
+        const response = await fetch("/api/users");
         const result = await response.json();
 
         if (response.ok && result.success) {
           setUsers(result.data);
         } else {
-          setError(result.message || 'No se pudo cargar la lista de usuarios.');
+          setError(result.message || "No se pudo cargar la lista de usuarios.");
         }
       } catch (err) {
-        setError('Error de red. Por favor, intenta de nuevo.');
+        setError("Error de red. Por favor, intenta de nuevo.");
       } finally {
         setLoading(false);
       }
@@ -427,9 +695,13 @@ function RegisteredUsersList() {
   }, []);
 
   const requestSort = (key: keyof CandidateUser) => {
-    let direction: SortDirection = 'asc';
-    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
-      direction = 'desc';
+    let direction: SortDirection = "asc";
+    if (
+      sortConfig &&
+      sortConfig.key === key &&
+      sortConfig.direction === "asc"
+    ) {
+      direction = "desc";
     }
     setSortConfig({ key, direction });
   };
@@ -438,14 +710,20 @@ function RegisteredUsersList() {
     if (!sortConfig || sortConfig.key !== key) {
       return <ArrowUp className="inline-block ml-1 h-4 w-4 text-transparent" />;
     }
-    if (sortConfig.direction === 'asc') {
+    if (sortConfig.direction === "asc") {
       return <ArrowUp className="inline-block ml-1 h-4 w-4" />;
     }
     return <ArrowDown className="inline-block ml-1 h-4 w-4" />;
   };
 
   const handleExportCSV = () => {
-    const headers = ['Nombre', 'Documento', 'Email', 'Teléfono', 'Última Postulación'];
+    const headers = [
+      "Nombre",
+      "Documento",
+      "Email",
+      "Teléfono",
+      "Última Postulación",
+    ];
 
     const escapeCsvField = (field: string | undefined | null): string => {
       if (field === null || field === undefined) {
@@ -464,17 +742,22 @@ function RegisteredUsersList() {
         escapeCsvField(user.candidateDocument),
         escapeCsvField(user.candidateEmail),
         escapeCsvField(user.candidatePhone),
-        escapeCsvField(user.appliedAt ? formatDate(user.appliedAt) : 'N/A'),
-      ].join(','),
+        escapeCsvField(user.appliedAt ? formatDate(user.appliedAt) : "N/A"),
+      ].join(","),
     );
 
-    const csvString = [headers.join(','), ...rows].join('\n');
-    const blob = new Blob([`\uFEFF${csvString}`], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
+    const csvString = [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([`\uFEFF${csvString}`], {
+      type: "text/csv;charset=utf-8;",
+    });
+    const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `usuarios-registrados-${new Date().toISOString().slice(0, 10)}.csv`);
-    link.style.visibility = 'hidden';
+    link.setAttribute("href", url);
+    link.setAttribute(
+      "download",
+      `usuarios-registrados-${new Date().toISOString().slice(0, 10)}.csv`,
+    );
+    link.style.visibility = "hidden";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -501,10 +784,10 @@ function RegisteredUsersList() {
         if (bValue === undefined || bValue === null) return -1;
 
         if (aValue < bValue) {
-          return sortConfig.direction === 'asc' ? -1 : 1;
+          return sortConfig.direction === "asc" ? -1 : 1;
         }
         if (aValue > bValue) {
-          return sortConfig.direction === 'asc' ? 1 : -1;
+          return sortConfig.direction === "asc" ? 1 : -1;
         }
         return 0;
       });
@@ -516,7 +799,8 @@ function RegisteredUsersList() {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-10">
-        <Loader2 className="animate-spin h-8 w-8 text-primary" /> Cargando usuarios...
+        <Loader2 className="animate-spin h-8 w-8 text-primary" /> Cargando
+        usuarios...
       </div>
     );
   }
@@ -525,8 +809,15 @@ function RegisteredUsersList() {
     return (
       <div className="rounded-3xl border border-red-100 bg-red-50/70 p-10 text-center text-red-700">
         <AlertCircle className="mx-auto h-9 w-9 mb-3" />
-        <p className="font-bold">No pudimos cargar los usuarios</p><p className="mt-1 text-sm">{error}</p>
-        <Button className="mt-5" variant="primary" onClick={() => window.location.reload()}>Reintentar</Button>
+        <p className="font-bold">No pudimos cargar los usuarios</p>
+        <p className="mt-1 text-sm">{error}</p>
+        <Button
+          className="mt-5"
+          variant="primary"
+          onClick={() => window.location.reload()}
+        >
+          Reintentar
+        </Button>
       </div>
     );
   }
@@ -535,18 +826,31 @@ function RegisteredUsersList() {
     <div className="rounded-3xl border border-[#dbe5f3] bg-[#fbfdff] p-5">
       <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[.16em] text-primary">Base de talento</p><h3 className="mt-1 text-xl font-bold text-text">Usuarios registrados</h3>
+          <p className="text-xs font-bold uppercase tracking-[.16em] text-primary">
+            Base de talento
+          </p>
+          <h3 className="mt-1 text-xl font-bold text-text">
+            Usuarios registrados
+          </h3>
           <p className="text-sm text-textLight mt-1">
-            Lista de todos los candidatos que han aplicado a una vacante en el sistema.
+            Lista de todos los candidatos que han aplicado a una vacante en el
+            sistema.
           </p>
         </div>
-        <Button onClick={handleExportCSV} variant="secondary" disabled={processedUsers.length === 0}>
+        <Button
+          onClick={handleExportCSV}
+          variant="secondary"
+          disabled={processedUsers.length === 0}
+        >
           <FileDown className="mr-2 h-4 w-4" />
           Exportar a CSV
         </Button>
       </div>
       <div className="relative">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+        <Search
+          className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+          size={20}
+        />
         <input
           type="text"
           placeholder="Buscar por nombre, email o documento..."
@@ -560,39 +864,95 @@ function RegisteredUsersList() {
         <table className="w-full text-left overflow-hidden rounded-2xl bg-white">
           <thead className="sticky top-0 border-b bg-[#f5f8fd]">
             <tr>
-              <th className="p-4 font-semibold text-gray-600 cursor-pointer hover:bg-primary/5" onClick={() => requestSort('candidateName')}>
-                <div className="flex items-center">Nombre {getSortIcon('candidateName')}</div>
+              <th
+                className="p-4 font-semibold text-gray-600 cursor-pointer hover:bg-primary/5"
+                onClick={() => requestSort("candidateName")}
+              >
+                <div className="flex items-center">
+                  Nombre {getSortIcon("candidateName")}
+                </div>
               </th>
-              <th className="p-4 font-semibold text-gray-600">
-                Contacto
+              <th className="p-4 font-semibold text-gray-600">Contacto</th>
+              <th
+                className="p-4 font-semibold text-gray-600 cursor-pointer hover:bg-primary/5"
+                onClick={() => requestSort("appliedAt")}
+              >
+                <div className="flex items-center">
+                  Última Postulación {getSortIcon("appliedAt")}
+                </div>
               </th>
-              <th className="p-4 font-semibold text-gray-600 cursor-pointer hover:bg-primary/5" onClick={() => requestSort('appliedAt')}>
-                <div className="flex items-center">Última Postulación {getSortIcon('appliedAt')}</div>
-              </th>
-              <th className="p-4 font-semibold text-gray-600">
-                Acciones
-              </th>
+              <th className="p-4 font-semibold text-gray-600">Acciones</th>
             </tr>
           </thead>
           <tbody>
             {processedUsers.map((user) => (
-              <tr key={user.candidateDocument} className="border-b border-[#edf2f8] transition hover:bg-[#f7faff]">
-                <td className="p-4"><div className="flex items-center gap-3"><User size={16} className="text-gray-400" /><div><p className="font-semibold text-text">{user.candidateName}</p><p className="text-xs text-textLight">C.C. {user.candidateDocument}</p></div></div></td>
-                <td className="p-4"><div className="flex flex-col gap-1"><div className="flex items-center gap-2 text-sm"><Mail size={14} className="text-gray-400" /><a href={`mailto:${user.candidateEmail}`} className="text-blue-600 hover:underline">{user.candidateEmail}</a></div><div className="flex items-center gap-2 text-sm"><Phone size={14} className="text-gray-400" />{user.candidatePhone || 'No registrado'}</div></div></td>
-                <td className="p-4"><div className="flex items-center gap-2 text-sm"><Calendar size={14} className="text-gray-400" />{user.appliedAt ? formatDate(user.appliedAt) : 'N/A'}</div></td>
+              <tr
+                key={user.candidateDocument}
+                className="border-b border-[#edf2f8] transition hover:bg-[#f7faff]"
+              >
                 <td className="p-4">
-                  <Button variant="outline" size="sm" onClick={() => setSelectedUser(user)}>
+                  <div className="flex items-center gap-3">
+                    <User size={16} className="text-gray-400" />
+                    <div>
+                      <p className="font-semibold text-text">
+                        {user.candidateName}
+                      </p>
+                      <p className="text-xs text-textLight">
+                        C.C. {user.candidateDocument}
+                      </p>
+                    </div>
+                  </div>
+                </td>
+                <td className="p-4">
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Mail size={14} className="text-gray-400" />
+                      <a
+                        href={`mailto:${user.candidateEmail}`}
+                        className="text-blue-600 hover:underline"
+                      >
+                        {user.candidateEmail}
+                      </a>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <Phone size={14} className="text-gray-400" />
+                      {user.candidatePhone || "No registrado"}
+                    </div>
+                  </div>
+                </td>
+                <td className="p-4">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Calendar size={14} className="text-gray-400" />
+                    {user.appliedAt ? formatDate(user.appliedAt) : "N/A"}
+                  </div>
+                </td>
+                <td className="p-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedUser(user)}
+                  >
                     <Eye className="mr-2 h-4 w-4" />
                     Ver
                   </Button>
                 </td>
               </tr>
             ))}
-            {processedUsers.length === 0 && <tr><td colSpan={4} className="p-12 text-center text-textLight">No hay usuarios registrados que coincidan con la búsqueda.</td></tr>}</tbody>
+            {processedUsers.length === 0 && (
+              <tr>
+                <td colSpan={4} className="p-12 text-center text-textLight">
+                  No hay usuarios registrados que coincidan con la búsqueda.
+                </td>
+              </tr>
+            )}
+          </tbody>
         </table>
       </div>
       {selectedUser && (
-        <CandidateApplicationsModal user={selectedUser} onClose={() => setSelectedUser(null)} />
+        <CandidateApplicationsModal
+          user={selectedUser}
+          onClose={() => setSelectedUser(null)}
+        />
       )}
     </div>
   );
@@ -601,10 +961,10 @@ function RegisteredUsersList() {
 function slugify(value: string) {
   return value
     .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
 
 function parseLines(value: string) {
@@ -617,8 +977,8 @@ function parseLines(value: string) {
 function createDraftFromVacancy(vacancy: JobVacancy) {
   return {
     ...vacancy,
-    requirementsText: vacancy.requirements.join('\n'),
-    benefitsText: vacancy.benefits.join('\n'),
+    requirementsText: vacancy.requirements.join("\n"),
+    benefitsText: vacancy.benefits.join("\n"),
   };
 }
 
@@ -637,8 +997,8 @@ function createInitialDraft(): VacancyDraft {
   const base = createEmptyVacancy();
   return {
     ...base,
-    requirementsText: '',
-    benefitsText: '',
+    requirementsText: "",
+    benefitsText: "",
   };
 }
 
@@ -646,29 +1006,36 @@ const APPLICATION_PROGRESS_SHORT_LABELS: Record<
   (typeof APPLICATION_PROGRESS_STEPS)[number],
   string
 > = {
-  Recibida: 'Recibida',
-  'En revision': 'Revision',
-  Entrevista: 'Entrevista',
-  'Prueba tecnica': 'Prueba',
-  Seleccionado: 'Seleccionado',
+  Recibida: "Recibida",
+  "En revision": "Revision",
+  Entrevista: "Entrevista",
+  "Prueba tecnica": "Prueba",
+  Seleccionado: "Seleccionado",
 };
 
-function ApplicationProgressTrack({ status }: { status: JobApplication['status'] }) {
+function ApplicationProgressTrack({
+  status,
+}: {
+  status: JobApplication["status"];
+}) {
   const progress = getApplicationProgress(status);
-  const barClass = progress.isRejected ? 'bg-red-500' : 'bg-primary';
-  const trailClass = progress.isRejected ? 'bg-red-100' : 'bg-primary/15';
+  const barClass = progress.isRejected ? "bg-red-500" : "bg-primary";
+  const trailClass = progress.isRejected ? "bg-red-100" : "bg-primary/15";
 
   return (
     <div className="mt-3 rounded-xl border border-primary/10 bg-white/70 p-3">
       <div className="flex items-center justify-between gap-3 mb-2">
-        <p className="text-[11px] uppercase tracking-[0.12em] text-textLight">Ruta del proceso</p>
+        <p className="text-[11px] uppercase tracking-[0.12em] text-textLight">
+          Ruta del proceso
+        </p>
         <span
-          className={`text-[11px] font-semibold px-2 py-1 rounded-full ${progress.isRejected
-            ? 'text-red-700 bg-red-100 border border-red-200'
-            : progress.isFinished
-              ? 'text-green-700 bg-green-100 border border-green-200'
-              : 'text-primary bg-primary/10 border border-primary/20'
-            }`}
+          className={`text-[11px] font-semibold px-2 py-1 rounded-full ${
+            progress.isRejected
+              ? "text-red-700 bg-red-100 border border-red-200"
+              : progress.isFinished
+                ? "text-green-700 bg-green-100 border border-green-200"
+                : "text-primary bg-primary/10 border border-primary/20"
+          }`}
         >
           {status}
         </span>
@@ -684,15 +1051,17 @@ function ApplicationProgressTrack({ status }: { status: JobApplication['status']
       <div className="mt-2 grid grid-cols-5 gap-2">
         {APPLICATION_PROGRESS_STEPS.map((step, index) => {
           const reached = !progress.isRejected && index <= progress.activeIndex;
-          const isCurrent = !progress.isRejected && index === progress.activeIndex;
+          const isCurrent =
+            !progress.isRejected && index === progress.activeIndex;
 
           return (
             <div key={step} className="flex flex-col items-center gap-1">
               <span
-                className={`h-3 w-3 rounded-full border transition-colors ${reached
-                  ? 'bg-primary border-primary'
-                  : 'bg-white border-primary/25'
-                  } ${isCurrent ? 'ring-2 ring-primary/30' : ''}`}
+                className={`h-3 w-3 rounded-full border transition-colors ${
+                  reached
+                    ? "bg-primary border-primary"
+                    : "bg-white border-primary/25"
+                } ${isCurrent ? "ring-2 ring-primary/30" : ""}`}
               />
               <span className="text-[10px] text-textLight text-center leading-tight">
                 {APPLICATION_PROGRESS_SHORT_LABELS[step]}
@@ -720,36 +1089,47 @@ export default function VacantesAdminPanel() {
   const [showVacancyForm, setShowVacancyForm] = useState(false);
   const [isModalMounted, setIsModalMounted] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<JobVacancy | null>(null);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const searchParams = useSearchParams();
-  const initialTab = searchParams.get('tab');
-  const [activeTab, setActiveTab] = useState<'vacancies' | 'users'>(
-    initialTab === 'users' ? 'users' : 'vacancies',
+  const initialTab = searchParams.get("tab");
+  const [activeTab, setActiveTab] = useState<"vacancies" | "users">(
+    initialTab === "users" ? "users" : "vacancies",
   );
-  const [expandedVacancyId, setExpandedVacancyId] = useState<string | null>(null);
+  const [expandedVacancyId, setExpandedVacancyId] = useState<string | null>(
+    null,
+  );
   const vacanciesListRef = useRef<HTMLDivElement>(null);
   const loadVacancies = async () => {
     try {
-      const response = await fetch('/api/vacantes', {
-        cache: 'no-store',
+      const response = await fetch("/api/vacantes", {
+        cache: "no-store",
       });
 
       const data = await response.json();
 
       setVacancies(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error('Error cargando vacantes:', error);
+      console.error("Error cargando vacantes:", error);
       setVacancies([]);
     }
   };
 
   const loadApplications = async () => {
     try {
-      const response = await fetch('/api/vacantes/postulaciones', { cache: 'no-store' });
-      const result = await response.json() as { success?: boolean; data?: JobApplication[] };
-      setApplications(response.ok && result.success && Array.isArray(result.data) ? result.data : []);
+      const response = await fetch("/api/vacantes/postulaciones", {
+        cache: "no-store",
+      });
+      const result = (await response.json()) as {
+        success?: boolean;
+        data?: JobApplication[];
+      };
+      setApplications(
+        response.ok && result.success && Array.isArray(result.data)
+          ? result.data
+          : [],
+      );
     } catch (error) {
-      console.error('Error cargando postulaciones:', error);
+      console.error("Error cargando postulaciones:", error);
       setApplications([]);
     }
   };
@@ -757,9 +1137,15 @@ export default function VacantesAdminPanel() {
   useEffect(() => {
     async function initialize() {
       try {
-        const response = await fetch('/api/iam/admin/session', { cache: 'no-store' });
-        const result = await response.json() as { user?: { name?: string } };
-        setSession(response.ok && result.user?.name ? { cedula: '', role: '', name: result.user.name } : null);
+        const response = await fetch("/api/iam/admin/session", {
+          cache: "no-store",
+        });
+        const result = (await response.json()) as { user?: { name?: string } };
+        setSession(
+          response.ok && result.user?.name
+            ? { cedula: "", role: "", name: result.user.name }
+            : null,
+        );
       } catch {
         setSession(null);
       }
@@ -771,7 +1157,9 @@ export default function VacantesAdminPanel() {
     return undefined;
   }, []);
 
-  useEffect(() => { setIsModalMounted(true); }, []);
+  useEffect(() => {
+    setIsModalMounted(true);
+  }, []);
 
   const ownedVacancies = useMemo(() => {
     if (!session?.cedula) {
@@ -779,13 +1167,19 @@ export default function VacantesAdminPanel() {
     }
 
     return vacancies.filter((vacancy) => {
-      return !vacancy.createdByCedula || vacancy.createdByCedula === session.cedula;
+      return (
+        !vacancy.createdByCedula || vacancy.createdByCedula === session.cedula
+      );
     });
   }, [session?.cedula, vacancies]);
 
   const ownedApplications = useMemo(() => {
-    const visibleVacancyIds = new Set(ownedVacancies.map((vacancy) => vacancy.id));
-    return applications.filter((application) => visibleVacancyIds.has(application.vacancyId));
+    const visibleVacancyIds = new Set(
+      ownedVacancies.map((vacancy) => vacancy.id),
+    );
+    return applications.filter((application) =>
+      visibleVacancyIds.has(application.vacancyId),
+    );
   }, [applications, ownedVacancies]);
 
   const filteredVacancies = useMemo(() => {
@@ -812,22 +1206,22 @@ export default function VacantesAdminPanel() {
     event.preventDefault();
 
     if (!draft.title.trim()) {
-      toast.error('Debes ingresar el cargo de la vacante.');
+      toast.error("Debes ingresar el cargo de la vacante.");
       return;
     }
 
     if (!draft.area.trim()) {
-      toast.error('Debes ingresar el área.');
+      toast.error("Debes ingresar el área.");
       return;
     }
 
     if (!draft.city.trim()) {
-      toast.error('Debes ingresar la ciudad.');
+      toast.error("Debes ingresar la ciudad.");
       return;
     }
 
     if (!draft.summary.trim()) {
-      toast.error('Debes ingresar un resumen de la vacante.');
+      toast.error("Debes ingresar un resumen de la vacante.");
       return;
     }
 
@@ -839,13 +1233,13 @@ export default function VacantesAdminPanel() {
 
     const record: JobVacancy = {
       ...draft,
-      id: editingId || '',
+      id: editingId || "",
       title: draft.title.trim(),
       area: draft.area.trim(),
       city: draft.city.trim(),
-      contractType: draft.contractType.trim() || 'Tiempo completo',
+      contractType: draft.contractType.trim() || "Tiempo completo",
       schedule: draft.schedule.trim(),
-      salary: draft.salary.trim() || 'A convenir',
+      salary: draft.salary.trim() || "A convenir",
       experience: draft.experience.trim(),
       summary: draft.summary.trim(),
       requirements: parseLines(draft.requirementsText),
@@ -853,47 +1247,58 @@ export default function VacantesAdminPanel() {
       postedAt: draft.postedAt || now.slice(0, 10),
       createdAt: current?.createdAt || now,
       updatedAt: now,
-      createdByCedula: current?.createdByCedula || session?.cedula || '',
-      createdByName: current?.createdByName || session?.name || '',
+      createdByCedula: current?.createdByCedula || session?.cedula || "",
+      createdByName: current?.createdByName || session?.name || "",
     };
 
     try {
       if (editingId) {
         await fetch(`/api/vacantes/${editingId}`, {
-          method: 'PUT',
+          method: "PUT",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify(record),
         });
-        toast.success('¡Cambios guardados con éxito!', { icon: '✨', duration: 4500 });
+        toast.success("¡Cambios guardados con éxito!", {
+          icon: "✨",
+          duration: 4500,
+        });
       } else {
-        await fetch('/api/vacantes', {
-          method: 'POST',
+        await fetch("/api/vacantes", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify(record),
         });
-        toast.success('¡Vacante creada con éxito! Ya está disponible para recibir postulaciones.', { icon: '🎉', duration: 5000 });
+        toast.success(
+          "¡Vacante creada con éxito! Ya está disponible para recibir postulaciones.",
+          { icon: "🎉", duration: 5000 },
+        );
       }
       await loadVacancies();
       resetDraft();
       setShowVacancyForm(false);
     } catch (error) {
       console.error(error);
-      toast.error('No fue posible guardar la vacante.');
+      toast.error("No fue posible guardar la vacante.");
     }
   };
 
-  const handleMetricClick = (metric: 'vacancies' | 'users' | 'applications') => {
-    if (metric === 'users') {
-      setActiveTab('users');
+  const handleMetricClick = (
+    metric: "vacancies" | "users" | "applications",
+  ) => {
+    if (metric === "users") {
+      setActiveTab("users");
     } else {
-      setActiveTab('vacancies');
+      setActiveTab("vacancies");
       // The timeout ensures the view has re-rendered before scrolling
       setTimeout(() => {
-        vacanciesListRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        vacanciesListRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
       }, 100);
     }
   };
@@ -902,54 +1307,72 @@ export default function VacantesAdminPanel() {
     setDraft(createDraftFromVacancy(vacancy));
     setEditingId(vacancy.id);
     setShowVacancyForm(true);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    toast(`Editando vacante: ${vacancy.title}`, { icon: '✍️' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    toast(`Editando vacante: ${vacancy.title}`, { icon: "✍️" });
   };
 
   const handleDelete = async (vacancy: JobVacancy) => {
     try {
       await fetch(`/api/vacantes/${vacancy.id}`, {
-        method: 'DELETE',
+        method: "DELETE",
       });
       await loadVacancies();
       if (editingId === vacancy.id) {
         resetDraft();
       }
-      toast.success('Vacante desactivada correctamente.');
+      toast.success("Vacante desactivada correctamente.");
     } catch (error) {
       console.error(error);
-      toast.error('No fue posible eliminar la vacante.');
+      toast.error("No fue posible eliminar la vacante.");
     }
   };
 
   const handleUpdateApplicationStatus = (
     applicationId: string,
-    status: JobApplication['status'],
+    status: JobApplication["status"],
   ) => {
-    const target = applications.find((application) => application.id === applicationId);
-    const toastId = toast.loading('Actualizando estado y enviando notificación...');
+    const target = applications.find(
+      (application) => application.id === applicationId,
+    );
+    const toastId = toast.loading(
+      "Actualizando estado y enviando notificación...",
+    );
 
     if (!target || !target.candidateEmail) {
-      toast.error('Estado actualizado. No se pudo enviar correo porque la postulación no tiene email.', { id: toastId });
+      toast.error(
+        "Estado actualizado. No se pudo enviar correo porque la postulación no tiene email.",
+        { id: toastId },
+      );
       return;
     }
 
     void (async () => {
       try {
-        const updateResponse = await fetch(`/api/vacantes/postulaciones/${applicationId}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status }),
-        });
+        const updateResponse = await fetch(
+          `/api/vacantes/postulaciones/${applicationId}`,
+          {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status }),
+          },
+        );
         if (!updateResponse.ok) {
           const updateResult = await updateResponse.json().catch(() => ({}));
-          throw new Error(updateResult.message || 'No se pudo actualizar el seguimiento.');
+          throw new Error(
+            updateResult.message || "No se pudo actualizar el seguimiento.",
+          );
         }
-        setApplications((current) => current.map((application) => application.id === applicationId ? { ...application, status } : application));
-        const response = await fetch('/api/vacantes/notificar-estado', {
-          method: 'POST',
+        setApplications((current) =>
+          current.map((application) =>
+            application.id === applicationId
+              ? { ...application, status }
+              : application,
+          ),
+        );
+        const response = await fetch("/api/vacantes/notificar-estado", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             applicationId: target.id,
@@ -962,15 +1385,28 @@ export default function VacantesAdminPanel() {
           }),
         });
 
-        const result = (await response.json()) as { ok: boolean; sent?: boolean; message?: string };
+        const result = (await response.json()) as {
+          ok: boolean;
+          sent?: boolean;
+          message?: string;
+        };
         if (!response.ok || !result.ok) {
-          toast.error(`No se pudo notificar por correo: ${result.message || 'Error de envío'}`, { id: toastId });
+          toast.error(
+            `No se pudo notificar por correo: ${result.message || "Error de envío"}`,
+            { id: toastId },
+          );
           return;
         }
 
-        toast.success(result.sent === false ? (result.message || 'Estado actualizado. El correo automático está desactivado para esta etapa.') : 'Estado actualizado y notificado por correo.', { id: toastId });
+        toast.success(
+          result.sent === false
+            ? result.message ||
+                "Estado actualizado. El correo automático está desactivado para esta etapa."
+            : "Estado actualizado y notificado por correo.",
+          { id: toastId },
+        );
       } catch {
-        toast.error('Falló la notificación por correo.', { id: toastId });
+        toast.error("Falló la notificación por correo.", { id: toastId });
       }
     })();
   };
@@ -978,208 +1414,395 @@ export default function VacantesAdminPanel() {
   return (
     <div className="min-h-screen pt-2 pb-10">
       {/* Es recomendable mover el componente Toaster a un layout principal para que las notificaciones persistan durante la navegación */}
-      <Toaster position="top-center" toastOptions={{ duration: 4500, style: { borderRadius: '16px', padding: '14px 18px', fontWeight: 600 } }} />
-      <ConfirmDialog open={Boolean(pendingDelete)} title="¿Cerrar esta vacante?" description={`La vacante “${pendingDelete?.title ?? ''}” dejará de estar disponible en el portal, pero conservará su trazabilidad.`} confirmLabel="Sí, cerrar vacante" variant="danger" onCancel={() => setPendingDelete(null)} onConfirm={() => { if (pendingDelete) void handleDelete(pendingDelete); setPendingDelete(null); }} />
-      <section className="relative mb-6 overflow-hidden rounded-[30px] bg-gradient-to-br from-[#143860] via-[#24558f] to-[#7199c7] p-7 text-white shadow-[0_20px_50px_rgba(20,57,106,.22)] md:p-8"><div className="absolute -right-10 -top-12 h-48 w-48 rounded-full border-[18px] border-white/10"/><div className="relative flex flex-col gap-5 md:flex-row md:items-end md:justify-between"><div><p className="text-xs font-bold uppercase tracking-[.18em] text-blue-100">Gestión de oportunidades</p><h1 className="mt-2 text-3xl font-bold">Panel de Vacantes</h1><p className="mt-2 max-w-2xl text-sm leading-6 text-blue-50">{session?.name ? `Administra las vacantes y procesos asignados a ${session.name}.` : 'Administra oportunidades, candidatos y decisiones en un solo lugar.'}</p></div><Button type="button" variant="secondary" onClick={() => { resetDraft(); setShowVacancyForm(true); }} className="!border-white !bg-white !text-[#173f73] hover:!bg-blue-50">Nueva vacante</Button></div></section>
+      <Toaster
+        position="top-center"
+        toastOptions={{
+          duration: 4500,
+          style: {
+            borderRadius: "16px",
+            padding: "14px 18px",
+            fontWeight: 600,
+          },
+        }}
+      />
+      <ConfirmDialog
+        open={Boolean(pendingDelete)}
+        title="¿Cerrar esta vacante?"
+        description={`La vacante “${pendingDelete?.title ?? ""}” dejará de estar disponible en el portal, pero conservará su trazabilidad.`}
+        confirmLabel="Sí, cerrar vacante"
+        variant="danger"
+        onCancel={() => setPendingDelete(null)}
+        onConfirm={() => {
+          if (pendingDelete) void handleDelete(pendingDelete);
+          setPendingDelete(null);
+        }}
+      />
+      <section className="relative mb-6 overflow-hidden rounded-[30px] bg-gradient-to-br from-[#143860] via-[#24558f] to-[#7199c7] p-7 text-white shadow-[0_20px_50px_rgba(20,57,106,.22)] md:p-8">
+        <div className="absolute -right-10 -top-12 h-48 w-48 rounded-full border-[18px] border-white/10" />
+        <div className="relative flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[.18em] text-blue-100">
+              Gestión de oportunidades
+            </p>
+            <h1 className="mt-2 text-3xl font-bold">Panel de Vacantes</h1>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-blue-50">
+              {session?.name
+                ? `Administra las vacantes y procesos asignados a ${session.name}.`
+                : "Administra oportunidades, candidatos y decisiones en un solo lugar."}
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => {
+              resetDraft();
+              setShowVacancyForm(true);
+            }}
+            className="!border-white !bg-white !text-[#173f73] hover:!bg-blue-50"
+          >
+            Nueva vacante
+          </Button>
+        </div>
+      </section>
 
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#dbe5f3] bg-white p-5 shadow-[0_10px_28px_rgba(32,69,113,.08)]"><div><p className="text-xs font-bold uppercase tracking-[.16em] text-primary">Vista operativa</p><p className="mt-1 text-sm text-textLight">Publica, consulta postulaciones y toma decisiones con trazabilidad.</p></div><div className="flex items-center gap-2 text-sm font-bold text-primary"><span className="h-2.5 w-2.5 rounded-full bg-emerald-500"/> Operación activa</div></div>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#dbe5f3] bg-white p-5 shadow-[0_10px_28px_rgba(32,69,113,.08)]">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[.16em] text-primary">
+            Vista operativa
+          </p>
+          <p className="mt-1 text-sm text-textLight">
+            Publica, consulta postulaciones y toma decisiones con trazabilidad.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 text-sm font-bold text-primary">
+          <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" /> Operación
+          activa
+        </div>
+      </div>
 
       <div className="space-y-8">
-        {isModalMounted && showVacancyForm && createPortal(<div className="fixed inset-0 z-[2147483647] flex items-center justify-center bg-[#07182e]/55 p-4 backdrop-blur-sm" onClick={() => { resetDraft(); setShowVacancyForm(false); }}><section className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-[30px] border border-[#dbe5f3] bg-[#f8fbff] shadow-2xl" onClick={(event) => event.stopPropagation()}>
-          <header className="flex shrink-0 items-center justify-between border-b border-[#dbe5f3] bg-white px-6 py-5 md:px-8"><div><p className="text-xs font-bold uppercase tracking-[.16em] text-primary">Gestión de oportunidades</p><h3 className="mt-1 text-2xl font-bold text-text">{editingId ? 'Editar vacante' : 'Crear nueva vacante'}</h3><p className="mt-1 text-sm text-textLight">Completa la información principal para publicar una oportunidad clara.</p></div><button type="button" aria-label="Cerrar formulario" onClick={() => { resetDraft(); setShowVacancyForm(false); }} className="flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-white text-xl font-bold text-textLight transition hover:bg-slate-50">×</button></header>
-          <div className="overflow-y-auto p-6 md:p-8">
+        {isModalMounted &&
+          showVacancyForm &&
+          createPortal(
+            <div
+              className="fixed inset-0 z-[2147483647] flex items-center justify-center bg-[#07182e]/55 p-4 backdrop-blur-sm"
+              onClick={() => {
+                resetDraft();
+                setShowVacancyForm(false);
+              }}
+            >
+              <section
+                className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-[30px] border border-[#dbe5f3] bg-[#f8fbff] shadow-2xl"
+                onClick={(event) => event.stopPropagation()}
+              >
+                <header className="flex shrink-0 items-center justify-between border-b border-[#dbe5f3] bg-white px-6 py-5 md:px-8">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[.16em] text-primary">
+                      Gestión de oportunidades
+                    </p>
+                    <h3 className="mt-1 text-2xl font-bold text-text">
+                      {editingId ? "Editar vacante" : "Crear nueva vacante"}
+                    </h3>
+                    <p className="mt-1 text-sm text-textLight">
+                      Completa la información principal para publicar una
+                      oportunidad clara.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    aria-label="Cerrar formulario"
+                    onClick={() => {
+                      resetDraft();
+                      setShowVacancyForm(false);
+                    }}
+                    className="flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-white text-xl font-bold text-textLight transition hover:bg-slate-50"
+                  >
+                    ×
+                  </button>
+                </header>
+                <div className="overflow-y-auto p-6 md:p-8">
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
+                      Información principal
+                    </p>
+                    <Input
+                      label="Cargo"
+                      value={draft.title}
+                      onChange={(event) =>
+                        setDraft((prev) => ({
+                          ...prev,
+                          title: event.target.value,
+                        }))
+                      }
+                      placeholder="Ej: Auxiliar de servicio al cliente"
+                      required
+                    />
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Información principal</p>
-            <Input
-              label="Cargo"
-              value={draft.title}
-              onChange={(event) => setDraft((prev) => ({ ...prev, title: event.target.value }))}
-              placeholder="Ej: Auxiliar de servicio al cliente"
-              required
-            />
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                      <Input
+                        label="Area"
+                        value={draft.area}
+                        onChange={(event) =>
+                          setDraft((prev) => ({
+                            ...prev,
+                            area: event.target.value,
+                          }))
+                        }
+                        placeholder="Ej: Comercial"
+                        required
+                      />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              <Input
-                label="Area"
-                value={draft.area}
-                onChange={(event) => setDraft((prev) => ({ ...prev, area: event.target.value }))}
-                placeholder="Ej: Comercial"
-                required
-              />
+                      <div>
+                        <label className="block text-sm font-medium text-text mb-2">
+                          Departamento
+                        </label>
+                        <select
+                          value={draft.department}
+                          onChange={(event) =>
+                            setDraft((prev) => ({
+                              ...prev,
+                              department: event.target.value,
+                            }))
+                          }
+                          className="w-full px-4 py-3 rounded-xl glass border border-border text-text focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-300"
+                        >
+                          {VACANCY_DEPARTMENTS.map((department) => (
+                            <option key={department} value={department}>
+                              {department}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
 
-              <div>
-                <label className="block text-sm font-medium text-text mb-2">Departamento</label>
-                <select
-                  value={draft.department}
-                  onChange={(event) =>
-                    setDraft((prev) => ({ ...prev, department: event.target.value }))
-                  }
-                  className="w-full px-4 py-3 rounded-xl glass border border-border text-text focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-300"
-                >
-                  {VACANCY_DEPARTMENTS.map((department) => (
-                    <option key={department} value={department}>
-                      {department}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                      <Input
+                        label="Ciudad"
+                        value={draft.city}
+                        onChange={(event) =>
+                          setDraft((prev) => ({
+                            ...prev,
+                            city: event.target.value,
+                          }))
+                        }
+                        placeholder="Ej: Pereira"
+                        required
+                      />
+                    </div>
 
-              <Input
-                label="Ciudad"
-                value={draft.city}
-                onChange={(event) => setDraft((prev) => ({ ...prev, city: event.target.value }))}
-                placeholder="Ej: Pereira"
-                required
-              />
-            </div>
+                    <div className="border-t border-primary/10 pt-5">
+                      <p className="mb-4 text-xs font-bold uppercase tracking-[0.16em] text-primary">
+                        Condiciones de la vacante
+                      </p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-text mb-2">
+                            Modalidad
+                          </label>
+                          <select
+                            value={draft.modality}
+                            onChange={(event) =>
+                              setDraft((prev) => ({
+                                ...prev,
+                                modality: event.target
+                                  .value as JobVacancy["modality"],
+                              }))
+                            }
+                            className="w-full px-4 py-3 rounded-xl glass border border-border text-text focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-300"
+                          >
+                            <option value="Presencial">Presencial</option>
+                            <option value="Hibrido">Hibrido</option>
+                            <option value="Remoto">Remoto</option>
+                          </select>
+                        </div>
 
-            <div className="border-t border-primary/10 pt-5"><p className="mb-4 text-xs font-bold uppercase tracking-[0.16em] text-primary">Condiciones de la vacante</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-text mb-2">Modalidad</label>
-                <select
-                  value={draft.modality}
-                  onChange={(event) =>
-                    setDraft((prev) => ({
-                      ...prev,
-                      modality: event.target.value as JobVacancy['modality'],
-                    }))
-                  }
-                  className="w-full px-4 py-3 rounded-xl glass border border-border text-text focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-300"
-                >
-                  <option value="Presencial">Presencial</option>
-                  <option value="Hibrido">Hibrido</option>
-                  <option value="Remoto">Remoto</option>
-                </select>
-              </div>
+                        <Input
+                          label="Tipo de contrato"
+                          value={draft.contractType}
+                          onChange={(event) =>
+                            setDraft((prev) => ({
+                              ...prev,
+                              contractType: event.target.value,
+                            }))
+                          }
+                          placeholder="Tiempo completo"
+                        />
 
-              <Input
-                label="Tipo de contrato"
-                value={draft.contractType}
-                onChange={(event) =>
-                  setDraft((prev) => ({ ...prev, contractType: event.target.value }))
-                }
-                placeholder="Tiempo completo"
-              />
+                        <Input
+                          label="Fecha de publicacion"
+                          type="date"
+                          value={draft.postedAt}
+                          onChange={(event) =>
+                            setDraft((prev) => ({
+                              ...prev,
+                              postedAt: event.target.value,
+                            }))
+                          }
+                        />
+                      </div>
 
-              <Input
-                label="Fecha de publicacion"
-                type="date"
-                value={draft.postedAt}
-                onChange={(event) => setDraft((prev) => ({ ...prev, postedAt: event.target.value }))}
-              />
-            </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <Input
+                          label="Horario"
+                          value={draft.schedule}
+                          onChange={(event) =>
+                            setDraft((prev) => ({
+                              ...prev,
+                              schedule: event.target.value,
+                            }))
+                          }
+                          placeholder="Lunes a viernes"
+                        />
+                        <Input
+                          label="Salario"
+                          value={draft.salary}
+                          onChange={(event) =>
+                            setDraft((prev) => ({
+                              ...prev,
+                              salary: event.target.value,
+                            }))
+                          }
+                          placeholder="A convenir"
+                        />
+                        <Input
+                          label="Experiencia"
+                          value={draft.experience}
+                          onChange={(event) =>
+                            setDraft((prev) => ({
+                              ...prev,
+                              experience: event.target.value,
+                            }))
+                          }
+                          placeholder="1+ ano"
+                        />
+                      </div>
+                    </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Input
-                label="Horario"
-                value={draft.schedule}
-                onChange={(event) => setDraft((prev) => ({ ...prev, schedule: event.target.value }))}
-                placeholder="Lunes a viernes"
-              />
-              <Input
-                label="Salario"
-                value={draft.salary}
-                onChange={(event) => setDraft((prev) => ({ ...prev, salary: event.target.value }))}
-                placeholder="A convenir"
-              />
-              <Input
-                label="Experiencia"
-                value={draft.experience}
-                onChange={(event) =>
-                  setDraft((prev) => ({ ...prev, experience: event.target.value }))
-                }
-                placeholder="1+ ano"
-              />
-            </div>
-            </div>
+                    <div className="border-t border-primary/10 pt-5">
+                      <p className="mb-4 text-xs font-bold uppercase tracking-[0.16em] text-primary">
+                        Descripción y propuesta de valor
+                      </p>
+                      <Textarea
+                        label="Resumen de la vacante"
+                        value={draft.summary}
+                        onChange={(event) =>
+                          setDraft((prev) => ({
+                            ...prev,
+                            summary: event.target.value,
+                          }))
+                        }
+                        placeholder="Describe la vacante en pocas lineas."
+                        rows={3}
+                        required
+                      />
 
-            <div className="border-t border-primary/10 pt-5"><p className="mb-4 text-xs font-bold uppercase tracking-[0.16em] text-primary">Descripción y propuesta de valor</p>
-            <Textarea
-              label="Resumen de la vacante"
-              value={draft.summary}
-              onChange={(event) => setDraft((prev) => ({ ...prev, summary: event.target.value }))}
-              placeholder="Describe la vacante en pocas lineas."
-              rows={3}
-              required
-            />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Textarea
+                          label="Requisitos (uno por linea)"
+                          value={draft.requirementsText}
+                          onChange={(event) =>
+                            setDraft((prev) => ({
+                              ...prev,
+                              requirementsText: event.target.value,
+                            }))
+                          }
+                          placeholder={
+                            "Ej:\nComunicacion asertiva\nManejo de Excel"
+                          }
+                          rows={5}
+                        />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Textarea
-                label="Requisitos (uno por linea)"
-                value={draft.requirementsText}
-                onChange={(event) =>
-                  setDraft((prev) => ({ ...prev, requirementsText: event.target.value }))
-                }
-                placeholder={'Ej:\nComunicacion asertiva\nManejo de Excel'}
-                rows={5}
-              />
+                        <Textarea
+                          label="Beneficios (uno por linea)"
+                          value={draft.benefitsText}
+                          onChange={(event) =>
+                            setDraft((prev) => ({
+                              ...prev,
+                              benefitsText: event.target.value,
+                            }))
+                          }
+                          placeholder={
+                            "Ej:\nEstabilidad laboral\nCapacitacion continua"
+                          }
+                          rows={5}
+                        />
+                      </div>
+                    </div>
 
-              <Textarea
-                label="Beneficios (uno por linea)"
-                value={draft.benefitsText}
-                onChange={(event) =>
-                  setDraft((prev) => ({ ...prev, benefitsText: event.target.value }))
-                }
-                placeholder={'Ej:\nEstabilidad laboral\nCapacitacion continua'}
-                rows={5}
-              />
-            </div>
-            </div>
+                    <div className="flex items-center justify-between gap-4 rounded-2xl border border-primary/10 bg-primary/[0.035] p-4">
+                      <label className="flex items-center gap-2 text-sm font-semibold text-text">
+                        <input
+                          type="checkbox"
+                          checked={draft.featured}
+                          onChange={(event) =>
+                            setDraft((prev) => ({
+                              ...prev,
+                              featured: event.target.checked,
+                            }))
+                          }
+                          className="accent-primary"
+                        />
+                        Marcar como vacante destacada
+                      </label>
+                      <span className="text-xs text-textLight">
+                        Se publicará en el portal de empleo.
+                      </span>
+                    </div>
 
-            <div className="flex items-center justify-between gap-4 rounded-2xl border border-primary/10 bg-primary/[0.035] p-4"><label className="flex items-center gap-2 text-sm font-semibold text-text">
-              <input
-                type="checkbox"
-                checked={draft.featured}
-                onChange={(event) =>
-                  setDraft((prev) => ({ ...prev, featured: event.target.checked }))
-                }
-                className="accent-primary"
-              />
-              Marcar como vacante destacada
-            </label><span className="text-xs text-textLight">Se publicará en el portal de empleo.</span></div>
-
-            <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 flex flex-wrap gap-3 border-t border-[#dbe5f3] bg-white px-6 py-4 md:-mx-8 md:-mb-8 md:px-8">
-              <Button type="submit" variant="primary">
-                {editingId ? 'Guardar cambios' : 'Crear vacante'}
-              </Button>
-              <Button type="button" variant="secondary" onClick={() => { resetDraft(); setShowVacancyForm(false); }}>
-                Cancelar
-              </Button>
-              {editingId && (
-                <Button type="button" variant="ghost" onClick={() => setEditingId(null)}>
-                  Cancelar edicion
-                </Button>
-              )}
-            </div>
-          </form>
-
-          </div></section></div>, document.body)}
+                    <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 flex flex-wrap gap-3 border-t border-[#dbe5f3] bg-white px-6 py-4 md:-mx-8 md:-mb-8 md:px-8">
+                      <Button type="submit" variant="primary">
+                        {editingId ? "Guardar cambios" : "Crear vacante"}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={() => {
+                          resetDraft();
+                          setShowVacancyForm(false);
+                        }}
+                      >
+                        Cancelar
+                      </Button>
+                      {editingId && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={() => setEditingId(null)}
+                        >
+                          Cancelar edicion
+                        </Button>
+                      )}
+                    </div>
+                  </form>
+                </div>
+              </section>
+            </div>,
+            document.body,
+          )}
 
         <section className="rounded-3xl border border-[#dbe5f3] bg-white p-6 shadow-[0_14px_36px_rgba(35,79,132,0.12)] md:p-7">
           <div className="flex border-b border-primary/10 mb-4">
             <button
-              onClick={() => setActiveTab('vacancies')}
-              className={`px-4 py-2 text-sm font-semibold transition-colors ${activeTab === 'vacancies'
-                ? 'text-primary border-b-2 border-primary'
-                : 'text-textLight hover:text-text'
-                }`}
+              onClick={() => setActiveTab("vacancies")}
+              className={`px-4 py-2 text-sm font-semibold transition-colors ${
+                activeTab === "vacancies"
+                  ? "text-primary border-b-2 border-primary"
+                  : "text-textLight hover:text-text"
+              }`}
             >
               Vacantes y Postulaciones
             </button>
             <button
-              onClick={() => setActiveTab('users')}
-              className={`px-4 py-2 text-sm font-semibold transition-colors ${activeTab === 'users'
-                ? 'text-primary border-b-2 border-primary'
-                : 'text-textLight hover:text-text'
-                }`}
+              onClick={() => setActiveTab("users")}
+              className={`px-4 py-2 text-sm font-semibold transition-colors ${
+                activeTab === "users"
+                  ? "text-primary border-b-2 border-primary"
+                  : "text-textLight hover:text-text"
+              }`}
             >
               Usuarios Registrados
             </button>
           </div>
 
-          {activeTab === 'vacancies' && (
+          {activeTab === "vacancies" && (
             <>
               <VacanciesMetrics
                 applications={ownedApplications}
@@ -1187,8 +1810,23 @@ export default function VacantesAdminPanel() {
                 onMetricClick={handleMetricClick}
               />
 
-              <div ref={vacanciesListRef} className="mt-6 pt-5 border-t border-primary/10">
-                <div className="mb-4 flex items-center justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[.16em] text-primary">Catálogo operativo</p><h3 className="mt-1 text-xl font-display text-text">Vacantes publicadas</h3></div><span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">{filteredVacancies.length} resultados</span></div>
+              <div
+                ref={vacanciesListRef}
+                className="mt-6 pt-5 border-t border-primary/10"
+              >
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[.16em] text-primary">
+                      Catálogo operativo
+                    </p>
+                    <h3 className="mt-1 text-xl font-display text-text">
+                      Vacantes publicadas
+                    </h3>
+                  </div>
+                  <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
+                    {filteredVacancies.length} resultados
+                  </span>
+                </div>
                 <Input
                   label="Buscar en listado de vacantes"
                   value={search}
@@ -1211,14 +1849,38 @@ export default function VacantesAdminPanel() {
                     >
                       <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#315d98] via-[#6f97c8] to-[#dceafb]" />
                       <div className="flex items-start justify-between gap-3 pt-1">
-                        <div className="min-w-0"><div className="flex items-center gap-2"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"><Briefcase size={18}/></span><p className="text-xs font-bold uppercase tracking-[.15em] text-primary">{vacancy.area}</p></div><p className="mt-4 text-lg font-bold leading-tight text-text line-clamp-2">{vacancy.title}</p></div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                              <Briefcase size={18} />
+                            </span>
+                            <p className="text-xs font-bold uppercase tracking-[.15em] text-primary">
+                              {vacancy.area}
+                            </p>
+                          </div>
+                          <p className="mt-4 text-lg font-bold leading-tight text-text line-clamp-2">
+                            {vacancy.title}
+                          </p>
+                        </div>
                         {vacancy.featured && (
                           <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-emerald-700">
                             Destacada
                           </span>
                         )}
                       </div>
-                      <div className="mt-5 flex flex-wrap gap-2"><span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-50 px-2.5 py-2 text-xs font-semibold text-slate-600"><MapPin size={14} className="text-primary"/>{vacancy.city}, {vacancy.department}</span><span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-50 px-2.5 py-2 text-xs font-semibold text-slate-600"><MonitorSmartphone size={14} className="text-primary"/>{vacancy.modality} · {vacancy.contractType}</span></div>
+                      <div className="mt-5 flex flex-wrap gap-2">
+                        <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-50 px-2.5 py-2 text-xs font-semibold text-slate-600">
+                          <MapPin size={14} className="text-primary" />
+                          {vacancy.city}, {vacancy.department}
+                        </span>
+                        <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-50 px-2.5 py-2 text-xs font-semibold text-slate-600">
+                          <MonitorSmartphone
+                            size={14}
+                            className="text-primary"
+                          />
+                          {vacancy.modality} · {vacancy.contractType}
+                        </span>
+                      </div>
 
                       <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-[#edf2f8] pt-4">
                         <button
@@ -1226,14 +1888,14 @@ export default function VacantesAdminPanel() {
                           onClick={() => handleEdit(vacancy)}
                           className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-primary-hover"
                         >
-                          <Pencil size={14}/> Editar
+                          <Pencil size={14} /> Editar
                         </button>
                         <button
                           type="button"
                           onClick={() => setPendingDelete(vacancy)}
                           className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-xs font-bold text-red-700 transition hover:bg-red-100"
                         >
-                          <Trash2 size={14}/> Cerrar
+                          <Trash2 size={14} /> Cerrar
                         </button>
                         <button
                           type="button"
@@ -1243,7 +1905,11 @@ export default function VacantesAdminPanel() {
                           className="ml-auto inline-flex items-center gap-1.5 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2.5 text-xs font-bold text-sky-700 transition hover:bg-sky-100"
                         >
                           <Users size={14} />
-                          {applicationsForVacancy.length} postulación{applicationsForVacancy.length === 1 ? '' : 'es'} <ChevronDown className={`h-3.5 w-3.5 transition ${isExpanded ? 'rotate-180' : ''}`}/>
+                          {applicationsForVacancy.length} postulación
+                          {applicationsForVacancy.length === 1 ? "" : "es"}{" "}
+                          <ChevronDown
+                            className={`h-3.5 w-3.5 transition ${isExpanded ? "rotate-180" : ""}`}
+                          />
                         </button>
                       </div>
 
@@ -1261,13 +1927,15 @@ export default function VacantesAdminPanel() {
                                   className="rounded-xl border border-primary/10 bg-white/20 p-3"
                                 >
                                   <p className="font-semibold text-text text-sm">
-                                    {application.candidateName || 'Postulante'}
+                                    {application.candidateName || "Postulante"}
                                   </p>
                                   <p className="text-xs text-textLight">
                                     {application.candidateEmail}
                                   </p>
                                   <p className="text-xs text-textLight mt-1">
-                                    C.C: {application.candidateDocument || 'No registrado'}
+                                    C.C:{" "}
+                                    {application.candidateDocument ||
+                                      "No registrado"}
                                   </p>
 
                                   <div className="mt-2 flex flex-wrap gap-2">
@@ -1290,21 +1958,28 @@ export default function VacantesAdminPanel() {
                                       onChange={(event) =>
                                         handleUpdateApplicationStatus(
                                           application.id,
-                                          event.target.value as JobApplication['status'],
+                                          event.target
+                                            .value as JobApplication["status"],
                                         )
                                       }
                                       className="w-full px-3 py-2 rounded-lg border border-primary/20 bg-white text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary/30"
                                     >
-                                      {APPLICATION_STATUS_OPTIONS.map((status) => (
-                                        <option key={status} value={status}>
-                                          {status}
-                                        </option>
-                                      ))}
+                                      {APPLICATION_STATUS_OPTIONS.map(
+                                        (status) => (
+                                          <option key={status} value={status}>
+                                            {status}
+                                          </option>
+                                        ),
+                                      )}
                                     </select>
                                   </div>
-                                  <ApplicationProgressTrack status={application.status} />
+                                  <ApplicationProgressTrack
+                                    status={application.status}
+                                  />
                                   <p className="text-xs text-textLight mt-2 text-right">
-                                    {new Date(application.appliedAt).toLocaleString('es-CO')}
+                                    {new Date(
+                                      application.appliedAt,
+                                    ).toLocaleString("es-CO")}
                                   </p>
                                 </article>
                               ))}
@@ -1318,7 +1993,7 @@ export default function VacantesAdminPanel() {
               </div>
             </>
           )}
-          {activeTab === 'users' && <RegisteredUsersList />}
+          {activeTab === "users" && <RegisteredUsersList />}
         </section>
       </div>
     </div>
