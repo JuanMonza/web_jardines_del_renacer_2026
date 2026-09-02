@@ -26,6 +26,27 @@ function styleTableSheet(sheet: XLSX.WorkSheet, range: string, widths: number[])
   sheet['!cols'] = widths.map((wch) => ({ wch }));
 }
 
+function auditRow(item: AuditItem) {
+  const responsible = item.description.match(/Administrador\s+(.+?)\s+\(ID\s+(\d+)\)/i);
+  const quotedItem = item.description.match(/“([^”]+)”/);
+  const candidate = item.description.match(/postulante\s+(.+?)\s+\(/i);
+  const actionLabels: Record<string, string> = {
+    VACANTE_CREADA: 'Creó una vacante',
+    VACANTE_ACTUALIZADA: 'Editó una vacante',
+    VACANTE_ELIMINADA: 'Cerró / eliminó una vacante',
+    POSTULANTE_ELIMINADO: 'Eliminó un postulante',
+    POSTULACION_ESTADO_ACTUALIZADO: 'Actualizó seguimiento del postulante',
+    POSTULANTE_NOTIFICADO: 'Envió notificación al postulante',
+  };
+  return {
+    Fecha: formatDate(item.createdAt),
+    Movimiento: actionLabels[item.action] || item.action.replaceAll('_', ' '),
+    'Usuario responsable': responsible ? `${responsible[1]} (ID ${responsible[2]})` : 'No disponible (registro histórico)',
+    'Elemento afectado': quotedItem?.[1] || candidate?.[1] || 'Ver detalle',
+    'Detalle completo': item.description,
+  };
+}
+
 export default function AnalyticsPage() {
   const [apps, setApps] = useState<Application[]>([]);
   const [vacancies, setVacancies] = useState<Vacancy[]>([]);
@@ -77,10 +98,8 @@ export default function AnalyticsPage() {
       styleTableSheet(applicationsSheet, `A1:E${Math.max(1, apps.length + 1)}`, [28, 34, 28, 20, 25]);
       XLSX.utils.book_append_sheet(workbook, applicationsSheet, 'Postulaciones activas');
 
-      const auditSheet = XLSX.utils.json_to_sheet(audit.map((item) => ({
-        Fecha: formatDate(item.createdAt), Acción: item.action.replaceAll('_', ' '), Detalle: item.description,
-      })));
-      styleTableSheet(auditSheet, `A1:C${Math.max(1, audit.length + 1)}`, [25, 32, 100]);
+      const auditSheet = XLSX.utils.json_to_sheet(audit.map(auditRow));
+      styleTableSheet(auditSheet, `A1:E${Math.max(1, audit.length + 1)}`, [25, 36, 34, 35, 100]);
       XLSX.utils.book_append_sheet(workbook, auditSheet, 'Movimientos y auditoría');
       XLSX.writeFile(workbook, `analitica-vacantes-${new Date().toISOString().slice(0, 10)}.xlsx`);
     } finally { setIsExporting(false); }
