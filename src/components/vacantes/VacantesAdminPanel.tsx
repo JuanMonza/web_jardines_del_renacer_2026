@@ -862,7 +862,7 @@ export default function VacantesAdminPanel() {
           },
           body: JSON.stringify(record),
         });
-        toast.success('Vacante actualizada correctamente.');
+        toast.success('¡Cambios guardados con éxito!', { icon: '✨', duration: 4500 });
       } else {
         await fetch('/api/vacantes', {
           method: 'POST',
@@ -871,10 +871,11 @@ export default function VacantesAdminPanel() {
           },
           body: JSON.stringify(record),
         });
-        toast.success('Vacante creada correctamente.');
+        toast.success('¡Vacante creada con éxito! Ya está disponible para recibir postulaciones.', { icon: '🎉', duration: 5000 });
       }
       await loadVacancies();
       resetDraft();
+      setShowVacancyForm(false);
     } catch (error) {
       console.error(error);
       toast.error('No fue posible guardar la vacante.');
@@ -979,11 +980,10 @@ export default function VacantesAdminPanel() {
 
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#dbe5f3] bg-white p-5 shadow-[0_10px_28px_rgba(32,69,113,.08)]"><div><p className="text-xs font-bold uppercase tracking-[.16em] text-primary">Vista operativa</p><p className="mt-1 text-sm text-textLight">Publica, consulta postulaciones y toma decisiones con trazabilidad.</p></div><div className="flex items-center gap-2 text-sm font-bold text-primary"><span className="h-2.5 w-2.5 rounded-full bg-emerald-500"/> Operación activa</div></div>
 
-      <div className={`grid grid-cols-1 gap-8 ${showVacancyForm ? 'xl:grid-cols-[1.08fr_0.92fr]' : ''}`}>
-        {showVacancyForm && <section className="glass rounded-3xl border border-primary/15 p-6 md:p-8">
-          <h3 className="text-2xl font-display text-text mb-6">
-            {editingId ? 'Editar vacante' : 'Crear nueva vacante'}
-          </h3>
+      <div className="space-y-8">
+        {showVacancyForm && <div className="fixed inset-0 z-[2147483647] flex items-center justify-center bg-[#07182e]/55 p-4 backdrop-blur-sm" onClick={() => { resetDraft(); setShowVacancyForm(false); }}><section className="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-[30px] border border-[#dbe5f3] bg-[#f8fbff] shadow-2xl" onClick={(event) => event.stopPropagation()}>
+          <header className="flex shrink-0 items-center justify-between border-b border-[#dbe5f3] bg-white px-6 py-5 md:px-8"><div><p className="text-xs font-bold uppercase tracking-[.16em] text-primary">Gestión de oportunidades</p><h3 className="mt-1 text-2xl font-bold text-text">{editingId ? 'Editar vacante' : 'Crear nueva vacante'}</h3><p className="mt-1 text-sm text-textLight">Completa la información principal para publicar una oportunidad clara.</p></div><button type="button" aria-label="Cerrar formulario" onClick={() => { resetDraft(); setShowVacancyForm(false); }} className="flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-white text-xl font-bold text-textLight transition hover:bg-slate-50">×</button></header>
+          <div className="overflow-y-auto p-6 md:p-8">
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Información principal</p>
@@ -1136,12 +1136,12 @@ export default function VacantesAdminPanel() {
               Marcar como vacante destacada
             </label><span className="text-xs text-textLight">Se publicará en el portal de empleo.</span></div>
 
-            <div className="flex flex-wrap gap-3 pt-2">
+            <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 flex flex-wrap gap-3 border-t border-[#dbe5f3] bg-white px-6 py-4 md:-mx-8 md:-mb-8 md:px-8">
               <Button type="submit" variant="primary">
                 {editingId ? 'Guardar cambios' : 'Crear vacante'}
               </Button>
               <Button type="button" variant="secondary" onClick={() => { resetDraft(); setShowVacancyForm(false); }}>
-                Limpiar formulario
+                Cancelar
               </Button>
               {editingId && (
                 <Button type="button" variant="ghost" onClick={() => setEditingId(null)}>
@@ -1151,7 +1151,7 @@ export default function VacantesAdminPanel() {
             </div>
           </form>
 
-        </section>}
+          </div></section></div>}
 
         <section className="rounded-3xl border border-[#dbe5f3] bg-white p-6 shadow-[0_14px_36px_rgba(35,79,132,0.12)] md:p-7">
           <div className="flex border-b border-primary/10 mb-4">
