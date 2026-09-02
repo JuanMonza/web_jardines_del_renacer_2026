@@ -39,7 +39,6 @@ import {
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Textarea from '@/components/ui/Textarea';
-import SectionTitle from '@/components/ui/SectionTitle';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { formatDate } from '@/lib/utils';
 import {
@@ -970,14 +969,9 @@ export default function VacantesAdminPanel() {
       {/* Es recomendable mover el componente Toaster a un layout principal para que las notificaciones persistan durante la navegación */}
       <Toaster position="top-center" toastOptions={{ duration: 4500, style: { borderRadius: '16px', padding: '14px 18px', fontWeight: 600 } }} />
       <ConfirmDialog open={Boolean(pendingDelete)} title="¿Cerrar esta vacante?" description={`La vacante “${pendingDelete?.title ?? ''}” dejará de estar disponible en el portal, pero conservará su trazabilidad.`} confirmLabel="Sí, cerrar vacante" variant="danger" onCancel={() => setPendingDelete(null)} onConfirm={() => { if (pendingDelete) void handleDelete(pendingDelete); setPendingDelete(null); }} />
-      <SectionTitle
-        title="Panel de Vacantes"
-        subtitle={session?.name ? `Administra las vacantes creadas por ${session.name}.` : 'Administra vacantes de Trabaja con Nosotros en un panel exclusivo.'}
-        align="left"
-        className="mb-8"
-      />
+      <section className="relative mb-6 overflow-hidden rounded-[30px] bg-gradient-to-br from-[#143860] via-[#24558f] to-[#7199c7] p-7 text-white shadow-[0_20px_50px_rgba(20,57,106,.22)] md:p-8"><div className="absolute -right-10 -top-12 h-48 w-48 rounded-full border-[18px] border-white/10"/><div className="relative flex flex-col gap-5 md:flex-row md:items-end md:justify-between"><div><p className="text-xs font-bold uppercase tracking-[.18em] text-blue-100">Gestión de oportunidades</p><h1 className="mt-2 text-3xl font-bold">Panel de Vacantes</h1><p className="mt-2 max-w-2xl text-sm leading-6 text-blue-50">{session?.name ? `Administra las vacantes y procesos asignados a ${session.name}.` : 'Administra oportunidades, candidatos y decisiones en un solo lugar.'}</p></div><Button type="button" variant="secondary" onClick={() => { resetDraft(); setShowVacancyForm(true); }} className="!border-white !bg-white !text-[#173f73] hover:!bg-blue-50">Nueva vacante</Button></div></section>
 
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/80 bg-white/60 p-4 shadow-sm backdrop-blur-xl"><div><p className="text-xs font-bold uppercase tracking-[.16em] text-primary">Gestión de oportunidades</p><p className="mt-1 text-sm text-textLight">Crea una vacante solo cuando la necesites; el resto del panel queda enfocado en control y seguimiento.</p></div><Button type="button" variant="primary" onClick={() => { resetDraft(); setShowVacancyForm(true); }}>Nueva vacante</Button></div>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#dbe5f3] bg-white p-5 shadow-[0_10px_28px_rgba(32,69,113,.08)]"><div><p className="text-xs font-bold uppercase tracking-[.16em] text-primary">Vista operativa</p><p className="mt-1 text-sm text-textLight">Publica, consulta postulaciones y toma decisiones con trazabilidad.</p></div><div className="flex items-center gap-2 text-sm font-bold text-primary"><span className="h-2.5 w-2.5 rounded-full bg-emerald-500"/> Operación activa</div></div>
 
       <div className={`grid grid-cols-1 gap-8 ${showVacancyForm ? 'xl:grid-cols-[1.08fr_0.92fr]' : ''}`}>
         {showVacancyForm && <section className="glass rounded-3xl border border-primary/15 p-6 md:p-8">
@@ -1153,7 +1147,7 @@ export default function VacantesAdminPanel() {
 
         </section>}
 
-        <section className="rounded-3xl border border-white/80 bg-white/65 p-6 shadow-[0_14px_36px_rgba(35,79,132,0.12)] backdrop-blur-xl md:p-7">
+        <section className="rounded-3xl border border-[#dbe5f3] bg-white p-6 shadow-[0_14px_36px_rgba(35,79,132,0.12)] md:p-7">
           <div className="flex border-b border-primary/10 mb-4">
             <button
               onClick={() => setActiveTab('vacancies')}

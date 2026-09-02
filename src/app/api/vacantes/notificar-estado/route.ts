@@ -39,10 +39,10 @@ function buildEmailCopy(payload: {
 
   if (payload.status === 'No continua') {
     return {
-      subject: `Actualizacion de tu postulacion - ${payload.vacancyTitle}`,
-      headline: `Hola ${name}, tu proceso para esta vacante no continuara.`,
+      subject: `Actualización de tu postulación - ${payload.vacancyTitle}`,
+      headline: `Hola ${name}, en esta oportunidad no continuarás en el proceso.`,
       body:
-        'Agradecemos tu postulacion y el tiempo invertido. Conservaremos tu perfil para futuras oportunidades alineadas a tu experiencia.',
+        'Agradecemos sinceramente tu postulación y el tiempo que dedicaste al proceso. Conservaremos tu información para tenerte en cuenta en futuras vacantes que se ajusten a tu perfil.',
     };
   }
 

@@ -9,6 +9,7 @@ type Application = {
     id: string;
     candidateName: string;
     candidateEmail: string;
+    candidateDocument?: string;
     city?: string;
     vacancyTitle: string;
     status: string;
@@ -35,13 +36,21 @@ export default function PostulantesAdminPanel() {
 
     const updateStatus = async (id: string, status: string, notes?: string) => {
         setUpdatingId(id);
+        let statusSaved = false;
         try {
             const response = await fetch(`/api/vacantes/postulaciones/${id}`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ status, notes }) });
             if (!response.ok) throw new Error();
+            statusSaved = true;
             setApplications((current) => current.map((item) => item.id === id ? { ...item, status } : item));
-            setNotice({ title: 'Proceso actualizado', description: 'La modificación quedó registrada en la postulación del candidato.', variant: 'success' });
-        } catch {
-            setNotice({ title: 'No fue posible guardar', description: 'Intenta nuevamente. Si el problema continúa, verifica la conexión con la base de datos.', variant: 'error' });
+            const target = applications.find((item) => item.id === id);
+            if (target?.candidateEmail) {
+                const notification = await fetch('/api/vacantes/notificar-estado', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ applicationId: target.id, candidateName: target.candidateName, candidateEmail: target.candidateEmail, candidateDocument: target.candidateDocument, vacancyTitle: target.vacancyTitle, trackingCode: `JDR-${target.id.padStart(6, '0')}`, status }) });
+                const notificationResult = await notification.json() as { ok?: boolean; message?: string };
+                if (!notification.ok || !notificationResult.ok) throw new Error(notificationResult.message || 'El estado se guardó, pero no fue posible enviar el correo.');
+            }
+            setNotice({ title: 'Proceso actualizado y notificado', description: 'El estado quedó registrado y enviamos una comunicación al correo del postulante.', variant: 'success' });
+        } catch (error) {
+            setNotice(statusSaved ? { title: 'Proceso actualizado; correo pendiente', description: error instanceof Error ? error.message : 'El estado se guardó, pero no fue posible enviar el correo.', variant: 'error' } : { title: 'No fue posible guardar', description: 'Intenta nuevamente. Si el problema continúa, verifica la conexión con la base de datos.', variant: 'error' });
         } finally { setUpdatingId(null); }
     };
 
