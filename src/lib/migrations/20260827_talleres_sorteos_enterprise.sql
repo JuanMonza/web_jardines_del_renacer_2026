@@ -54,6 +54,52 @@ CREATE TABLE IF NOT EXISTS talleres_duelo_imagenes (
   CONSTRAINT fk_imagenes_album FOREIGN KEY (album_id) REFERENCES talleres_duelo_albumes(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Operación de talleres: filtros públicos, cupos, inscripciones y trazabilidad.
+CREATE TABLE IF NOT EXISTS talleres_duelo_configuracion (
+  taller_id BIGINT UNSIGNED NOT NULL PRIMARY KEY,
+  ciudad VARCHAR(120) NOT NULL DEFAULT '',
+  modalidad ENUM('Presencial','Virtual','Híbrido') NOT NULL DEFAULT 'Presencial',
+  cupos INT UNSIGNED NOT NULL DEFAULT 20,
+  facilitador VARCHAR(180) NOT NULL DEFAULT '',
+  duracion VARCHAR(80) NOT NULL DEFAULT '',
+  categoria VARCHAR(120) NOT NULL DEFAULT 'Acompañamiento en duelo',
+  instrucciones TEXT NULL,
+  url_conexion VARCHAR(500) NOT NULL DEFAULT '',
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_taller_config_taller FOREIGN KEY (taller_id) REFERENCES talleres_duelo(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+CREATE TABLE IF NOT EXISTS talleres_duelo_inscripciones (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  taller_id BIGINT UNSIGNED NOT NULL,
+  nombre VARCHAR(180) NOT NULL,
+  telefono VARCHAR(50) NOT NULL,
+  email VARCHAR(160) NOT NULL,
+  estado ENUM('CONFIRMADA','LISTA_ESPERA','CANCELADA') NOT NULL DEFAULT 'CONFIRMADA',
+  asistencia ENUM('PENDIENTE','ASISTIÓ','NO_ASISTIÓ') NOT NULL DEFAULT 'PENDIENTE',
+  observaciones VARCHAR(1000) NULL,
+  correo_estado ENUM('PENDIENTE','ENVIADO','ERROR') NOT NULL DEFAULT 'PENDIENTE',
+  correo_enviado_at TIMESTAMP NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_taller_email (taller_id, email),
+  INDEX idx_taller_inscripciones (taller_id, estado),
+  CONSTRAINT fk_taller_inscripcion_taller FOREIGN KEY (taller_id) REFERENCES talleres_duelo(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS talleres_duelo_activity_logs (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  taller_id BIGINT UNSIGNED NOT NULL,
+  admin_user_id BIGINT UNSIGNED NULL,
+  accion VARCHAR(80) NOT NULL,
+  detalle VARCHAR(1000) NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_taller_auditoria (taller_id, created_at),
+  CONSTRAINT fk_taller_log_taller FOREIGN KEY (taller_id) REFERENCES talleres_duelo(id) ON DELETE CASCADE,
+  CONSTRAINT fk_taller_log_admin FOREIGN KEY (admin_user_id) REFERENCES admin_users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS sorteos (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   titulo VARCHAR(180) NOT NULL,

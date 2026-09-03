@@ -35,6 +35,11 @@ export default function PostulantesAdminPanel() {
   const [selectedApplication, setSelectedApplication] =
     useState<Application | null>(null);
   const [note, setNote] = useState("");
+  const [pendingStatusChange, setPendingStatusChange] = useState<{
+    application: Application;
+    status: string;
+  } | null>(null);
+  const [statusReason, setStatusReason] = useState("");
   const [candidateDetail, setCandidateDetail] = useState<Record<
     string,
     string
@@ -555,12 +560,12 @@ export default function PostulantesAdminPanel() {
                           <select
                             value={application.status}
                             disabled={updatingId === application.id}
-                            onChange={(event) =>
-                              void updateStatus(
-                                application.id,
-                                event.target.value,
-                              )
-                            }
+                            onChange={(event) => {
+                              const status = event.target.value;
+                              if (status === application.status) return;
+                              setPendingStatusChange({ application, status });
+                              setStatusReason("");
+                            }}
                             className="block rounded-lg border border-border bg-white px-2 py-1.5 text-xs text-text outline-none"
                           >
                             <option value="Recibida">Recibida</option>
@@ -628,6 +633,70 @@ export default function PostulantesAdminPanel() {
             </table>
           )}
         </div>
+        {pendingStatusChange && (
+          <div
+            className="fixed inset-0 z-[2147483647] flex items-center justify-center bg-[#07182e]/55 p-4 backdrop-blur-sm"
+            onClick={() => setPendingStatusChange(null)}
+          >
+            <section
+              className="w-full max-w-lg rounded-[28px] border border-white/80 bg-[#f8fbff] p-6 shadow-2xl"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <p className="text-xs font-bold uppercase tracking-[.16em] text-primary">
+                Trazabilidad del proceso
+              </p>
+              <h2 className="mt-2 text-xl font-bold text-text">
+                Registrar cambio de etapa
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-textLight">
+                <strong>{pendingStatusChange.application.candidateName}</strong>{" "}
+                pasará a{" "}
+                <strong>
+                  {statusStyle[pendingStatusChange.status]?.label ||
+                    pendingStatusChange.status}
+                </strong>
+                . Explica el motivo: quedará en el historial, auditoría y Excel.
+              </p>
+              <textarea
+                autoFocus
+                value={statusReason}
+                onChange={(event) => setStatusReason(event.target.value)}
+                rows={4}
+                placeholder="Ej.: Cumple el perfil comercial y la experiencia requerida; se agenda entrevista con RR. HH."
+                className="mt-5 w-full rounded-xl border border-border bg-white p-4 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
+              />
+              <div className="mt-2 flex items-start gap-2 rounded-xl bg-primary/5 p-3 text-xs leading-5 text-primary">
+                Esta observación es obligatoria para conservar una trazabilidad
+                clara.
+              </div>
+              <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  onClick={() => setPendingStatusChange(null)}
+                  className="rounded-xl border border-border bg-white px-4 py-3 text-sm font-bold text-textLight"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  disabled={!statusReason.trim() || updatingId !== null}
+                  onClick={() => {
+                    const change = pendingStatusChange;
+                    setPendingStatusChange(null);
+                    void updateStatus(
+                      change.application.id,
+                      change.status,
+                      statusReason,
+                    );
+                  }}
+                  className="rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Guardar y notificar
+                </button>
+              </div>
+            </section>
+          </div>
+        )}
         {candidateToDelete && (
           <div
             className="fixed inset-0 z-[2147483647] flex items-center justify-center bg-[#07182e]/55 p-4 backdrop-blur-sm"

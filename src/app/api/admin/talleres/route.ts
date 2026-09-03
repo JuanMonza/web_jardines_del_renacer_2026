@@ -1,71 +1,372 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { execute, query } from '@/lib/db';
-import { ADMIN_SESSION_COOKIE, requireAdminPermission } from '@/lib/iam/admin-session';
+import { NextRequest, NextResponse } from "next/server";
+import { execute, query } from "@/lib/db";
+import {
+  ADMIN_SESSION_COOKIE,
+  requireAdminPermission,
+} from "@/lib/iam/admin-session";
+import { repairMojibake } from "@/lib/text-encoding";
+import {
+  ensureWorkshopManagementTables,
+  getWorkshopSettings,
+  recordWorkshopActivity,
+  saveWorkshopSettings,
+  type WorkshopSettings,
+} from "@/lib/workshop-management";
 
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
-type TallerRow = { id: number; titulo: string; fecha_label: string; fecha: string | null; lugar: string; descripcion: string | null; imagen: string | null; activo: number; created_at: string; updated_at: string };
-type AlbumRow = { id: number; taller_id: number; titulo: string; fecha_label: string; fecha: string | null; descripcion: string | null; activo: number; created_at: string; updated_at: string };
-type ImageRow = { id: number; album_id: number; imagen: string; alt: string; descripcion: string | null; orden: number };
+type TallerRow = {
+  id: number;
+  titulo: string;
+  fecha_label: string;
+  fecha: string | null;
+  lugar: string;
+  descripcion: string | null;
+  imagen: string | null;
+  activo: number;
+  created_at: string;
+  updated_at: string;
+};
+type AlbumRow = {
+  id: number;
+  taller_id: number;
+  titulo: string;
+  fecha_label: string;
+  fecha: string | null;
+  descripcion: string | null;
+  activo: number;
+  created_at: string;
+  updated_at: string;
+};
+type ImageRow = {
+  id: number;
+  album_id: number;
+  imagen: string;
+  alt: string;
+  descripcion: string | null;
+  orden: number;
+};
 
-function clean(value: unknown, max: number) { return typeof value === 'string' ? value.trim().slice(0, max) : ''; }
-function validImage(value: unknown) { return typeof value === 'string' && /^data:image\/(png|jpe?g|webp);base64,/i.test(value) && value.length <= 2_800_000; }
+function clean(value: unknown, max: number) {
+  return typeof value === "string" ? value.trim().slice(0, max) : "";
+}
+function validImage(value: unknown) {
+  return (
+    typeof value === "string" &&
+    /^data:image\/(png|jpe?g|webp);base64,/i.test(value) &&
+    value.length <= 2_800_000
+  );
+}
+function cleanConnectionUrl(value: unknown) {
+  const url = clean(value, 500);
+  if (!url) return "";
+  try {
+    const parsed = new URL(url);
+    return ["http:", "https:"].includes(parsed.protocol)
+      ? parsed.toString()
+      : "";
+  } catch {
+    return "";
+  }
+}
 
 async function getData() {
-  const talleres = await query<TallerRow>('SELECT id,titulo,fecha_label,fecha,lugar,descripcion,imagen,activo,created_at,updated_at FROM talleres_duelo WHERE deleted_at IS NULL ORDER BY fecha IS NULL, fecha DESC, id DESC');
-  const albums = await query<AlbumRow>('SELECT id,taller_id,titulo,fecha_label,fecha,descripcion,activo,created_at,updated_at FROM talleres_duelo_albumes WHERE deleted_at IS NULL ORDER BY fecha IS NULL, fecha DESC, id DESC');
-  const images = await query<ImageRow>('SELECT id,album_id,imagen,alt,descripcion,orden FROM talleres_duelo_imagenes ORDER BY orden,id');
+  await ensureWorkshopManagementTables();
+  const talleres = await query<TallerRow>(
+    "SELECT id,titulo,fecha_label,fecha,lugar,descripcion,imagen,activo,created_at,updated_at FROM talleres_duelo WHERE deleted_at IS NULL ORDER BY fecha IS NULL, fecha ASC, id DESC",
+  );
+  const albums = await query<AlbumRow>(
+    "SELECT id,taller_id,titulo,fecha_label,fecha,descripcion,activo,created_at,updated_at FROM talleres_duelo_albumes WHERE deleted_at IS NULL ORDER BY fecha IS NULL, fecha DESC, id DESC",
+  );
+  const images = await query<ImageRow>(
+    "SELECT id,album_id,imagen,alt,descripcion,orden FROM talleres_duelo_imagenes ORDER BY orden,id",
+  );
+  const settings = await getWorkshopSettings(talleres.map((item) => item.id));
+  const registrations = await query<{
+    taller_id: number;
+    confirmed: number;
+    waiting: number;
+  }>(
+    "SELECT taller_id,SUM(estado='CONFIRMADA') AS confirmed,SUM(estado='LISTA_ESPERA') AS waiting FROM talleres_duelo_inscripciones GROUP BY taller_id",
+  );
   return {
-    talleres: talleres.map((item) => ({ ...item, activo: Boolean(item.activo) })),
-    albums: albums.map((item) => ({ ...item, activo: Boolean(item.activo), images: images.filter((image) => image.album_id === item.id) })),
+    talleres: talleres.map((item) => {
+      const detail = settings.get(item.id)!;
+      const registered = registrations.find(
+        (row) => Number(row.taller_id) === item.id,
+      );
+      return {
+        ...item,
+        titulo: repairMojibake(item.titulo),
+        fecha_label: repairMojibake(item.fecha_label),
+        lugar: repairMojibake(item.lugar),
+        descripcion: repairMojibake(item.descripcion),
+        activo: Boolean(item.activo),
+        ...detail,
+        confirmedCount: Number(registered?.confirmed || 0),
+        waitingCount: Number(registered?.waiting || 0),
+      };
+    }),
+    albums: albums.map((item) => ({
+      ...item,
+      titulo: repairMojibake(item.titulo),
+      fecha_label: repairMojibake(item.fecha_label),
+      descripcion: repairMojibake(item.descripcion),
+      activo: Boolean(item.activo),
+      images: images
+        .filter((image) => image.album_id === item.id)
+        .map((image) => ({
+          ...image,
+          alt: repairMojibake(image.alt),
+          descripcion: repairMojibake(image.descripcion),
+        })),
+    })),
   };
 }
 
 export async function GET(request: NextRequest) {
-  if (!await requireAdminPermission(request.cookies.get(ADMIN_SESSION_COOKIE)?.value, 'workshops.view')) return NextResponse.json({ message: 'No autorizado.' }, { status: 403 });
-  try { return NextResponse.json({ data: await getData() }); }
-  catch (error) { console.error('GET talleres:', error); return NextResponse.json({ message: 'No fue posible cargar los talleres. Verifica que la migración MySQL esté aplicada.' }, { status: 500 }); }
+  if (
+    !(await requireAdminPermission(
+      request.cookies.get(ADMIN_SESSION_COOKIE)?.value,
+      "workshops.view",
+    ))
+  )
+    return NextResponse.json({ message: "No autorizado." }, { status: 403 });
+  try {
+    return NextResponse.json({ data: await getData() });
+  } catch (error) {
+    console.error("GET talleres:", error);
+    return NextResponse.json(
+      {
+        message:
+          "No fue posible cargar los talleres. Verifica que la migración MySQL esté aplicada.",
+      },
+      { status: 500 },
+    );
+  }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json() as Record<string, unknown>;
+    const body = (await request.json()) as Record<string, unknown>;
     const action = clean(body.action, 40);
-    const permission = action.includes('delete') ? 'workshops.delete' : action.includes('save') ? (body.id ? 'workshops.update' : 'workshops.create') : '';
-    const session = permission ? await requireAdminPermission(request.cookies.get(ADMIN_SESSION_COOKIE)?.value, permission) : null;
-    if (!session) return NextResponse.json({ message: 'No autorizado.' }, { status: 403 });
+    const permission = action.includes("delete")
+      ? "workshops.delete"
+      : action.includes("save")
+        ? body.id
+          ? "workshops.update"
+          : "workshops.create"
+        : "";
+    const session = permission
+      ? await requireAdminPermission(
+          request.cookies.get(ADMIN_SESSION_COOKIE)?.value,
+          permission,
+        )
+      : null;
+    if (!session)
+      return NextResponse.json({ message: "No autorizado." }, { status: 403 });
 
-    if (action === 'save-taller') {
-      const titulo = clean(body.titulo, 180); const fechaLabel = clean(body.fechaLabel, 100); const lugar = clean(body.lugar, 180);
-      const fecha = clean(body.fecha, 10) || null; const descripcion = clean(body.descripcion, 4000) || null;
-      const imagen = validImage(body.imagen) ? body.imagen as string : null; const activo = body.activo !== false;
-      if (!titulo || !fechaLabel || !lugar) return NextResponse.json({ message: 'Completa título, fecha visible y lugar.' }, { status: 422 });
+    if (action === "save-taller") {
+      const titulo = clean(body.titulo, 180);
+      const fechaLabel = clean(body.fechaLabel, 100);
+      const lugar = clean(body.lugar, 180);
+      const fecha = clean(body.fecha, 10) || null;
+      const descripcion = clean(body.descripcion, 4000) || null;
+      const imagen = validImage(body.imagen) ? (body.imagen as string) : null;
+      const activo = body.activo !== false;
+      if (!titulo || !fechaLabel || !lugar)
+        return NextResponse.json(
+          { message: "Completa título, fecha visible y lugar." },
+          { status: 422 },
+        );
       const id = Number(body.id);
-      if (Number.isSafeInteger(id) && id > 0) await execute('UPDATE talleres_duelo SET titulo=?,fecha_label=?,fecha=?,lugar=?,descripcion=?,imagen=COALESCE(?,imagen),activo=?,updated_by=? WHERE id=? AND deleted_at IS NULL', [titulo, fechaLabel, fecha, lugar, descripcion, imagen, activo, session.userId, id]);
-      else await execute('INSERT INTO talleres_duelo (titulo,fecha_label,fecha,lugar,descripcion,imagen,activo,created_by,updated_by) VALUES (?,?,?,?,?,?,?,?,?)', [titulo, fechaLabel, fecha, lugar, descripcion, imagen, activo, session.userId, session.userId]);
-    } else if (action === 'delete-taller') {
-      const id = Number(body.id); if (!Number.isSafeInteger(id) || id < 1) return NextResponse.json({ message: 'Taller inválido.' }, { status: 422 });
-      await execute('UPDATE talleres_duelo SET activo=FALSE,deleted_at=NOW(),updated_by=? WHERE id=? AND deleted_at IS NULL', [session.userId, id]);
-    } else if (action === 'save-album') {
-      const tallerId = Number(body.tallerId); const titulo = clean(body.titulo, 180); const fechaLabel = clean(body.fechaLabel, 100); const fecha = clean(body.fecha, 10) || null; const descripcion = clean(body.descripcion, 4000) || null;
-      const activo = body.activo !== false; const received = Array.isArray(body.images) ? body.images : [];
-      const images = received.slice(0, 10).filter((image): image is Record<string, unknown> => Boolean(image) && typeof image === 'object' && validImage((image as Record<string, unknown>).imagen));
-      if (!Number.isSafeInteger(tallerId) || tallerId < 1 || !titulo || !fechaLabel) return NextResponse.json({ message: 'Relaciona el álbum con un taller y completa sus datos.' }, { status: 422 });
-      if (images.length === 0) return NextResponse.json({ message: 'Carga al menos una imagen válida de máximo 2 MB.' }, { status: 422 });
-      const id = Number(body.id); let albumId = id;
+      let workshopId = id;
+      if (Number.isSafeInteger(id) && id > 0)
+        await execute(
+          "UPDATE talleres_duelo SET titulo=?,fecha_label=?,fecha=?,lugar=?,descripcion=?,imagen=COALESCE(?,imagen),activo=?,updated_by=? WHERE id=? AND deleted_at IS NULL",
+          [
+            titulo,
+            fechaLabel,
+            fecha,
+            lugar,
+            descripcion,
+            imagen,
+            activo,
+            session.userId,
+            id,
+          ],
+        );
+      else {
+        const result = await execute(
+          "INSERT INTO talleres_duelo (titulo,fecha_label,fecha,lugar,descripcion,imagen,activo,created_by,updated_by) VALUES (?,?,?,?,?,?,?,?,?)",
+          [
+            titulo,
+            fechaLabel,
+            fecha,
+            lugar,
+            descripcion,
+            imagen,
+            activo,
+            session.userId,
+            session.userId,
+          ],
+        );
+        workshopId = Number(result.insertId);
+      }
+      const modality = ["Presencial", "Virtual", "Híbrido"].includes(
+        String(body.modalidad),
+      )
+        ? (String(body.modalidad) as WorkshopSettings["modality"])
+        : "Presencial";
+      const connectionUrl = cleanConnectionUrl(body.urlConexion);
+      if (modality !== "Presencial" && !connectionUrl)
+        return NextResponse.json(
+          {
+            message:
+              "Incluye un enlace válido de conexión para un taller virtual o híbrido.",
+          },
+          { status: 422 },
+        );
+      await saveWorkshopSettings({
+        workshopId,
+        city: clean(body.ciudad, 120),
+        modality,
+        capacity: Math.min(Math.max(Number(body.cupos) || 20, 1), 5000),
+        facilitator: clean(body.facilitador, 180),
+        duration: clean(body.duracion, 80),
+        category: clean(body.categoria, 120) || "Acompañamiento en duelo",
+        instructions: clean(body.instrucciones, 4000),
+        connectionUrl,
+      });
+      await recordWorkshopActivity({
+        workshopId,
+        adminUserId: session.userId,
+        action:
+          Number.isSafeInteger(id) && id > 0
+            ? "TALLER_ACTUALIZADO"
+            : "TALLER_CREADO",
+        detail: titulo,
+      });
+    } else if (action === "delete-taller") {
+      const id = Number(body.id);
+      if (!Number.isSafeInteger(id) || id < 1)
+        return NextResponse.json(
+          { message: "Taller inválido." },
+          { status: 422 },
+        );
+      await execute(
+        "UPDATE talleres_duelo SET activo=FALSE,deleted_at=NOW(),updated_by=? WHERE id=? AND deleted_at IS NULL",
+        [session.userId, id],
+      );
+      await recordWorkshopActivity({
+        workshopId: id,
+        adminUserId: session.userId,
+        action: "TALLER_DESACTIVADO",
+        detail: "Taller desactivado desde el panel administrativo.",
+      });
+    } else if (action === "save-album") {
+      const tallerId = Number(body.tallerId);
+      const titulo = clean(body.titulo, 180);
+      const fechaLabel = clean(body.fechaLabel, 100);
+      const fecha = clean(body.fecha, 10) || null;
+      const descripcion = clean(body.descripcion, 4000) || null;
+      const activo = body.activo !== false;
+      const received = Array.isArray(body.images) ? body.images : [];
+      const images = received
+        .slice(0, 10)
+        .filter(
+          (image): image is Record<string, unknown> =>
+            Boolean(image) &&
+            typeof image === "object" &&
+            validImage((image as Record<string, unknown>).imagen),
+        );
+      if (
+        !Number.isSafeInteger(tallerId) ||
+        tallerId < 1 ||
+        !titulo ||
+        !fechaLabel
+      )
+        return NextResponse.json(
+          { message: "Relaciona el álbum con un taller y completa sus datos." },
+          { status: 422 },
+        );
+      if (images.length === 0)
+        return NextResponse.json(
+          { message: "Carga al menos una imagen válida de máximo 2 MB." },
+          { status: 422 },
+        );
+      const id = Number(body.id);
+      let albumId = id;
       if (Number.isSafeInteger(id) && id > 0) {
-        await execute('UPDATE talleres_duelo_albumes SET taller_id=?,titulo=?,fecha_label=?,fecha=?,descripcion=?,activo=?,updated_by=? WHERE id=? AND deleted_at IS NULL', [tallerId,titulo,fechaLabel,fecha,descripcion,activo,session.userId,id]);
-        await execute('DELETE FROM talleres_duelo_imagenes WHERE album_id=?', [id]);
+        await execute(
+          "UPDATE talleres_duelo_albumes SET taller_id=?,titulo=?,fecha_label=?,fecha=?,descripcion=?,activo=?,updated_by=? WHERE id=? AND deleted_at IS NULL",
+          [
+            tallerId,
+            titulo,
+            fechaLabel,
+            fecha,
+            descripcion,
+            activo,
+            session.userId,
+            id,
+          ],
+        );
+        await execute("DELETE FROM talleres_duelo_imagenes WHERE album_id=?", [
+          id,
+        ]);
       } else {
-        const result = await execute('INSERT INTO talleres_duelo_albumes (taller_id,titulo,fecha_label,fecha,descripcion,activo,created_by,updated_by) VALUES (?,?,?,?,?,?,?,?)', [tallerId,titulo,fechaLabel,fecha,descripcion,activo,session.userId,session.userId]);
+        const result = await execute(
+          "INSERT INTO talleres_duelo_albumes (taller_id,titulo,fecha_label,fecha,descripcion,activo,created_by,updated_by) VALUES (?,?,?,?,?,?,?,?)",
+          [
+            tallerId,
+            titulo,
+            fechaLabel,
+            fecha,
+            descripcion,
+            activo,
+            session.userId,
+            session.userId,
+          ],
+        );
         albumId = Number(result.insertId);
       }
-      for (const [index, image] of images.entries()) await execute('INSERT INTO talleres_duelo_imagenes (album_id,imagen,alt,descripcion,orden) VALUES (?,?,?,?,?)', [albumId, image.imagen, clean(image.alt,180) || `Imagen ${index + 1}`, clean(image.descripcion,280) || null, index]);
-    } else if (action === 'delete-album') {
-      const id = Number(body.id); if (!Number.isSafeInteger(id) || id < 1) return NextResponse.json({ message: 'Álbum inválido.' }, { status: 422 });
-      await execute('UPDATE talleres_duelo_albumes SET activo=FALSE,deleted_at=NOW(),updated_by=? WHERE id=? AND deleted_at IS NULL', [session.userId, id]);
-    } else return NextResponse.json({ message: 'Operación inválida.' }, { status: 400 });
+      for (const [index, image] of images.entries())
+        await execute(
+          "INSERT INTO talleres_duelo_imagenes (album_id,imagen,alt,descripcion,orden) VALUES (?,?,?,?,?)",
+          [
+            albumId,
+            image.imagen,
+            clean(image.alt, 180) || `Imagen ${index + 1}`,
+            clean(image.descripcion, 280) || null,
+            index,
+          ],
+        );
+    } else if (action === "delete-album") {
+      const id = Number(body.id);
+      if (!Number.isSafeInteger(id) || id < 1)
+        return NextResponse.json(
+          { message: "Álbum inválido." },
+          { status: 422 },
+        );
+      await execute(
+        "UPDATE talleres_duelo_albumes SET activo=FALSE,deleted_at=NOW(),updated_by=? WHERE id=? AND deleted_at IS NULL",
+        [session.userId, id],
+      );
+    } else
+      return NextResponse.json(
+        { message: "Operación inválida." },
+        { status: 400 },
+      );
     return NextResponse.json({ data: await getData() });
-  } catch (error) { console.error('POST talleres:', error); return NextResponse.json({ message: 'No fue posible guardar. Revisa los datos y que la migración MySQL esté aplicada.' }, { status: 500 }); }
+  } catch (error) {
+    console.error("POST talleres:", error);
+    return NextResponse.json(
+      {
+        message:
+          "No fue posible guardar. Revisa los datos y que la migración MySQL esté aplicada.",
+      },
+      { status: 500 },
+    );
+  }
 }

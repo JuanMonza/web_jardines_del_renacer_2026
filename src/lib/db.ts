@@ -1,4 +1,4 @@
-import mysql from 'mysql2/promise';
+import mysql from "mysql2/promise";
 
 // Lee las credenciales de forma segura desde las variables de entorno
 const dbConfig = {
@@ -7,6 +7,7 @@ const dbConfig = {
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_DATABASE,
+  charset: "utf8mb4",
   // Habilita SSL si está configurado en las variables de entorno
   ssl: process.env.DB_SSL ? JSON.parse(process.env.DB_SSL) : undefined,
   // Otras opciones recomendadas para producción
@@ -16,9 +17,11 @@ const dbConfig = {
 };
 
 // Crea un pool de conexiones para reutilizarlas y mejorar el rendimiento
-const globalDatabase = globalThis as typeof globalThis & { __jdrMysqlPool?: mysql.Pool };
+const globalDatabase = globalThis as typeof globalThis & {
+  __jdrMysqlPool?: mysql.Pool;
+};
 const pool = globalDatabase.__jdrMysqlPool ?? mysql.createPool(dbConfig);
-if (process.env.NODE_ENV !== 'production') globalDatabase.__jdrMysqlPool = pool;
+if (process.env.NODE_ENV !== "production") globalDatabase.__jdrMysqlPool = pool;
 
 /**
  * Ejecuta una consulta SQL y devuelve las filas.
@@ -38,7 +41,10 @@ export async function query<T>(sql: string, params: any[] = []): Promise<T[]> {
  * @param params - Un array de parámetros.
  * @returns Una promesa que se resuelve con el resultado de la ejecución.
  */
-export async function execute(sql: string, params: any[] = []): Promise<mysql.ResultSetHeader> {
+export async function execute(
+  sql: string,
+  params: any[] = [],
+): Promise<mysql.ResultSetHeader> {
   const [result] = await pool.execute<mysql.ResultSetHeader>(sql, params);
   return result;
 }

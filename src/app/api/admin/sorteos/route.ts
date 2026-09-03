@@ -4,6 +4,7 @@ import {
   ADMIN_SESSION_COOKIE,
   requireAdminPermission,
 } from "@/lib/iam/admin-session";
+import { repairMojibake } from "@/lib/text-encoding";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -52,13 +53,21 @@ async function data() {
   );
   return sorteos.map((sorteo) => ({
     ...sorteo,
+    titulo: repairMojibake(sorteo.titulo),
+    descripcion: repairMojibake(sorteo.descripcion),
+    premio: repairMojibake(sorteo.premio),
     participantes: participants.find((row) => row.sorteo_id === sorteo.id) ?? {
       total: 0,
       habilitados: 0,
     },
     ganadores: winners
       .filter((winner) => winner.sorteo_id === sorteo.id)
-      .map((winner) => ({ ...winner, validado: Boolean(winner.validado) })),
+      .map((winner) => ({
+        ...winner,
+        nombre: repairMojibake(winner.nombre),
+        numero_contrato: repairMojibake(winner.numero_contrato),
+        validado: Boolean(winner.validado),
+      })),
   }));
 }
 export async function GET(request: NextRequest) {

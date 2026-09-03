@@ -126,7 +126,10 @@ function decodeBase64File(value: string) {
 }
 
 function buildFullName(firstName: string, lastName?: string | null) {
-  return [firstName, lastName ?? ""].map((part) => part.trim()).filter(Boolean).join(" ");
+  return [firstName, lastName ?? ""]
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .join(" ");
 }
 
 function splitFullName(fullName: string) {
@@ -200,7 +203,7 @@ function mapCandidateProfile(row: CandidateAccountRow): CandidateProfile {
     linkedinUrl: account.linkedinUrl,
     portfolioUrl: account.portfolioUrl,
     cvUrl: account.cvUrl,
-    resumeFileName: account.cvUrl ? account.cvUrl.split('/').pop() ?? '' : '',
+    resumeFileName: account.cvUrl ? (account.cvUrl.split("/").pop() ?? "") : "",
     active: account.active,
     lastLoginAt: account.lastLoginAt,
     updatedAt: account.updatedAt,
@@ -400,13 +403,39 @@ export async function getAllApplicationsFromDB() {
   return query(sql);
 }
 
-export async function updateApplicationStatusInDB(input: { id: string; status: JobApplication['status']; notes?: string; adminName?: string; adminUserId?: number }) {
-  const corporateStatus = { Recibida: 'Postulado', 'En revision': 'En revisión', Entrevista: 'Entrevista RH', 'Prueba tecnica': 'Prueba técnica', Seleccionado: 'Contratado', 'No continua': 'No seleccionado' }[input.status];
+export async function updateApplicationStatusInDB(input: {
+  id: string;
+  status: JobApplication["status"];
+  notes?: string;
+  adminName?: string;
+  adminUserId?: number;
+}) {
+  const note = input.notes?.trim() || "";
+  if (input.status !== "Recibida" && !note) return false;
+  const corporateStatus = {
+    Recibida: "Postulado",
+    "En revision": "En revisión",
+    Entrevista: "Entrevista RH",
+    "Prueba tecnica": "Prueba técnica",
+    Seleccionado: "Contratado",
+    "No continua": "No seleccionado",
+  }[input.status];
   const result = await execute(
-    'UPDATE postulaciones SET estado = ?, observaciones_rh = ? WHERE id = ?',
-    [corporateStatus, input.notes?.trim() || null, input.id],
+    "UPDATE postulaciones SET estado = ?, observaciones_rh = ? WHERE id = ?",
+    [corporateStatus, note || null, input.id],
   );
-  if (result.affectedRows > 0) await execute('INSERT INTO activity_logs (usuario_tipo, accion, modulo, tabla_afectada, registro_id, descripcion) VALUES (?,?,?,?,?,?)', ['Admin', 'POSTULACION_ESTADO_ACTUALIZADO', 'Vacantes', 'postulaciones', input.id, `Administrador ${input.adminName || 'no identificado'}${input.adminUserId ? ` (ID ${input.adminUserId})` : ''} actualizó el estado a ${corporateStatus}. ${input.notes?.trim() || ''}`]);
+  if (result.affectedRows > 0)
+    await execute(
+      "INSERT INTO activity_logs (usuario_tipo, accion, modulo, tabla_afectada, registro_id, descripcion) VALUES (?,?,?,?,?,?)",
+      [
+        "Admin",
+        "POSTULACION_ESTADO_ACTUALIZADO",
+        "Vacantes",
+        "postulaciones",
+        input.id,
+        `Administrador ${input.adminName || "no identificado"}${input.adminUserId ? ` (ID ${input.adminUserId})` : ""} actualizó el proceso. Estado informado: ${input.status}. Observación: ${note || "Sin observación."}`,
+      ],
+    );
   return result.affectedRows > 0;
 }
 
@@ -427,7 +456,9 @@ export function writeCandidateApplications(applications: JobApplication[]) {
   window.dispatchEvent(new Event("candidate-storage-updated"));
 }
 
-export async function createCandidateAccountInDB(input: CandidateRegistrationInput) {
+export async function createCandidateAccountInDB(
+  input: CandidateRegistrationInput,
+) {
   const documentNumber = normalizeDocumentNumber(input.documentNumber);
   const email = normalizeEmail(input.email);
   const sql = `
@@ -544,19 +575,31 @@ export async function deactivateCandidateFromApplicationInDB(input: {
        WHERE p.id = ? AND p.deleted_at IS NULL AND c.deleted_at IS NULL LIMIT 1`,
       [input.applicationId],
     );
-    const candidate = rows[0] as { id: number; documento: string; email: string; name: string } | undefined;
+    const candidate = rows[0] as
+      | { id: number; documento: string; email: string; name: string }
+      | undefined;
     if (!candidate) {
       await connection.rollback();
       return null;
     }
 
-    await connection.execute('UPDATE postulaciones SET deleted_at = NOW() WHERE candidato_id = ? AND deleted_at IS NULL', [candidate.id]);
-    await connection.execute('UPDATE candidatos SET activo = FALSE, deleted_at = NOW() WHERE id = ? AND deleted_at IS NULL', [candidate.id]);
+    await connection.execute(
+      "UPDATE postulaciones SET deleted_at = NOW() WHERE candidato_id = ? AND deleted_at IS NULL",
+      [candidate.id],
+    );
+    await connection.execute(
+      "UPDATE candidatos SET activo = FALSE, deleted_at = NOW() WHERE id = ? AND deleted_at IS NULL",
+      [candidate.id],
+    );
     // Estas columnas existen tanto en la base actual como en la de producción.
     await connection.execute(
-      'INSERT INTO activity_logs (usuario_tipo, accion, modulo, tabla_afectada, registro_id, descripcion) VALUES (?,?,?,?,?,?)',
+      "INSERT INTO activity_logs (usuario_tipo, accion, modulo, tabla_afectada, registro_id, descripcion) VALUES (?,?,?,?,?,?)",
       [
-        'Admin', 'POSTULANTE_ELIMINADO', 'Vacantes', 'candidatos', candidate.id,
+        "Admin",
+        "POSTULANTE_ELIMINADO",
+        "Vacantes",
+        "candidatos",
+        candidate.id,
         `Administrador ${input.adminName} (ID ${input.adminUserId}) eliminó lógicamente al postulante ${candidate.name} (${candidate.documento}) y sus postulaciones activas.`,
       ],
     );
@@ -586,7 +629,9 @@ export async function createCandidateEmailAccessCode(input: {
   expiresAt: Date;
 }) {
   const email = normalizeEmail(input.email);
-  await execute('DELETE FROM postulante_access_codes WHERE LOWER(email) = ?', [email]);
+  await execute("DELETE FROM postulante_access_codes WHERE LOWER(email) = ?", [
+    email,
+  ]);
   await execute(
     `INSERT INTO postulante_access_codes (email, code_hash, expires_at)
      VALUES (?, ?, ?)`,
@@ -605,16 +650,18 @@ export async function getCandidateEmailAccessCode(email: string) {
   return rows[0] ?? null;
 }
 
-export async function registerFailedCandidateEmailAccessCodeAttempt(id: number) {
+export async function registerFailedCandidateEmailAccessCodeAttempt(
+  id: number,
+) {
   await execute(
-    'UPDATE postulante_access_codes SET attempts = attempts + 1 WHERE id = ? AND used_at IS NULL',
+    "UPDATE postulante_access_codes SET attempts = attempts + 1 WHERE id = ? AND used_at IS NULL",
     [id],
   );
 }
 
 export async function consumeCandidateEmailAccessCode(id: number) {
   const result = await execute(
-    'UPDATE postulante_access_codes SET used_at = CURRENT_TIMESTAMP WHERE id = ? AND used_at IS NULL',
+    "UPDATE postulante_access_codes SET used_at = CURRENT_TIMESTAMP WHERE id = ? AND used_at IS NULL",
     [id],
   );
   return result.affectedRows > 0;
@@ -728,11 +775,7 @@ export async function setCandidatePasswordResetToken(input: {
         AND activo = 1
         AND deleted_at IS NULL
     `,
-    [
-      input.tokenHash,
-      input.expiresAt,
-      normalizeEmail(input.email),
-    ],
+    [input.tokenHash, input.expiresAt, normalizeEmail(input.email)],
   );
 
   return result.affectedRows;
@@ -767,19 +810,42 @@ function mapDbApplicationToJobApplication(
     return null;
   }
 
-  const rawStatus = String(dbApplication.estado ?? dbApplication.status ?? 'Postulado');
-  const statusMap: Record<string, JobApplication['status']> = { Postulado: 'Recibida', Recibido: 'Recibida', 'En revisión': 'En revision', 'Filtro RH': 'En revision', 'Prueba técnica': 'Prueba tecnica', 'Entrevista RH': 'Entrevista', 'Entrevista Técnica': 'Entrevista', Finalista: 'Entrevista', Contratado: 'Seleccionado', 'No seleccionado': 'No continua', 'Proceso cerrado': 'No continua' };
-  const status = statusMap[rawStatus] ?? (APPLICATION_STATUS_OPTIONS.includes(rawStatus as JobApplication['status']) ? rawStatus as JobApplication['status'] : 'Recibida');
+  const rawStatus = String(
+    dbApplication.estado ?? dbApplication.status ?? "Postulado",
+  );
+  const statusMap: Record<string, JobApplication["status"]> = {
+    Postulado: "Recibida",
+    Recibido: "Recibida",
+    "En revisión": "En revision",
+    "Filtro RH": "En revision",
+    "Prueba técnica": "Prueba tecnica",
+    "Entrevista RH": "Entrevista",
+    "Entrevista Técnica": "Entrevista",
+    Finalista: "Entrevista",
+    Contratado: "Seleccionado",
+    "No seleccionado": "No continua",
+    "Proceso cerrado": "No continua",
+  };
+  const status =
+    statusMap[rawStatus] ??
+    (APPLICATION_STATUS_OPTIONS.includes(rawStatus as JobApplication["status"])
+      ? (rawStatus as JobApplication["status"])
+      : "Recibida");
 
   // La hoja de vida se almacena como BLOB, no la devolvemos en listados.
   return {
     id: String(dbApplication.id),
-    trackingCode: `JDR-${String(dbApplication.id).padStart(6, '0')}`,
+    trackingCode: `JDR-${String(dbApplication.id).padStart(6, "0")}`,
     vacancyId: String(dbApplication.vacante_id ?? dbApplication.vacancy_id),
     vacancyTitle: dbApplication.vacancy_title ?? "Vacante sin titulo",
-    candidateDocument: dbApplication.documento ?? '', candidateName: dbApplication.candidate_name ?? '', candidateEmail: dbApplication.candidate_email ?? '', candidatePhone: dbApplication.candidate_phone ?? '', resumeFileName: '',
+    candidateDocument: dbApplication.documento ?? "",
+    candidateName: dbApplication.candidate_name ?? "",
+    candidateEmail: dbApplication.candidate_email ?? "",
+    candidatePhone: dbApplication.candidate_phone ?? "",
+    resumeFileName: "",
     resumeFileData: "", // No se devuelve el binario en las listas
-    appliedAt: toIsoString(dbApplication.created_at) || new Date().toISOString(),
+    appliedAt:
+      toIsoString(dbApplication.created_at) || new Date().toISOString(),
     status,
   };
 }
@@ -814,10 +880,14 @@ export async function createApplicationInDB(
   `;
 
   const params = [
-    candidateId || null, vacancyId, `Postulación de ${candidateName.trim()}`, resumeUrl || null,
+    candidateId || null,
+    vacancyId,
+    `Postulación de ${candidateName.trim()}`,
+    resumeUrl || null,
   ];
 
-  const result = await execute(sql, params); return String(result.insertId);
+  const result = await execute(sql, params);
+  return String(result.insertId);
 }
 
 /**
