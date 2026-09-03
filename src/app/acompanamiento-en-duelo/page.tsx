@@ -115,6 +115,7 @@ export default function AcompanamientoDueloPage() {
   );
   const [selectedTallerIndex, setSelectedTallerIndex] = useState(0);
   const [selectedAlbumDate, setSelectedAlbumDate] = useState("all");
+  const [openAlbum, setOpenAlbum] = useState<DueloGalleryAlbum | null>(null);
   const [registrationMessage, setRegistrationMessage] = useState("");
   const [registering, setRegistering] = useState(false);
   const [cityFilter, setCityFilter] = useState("todas");
@@ -226,7 +227,8 @@ export default function AcompanamientoDueloPage() {
 
   const handleWorkshopSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
+    const form = event.currentTarget;
+    const formData = new FormData(form);
     const nombre = String(formData.get("nombre") || "").trim();
     const telefono = String(formData.get("telefono") || "").trim();
     const correo = String(formData.get("correo") || "").trim();
@@ -256,7 +258,21 @@ export default function AcompanamientoDueloPage() {
       setRegistrationMessage(
         result.message || "Tu inscripción fue registrada correctamente.",
       );
-      event.currentTarget.reset();
+      form.reset();
+      const workshopsResponse = await fetch("/api/talleres-duelo/public");
+      const workshopsPayload = workshopsResponse.ok
+        ? await workshopsResponse.json()
+        : null;
+      const refreshed = workshopsPayload?.data?.talleres as WorkshopView[] | undefined;
+      if (refreshed) {
+        const active = refreshed
+          .filter((taller) => taller.activo && (!taller.fechaISO || taller.fechaISO >= todayISO))
+          .sort(sortByDateAsc);
+        setAllTalleres(refreshed);
+        setProximosTalleres(active);
+        const nextIndex = active.findIndex((taller) => taller.id === selectedTaller.id);
+        setSelectedTallerIndex(nextIndex >= 0 ? nextIndex : 0);
+      }
     } catch (error) {
       setRegistrationMessage(
         error instanceof Error
@@ -591,7 +607,7 @@ export default function AcompanamientoDueloPage() {
                       className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-text outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10"
                     />
                     {registrationMessage && (
-                      <p className="rounded-xl border border-primary/15 bg-primary/5 px-4 py-3 text-sm font-semibold text-primary">
+                      <p role="status" className={`rounded-xl border px-4 py-3 text-sm font-semibold ${registrationMessage.includes("No fue posible") ? "border-red-200 bg-red-50 text-red-700" : registrationMessage.includes("agotaron") ? "border-amber-200 bg-amber-50 text-amber-800" : "border-emerald-200 bg-emerald-50 text-emerald-800"}`}>
                         {registrationMessage}
                       </p>
                     )}
@@ -707,7 +723,7 @@ export default function AcompanamientoDueloPage() {
               <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 {visibleAlbumes.map((album) => (
                   <FadeIn key={album.id}>
-                    <article className="overflow-hidden rounded-2xl border border-primary/10 bg-white shadow-lg">
+                    <button type="button" onClick={() => setOpenAlbum(album)} className="w-full overflow-hidden rounded-2xl border border-primary/10 bg-white text-left shadow-lg transition hover:-translate-y-1 hover:shadow-xl">
                       <div className="grid grid-cols-3 gap-1 bg-slate-100 p-1">
                         {album.images.slice(0, 3).map((image) => (
                           <img
@@ -734,13 +750,23 @@ export default function AcompanamientoDueloPage() {
                           </p>
                         )}
                       </div>
-                    </article>
+                    </button>
                   </FadeIn>
                 ))}
               </div>
             </Container>
           </section>
         </>
+      )}
+
+      {openAlbum && (
+        <div className="fixed inset-0 z-[100] grid place-items-center bg-slate-950/70 p-4 backdrop-blur-sm" onClick={() => setOpenAlbum(null)}>
+          <section className="max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+            <div className="flex items-start justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-[.18em] text-primary">Galería del taller</p><h2 className="mt-2 text-2xl font-bold text-text">{openAlbum.titulo}</h2><p className="mt-1 text-sm text-textLight">{openAlbum.fecha} · {openAlbum.images.length} fotografías</p></div><button type="button" onClick={() => setOpenAlbum(null)} className="grid h-10 w-10 place-items-center rounded-xl border border-border text-xl font-bold text-textLight" aria-label="Cerrar galería">×</button></div>
+            {openAlbum.descripcion && <p className="mt-4 max-w-3xl text-sm leading-relaxed text-textLight">{openAlbum.descripcion}</p>}
+            <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">{openAlbum.images.map((image) => <figure key={image.id} className="overflow-hidden rounded-2xl border border-slate-100 bg-slate-50"><img src={image.src} alt={image.alt} className="h-60 w-full object-cover" />{(image.caption || image.alt) && <figcaption className="p-3 text-sm text-textLight">{image.caption || image.alt}</figcaption>}</figure>)}</div>
+          </section>
+        </div>
       )}
     </main>
   );

@@ -103,6 +103,7 @@ export default function DashboardTalleresPage() {
   const [talleres, setTalleres] = useState<Taller[]>([]);
   const [albums, setAlbums] = useState<Album[]>([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [tab, setTab] = useState<"talleres" | "galeria">("talleres");
   const [tallerForm, setTallerForm] = useState(blankTaller);
@@ -113,6 +114,8 @@ export default function DashboardTalleresPage() {
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [registrationWorkshop, setRegistrationWorkshop] =
     useState<Taller | null>(null);
+  const [galleryViewer, setGalleryViewer] = useState<Album | null>(null);
+  const [manualRegistration, setManualRegistration] = useState({ nombre: "", telefono: "", email: "" });
   const load = async () => {
     setLoading(true);
     try {
@@ -166,21 +169,29 @@ export default function DashboardTalleresPage() {
     body: Record<string, unknown>,
   ) => {
     event.preventDefault();
+    if (saving) return;
+    setSaving(true);
     setMessage("");
-    const r = await fetch("/api/admin/talleres", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ action, ...body }),
-    });
-    const p = await r.json();
-    if (!r.ok) {
-      setMessage(p.message || "No fue posible guardar.");
-      return;
+    try {
+      const r = await fetch("/api/admin/talleres", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ action, ...body }),
+      });
+      const p = await r.json();
+      if (!r.ok) {
+        setMessage(p.message || "No fue posible guardar.");
+        return;
+      }
+      setTalleres(p.data.talleres);
+      setAlbums(p.data.albums);
+      setModal(null);
+      setMessage("Cambios guardados correctamente.");
+    } catch {
+      setMessage("No fue posible guardar. Intenta nuevamente.");
+    } finally {
+      setSaving(false);
     }
-    setTalleres(p.data.talleres);
-    setAlbums(p.data.albums);
-    setModal(null);
-    setMessage("Cambios guardados correctamente.");
   };
   const openTaller = (item?: Taller) => {
     setEditTaller(item || null);
@@ -282,6 +293,19 @@ export default function DashboardTalleresPage() {
         item.id === registration.id ? { ...item, ...changes } : item,
       ),
     );
+  };
+  const addManualRegistration = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!registrationWorkshop) return;
+    const response = await fetch(`/api/admin/talleres/${registrationWorkshop.id}/inscripciones`, {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(manualRegistration),
+    });
+    const result = await response.json();
+    if (!response.ok || !result.success) { setMessage(result.message || "No fue posible agregar la persona."); return; }
+    setManualRegistration({ nombre: "", telefono: "", email: "" });
+    setMessage(result.message || "Persona agregada correctamente.");
+    void openRegistrations(registrationWorkshop);
+    void load();
   };
   const exportRegistrations = () => {
     if (!registrationWorkshop) return;
@@ -501,23 +525,26 @@ export default function DashboardTalleresPage() {
           {albums.map((a) => (
             <article
               key={a.id}
-              className="overflow-hidden rounded-2xl border border-white/80 bg-white/70 shadow-sm"
+              className="overflow-hidden rounded-2xl border border-[#dce8f7] bg-white shadow-[0_18px_40px_-30px_rgba(21,60,112,.55)]"
             >
-              <div className="grid h-36 grid-cols-3 gap-1 bg-[#e9f1fb] p-1">
+              <button
+                type="button"
+                onClick={() => setGalleryViewer(a)}
+                className="group grid h-48 w-full grid-cols-3 gap-1 bg-[#e9f1fb] p-1 text-left"
+                aria-label={`Abrir álbum ${a.titulo}`}
+              >
                 {a.images.slice(0, 3).map((image, index) => (
-                  <img
-                    key={index}
-                    src={image.imagen}
-                    alt={image.alt}
-                    className="h-full w-full rounded-lg object-cover"
-                  />
+                  <div key={index} className="relative overflow-hidden rounded-lg">
+                    <img src={image.imagen} alt={image.alt} className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
+                    {index === 2 && a.images.length > 3 && <span className="absolute inset-0 grid place-items-center bg-[#173f73]/70 text-lg font-black text-white">+{a.images.length - 3}</span>}
+                  </div>
                 ))}
                 {a.images.length === 0 && (
                   <div className="col-span-3 grid place-items-center text-sm text-[#5d7698]">
                     Sin imágenes
                   </div>
                 )}
-              </div>
+              </button>
               <div className="p-5">
                 <div className="flex justify-between gap-3">
                   <div>
@@ -526,11 +553,12 @@ export default function DashboardTalleresPage() {
                       {a.fecha_label} · {a.images.length} imágenes
                     </p>
                   </div>
-                  <span className="text-xs font-bold text-emerald-700">
+                  <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${a.activo ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600"}`}>
                     {a.activo ? "Publicado" : "Oculto"}
                   </span>
                 </div>
                 <div className="mt-4 flex gap-2">
+                  <button onClick={() => setGalleryViewer(a)} className="rounded-lg bg-[#edf4ff] px-3 py-2 text-sm font-bold text-[#28569a]">Ver fotos</button>
                   <button
                     onClick={() => openAlbum(a)}
                     className="rounded-lg border border-[#a7c1e7] px-3 py-2 text-sm font-bold text-[#28569a]"
@@ -637,13 +665,11 @@ export default function DashboardTalleresPage() {
                     })
                   }
                 />
-                <Field
-                  label="Facilitador/a"
-                  value={tallerForm.facilitador}
-                  onChange={(v) =>
-                    setTallerForm({ ...tallerForm, facilitador: v })
-                  }
-                />
+                <label className="text-sm font-bold text-[#31547d]">
+                  Facilitadores/as
+                  <textarea rows={2} value={tallerForm.facilitador} onChange={(e) => setTallerForm({ ...tallerForm, facilitador: e.target.value })} placeholder="Escribe uno o varios nombres, separados por coma o por línea" className="mt-1 w-full rounded-xl border border-[#cbdcf3] bg-white p-3 font-normal" />
+                  <span className="mt-1 block text-xs font-normal text-[#6a82a3]">Puedes agregar los nombres libremente; aparecerán juntos en la publicación.</span>
+                </label>
                 <Field
                   label="Duración"
                   value={tallerForm.duracion}
@@ -692,6 +718,12 @@ export default function DashboardTalleresPage() {
                       })
                     }
                   />
+                  {tallerForm.imagen && (
+                    <div className="mt-3 overflow-hidden rounded-2xl border border-[#cbdcf3] bg-white p-2">
+                      <img src={tallerForm.imagen} alt="Vista previa de la imagen del taller" className="h-44 w-full rounded-xl object-cover" />
+                      <button type="button" onClick={() => setTallerForm({ ...tallerForm, imagen: null })} className="mt-2 text-xs font-bold text-red-600">Quitar imagen</button>
+                    </div>
+                  )}
                 </label>
                 <label className="md:col-span-2 text-sm font-bold text-[#31547d]">
                   Descripción
@@ -724,7 +756,7 @@ export default function DashboardTalleresPage() {
                   checked={tallerForm.activo}
                   onChange={(v) => setTallerForm({ ...tallerForm, activo: v })}
                 />
-                <Save />
+                <Save saving={saving} />
               </form>
             ) : (
               <form
@@ -830,10 +862,23 @@ export default function DashboardTalleresPage() {
                   checked={albumForm.activo}
                   onChange={(v) => setAlbumForm({ ...albumForm, activo: v })}
                 />
-                <Save />
+                <Save saving={saving} />
               </form>
             )}
           </div>
+        </div>
+      )}
+      {galleryViewer && (
+        <div className="fixed inset-0 z-[100] grid place-items-center bg-slate-950/70 p-4 backdrop-blur-sm" onClick={() => setGalleryViewer(null)}>
+          <section className="max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-[28px] bg-white p-6 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+            <div className="flex items-start justify-between gap-4">
+              <div><p className="text-xs font-bold uppercase tracking-[.16em] text-primary">Galería del taller</p><h2 className="mt-1 text-2xl font-black text-[#173c70]">{galleryViewer.titulo}</h2><p className="mt-1 text-sm text-textLight">{galleryViewer.fecha_label} · {galleryViewer.images.length} fotografías</p></div>
+              <button onClick={() => setGalleryViewer(null)} className="rounded-xl border border-border bg-white p-2 text-slate-600" aria-label="Cerrar galería"><X /></button>
+            </div>
+            <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {galleryViewer.images.map((image, index) => <figure key={`${image.imagen}-${index}`} className="overflow-hidden rounded-2xl border border-slate-100 bg-slate-50"><img src={image.imagen} alt={image.alt} className="h-56 w-full object-cover" /><figcaption className="p-3 text-sm text-textLight">{image.descripcion || image.alt}</figcaption></figure>)}
+            </div>
+          </section>
         </div>
       )}
       {registrationWorkshop && (
@@ -869,6 +914,13 @@ export default function DashboardTalleresPage() {
                 </button>
               </div>
             </div>
+            <form onSubmit={addManualRegistration} className="mt-5 grid gap-3 rounded-2xl border border-[#dbe5f3] bg-white p-4 md:grid-cols-4">
+              <p className="md:col-span-4 text-sm font-bold text-[#193d70]">Agregar persona manualmente</p>
+              <input required value={manualRegistration.nombre} onChange={(event) => setManualRegistration({ ...manualRegistration, nombre: event.target.value })} placeholder="Nombre completo" className="rounded-xl border border-border px-3 py-2 text-sm" />
+              <input required value={manualRegistration.telefono} onChange={(event) => setManualRegistration({ ...manualRegistration, telefono: event.target.value })} placeholder="Teléfono" className="rounded-xl border border-border px-3 py-2 text-sm" />
+              <input required type="email" value={manualRegistration.email} onChange={(event) => setManualRegistration({ ...manualRegistration, email: event.target.value })} placeholder="Correo electrónico" className="rounded-xl border border-border px-3 py-2 text-sm" />
+              <button type="submit" className="rounded-xl bg-[#234d8d] px-4 py-2 text-sm font-bold text-white">Agregar inscrito</button>
+            </form>
             <div className="mt-5 overflow-x-auto rounded-2xl border border-[#dbe5f3] bg-white">
               <table className="w-full min-w-[760px] text-left text-sm">
                 <thead className="bg-[#f4f8fd] text-xs uppercase tracking-wider text-[#557190]">
@@ -1054,10 +1106,10 @@ function Toggle({
     </label>
   );
 }
-function Save() {
+function Save({ saving }: { saving: boolean }) {
   return (
-    <button className="rounded-xl bg-[#234d8d] px-5 py-3 font-bold text-white">
-      Guardar cambios
+    <button disabled={saving} className="rounded-xl bg-[#234d8d] px-5 py-3 font-bold text-white disabled:cursor-wait disabled:opacity-60">
+      {saving ? "Guardando…" : "Guardar cambios"}
     </button>
   );
 }

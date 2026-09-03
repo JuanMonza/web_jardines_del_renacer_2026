@@ -12,6 +12,10 @@ import {
   saveWorkshopSettings,
   type WorkshopSettings,
 } from "@/lib/workshop-management";
+import {
+  sendWorkshopCancellation,
+  sendWorkshopUpdate,
+} from "@/lib/workshop-mailer";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -125,6 +129,32 @@ async function getData() {
   };
 }
 
+async function notifyWorkshopRegistrations(input: {
+  workshopId: number;
+  type: "updated" | "cancelled";
+  title: string;
+  date: string;
+  place: string;
+  connectionUrl?: string;
+}) {
+  const registrations = await query<{ nombre: string; email: string }>(
+    "SELECT nombre,email FROM talleres_duelo_inscripciones WHERE taller_id=? AND estado IN ('CONFIRMADA','LISTA_ESPERA')",
+    [input.workshopId],
+  );
+  let sent = 0;
+  for (const registration of registrations) {
+    try {
+      const status = input.type === "cancelled"
+        ? await sendWorkshopCancellation({ ...input, email: registration.email, name: registration.nombre })
+        : await sendWorkshopUpdate({ ...input, email: registration.email, name: registration.nombre });
+      if (status === "ENVIADO") sent += 1;
+    } catch (error) {
+      console.error("No fue posible notificar actualización de taller:", error);
+    }
+  }
+  return { total: registrations.length, sent };
+}
+
 export async function GET(request: NextRequest) {
   if (
     !(await requireAdminPermission(
@@ -182,6 +212,16 @@ export async function POST(request: NextRequest) {
         );
       const id = Number(body.id);
       let workshopId = id;
+      const isEditing = Number.isSafeInteger(id) && id > 0;
+      const previous = isEditing
+        ? (await query<Pick<TallerRow, "fecha_label" | "fecha" | "lugar" | "titulo">>(
+            "SELECT titulo,fecha_label,fecha,lugar FROM talleres_duelo WHERE id=? AND deleted_at IS NULL LIMIT 1",
+            [id],
+          ))[0]
+        : undefined;
+      const previousSettings = isEditing
+        ? (await getWorkshopSettings([id])).get(id)
+        : undefined;
       if (Number.isSafeInteger(id) && id > 0)
         await execute(
           "UPDATE talleres_duelo SET titulo=?,fecha_label=?,fecha=?,lugar=?,descripcion=?,imagen=COALESCE(?,imagen),activo=?,updated_by=? WHERE id=? AND deleted_at IS NULL",
@@ -248,6 +288,32 @@ export async function POST(request: NextRequest) {
             : "TALLER_CREADO",
         detail: titulo,
       });
+      const relevantChange = Boolean(
+        previous && (
+          previous.fecha_label !== fechaLabel ||
+          previous.fecha !== fecha ||
+          previous.lugar !== lugar ||
+          previousSettings?.duration !== clean(body.duracion, 80) ||
+          previousSettings?.modality !== modality ||
+          previousSettings?.connectionUrl !== connectionUrl
+        ),
+      );
+      if (relevantChange) {
+        const notification = await notifyWorkshopRegistrations({
+          workshopId,
+          type: "updated",
+          title: repairMojibake(titulo),
+          date: repairMojibake(fechaLabel),
+          place: repairMojibake(lugar),
+          connectionUrl,
+        });
+        await recordWorkshopActivity({
+          workshopId,
+          adminUserId: session.userId,
+          action: "CORREO_ACTUALIZACION",
+          detail: `Actualización notificada a ${notification.sent} de ${notification.total} inscritos.`,
+        });
+      }
     } else if (action === "delete-taller") {
       const id = Number(body.id);
       if (!Number.isSafeInteger(id) || id < 1)
@@ -255,6 +321,13 @@ export async function POST(request: NextRequest) {
           { message: "Taller inválido." },
           { status: 422 },
         );
+      const workshop = (await query<Pick<TallerRow, "titulo" | "fecha_label" | "lugar">>(
+        "SELECT titulo,fecha_label,lugar FROM talleres_duelo WHERE id=? AND deleted_at IS NULL LIMIT 1",
+        [id],
+      ))[0];
+      const detail = (await getWorkshopSettings([id])).get(id);
+      if (!workshop)
+        return NextResponse.json({ message: "Taller no encontrado." }, { status: 404 });
       await execute(
         "UPDATE talleres_duelo SET activo=FALSE,deleted_at=NOW(),updated_by=? WHERE id=? AND deleted_at IS NULL",
         [session.userId, id],
@@ -264,6 +337,20 @@ export async function POST(request: NextRequest) {
         adminUserId: session.userId,
         action: "TALLER_DESACTIVADO",
         detail: "Taller desactivado desde el panel administrativo.",
+      });
+      const notification = await notifyWorkshopRegistrations({
+        workshopId: id,
+        type: "cancelled",
+        title: repairMojibake(workshop.titulo),
+        date: repairMojibake(workshop.fecha_label),
+        place: repairMojibake(workshop.lugar),
+        connectionUrl: detail?.connectionUrl,
+      });
+      await recordWorkshopActivity({
+        workshopId: id,
+        adminUserId: session.userId,
+        action: "CORREO_CANCELACION",
+        detail: `Cancelación notificada a ${notification.sent} de ${notification.total} inscritos.`,
       });
     } else if (action === "save-album") {
       const tallerId = Number(body.tallerId);
@@ -316,6 +403,15 @@ export async function POST(request: NextRequest) {
           id,
         ]);
       } else {
+        const duplicate = await query<{ id: number }>(
+          "SELECT id FROM talleres_duelo_albumes WHERE taller_id=? AND titulo=? AND (fecha <=> ?) AND deleted_at IS NULL LIMIT 1",
+          [tallerId, titulo, fecha],
+        );
+        if (duplicate.length)
+          return NextResponse.json(
+            { message: "Ya existe un álbum activo con ese taller, título y fecha. Edítalo en lugar de crear otro." },
+            { status: 409 },
+          );
         const result = await execute(
           "INSERT INTO talleres_duelo_albumes (taller_id,titulo,fecha_label,fecha,descripcion,activo,created_by,updated_by) VALUES (?,?,?,?,?,?,?,?)",
           [

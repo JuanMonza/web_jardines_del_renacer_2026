@@ -6,51 +6,10 @@ import {
   recordWorkshopActivity,
 } from "@/lib/workshop-management";
 import { repairMojibake } from "@/lib/text-encoding";
+import { sendWorkshopConfirmation } from "@/lib/workshop-mailer";
 
 const clean = (value: unknown, length: number) =>
   typeof value === "string" ? value.trim().slice(0, length) : "";
-
-async function sendConfirmation(input: {
-  email: string;
-  name: string;
-  title: string;
-  date: string;
-  place: string;
-  status: string;
-  connectionUrl: string;
-}) {
-  const user = (process.env.SMTP_USER || process.env.GMAIL_USER || "").trim();
-  const password = (
-    process.env.SMTP_PASS ||
-    process.env.GMAIL_APP_PASSWORD ||
-    ""
-  ).trim();
-  const from = (process.env.SMTP_FROM || user).trim();
-  if (!user || !password || !from) return "PENDIENTE" as const;
-  const nodemailer = require("nodemailer") as {
-    createTransport: (options: object) => {
-      sendMail: (options: object) => Promise<unknown>;
-    };
-  };
-  const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || "smtp.gmail.com",
-    port: Number(process.env.SMTP_PORT || 465),
-    secure:
-      (process.env.SMTP_SECURE || "").toLowerCase() === "true" ||
-      Number(process.env.SMTP_PORT || 465) === 465,
-    auth: { user, pass: password },
-  });
-  const waiting = input.status === "LISTA_ESPERA";
-  await transporter.sendMail({
-    from,
-    to: input.email,
-    subject: waiting
-      ? `Lista de espera · ${input.title}`
-      : `Inscripción confirmada · ${input.title}`,
-    html: `<div style="font-family:Arial,sans-serif;background:#f5f7fb;padding:24px;color:#1f2937"><div style="max-width:600px;margin:auto;background:#fff;border-radius:16px;overflow:hidden;border:1px solid #dbe5f6"><div style="background:#173f73;color:#fff;padding:20px"><strong>Jardines del Renacer</strong><div style="font-size:13px;margin-top:6px">Talleres de acompañamiento</div></div><div style="padding:24px"><h2 style="margin-top:0">Hola, ${input.name}</h2><p>${waiting ? "Recibimos tu solicitud y quedaste en lista de espera. Te avisaremos si se libera un cupo." : "Tu cupo fue reservado correctamente."}</p><div style="background:#f8fbff;border:1px solid #dbe5f6;border-radius:12px;padding:14px"><p><strong>Taller:</strong> ${input.title}</p><p><strong>Fecha:</strong> ${input.date}</p><p><strong>Lugar:</strong> ${input.place}</p></div>${!waiting && input.connectionUrl ? `<p style="margin:22px 0"><a href="${input.connectionUrl}" style="display:inline-block;background:#2454a0;color:#fff;padding:12px 18px;border-radius:8px;text-decoration:none;font-weight:bold">Conectarme al taller</a></p>` : ""}<p style="font-size:13px;color:#64748b">Si necesitas apoyo o no puedes asistir, comunícate con nuestro equipo.</p></div></div></div>`,
-  });
-  return "ENVIADO" as const;
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -91,6 +50,17 @@ export async function POST(request: NextRequest) {
       );
     const settings = await getWorkshopSettings([workshopId]);
     const detail = settings.get(workshopId)!;
+    const existingRows = await query<{ estado: string }>(
+      "SELECT estado FROM talleres_duelo_inscripciones WHERE taller_id=? AND email=? LIMIT 1",
+      [workshopId, email],
+    );
+    const existing = existingRows[0];
+    if (existing?.estado === "CONFIRMADA")
+      return NextResponse.json({
+        success: true,
+        data: { status: "CONFIRMADA", alreadyRegistered: true },
+        message: "Ya tienes una reserva confirmada para este taller.",
+      });
     const countRows = await query<{ total: number }>(
       "SELECT COUNT(*) AS total FROM talleres_duelo_inscripciones WHERE taller_id=? AND estado='CONFIRMADA'",
       [workshopId],
@@ -110,13 +80,13 @@ export async function POST(request: NextRequest) {
     });
     let emailStatus: "PENDIENTE" | "ENVIADO" | "ERROR" = "PENDIENTE";
     try {
-      emailStatus = await sendConfirmation({
+      emailStatus = await sendWorkshopConfirmation({
         email,
         name,
         title: repairMojibake(workshop.titulo),
         date: repairMojibake(workshop.fecha_label),
         place: repairMojibake(workshop.lugar),
-        status,
+        waiting: status === "LISTA_ESPERA",
         connectionUrl: detail.connectionUrl,
       });
     } catch (emailError) {
@@ -140,8 +110,8 @@ export async function POST(request: NextRequest) {
       data: { status, emailStatus },
       message:
         status === "LISTA_ESPERA"
-          ? "Te registramos en la lista de espera. Revisa tu correo."
-          : "Tu inscripción fue confirmada. Revisa tu correo.",
+          ? "Los cupos se agotaron. Quedaste registrado en la lista de espera y te enviamos la confirmación al correo."
+          : "Reserva realizada con éxito. Te enviamos la confirmación al correo.",
     });
   } catch (error) {
     console.error("No fue posible registrar inscripción a taller:", error);

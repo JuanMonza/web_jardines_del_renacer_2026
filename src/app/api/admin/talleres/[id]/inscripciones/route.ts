@@ -9,6 +9,8 @@ import {
   recordWorkshopActivity,
 } from "@/lib/workshop-management";
 import { repairMojibake } from "@/lib/text-encoding";
+import { getWorkshopSettings } from "@/lib/workshop-management";
+import { sendWorkshopConfirmation } from "@/lib/workshop-mailer";
 
 export const dynamic = "force-dynamic";
 
@@ -130,5 +132,39 @@ export async function PATCH(
       { success: false, message: "No fue posible actualizar la inscripción." },
       { status: 500 },
     );
+  }
+}
+
+export async function POST(
+  request: NextRequest,
+  { params }: { params: { id: string } },
+) {
+  const session = await requireAdminPermission(
+    request.cookies.get(ADMIN_SESSION_COOKIE)?.value,
+    "workshops.update",
+  );
+  if (!session) return NextResponse.json({ success: false, message: "No autorizado." }, { status: 403 });
+  const workshopId = Number(params.id);
+  try {
+    const body = (await request.json()) as Record<string, unknown>;
+    const name = typeof body.nombre === "string" ? body.nombre.trim().slice(0, 180) : "";
+    const phone = typeof body.telefono === "string" ? body.telefono.trim().slice(0, 50) : "";
+    const email = typeof body.email === "string" ? body.email.trim().toLowerCase().slice(0, 160) : "";
+    if (!Number.isSafeInteger(workshopId) || workshopId < 1 || !name || !phone || !/^\S+@\S+\.\S+$/.test(email))
+      return NextResponse.json({ success: false, message: "Completa nombre, teléfono y un correo válido." }, { status: 422 });
+    await ensureWorkshopManagementTables();
+    const workshop = (await query<{ titulo: string; fecha_label: string; lugar: string }>("SELECT titulo,fecha_label,lugar FROM talleres_duelo WHERE id=? AND activo=TRUE AND deleted_at IS NULL LIMIT 1", [workshopId]))[0];
+    if (!workshop) return NextResponse.json({ success: false, message: "El taller ya no está disponible." }, { status: 404 });
+    const settings = (await getWorkshopSettings([workshopId])).get(workshopId)!;
+    const count = (await query<{ total: number }>("SELECT COUNT(*) AS total FROM talleres_duelo_inscripciones WHERE taller_id=? AND estado='CONFIRMADA'", [workshopId]))[0];
+    const status = Number(count?.total || 0) >= settings.capacity ? "LISTA_ESPERA" : "CONFIRMADA";
+    await execute("INSERT INTO talleres_duelo_inscripciones (taller_id,nombre,telefono,email,estado) VALUES (?,?,?,?,?) ON DUPLICATE KEY UPDATE nombre=VALUES(nombre),telefono=VALUES(telefono),estado=IF(estado='CANCELADA',VALUES(estado),estado)", [workshopId, name, phone, email, status]);
+    let emailStatus = "PENDIENTE";
+    try { emailStatus = await sendWorkshopConfirmation({ email, name, title: repairMojibake(workshop.titulo), date: repairMojibake(workshop.fecha_label), place: repairMojibake(workshop.lugar), connectionUrl: settings.connectionUrl, waiting: status === "LISTA_ESPERA" }); } catch { emailStatus = "ERROR"; }
+    await execute("UPDATE talleres_duelo_inscripciones SET correo_estado=?,correo_enviado_at=IF(?='ENVIADO',NOW(),correo_enviado_at) WHERE taller_id=? AND email=?", [emailStatus, emailStatus, workshopId, email]);
+    await recordWorkshopActivity({ workshopId, adminUserId: session.userId, action: "INSCRIPCION_MANUAL", detail: `${name} agregado manualmente con estado ${status}.` });
+    return NextResponse.json({ success: true, message: status === "CONFIRMADA" ? "Persona agregada y reserva confirmada." : "Persona agregada a la lista de espera." });
+  } catch {
+    return NextResponse.json({ success: false, message: "No fue posible agregar la persona." }, { status: 500 });
   }
 }
