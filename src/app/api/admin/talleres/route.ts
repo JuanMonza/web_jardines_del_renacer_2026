@@ -260,6 +260,12 @@ export async function POST(request: NextRequest) {
         ? (String(body.modalidad) as WorkshopSettings["modality"])
         : "Presencial";
       const connectionUrl = cleanConnectionUrl(body.urlConexion);
+      const capacity = Number(body.cupos);
+      if (!Number.isInteger(capacity) || capacity < 1 || capacity > 5000)
+        return NextResponse.json(
+          { message: "Define una cantidad de cupos entre 1 y 5000." },
+          { status: 422 },
+        );
       if (modality !== "Presencial" && !connectionUrl)
         return NextResponse.json(
           {
@@ -272,7 +278,7 @@ export async function POST(request: NextRequest) {
         workshopId,
         city: clean(body.ciudad, 120),
         modality,
-        capacity: Math.min(Math.max(Number(body.cupos) || 20, 1), 5000),
+        capacity,
         facilitator: clean(body.facilitador, 180),
         duration: clean(body.duracion, 80),
         category: clean(body.categoria, 120) || "Acompañamiento en duelo",

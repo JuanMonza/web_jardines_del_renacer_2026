@@ -116,6 +116,8 @@ export default function DashboardTalleresPage() {
     useState<Taller | null>(null);
   const [galleryViewer, setGalleryViewer] = useState<Album | null>(null);
   const [manualRegistration, setManualRegistration] = useState({ nombre: "", telefono: "", email: "" });
+  const [capacityInput, setCapacityInput] = useState("20");
+  const [facilitatorNames, setFacilitatorNames] = useState<string[]>([""]);
   const load = async () => {
     setLoading(true);
     try {
@@ -215,6 +217,15 @@ export default function DashboardTalleresPage() {
             urlConexion: item.connectionUrl || "",
           }
         : blankTaller,
+    );
+    setCapacityInput(String(item?.capacity ?? 20));
+    setFacilitatorNames(
+      (item?.facilitator || "")
+        .split(/[,\n]+/)
+        .map((name) => name.trim())
+        .filter(Boolean)
+        .slice(0, 10)
+        .concat((item?.facilitator || "").trim() ? [] : [""]),
     );
     setModal("taller");
   };
@@ -601,6 +612,8 @@ export default function DashboardTalleresPage() {
                   submit(e, "save-taller", {
                     id: editTaller?.id,
                     ...tallerForm,
+                    cupos: capacityInput,
+                    facilitador: facilitatorNames.filter(Boolean).join(", "),
                   })
                 }
                 className="mt-5 grid gap-4 md:grid-cols-2"
@@ -657,19 +670,19 @@ export default function DashboardTalleresPage() {
                 <Field
                   label="Cupos disponibles"
                   type="number"
-                  value={String(tallerForm.cupos)}
-                  onChange={(v) =>
-                    setTallerForm({
-                      ...tallerForm,
-                      cupos: Math.max(Number(v) || 1, 1),
-                    })
-                  }
+                  value={capacityInput}
+                  onChange={setCapacityInput}
                 />
                 <label className="text-sm font-bold text-[#31547d]">
-                  Facilitadores/as
-                  <textarea rows={2} value={tallerForm.facilitador} onChange={(e) => setTallerForm({ ...tallerForm, facilitador: e.target.value })} placeholder="Escribe uno o varios nombres, separados por coma o por línea" className="mt-1 w-full rounded-xl border border-[#cbdcf3] bg-white p-3 font-normal" />
-                  <span className="mt-1 block text-xs font-normal text-[#6a82a3]">Puedes agregar los nombres libremente; aparecerán juntos en la publicación.</span>
+                  Cantidad de facilitadores/as
+                  <select value={facilitatorNames.length} onChange={(event) => setFacilitatorNames((current) => Array.from({ length: Number(event.target.value) }, (_, index) => current[index] || ""))} className="mt-1 w-full rounded-xl border border-[#cbdcf3] bg-white p-3 font-normal">
+                    {Array.from({ length: 10 }, (_, index) => index + 1).map((quantity) => <option key={quantity} value={quantity}>{quantity} {quantity === 1 ? "facilitador/a" : "facilitadores/as"}</option>)}
+                  </select>
+                  <span className="mt-1 block text-xs font-normal text-[#6a82a3]">Selecciona la cantidad y escribe nombres y apellidos de cada persona.</span>
                 </label>
+                <div className="md:col-span-2 grid gap-3 sm:grid-cols-2">
+                  {facilitatorNames.map((name, index) => <Field key={index} label={`Facilitador/a ${index + 1}`} value={name} onChange={(value) => setFacilitatorNames((current) => current.map((item, currentIndex) => currentIndex === index ? value : item))} />)}
+                </div>
                 <Field
                   label="Duración"
                   value={tallerForm.duracion}

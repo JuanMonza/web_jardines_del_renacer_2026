@@ -96,10 +96,6 @@ function sortByDateAsc(a: TallerDuelo, b: TallerDuelo) {
   return (a.fechaISO ?? "9999-12-31").localeCompare(b.fechaISO ?? "9999-12-31");
 }
 
-function sortByDateDesc(a: TallerDuelo, b: TallerDuelo) {
-  return (b.fechaISO ?? "0000-01-01").localeCompare(a.fechaISO ?? "0000-01-01");
-}
-
 export default function AcompanamientoDueloPage() {
   const todayISO = useMemo(() => getLocalDateISO(), []);
   const [allTalleres, setAllTalleres] = useState<WorkshopView[]>(() =>
@@ -205,25 +201,6 @@ export default function AcompanamientoDueloPage() {
       setSelectedTallerIndex(firstIndex >= 0 ? firstIndex : 0);
     }
   }, [filteredUpcoming, proximosTalleres, selectedTaller?.id]);
-
-  const pastTalleres = useMemo(
-    () =>
-      allTalleres
-        .filter(
-          (taller) =>
-            taller.activo &&
-            Boolean(taller.fechaISO) &&
-            taller.fechaISO! < todayISO,
-        )
-        .sort(sortByDateDesc),
-    [allTalleres, todayISO],
-  );
-
-  const albumsByTaller = useMemo(() => {
-    const map = new Map<string, DueloGalleryAlbum>();
-    albumes.forEach((album) => map.set(album.tallerId, album));
-    return map;
-  }, [albumes]);
 
   const handleWorkshopSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -630,66 +607,6 @@ export default function AcompanamientoDueloPage() {
           </div>
         </Container>
       </section>
-
-      {pastTalleres.length > 0 && (
-        <>
-          <TitleBand title="Talleres Pasados" />
-
-          <section className="py-16 md:py-24">
-            <Container>
-              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                {pastTalleres.map((taller) => {
-                  const album = albumsByTaller.get(taller.id);
-
-                  return (
-                    <FadeIn key={taller.id}>
-                      <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-                        {album?.images.length ? (
-                          <div className="grid grid-cols-3 gap-1 bg-slate-100 p-1">
-                            {album.images.slice(0, 3).map((image) => (
-                              <img
-                                key={image.id}
-                                src={image.src}
-                                alt={image.alt}
-                                className="h-32 w-full rounded-xl object-cover sm:h-40"
-                              />
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="flex h-36 items-center justify-center bg-slate-100 text-sm font-semibold text-slate-500">
-                            Álbum pendiente
-                          </div>
-                        )}
-                        <div className="p-6">
-                          <div className="mb-3 flex flex-wrap items-center gap-2">
-                            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">
-                              Finalizado
-                            </span>
-                            <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
-                              {taller.fecha}
-                            </span>
-                          </div>
-                          <h3 className="text-xl font-bold text-text">
-                            {taller.titulo}
-                          </h3>
-                          <p className="mt-1 text-sm text-textLight">
-                            {taller.lugar}
-                          </p>
-                          {album?.descripcion && (
-                            <p className="mt-3 text-sm leading-relaxed text-textLight">
-                              {album.descripcion}
-                            </p>
-                          )}
-                        </div>
-                      </article>
-                    </FadeIn>
-                  );
-                })}
-              </div>
-            </Container>
-          </section>
-        </>
-      )}
 
       {albumes.length > 0 && (
         <>
