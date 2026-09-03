@@ -155,3 +155,44 @@ export async function sendCandidateApplicationReceivedEmail({
   });
   return true;
 }
+
+export async function sendCandidateVacancyClosedEmail({
+  email,
+  name,
+  vacancyTitle,
+}: {
+  email: string;
+  name: string;
+  vacancyTitle: string;
+}) {
+  const smtp = getSmtpConfiguration();
+  if (!smtp.user || !smtp.pass || !smtp.from) return false;
+  const nodemailer = require("nodemailer") as {
+    createTransport: (options: {
+      host: string;
+      port: number;
+      secure: boolean;
+      auth: { user: string; pass: string };
+    }) => {
+      sendMail: (options: {
+        from: string;
+        to: string;
+        subject: string;
+        html: string;
+      }) => Promise<unknown>;
+    };
+  };
+  const transporter = nodemailer.createTransport({
+    host: smtp.host,
+    port: smtp.port,
+    secure: smtp.secure,
+    auth: { user: smtp.user, pass: smtp.pass },
+  });
+  await transporter.sendMail({
+    from: smtp.from,
+    to: email,
+    subject: `Actualización de tu postulación - ${vacancyTitle}`,
+    html: `<div style="font-family:Arial,sans-serif;color:#24344d;max-width:540px;margin:auto;padding:28px"><p style="color:#3c60a2;font-weight:700;letter-spacing:1.5px;font-size:12px">PORTAL DE POSTULANTES</p><h1 style="font-size:24px;margin:0 0 16px">Actualización de tu proceso</h1><p>Hola, <strong>${escapeHtml(name || "Postulante")}</strong>.</p><p>El proceso de selección para <strong>${escapeHtml(vacancyTitle)}</strong> finalizó y en esta oportunidad no continuarás a la siguiente etapa.</p><div style="margin:24px 0;padding:16px 18px;border-radius:12px;background:#edf3fc"><strong>Tu perfil sigue siendo valioso.</strong><br>Conservaremos tu información para considerarte en futuras vacantes que se ajusten a tu experiencia.</div><p style="font-size:13px;color:#667085">Este es un mensaje automático; por favor no respondas a este correo.</p></div>`,
+  });
+  return true;
+}

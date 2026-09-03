@@ -1,11 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server';
-import type { ApplicationStatus } from '@/config/candidates';
-import { ADMIN_SESSION_COOKIE, requireAdminPermission } from '@/lib/iam/admin-session';
-import { recordVacancyAudit } from '@/lib/vacancy-audit';
-import { getVacancySettings } from '@/lib/vacancy-settings';
+import { NextRequest, NextResponse } from "next/server";
+import type { ApplicationStatus } from "@/config/candidates";
+import {
+  ADMIN_SESSION_COOKIE,
+  requireAdminPermission,
+} from "@/lib/iam/admin-session";
+import { recordVacancyAudit } from "@/lib/vacancy-audit";
+import { getVacancySettings } from "@/lib/vacancy-settings";
 
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 type NotifyStatusPayload = {
   candidateName?: string;
@@ -15,25 +18,54 @@ type NotifyStatusPayload = {
   trackingCode?: string;
   applicationId?: string;
   status?: ApplicationStatus;
+  notes?: string;
 };
 
 function asText(value: unknown) {
-  return typeof value === 'string' ? value.trim() : '';
+  return typeof value === "string" ? value.trim() : "";
 }
 
 function cleanPersonName(value: string) {
-  return value.replace(/\b([\p{L}]+)(?:\s+\1)\b/giu, '$1').replace(/\s{2,}/g, ' ').trim();
+  return value
+    .replace(/\b([\p{L}]+)(?:\s+\1)\b/giu, "$1")
+    .replace(/\s{2,}/g, " ")
+    .trim();
 }
 
 function emailStatusStyle(status: ApplicationStatus) {
-  return ({
-    Recibida: { label: 'Recibida', background: '#e0f2fe', color: '#075985' },
-    'En revision': { label: 'En revisión', background: '#fef3c7', color: '#92400e' },
-    Entrevista: { label: 'Entrevista', background: '#ede9fe', color: '#6d28d9' },
-    'Prueba tecnica': { label: 'Prueba técnica', background: '#ffedd5', color: '#9a3412' },
-    Seleccionado: { label: 'Seleccionado', background: '#dcfce7', color: '#166534' },
-    'No continua': { label: 'No continúa', background: '#fee2e2', color: '#b91c1c' },
-  } as Record<ApplicationStatus, { label: string; background: string; color: string }>)[status];
+  return (
+    {
+      Recibida: { label: "Recibida", background: "#e0f2fe", color: "#075985" },
+      "En revision": {
+        label: "En revisión",
+        background: "#fef3c7",
+        color: "#92400e",
+      },
+      Entrevista: {
+        label: "Entrevista",
+        background: "#ede9fe",
+        color: "#6d28d9",
+      },
+      "Prueba tecnica": {
+        label: "Prueba técnica",
+        background: "#ffedd5",
+        color: "#9a3412",
+      },
+      Seleccionado: {
+        label: "Seleccionado",
+        background: "#dcfce7",
+        color: "#166534",
+      },
+      "No continua": {
+        label: "No continúa",
+        background: "#fee2e2",
+        color: "#b91c1c",
+      },
+    } as Record<
+      ApplicationStatus,
+      { label: string; background: string; color: string }
+    >
+  )[status];
 }
 
 function buildEmailCopy(payload: {
@@ -42,23 +74,21 @@ function buildEmailCopy(payload: {
   status: ApplicationStatus;
   trackingCode: string;
 }) {
-  const name = payload.candidateName || 'Postulante';
+  const name = payload.candidateName || "Postulante";
 
-  if (payload.status === 'Prueba tecnica') {
+  if (payload.status === "Prueba tecnica") {
     return {
       subject: `Avanzaste a prueba tecnica - ${payload.vacancyTitle}`,
       headline: `Hola ${name}, avanzaste a la etapa de prueba tecnica.`,
-      body:
-        'Tu perfil fue validado por nuestro equipo y queremos continuar contigo en el proceso de seleccion. Pronto te contactaremos con instrucciones y fecha.',
+      body: "Tu perfil fue validado por nuestro equipo y queremos continuar contigo en el proceso de seleccion. Pronto te contactaremos con instrucciones y fecha.",
     };
   }
 
-  if (payload.status === 'No continua') {
+  if (payload.status === "No continua") {
     return {
       subject: `Actualización de tu postulación - ${payload.vacancyTitle}`,
       headline: `Hola ${name}, en esta oportunidad no continuarás en el proceso.`,
-      body:
-        'Agradecemos sinceramente tu postulación y el tiempo que dedicaste al proceso. Conservaremos tu información para tenerte en cuenta en futuras vacantes que se ajusten a tu perfil.',
+      body: "Agradecemos sinceramente tu postulación y el tiempo que dedicaste al proceso. Conservaremos tu información para tenerte en cuenta en futuras vacantes que se ajusten a tu perfil.",
     };
   }
 
@@ -94,10 +124,10 @@ function buildHtmlMail(payload: {
           <p style="margin:0 0 8px;font-size:13px;"><strong>Cargo:</strong> ${payload.vacancyTitle}</p>
           <p style="margin:0 0 10px;font-size:13px;"><strong>Estado actual:</strong> <span style="display:inline-block;margin-left:4px;padding:5px 10px;border-radius:999px;background:${statusStyle.background};color:${statusStyle.color};font-weight:700;">${statusStyle.label}</span></p>
           <p style="margin:0 0 8px;font-size:13px;"><strong>Codigo de seguimiento:</strong> ${
-            payload.trackingCode || 'No registrado'
+            payload.trackingCode || "No registrado"
           }</p>
           <p style="margin:0;font-size:13px;"><strong>Cedula:</strong> ${
-            payload.candidateDocument || 'No registrada'
+            payload.candidateDocument || "No registrada"
           }</p>
         </div>
 
@@ -112,8 +142,15 @@ function buildHtmlMail(payload: {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await requireAdminPermission(request.cookies.get(ADMIN_SESSION_COOKIE)?.value, 'vacancies.applications.update');
-    if (!session) return NextResponse.json({ ok: false, message: 'No autorizado.' }, { status: 403 });
+    const session = await requireAdminPermission(
+      request.cookies.get(ADMIN_SESSION_COOKIE)?.value,
+      "vacancies.applications.update",
+    );
+    if (!session)
+      return NextResponse.json(
+        { ok: false, message: "No autorizado." },
+        { status: 403 },
+      );
     const payload = (await request.json()) as NotifyStatusPayload;
 
     const candidateName = cleanPersonName(asText(payload.candidateName));
@@ -123,27 +160,39 @@ export async function POST(request: NextRequest) {
     const trackingCode = asText(payload.trackingCode);
     const applicationId = asText(payload.applicationId);
     const status = payload.status;
+    const notes = asText(payload.notes).slice(0, 1000);
 
     if (!candidateEmail || !vacancyTitle || !status) {
       return NextResponse.json(
-        { ok: false, message: 'Datos incompletos para notificar el estado.' },
+        { ok: false, message: "Datos incompletos para notificar el estado." },
         { status: 400 },
       );
     }
 
     const settings = await getVacancySettings();
-    if (!settings.notificationsEnabled || !settings.notificationStatuses.includes(status)) {
+    if (
+      !settings.notificationsEnabled ||
+      !settings.notificationStatuses.includes(status)
+    ) {
       await recordVacancyAudit({
-        action: 'POSTULANTE_NOTIFICACION_OMITIDA', table: 'postulaciones', recordId: applicationId || 0,
-        description: `Administrador ${session.name} (ID ${session.userId}) actualizó el proceso de ${candidateName || candidateEmail} para “${vacancyTitle}” a ${status}. El correo no se envió porque esta etapa no tiene notificación automática activa.`,
+        action: "POSTULANTE_NOTIFICACION_OMITIDA",
+        table: "postulaciones",
+        recordId: applicationId || 0,
+        description: `Administrador ${session.name} (ID ${session.userId}) actualizó el proceso de ${candidateName || candidateEmail} para “${vacancyTitle}” a ${status}. El correo no se envió porque esta etapa no tiene notificación automática activa. Observación: ${notes || "Sin observación registrada."}`,
       });
-      return NextResponse.json({ ok: true, sent: false, message: 'Estado actualizado. El correo automático está desactivado para esta etapa.' });
+      return NextResponse.json({
+        ok: true,
+        sent: false,
+        message:
+          "Estado actualizado. El correo automático está desactivado para esta etapa.",
+      });
     }
 
-    const smtpHost = asText(process.env.SMTP_HOST || 'smtp.gmail.com');
+    const smtpHost = asText(process.env.SMTP_HOST || "smtp.gmail.com");
     const smtpPort = Number(process.env.SMTP_PORT || 465);
     const smtpSecure =
-      (process.env.SMTP_SECURE || '').toLowerCase() === 'true' || smtpPort === 465;
+      (process.env.SMTP_SECURE || "").toLowerCase() === "true" ||
+      smtpPort === 465;
     const smtpUser = asText(process.env.SMTP_USER || process.env.GMAIL_USER);
     const smtpPass = asText(
       process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD,
@@ -155,13 +204,13 @@ export async function POST(request: NextRequest) {
         {
           ok: false,
           message:
-            'Correo no configurado. Define SMTP_USER, SMTP_PASS (App Password de Google) y SMTP_FROM.',
+            "Correo no configurado. Define SMTP_USER, SMTP_PASS (App Password de Google) y SMTP_FROM.",
         },
         { status: 500 },
       );
     }
 
-    const nodemailer = require('nodemailer') as {
+    const nodemailer = require("nodemailer") as {
       createTransport: (options: {
         host: string;
         port: number;
@@ -212,23 +261,25 @@ export async function POST(request: NextRequest) {
     });
 
     await recordVacancyAudit({
-      action: 'POSTULANTE_NOTIFICADO', table: 'postulaciones', recordId: applicationId || 0,
-      description: `Administrador ${session.name} (ID ${session.userId}) notificó por correo a ${candidateName || candidateEmail} (${candidateEmail}) sobre “${vacancyTitle}”. Estado informado: ${status}.`,
+      action: "POSTULANTE_NOTIFICADO",
+      table: "postulaciones",
+      recordId: applicationId || 0,
+      description: `Administrador ${session.name} (ID ${session.userId}) notificó por correo a ${candidateName || candidateEmail} (${candidateEmail}) sobre “${vacancyTitle}”. Estado informado: ${status}. Observación: ${notes || "Sin observación registrada."}`,
     });
 
     return NextResponse.json({
       ok: true,
       sent: true,
-      message: 'Correo enviado correctamente.',
-      messageId: result.messageId || '',
+      message: "Correo enviado correctamente.",
+      messageId: result.messageId || "",
     });
   } catch (error) {
-    console.error('Error enviando notificacion de vacantes:', error);
+    console.error("Error enviando notificacion de vacantes:", error);
     return NextResponse.json(
       {
         ok: false,
         message:
-          'No se pudo enviar el correo. Verifica si falta instalar nodemailer o revisar credenciales SMTP.',
+          "No se pudo enviar el correo. Verifica si falta instalar nodemailer o revisar credenciales SMTP.",
       },
       { status: 500 },
     );

@@ -85,6 +85,7 @@ export default function PostulantesAdminPanel() {
             vacancyTitle: target.vacancyTitle,
             trackingCode: `JDR-${target.id.padStart(6, "0")}`,
             status,
+            notes,
           }),
         });
         const notificationResult = (await notification.json()) as {

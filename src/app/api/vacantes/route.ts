@@ -1,15 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
-import {getVacanciesFromDB,createVacancyInDB,} from "@/lib/vacanciesStorageDB";
+import {
+  getVacanciesForAdminFromDB,
+  getVacanciesFromDB,
+  createVacancyInDB,
+} from "@/lib/vacanciesStorageDB";
 import { getVacancyApplicationCounts } from "@/lib/candidateStorageDB";
-import { ADMIN_SESSION_COOKIE, requireAdminPermission } from '@/lib/iam/admin-session';
-import { recordVacancyAudit } from '@/lib/vacancy-audit';
+import {
+  ADMIN_SESSION_COOKIE,
+  requireAdminPermission,
+} from "@/lib/iam/admin-session";
+import { recordVacancyAudit } from "@/lib/vacancy-audit";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const includePaused = request.nextUrl.searchParams.get("admin") === "1";
+    if (includePaused) {
+      const session = await requireAdminPermission(
+        request.cookies.get(ADMIN_SESSION_COOKIE)?.value,
+        "vacancies.applications.view",
+      );
+      if (!session)
+        return NextResponse.json(
+          { success: false, message: "No autorizado." },
+          { status: 403 },
+        );
+    }
     const [dbVacancies, counts] = await Promise.all([
-      getVacanciesFromDB(),
+      includePaused ? getVacanciesForAdminFromDB() : getVacanciesFromDB(),
       getVacancyApplicationCounts(),
     ]);
 
@@ -22,18 +41,37 @@ export async function GET() {
   } catch (error) {
     console.error("Error en GET /api/vacantes:", error);
 
-    return NextResponse.json({ success: false, message: 'No fue posible consultar las vacantes desde la base operativa.' }, { status: 503 });
+    return NextResponse.json(
+      {
+        success: false,
+        message:
+          "No fue posible consultar las vacantes desde la base operativa.",
+      },
+      { status: 503 },
+    );
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await requireAdminPermission(request.cookies.get(ADMIN_SESSION_COOKIE)?.value, 'vacancies.create');
-    if (!session) return NextResponse.json({ success: false, message: 'No autorizado.' }, { status: 403 });
+    const session = await requireAdminPermission(
+      request.cookies.get(ADMIN_SESSION_COOKIE)?.value,
+      "vacancies.create",
+    );
+    if (!session)
+      return NextResponse.json(
+        { success: false, message: "No autorizado." },
+        { status: 403 },
+      );
     const body = await request.json();
 
     const id = await createVacancyInDB(body);
-    await recordVacancyAudit({ action: 'VACANTE_CREADA', table: 'vacantes', recordId: id, description: `Administrador ${session.name} (ID ${session.userId}) creó la vacante “${body.title || 'Sin título'}”.` });
+    await recordVacancyAudit({
+      action: "VACANTE_CREADA",
+      table: "vacantes",
+      recordId: id,
+      description: `Administrador ${session.name} (ID ${session.userId}) creó la vacante “${body.title || "Sin título"}”.`,
+    });
 
     return NextResponse.json(
       {

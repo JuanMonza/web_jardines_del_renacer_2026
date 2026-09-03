@@ -1,8 +1,8 @@
-import { query, execute } from './db';
+import { query, execute } from "./db";
 import {
   normalizeVacancyDepartment,
   type JobVacancy,
-} from '@/config/vacancies';
+} from "@/config/vacancies";
 
 /**
  * Mapea una fila de la tabla `vacantes` a la interfaz `JobVacancy`.
@@ -17,18 +17,33 @@ function mapDbVacancyToJobVacancy(dbVacancy: any): JobVacancy | null {
   }
 
   return {
-    id: String(dbVacancy.id), title: dbVacancy.titulo, area: 'Talento humano',
-    department: normalizeVacancyDepartment(dbVacancy.departamento), city: dbVacancy.ciudad,
-    modality: dbVacancy.modalidad === 'Híbrido' ? 'Hibrido' : dbVacancy.modalidad,
-    contractType: dbVacancy.tipo_contrato || 'Tiempo completo', schedule: '',
-    salary: dbVacancy.mostrar_salario ? [dbVacancy.salario_desde, dbVacancy.salario_hasta].filter(Boolean).join(' - ') : 'A convenir', summary: dbVacancy.descripcion || '',
+    id: String(dbVacancy.id),
+    title: dbVacancy.titulo,
+    area: "Talento humano",
+    department: normalizeVacancyDepartment(dbVacancy.departamento),
+    city: dbVacancy.ciudad,
+    modality:
+      dbVacancy.modalidad === "Híbrido" ? "Hibrido" : dbVacancy.modalidad,
+    contractType: dbVacancy.tipo_contrato || "Tiempo completo",
+    schedule: "",
+    salary: dbVacancy.mostrar_salario
+      ? [dbVacancy.salario_desde, dbVacancy.salario_hasta]
+          .filter(Boolean)
+          .join(" - ")
+      : "A convenir",
+    summary: dbVacancy.descripcion || "",
     // Los campos JSON se parsean. Si están vacíos o nulos, se devuelve un array vacío.
-    requirements: dbVacancy.requisitos ? JSON.parse(dbVacancy.requisitos) : [], benefits: dbVacancy.beneficios ? JSON.parse(dbVacancy.beneficios) : [],
-    featured: Boolean(dbVacancy.destacada), postedAt: new Date(dbVacancy.fecha_publicacion || dbVacancy.created_at).toISOString().slice(0, 10),
+    requirements: dbVacancy.requisitos ? JSON.parse(dbVacancy.requisitos) : [],
+    benefits: dbVacancy.beneficios ? JSON.parse(dbVacancy.beneficios) : [],
+    featured: Boolean(dbVacancy.destacada),
+    postedAt: new Date(dbVacancy.fecha_publicacion || dbVacancy.created_at)
+      .toISOString()
+      .slice(0, 10),
     createdAt: new Date(dbVacancy.created_at).toISOString(),
     updatedAt: new Date(dbVacancy.updated_at).toISOString(),
     // El campo 'experience' no está en la tabla, se puede añadir o manejar por defecto.
-    experience: dbVacancy.experience ?? '',
+    experience: dbVacancy.experience ?? "",
+    status: dbVacancy.estado === "Pausada" ? "Pausada" : "Publicada",
   };
 }
 
@@ -38,12 +53,25 @@ function mapDbVacancyToJobVacancy(dbVacancy: any): JobVacancy | null {
  */
 export async function getVacanciesFromDB(): Promise<JobVacancy[]> {
   try {
-    const rows = await query('SELECT * FROM vacantes WHERE estado = ? AND deleted_at IS NULL ORDER BY destacada DESC, fecha_publicacion DESC', ['Publicada']);
-    return rows
-      .map(mapDbVacancyToJobVacancy)
-      .filter(Boolean) as JobVacancy[];
+    const rows = await query(
+      "SELECT * FROM vacantes WHERE estado = ? AND deleted_at IS NULL ORDER BY destacada DESC, fecha_publicacion DESC",
+      ["Publicada"],
+    );
+    return rows.map(mapDbVacancyToJobVacancy).filter(Boolean) as JobVacancy[];
   } catch (error) {
-    console.error('Error al leer las vacantes de la base de datos:', error);
+    console.error("Error al leer las vacantes de la base de datos:", error);
+    return [];
+  }
+}
+
+export async function getVacanciesForAdminFromDB(): Promise<JobVacancy[]> {
+  try {
+    const rows = await query(
+      "SELECT * FROM vacantes WHERE estado IN ('Publicada','Pausada') AND deleted_at IS NULL ORDER BY destacada DESC, fecha_publicacion DESC",
+    );
+    return rows.map(mapDbVacancyToJobVacancy).filter(Boolean) as JobVacancy[];
+  } catch (error) {
+    console.error("Error al leer vacantes para administración:", error);
     return [];
   }
 }
@@ -53,8 +81,13 @@ export async function getVacanciesFromDB(): Promise<JobVacancy[]> {
  * @param id - El UUID de la vacante a buscar.
  * @returns Una promesa que se resuelve en el objeto `JobVacancy` o `null` si no se encuentra.
  */
-export async function getVacancyByIdFromDB(id: string): Promise<JobVacancy | null> {
-  const rows = await query('SELECT * FROM vacantes WHERE id = ? AND estado = ? AND deleted_at IS NULL', [id, 'Publicada']);
+export async function getVacancyByIdFromDB(
+  id: string,
+): Promise<JobVacancy | null> {
+  const rows = await query(
+    "SELECT * FROM vacantes WHERE id = ? AND estado = ? AND deleted_at IS NULL",
+    [id, "Publicada"],
+  );
   if (rows.length === 0) {
     return null;
   }
@@ -66,14 +99,39 @@ export async function getVacancyByIdFromDB(id: string): Promise<JobVacancy | nul
  * @param vacancyData - Un objeto con los datos de la nueva vacante.
  * @returns El ID de la nueva vacante creada.
  */
-export async function createVacancyInDB(vacancyData: Omit<JobVacancy, 'id' | 'createdAt' | 'updatedAt'>) {
-  const { title, area, department, city, modality, contractType, schedule, summary, requirements, benefits, salary, featured, postedAt } = vacancyData;
+export async function createVacancyInDB(
+  vacancyData: Omit<JobVacancy, "id" | "createdAt" | "updatedAt">,
+) {
+  const {
+    title,
+    area,
+    department,
+    city,
+    modality,
+    contractType,
+    schedule,
+    summary,
+    requirements,
+    benefits,
+    salary,
+    featured,
+    postedAt,
+  } = vacancyData;
   const sql = `
     INSERT INTO vacantes (titulo, descripcion, requisitos, beneficios, ciudad, departamento, modalidad, tipo_contrato, destacada, estado, fecha_publicacion)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Publicada', ?)
   `;
   const params = [
-    title, summary, JSON.stringify(requirements), JSON.stringify(benefits), city, department, modality === 'Hibrido' ? 'Híbrido' : modality, contractType === 'Tiempo completo' ? 'Indefinido' : 'Fijo', featured, postedAt,
+    title,
+    summary,
+    JSON.stringify(requirements),
+    JSON.stringify(benefits),
+    city,
+    department,
+    modality === "Hibrido" ? "Híbrido" : modality,
+    contractType === "Tiempo completo" ? "Indefinido" : "Fijo",
+    featured,
+    postedAt,
   ];
   const result = await execute(sql, params);
   return result.insertId;
@@ -89,12 +147,22 @@ export async function deactivateVacancyInDB(id: string): Promise<number> {
   const result = await execute(sql, [id]);
   return result.affectedRows;
 }
+export async function setVacancyStatusInDB(
+  id: string,
+  status: "Publicada" | "Pausada",
+): Promise<number> {
+  const result = await execute(
+    "UPDATE vacantes SET estado = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND deleted_at IS NULL",
+    [status, id],
+  );
+  return result.affectedRows;
+}
 /**
  * Actualiza una vacante existente.
  */
 export async function updateVacancyInDB(
   id: string,
-  vacancyData: Omit<JobVacancy, 'id' | 'createdAt' | 'updatedAt'>
+  vacancyData: Omit<JobVacancy, "id" | "createdAt" | "updatedAt">,
 ): Promise<number> {
   const {
     title,
@@ -118,7 +186,16 @@ export async function updateVacancyInDB(
   `;
 
   const result = await execute(sql, [
-    title, summary, JSON.stringify(requirements), JSON.stringify(benefits), city, department, modality === 'Hibrido' ? 'Híbrido' : modality, contractType === 'Tiempo completo' ? 'Indefinido' : 'Fijo', featured, postedAt,
+    title,
+    summary,
+    JSON.stringify(requirements),
+    JSON.stringify(benefits),
+    city,
+    department,
+    modality === "Hibrido" ? "Híbrido" : modality,
+    contractType === "Tiempo completo" ? "Indefinido" : "Fijo",
+    featured,
+    postedAt,
     id,
   ]);
 

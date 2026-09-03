@@ -160,6 +160,9 @@ function auditRow(item: AuditItem) {
     /Administrador\s+(.+?)\s+\(ID\s+(\d+)\)/i,
   );
   const quotedItem = description.match(/“([^”]+)”/);
+  const observation = description
+    .match(/Observación:\s*([\s\S]*?)$/i)?.[1]
+    ?.trim();
   return {
     Fecha: formatDate(item.createdAt),
     Movimiento:
@@ -168,9 +171,12 @@ function auditRow(item: AuditItem) {
           VACANTE_CREADA: "Creó una vacante",
           VACANTE_ACTUALIZADA: "Editó una vacante",
           VACANTE_ELIMINADA: "Cerró una vacante",
+          VACANTE_PAUSADA: "Pausó una vacante",
+          VACANTE_REANUDADA: "Reanudó una vacante",
           POSTULANTE_ELIMINADO: "Eliminó un postulante",
           POSTULACION_ESTADO_ACTUALIZADO: "Actualizó un proceso",
           POSTULANTE_NOTIFICADO: "Envió una notificación",
+          POSTULANTE_NO_CONTINUA_VACANTE_CUBIERTA: "Notificó cierre de vacante",
         } as Record<string, string>
       )[action] || action.replaceAll("_", " "),
     Estado: auditStatus(description),
@@ -178,6 +184,7 @@ function auditRow(item: AuditItem) {
       ? `${responsible[1]} (ID ${responsible[2]})`
       : "No disponible (histórico)",
     "Elemento afectado": quotedItem?.[1] || "Ver detalle",
+    Observación: observation || "Sin observación registrada",
     "Detalle completo":
       description || "Sin detalle disponible para este movimiento histórico.",
   };
@@ -189,9 +196,12 @@ function auditLabel(action: string) {
         VACANTE_CREADA: "Vacante creada",
         VACANTE_ACTUALIZADA: "Vacante editada",
         VACANTE_ELIMINADA: "Vacante cerrada",
+        VACANTE_PAUSADA: "Vacante pausada",
+        VACANTE_REANUDADA: "Vacante reanudada",
         POSTULANTE_ELIMINADO: "Postulante eliminado",
         POSTULACION_ESTADO_ACTUALIZADO: "Seguimiento actualizado",
         POSTULANTE_NOTIFICADO: "Correo enviado",
+        POSTULANTE_NO_CONTINUA_VACANTE_CUBIERTA: "Cierre notificado",
       } as Record<string, string>
     )[action] || action.replaceAll("_", " ")
   );
@@ -201,6 +211,8 @@ export default function AnalyticsPage() {
   const [apps, setApps] = useState<Application[]>([]);
   const [vacancies, setVacancies] = useState<Vacancy[]>([]);
   const [audit, setAudit] = useState<AuditItem[]>([]);
+  const [auditStartDate, setAuditStartDate] = useState("");
+  const [auditEndDate, setAuditEndDate] = useState("");
   const [isExporting, setIsExporting] = useState(false);
   useEffect(() => {
     void Promise.all([
@@ -223,6 +235,24 @@ export default function AnalyticsPage() {
     (vacancy) => (vacancy.applicationCount || 0) > 0,
   ).length;
   const noMovement = vacancies.filter((vacancy) => !vacancy.applicationCount);
+  const visibleAudit = useMemo(
+    () =>
+      audit.filter((item) => {
+        const value = new Date(item.createdAt).getTime();
+        const from = auditStartDate
+          ? new Date(`${auditStartDate}T00:00:00`).getTime()
+          : null;
+        const until = auditEndDate
+          ? new Date(`${auditEndDate}T23:59:59.999`).getTime()
+          : null;
+        return (
+          Number.isFinite(value) &&
+          (from === null || value >= from) &&
+          (until === null || value <= until)
+        );
+      }),
+    [audit, auditStartDate, auditEndDate],
+  );
   const stalled = apps.filter(
     (item) =>
       item.status === "Recibida" &&
@@ -336,8 +366,8 @@ export default function AnalyticsPage() {
       const auditSheet = XLSX.utils.json_to_sheet(auditRows);
       styleTableSheet(
         auditSheet,
-        `A1:F${Math.max(1, auditRows.length + 1)}`,
-        [25, 32, 20, 34, 35, 100],
+        `A1:G${Math.max(1, auditRows.length + 1)}`,
+        [25, 32, 20, 34, 35, 55, 100],
       );
       auditRows.forEach((item, index) =>
         applyStatusCellStyle(auditSheet, `C${index + 2}`, item.Estado),
@@ -356,22 +386,18 @@ export default function AnalyticsPage() {
     }
   };
   const alerts = [
-    ...noMovement
-      .slice(0, 2)
-      .map((item) => ({
-        type: "Vacante sin movimiento",
-        text: item.title,
-        icon: BriefcaseBusiness,
-        tone: "text-amber-700 bg-amber-50",
-      })),
-    ...stalled
-      .slice(0, 2)
-      .map((item) => ({
-        type: "Postulación pendiente",
-        text: `${item.candidateName} · ${item.vacancyTitle}`,
-        icon: Clock3,
-        tone: "text-rose-700 bg-rose-50",
-      })),
+    ...noMovement.slice(0, 2).map((item) => ({
+      type: "Vacante sin movimiento",
+      text: item.title,
+      icon: BriefcaseBusiness,
+      tone: "text-amber-700 bg-amber-50",
+    })),
+    ...stalled.slice(0, 2).map((item) => ({
+      type: "Postulación pendiente",
+      text: `${item.candidateName} · ${item.vacancyTitle}`,
+      icon: Clock3,
+      tone: "text-rose-700 bg-rose-50",
+    })),
   ];
   return (
     <div className="space-y-6 p-6 md:p-8">
@@ -581,8 +607,38 @@ export default function AnalyticsPage() {
           <h2 className="mt-1 text-xl font-bold text-text">
             Últimos movimientos
           </h2>
-          <div className="mt-5 space-y-4">
-            {audit.slice(0, 4).map((item, index) => (
+          <div className="mt-4 grid gap-2 rounded-2xl border border-[#dbe5f3] bg-[#f8fbff] p-3 sm:grid-cols-[1fr_1fr_auto]">
+            <input
+              type="date"
+              value={auditStartDate}
+              onChange={(event) => setAuditStartDate(event.target.value)}
+              className="rounded-xl border border-border bg-white px-3 py-2 text-sm"
+              aria-label="Movimientos desde"
+            />
+            <input
+              type="date"
+              value={auditEndDate}
+              onChange={(event) => setAuditEndDate(event.target.value)}
+              className="rounded-xl border border-border bg-white px-3 py-2 text-sm"
+              aria-label="Movimientos hasta"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                setAuditStartDate("");
+                setAuditEndDate("");
+              }}
+              className="rounded-xl border border-primary/20 bg-white px-3 py-2 text-sm font-bold text-primary"
+            >
+              Limpiar
+            </button>
+          </div>
+          <p className="mt-3 text-xs font-semibold text-textLight">
+            {visibleAudit.length} de {audit.length} movimiento(s), ordenados por
+            fecha.
+          </p>
+          <div className="mt-4 max-h-[420px] space-y-4 overflow-y-auto pr-2 custom-scrollbar">
+            {visibleAudit.map((item, index) => (
               <article
                 key={`${item.createdAt}-${index}`}
                 className="border-l-2 border-primary/30 pl-4"
@@ -598,9 +654,9 @@ export default function AnalyticsPage() {
                 </p>
               </article>
             ))}
-            {!audit.length && (
+            {!visibleAudit.length && (
               <p className="rounded-2xl bg-slate-50 p-5 text-center text-sm text-textLight">
-                Los movimientos aparecerán aquí.
+                No hay movimientos en el rango seleccionado.
               </p>
             )}
           </div>

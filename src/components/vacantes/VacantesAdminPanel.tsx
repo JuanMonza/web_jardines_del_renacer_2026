@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useRef } from "react";
+import * as XLSX from "xlsx-js-style";
 import { createPortal } from "react-dom";
 import { useSearchParams } from "next/navigation";
 import { Toaster, toast } from "react-hot-toast";
@@ -41,6 +42,8 @@ import {
   Pencil,
   Trash2,
   ChevronDown,
+  Pause,
+  Play,
 } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
@@ -716,51 +719,45 @@ function RegisteredUsersList() {
     return <ArrowDown className="inline-block ml-1 h-4 w-4" />;
   };
 
-  const handleExportCSV = () => {
-    const headers = [
-      "Nombre",
-      "Documento",
-      "Email",
-      "Teléfono",
-      "Última Postulación",
+  const handleExportExcel = () => {
+    const workbook = XLSX.utils.book_new();
+    const sheet = XLSX.utils.json_to_sheet(
+      processedUsers.map((user, index) => ({
+        "N.º": index + 1,
+        Nombre: user.candidateName || "No registrado",
+        Documento: user.candidateDocument || "No registrado",
+        Correo: user.candidateEmail || "No registrado",
+        Teléfono: user.candidatePhone || "No registrado",
+        "Última postulación": user.appliedAt
+          ? formatDate(user.appliedAt)
+          : "Sin postulaciones",
+      })),
+    );
+    const range = XLSX.utils.decode_range(sheet["!ref"] || "A1:F1");
+    for (let column = range.s.c; column <= range.e.c; column += 1) {
+      const cell = sheet[XLSX.utils.encode_cell({ r: 0, c: column })];
+      if (cell)
+        cell.s = {
+          font: { bold: true, color: { rgb: "FFFFFF" } },
+          fill: { fgColor: { rgb: "173F73" } },
+          alignment: { horizontal: "center" },
+        };
+    }
+    sheet["!cols"] = [
+      { wch: 8 },
+      { wch: 30 },
+      { wch: 18 },
+      { wch: 34 },
+      { wch: 18 },
+      { wch: 25 },
     ];
-
-    const escapeCsvField = (field: string | undefined | null): string => {
-      if (field === null || field === undefined) {
-        return '""';
-      }
-      const stringField = String(field);
-      if (/[",\n\r]/.test(stringField)) {
-        return `"${stringField.replace(/"/g, '""')}"`;
-      }
-      return `"${stringField}"`;
-    };
-
-    const rows = processedUsers.map((user) =>
-      [
-        escapeCsvField(user.candidateName),
-        escapeCsvField(user.candidateDocument),
-        escapeCsvField(user.candidateEmail),
-        escapeCsvField(user.candidatePhone),
-        escapeCsvField(user.appliedAt ? formatDate(user.appliedAt) : "N/A"),
-      ].join(","),
+    sheet["!autofilter"] = { ref: sheet["!ref"] || "A1:F1" };
+    sheet["!freeze"] = { xSplit: 0, ySplit: 1 };
+    XLSX.utils.book_append_sheet(workbook, sheet, "Usuarios registrados");
+    XLSX.writeFile(
+      workbook,
+      `usuarios-registrados-${new Date().toISOString().slice(0, 10)}.xlsx`,
     );
-
-    const csvString = [headers.join(","), ...rows].join("\n");
-    const blob = new Blob([`\uFEFF${csvString}`], {
-      type: "text/csv;charset=utf-8;",
-    });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute(
-      "download",
-      `usuarios-registrados-${new Date().toISOString().slice(0, 10)}.csv`,
-    );
-    link.style.visibility = "hidden";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   };
 
   const processedUsers = useMemo(() => {
@@ -838,12 +835,12 @@ function RegisteredUsersList() {
           </p>
         </div>
         <Button
-          onClick={handleExportCSV}
+          onClick={handleExportExcel}
           variant="secondary"
           disabled={processedUsers.length === 0}
         >
           <FileDown className="mr-2 h-4 w-4" />
-          Exportar a CSV
+          Exportar a Excel
         </Button>
       </div>
       <div className="relative">
@@ -1089,6 +1086,11 @@ export default function VacantesAdminPanel() {
   const [showVacancyForm, setShowVacancyForm] = useState(false);
   const [isModalMounted, setIsModalMounted] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<JobVacancy | null>(null);
+  const [pendingApplicationStatus, setPendingApplicationStatus] = useState<{
+    applicationId: string;
+    status: JobApplication["status"];
+  } | null>(null);
+  const [statusObservation, setStatusObservation] = useState("");
   const [search, setSearch] = useState("");
   const searchParams = useSearchParams();
   const initialTab = searchParams.get("tab");
@@ -1101,7 +1103,7 @@ export default function VacantesAdminPanel() {
   const vacanciesListRef = useRef<HTMLDivElement>(null);
   const loadVacancies = async () => {
     try {
-      const response = await fetch("/api/vacantes", {
+      const response = await fetch("/api/vacantes?admin=1", {
         cache: "no-store",
       });
 
@@ -1313,27 +1315,57 @@ export default function VacantesAdminPanel() {
 
   const handleDelete = async (vacancy: JobVacancy) => {
     try {
-      await fetch(`/api/vacantes/${vacancy.id}`, {
+      const response = await fetch(`/api/vacantes/${vacancy.id}`, {
         method: "DELETE",
       });
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.message);
       await loadVacancies();
       if (editingId === vacancy.id) {
         resetDraft();
       }
-      toast.success("Vacante desactivada correctamente.");
+      toast.success(result.message || "Vacante cerrada correctamente.");
     } catch (error) {
-      console.error(error);
-      toast.error("No fue posible eliminar la vacante.");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "No fue posible cerrar la vacante.",
+      );
+    }
+  };
+  const handlePause = async (vacancy: JobVacancy) => {
+    const nextStatus = vacancy.status === "Pausada" ? "Publicada" : "Pausada";
+    try {
+      const response = await fetch(`/api/vacantes/${vacancy.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: nextStatus }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.message);
+      await loadVacancies();
+      toast.success(
+        nextStatus === "Pausada"
+          ? "Vacante pausada. Ya no recibe nuevas postulaciones."
+          : "Vacante reanudada y disponible nuevamente.",
+      );
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "No fue posible actualizar la vacante.",
+      );
     }
   };
 
-  const handleUpdateApplicationStatus = (
+  const submitApplicationStatusUpdate = (
     applicationId: string,
     status: JobApplication["status"],
   ) => {
     const target = applications.find(
       (application) => application.id === applicationId,
     );
+    const notes = statusObservation.trim();
     const toastId = toast.loading(
       "Actualizando estado y enviando notificación...",
     );
@@ -1353,7 +1385,7 @@ export default function VacantesAdminPanel() {
           {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ status }),
+            body: JSON.stringify({ status, notes }),
           },
         );
         if (!updateResponse.ok) {
@@ -1382,6 +1414,7 @@ export default function VacantesAdminPanel() {
             vacancyTitle: target.vacancyTitle,
             trackingCode: target.trackingCode,
             status,
+            notes,
           }),
         });
 
@@ -1411,6 +1444,14 @@ export default function VacantesAdminPanel() {
     })();
   };
 
+  const handleUpdateApplicationStatus = (
+    applicationId: string,
+    status: JobApplication["status"],
+  ) => {
+    setPendingApplicationStatus({ applicationId, status });
+    setStatusObservation("");
+  };
+
   return (
     <div className="min-h-screen pt-2 pb-10">
       {/* Es recomendable mover el componente Toaster a un layout principal para que las notificaciones persistan durante la navegación */}
@@ -1437,6 +1478,65 @@ export default function VacantesAdminPanel() {
           setPendingDelete(null);
         }}
       />
+      {pendingApplicationStatus && (
+        <div className="fixed inset-0 z-[2147483647] flex items-center justify-center bg-[#07182e]/55 p-4 backdrop-blur-sm">
+          <section className="w-full max-w-xl rounded-[28px] border border-white/80 bg-[#f8fbff] p-6 shadow-2xl">
+            <p className="text-xs font-bold uppercase tracking-[.16em] text-primary">
+              Trazabilidad del proceso
+            </p>
+            <h2 className="mt-2 text-2xl font-bold text-text">
+              Registrar decisión de selección
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-textLight">
+              Explica por qué el postulante cambia a esta etapa. La nota quedará
+              asociada al administrador, al historial y al correo enviado.
+            </p>
+            <div className="mt-5 rounded-2xl border border-primary/10 bg-white p-4">
+              <p className="text-xs font-bold uppercase tracking-wider text-textLight">
+                Nueva etapa
+              </p>
+              <p className="mt-1 font-bold text-primary">
+                {pendingApplicationStatus.status}
+              </p>
+            </div>
+            <label className="mt-5 block text-sm font-bold text-text">
+              Observación del movimiento
+              <textarea
+                autoFocus
+                value={statusObservation}
+                onChange={(event) => setStatusObservation(event.target.value)}
+                rows={5}
+                placeholder="Ej.: Cumple el perfil y la experiencia requerida; se agenda entrevista con Talento Humano."
+                className="mt-2 w-full rounded-xl border border-border bg-white p-4 font-normal outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15"
+              />
+            </label>
+            <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setPendingApplicationStatus(null)}
+                className="rounded-xl border border-border bg-white px-4 py-3 text-sm font-bold text-textLight"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={!statusObservation.trim()}
+                onClick={() => {
+                  const change = pendingApplicationStatus;
+                  setPendingApplicationStatus(null);
+                  submitApplicationStatusUpdate(
+                    change.applicationId,
+                    change.status,
+                  );
+                }}
+                className="rounded-xl bg-primary px-5 py-3 text-sm font-bold text-white transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Guardar movimiento y notificar
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
       <section className="relative mb-6 overflow-hidden rounded-[30px] bg-gradient-to-br from-[#143860] via-[#24558f] to-[#7199c7] p-7 text-white shadow-[0_20px_50px_rgba(20,57,106,.22)] md:p-8">
         <div className="absolute -right-10 -top-12 h-48 w-48 rounded-full border-[18px] border-white/10" />
         <div className="relative flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
@@ -1804,16 +1904,7 @@ export default function VacantesAdminPanel() {
 
           {activeTab === "vacancies" && (
             <>
-              <VacanciesMetrics
-                applications={ownedApplications}
-                vacancies={ownedVacancies}
-                onMetricClick={handleMetricClick}
-              />
-
-              <div
-                ref={vacanciesListRef}
-                className="mt-6 pt-5 border-t border-primary/10"
-              >
+              <div ref={vacanciesListRef} className="pt-2">
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <div>
                     <p className="text-xs font-bold uppercase tracking-[.16em] text-primary">
@@ -1840,6 +1931,18 @@ export default function VacantesAdminPanel() {
                   const applicationsForVacancy = ownedApplications.filter(
                     (app) => app.vacancyId === vacancy.id,
                   );
+                  const inProgressForVacancy = applicationsForVacancy.filter(
+                    (app) =>
+                      ["En revision", "Entrevista", "Prueba tecnica"].includes(
+                        app.status,
+                      ),
+                  ).length;
+                  const selectedForVacancy = applicationsForVacancy.filter(
+                    (app) => app.status === "Seleccionado",
+                  ).length;
+                  const notContinuedForVacancy = applicationsForVacancy.filter(
+                    (app) => app.status === "No continua",
+                  ).length;
                   const isExpanded = expandedVacancyId === vacancy.id;
 
                   return (
@@ -1867,6 +1970,11 @@ export default function VacantesAdminPanel() {
                             Destacada
                           </span>
                         )}
+                        {vacancy.status === "Pausada" && (
+                          <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-amber-800">
+                            Pausada
+                          </span>
+                        )}
                       </div>
                       <div className="mt-5 flex flex-wrap gap-2">
                         <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-50 px-2.5 py-2 text-xs font-semibold text-slate-600">
@@ -1881,6 +1989,35 @@ export default function VacantesAdminPanel() {
                           {vacancy.modality} · {vacancy.contractType}
                         </span>
                       </div>
+                      <div className="mt-4 grid grid-cols-4 gap-2 rounded-2xl border border-[#e5edf7] bg-[#f8fbff] p-3 text-center">
+                        {[
+                          [
+                            "Recibidas",
+                            applicationsForVacancy.length,
+                            "text-primary",
+                          ],
+                          ["Avanzan", inProgressForVacancy, "text-violet-700"],
+                          [
+                            "Seleccionados",
+                            selectedForVacancy,
+                            "text-emerald-700",
+                          ],
+                          [
+                            "No continúan",
+                            notContinuedForVacancy,
+                            "text-red-700",
+                          ],
+                        ].map(([label, value, tone]) => (
+                          <div key={String(label)}>
+                            <p className={`text-lg font-black ${tone}`}>
+                              {value}
+                            </p>
+                            <p className="text-[9px] font-bold uppercase leading-3 text-textLight">
+                              {label}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
 
                       <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-[#edf2f8] pt-4">
                         <button
@@ -1889,6 +2026,18 @@ export default function VacantesAdminPanel() {
                           className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-primary-hover"
                         >
                           <Pencil size={14} /> Editar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void handlePause(vacancy)}
+                          className="inline-flex items-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs font-bold text-amber-800 transition hover:bg-amber-100"
+                        >
+                          {vacancy.status === "Pausada" ? (
+                            <Play size={14} />
+                          ) : (
+                            <Pause size={14} />
+                          )}
+                          {vacancy.status === "Pausada" ? "Reanudar" : "Pausar"}
                         </button>
                         <button
                           type="button"
