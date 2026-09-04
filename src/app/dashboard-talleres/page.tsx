@@ -1,7 +1,7 @@
 "use client";
 
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
-import { CalendarDays, ImagePlus, Pencil, Plus, Trash2, X } from "lucide-react";
+import { CalendarDays, Clock3, FileDown, ImagePlus, Pencil, Plus, Trash2, X } from "lucide-react";
 import * as XLSX from "xlsx-js-style";
 
 type Taller = {
@@ -53,6 +53,9 @@ type Registration = {
   created_at: string;
 };
 type PendingDelete = { action: "delete-taller" | "delete-album"; id: number; label: string };
+type AuditWorkshop = { id: number; title: string; date: string; dateISO: string | null; place: string; active: boolean; deletedAt: string | null; createdAt: string; updatedAt: string; capacity: number; confirmed: number; waiting: number; cancelled: number; attended: number; absent: number };
+type AuditMovement = { id: number; taller_id: number; taller: string; accion: string; detalle: string | null; administrador: string | null; created_at: string };
+type AuditRegistration = { taller_id: number; taller: string; nombre: string; email: string; telefono: string; estado: string; asistencia: string; observaciones: string | null; correo_estado: string; created_at: string; updated_at: string };
 const blankTaller = {
   titulo: "",
   fechaLabel: "",
@@ -106,7 +109,7 @@ export default function DashboardTalleresPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
-  const [tab, setTab] = useState<"talleres" | "galeria">("talleres");
+  const [tab, setTab] = useState<"talleres" | "galeria" | "trazabilidad">("talleres");
   const [tallerForm, setTallerForm] = useState(blankTaller);
   const [albumForm, setAlbumForm] = useState(blankAlbum);
   const [editTaller, setEditTaller] = useState<Taller | null>(null);
@@ -122,6 +125,10 @@ export default function DashboardTalleresPage() {
   const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [postponing, setPostponing] = useState(false);
+  const [auditWorkshops, setAuditWorkshops] = useState<AuditWorkshop[]>([]);
+  const [auditMovements, setAuditMovements] = useState<AuditMovement[]>([]);
+  const [auditRegistrations, setAuditRegistrations] = useState<AuditRegistration[]>([]);
+  const [loadingAudit, setLoadingAudit] = useState(false);
   const load = async () => {
     setLoading(true);
     try {
@@ -141,6 +148,24 @@ export default function DashboardTalleresPage() {
   useEffect(() => {
     load();
   }, []);
+  useEffect(() => {
+    if (!message) return;
+    const timer = window.setTimeout(() => setMessage(""), 6000);
+    return () => window.clearTimeout(timer);
+  }, [message]);
+  const loadAudit = async () => {
+    setLoadingAudit(true);
+    try {
+      const response = await fetch("/api/admin/talleres/auditoria");
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.message);
+      setAuditWorkshops(payload.data.workshops || []);
+      setAuditMovements(payload.data.movements || []);
+      setAuditRegistrations(payload.data.registrations || []);
+    } catch (error) { setMessage(error instanceof Error ? error.message : "No fue posible cargar la trazabilidad."); }
+    finally { setLoadingAudit(false); }
+  };
+  useEffect(() => { if (tab === "trazabilidad") void loadAudit(); }, [tab]);
   const active = talleres.filter((t) => t.activo).length;
   const confirmedRegistrations = talleres.reduce(
     (total, workshop) => total + (workshop.confirmedCount || 0),
@@ -315,11 +340,13 @@ export default function DashboardTalleresPage() {
       setMessage("No fue posible actualizar el registro.");
       return;
     }
+    const result = await response.json();
     setRegistrations((current) =>
       current.map((item) =>
         item.id === registration.id ? { ...item, ...changes } : item,
       ),
     );
+    setMessage(result.message || "Registro actualizado correctamente.");
   };
   const addManualRegistration = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -390,6 +417,14 @@ export default function DashboardTalleresPage() {
       `inscritos-${registrationWorkshop.titulo.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}-${new Date().toISOString().slice(0, 10)}.xlsx`,
     );
   };
+  const exportAudit = () => {
+    const workbook = XLSX.utils.book_new();
+    const summary = XLSX.utils.json_to_sheet(auditWorkshops.map((workshop) => ({ Taller: workshop.title, Fecha: workshop.date, Lugar: workshop.place, Semáforo: workshop.deletedAt ? "ROJO · Cancelado" : "VERDE · Activo", Cupos: workshop.capacity, Confirmados: workshop.confirmed, "Lista de espera": workshop.waiting, "Registros cancelados": workshop.cancelled, Asistieron: workshop.attended, "No asistieron": workshop.absent, "Última actualización": workshop.updatedAt })));
+    const records = XLSX.utils.json_to_sheet(auditRegistrations.map((registration) => ({ Taller: registration.taller, Participante: registration.nombre, Correo: registration.email, Teléfono: registration.telefono, "Estado del registro": registration.estado, Asistencia: registration.asistencia, "Correo enviado": registration.correo_estado, Observación: registration.observaciones || "", "Fecha de registro": registration.created_at, "Última actualización": registration.updated_at })));
+    const movements = XLSX.utils.json_to_sheet(auditMovements.map((movement) => ({ Fecha: movement.created_at, Taller: movement.taller, Acción: movement.accion, Semáforo: movement.accion.includes("DESACTIVADO") ? "ROJO" : movement.accion.includes("APLAZADO") ? "AMARILLO" : "VERDE", Administrador: movement.administrador || "Sistema", Detalle: movement.detalle || "" })));
+    [[summary, "Resumen semáforo"], [records, "Registros"], [movements, "Movimientos"]].forEach(([sheet, name]) => { const worksheet = sheet as XLSX.WorkSheet; const range = XLSX.utils.decode_range(worksheet["!ref"] || "A1:A1"); for (let column = range.s.c; column <= range.e.c; column += 1) { const cell = worksheet[XLSX.utils.encode_cell({ r: 0, c: column })]; if (cell) cell.s = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "173F73" } } }; } worksheet["!autofilter"] = { ref: worksheet["!ref"] || "A1:A1" }; XLSX.utils.book_append_sheet(workbook, worksheet, name as string); });
+    XLSX.writeFile(workbook, `trazabilidad-talleres-${new Date().toISOString().slice(0, 10)}.xlsx`);
+  };
   return (
     <div className="p-5 md:p-8">
       <section className="rounded-[28px] border border-white/70 bg-gradient-to-br from-white/80 via-white/55 to-[#dceafb]/65 p-6 shadow-[0_22px_65px_-45px_rgba(12,57,117,.8)] backdrop-blur-xl md:p-8">
@@ -427,7 +462,7 @@ export default function DashboardTalleresPage() {
         </div>
       </section>
       {message && (
-        <div className="mt-4 rounded-xl border border-[#8fb2e3] bg-white/80 px-4 py-3 text-sm font-semibold text-[#234d8d]">
+        <div role="status" className={`fixed right-5 top-5 z-[200] max-w-md animate-[slide-in_0.25s_ease-out] rounded-2xl border px-5 py-4 text-sm font-semibold shadow-2xl ${message.startsWith("No fue posible") ? "border-red-200 bg-red-50 text-red-700" : "border-emerald-200 bg-white text-emerald-800"}`}>
           {message}
         </div>
       )}
@@ -457,6 +492,7 @@ export default function DashboardTalleresPage() {
         >
           Galería
         </button>
+        <button onClick={() => setTab("trazabilidad")} className={`rounded-xl px-4 py-2 text-sm font-bold ${tab === "trazabilidad" ? "bg-[#234d8d] text-white" : "bg-white/65 text-[#436da7]"}`}><Clock3 className="mr-1 inline h-4 w-4" />Trazabilidad</button>
         {tab === "galeria" && (
           <button
             onClick={() => openAlbum()}
@@ -550,7 +586,7 @@ export default function DashboardTalleresPage() {
             </article>
           ))}
         </div>
-      ) : (
+      ) : tab === "galeria" ? (
         <div
           id="galeria"
           className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2"
@@ -609,6 +645,11 @@ export default function DashboardTalleresPage() {
             </article>
           ))}
         </div>
+      ) : null}
+      {tab === "trazabilidad" && (
+        <section className="mt-5 space-y-5">
+          <div className="flex flex-col gap-4 rounded-3xl border border-[#dce8f7] bg-white p-6 shadow-sm md:flex-row md:items-center md:justify-between"><div><p className="text-xs font-bold uppercase tracking-[.16em] text-[#436da7]">Control operativo</p><h2 className="mt-1 text-2xl font-black text-[#173c70]">Historial completo de eventos</h2><p className="mt-1 text-sm text-[#5d7698]">Incluye talleres activos, cancelados, aplazados, asistentes y correos de reserva.</p></div><button onClick={exportAudit} disabled={loadingAudit} className="rounded-xl bg-[#234d8d] px-4 py-3 text-sm font-bold text-white disabled:opacity-60"><FileDown className="mr-2 inline h-4 w-4" />Descargar Excel</button></div>
+          {loadingAudit ? <div className="py-12 text-center text-textLight">Cargando trazabilidad…</div> : <><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><AuditMetric label="Eventos activos" value={auditWorkshops.filter((workshop) => workshop.active).length} tone="green" /><AuditMetric label="Eventos cancelados" value={auditWorkshops.filter((workshop) => workshop.deletedAt).length} tone="red" /><AuditMetric label="Eventos aplazados" value={auditMovements.filter((movement) => movement.accion === "TALLER_APLAZADO").length} tone="yellow" /><AuditMetric label="Registros confirmados" value={auditRegistrations.filter((registration) => registration.estado === "CONFIRMADA").length} tone="green" /></div><div className="overflow-x-auto rounded-3xl border border-[#dce8f7] bg-white"><table className="w-full min-w-[940px] text-left text-sm"><thead className="bg-[#f4f8fd] text-xs font-bold uppercase tracking-wider text-[#557190]"><tr><th className="p-4">Evento</th><th className="p-4">Fecha y lugar</th><th className="p-4">Semáforo</th><th className="p-4">Asistentes y cupos</th><th className="p-4">Actualización</th></tr></thead><tbody>{auditWorkshops.map((workshop) => <tr key={workshop.id} className="border-t border-[#edf2f8]"><td className="p-4 font-bold text-[#173c70]">{workshop.title}</td><td className="p-4 text-[#5d7698]">{workshop.date}<br />{workshop.place}</td><td className="p-4"><StatusLight label={workshop.deletedAt ? "Cancelado" : "Activo"} tone={workshop.deletedAt ? "red" : "green"} /></td><td className="p-4"><strong>{workshop.confirmed}/{workshop.capacity}</strong> confirmados · {workshop.waiting} espera<br /><span className="text-xs text-[#5d7698]">{workshop.attended} asistieron · {workshop.absent} no asistieron</span></td><td className="p-4 text-xs text-[#5d7698]">{new Date(workshop.updatedAt).toLocaleString("es-CO")}</td></tr>)}</tbody></table></div><div className="rounded-3xl border border-[#dce8f7] bg-white p-6"><h3 className="text-lg font-black text-[#173c70]">Últimos movimientos</h3><div className="mt-4 space-y-3">{auditMovements.slice(0, 15).map((movement) => <div key={movement.id} className="border-l-2 border-[#a9c5ee] pl-4"><div className="flex flex-wrap items-center gap-2"><StatusLight label={movement.accion.replaceAll("_", " ")} tone={movement.accion.includes("DESACTIVADO") ? "red" : movement.accion.includes("APLAZADO") ? "yellow" : "green"} /><span className="font-bold text-[#173c70]">{movement.taller}</span></div><p className="mt-1 text-sm text-[#5d7698]">{movement.detalle || "Sin detalle"}</p><p className="mt-1 text-xs text-[#7890ad]">{movement.administrador || "Sistema"} · {new Date(movement.created_at).toLocaleString("es-CO")}</p></div>)}{!auditMovements.length && <p className="text-sm text-textLight">Aún no hay movimientos registrados.</p>}</div></div></>}</section>
       )}
       {modal && (
         <div className="fixed inset-0 z-[90] grid place-items-center bg-slate-950/55 p-4 backdrop-blur-sm">
@@ -1109,6 +1150,14 @@ function Metric({ label, value }: { label: string; value: number }) {
       <p className="mt-2 text-3xl font-black text-[#173c70]">{value}</p>
     </div>
   );
+}
+function AuditMetric({ label, value, tone }: { label: string; value: number; tone: "green" | "yellow" | "red" }) {
+  const colors = { green: "border-emerald-200 bg-emerald-50 text-emerald-800", yellow: "border-amber-200 bg-amber-50 text-amber-800", red: "border-red-200 bg-red-50 text-red-800" };
+  return <div className={`rounded-2xl border p-5 ${colors[tone]}`}><p className="text-xs font-bold uppercase tracking-[.14em]">{label}</p><p className="mt-2 text-3xl font-black">{value}</p></div>;
+}
+function StatusLight({ label, tone }: { label: string; tone: "green" | "yellow" | "red" }) {
+  const colors = { green: "bg-emerald-100 text-emerald-800", yellow: "bg-amber-100 text-amber-800", red: "bg-red-100 text-red-800" };
+  return <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold ${colors[tone]}`}><span className={`h-2 w-2 rounded-full ${tone === "green" ? "bg-emerald-500" : tone === "yellow" ? "bg-amber-500" : "bg-red-500"}`} />{label}</span>;
 }
 function Field({
   label,

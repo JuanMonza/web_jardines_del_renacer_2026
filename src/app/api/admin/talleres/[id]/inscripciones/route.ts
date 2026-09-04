@@ -10,7 +10,7 @@ import {
 } from "@/lib/workshop-management";
 import { repairMojibake } from "@/lib/text-encoding";
 import { getWorkshopSettings } from "@/lib/workshop-management";
-import { sendWorkshopConfirmation } from "@/lib/workshop-mailer";
+import { sendWorkshopCancellation, sendWorkshopConfirmation } from "@/lib/workshop-mailer";
 
 export const dynamic = "force-dynamic";
 
@@ -108,6 +108,11 @@ export async function PATCH(
         { status: 422 },
       );
     await ensureWorkshopManagementTables();
+    const previous = (await query<{ nombre: string; email: string; estado: string }>(
+      "SELECT nombre,email,estado FROM talleres_duelo_inscripciones WHERE id=? AND taller_id=? LIMIT 1",
+      [registrationId, workshopId],
+    ))[0];
+    if (!previous) return NextResponse.json({ success: false, message: "Registro no encontrado." }, { status: 404 });
     await execute(
       "UPDATE talleres_duelo_inscripciones SET asistencia=?,estado=?,observaciones=? WHERE id=? AND taller_id=?",
       [
@@ -126,7 +131,25 @@ export async function PATCH(
       action: "INSCRIPCION_ACTUALIZADA",
       detail: `Registro ${registrationId}: ${status}, asistencia ${attendance}.`,
     });
-    return NextResponse.json({ success: true });
+    let emailStatus: "PENDIENTE" | "ENVIADO" | "ERROR" = "PENDIENTE";
+    if (previous.estado !== status) {
+      try {
+        const workshop = (await query<{ titulo: string; fecha_label: string; lugar: string }>("SELECT titulo,fecha_label,lugar FROM talleres_duelo WHERE id=? LIMIT 1", [workshopId]))[0];
+        const settings = (await getWorkshopSettings([workshopId])).get(workshopId);
+        if (workshop && settings) {
+          const mail = { email: previous.email, name: repairMojibake(previous.nombre), title: repairMojibake(workshop.titulo), date: repairMojibake(workshop.fecha_label), place: repairMojibake(workshop.lugar), connectionUrl: settings.connectionUrl };
+          emailStatus = status === "CANCELADA"
+            ? await sendWorkshopCancellation(mail)
+            : await sendWorkshopConfirmation({ ...mail, waiting: status === "LISTA_ESPERA" });
+          await execute("UPDATE talleres_duelo_inscripciones SET correo_estado=?,correo_enviado_at=IF(?='ENVIADO',NOW(),correo_enviado_at) WHERE id=?", [emailStatus, emailStatus, registrationId]);
+          await recordWorkshopActivity({ workshopId, adminUserId: session.userId, action: "CORREO_ESTADO_INSCRIPCION", detail: `Estado ${status} notificado a ${previous.email}: ${emailStatus}.` });
+        }
+      } catch (mailError) {
+        console.error("La inscripción se actualizó, pero no fue posible enviar el correo:", mailError);
+        emailStatus = "ERROR";
+      }
+    }
+    return NextResponse.json({ success: true, message: previous.estado === status ? "Registro actualizado." : `Estado actualizado a ${status}. Correo: ${emailStatus.toLowerCase()}.` });
   } catch {
     return NextResponse.json(
       { success: false, message: "No fue posible actualizar la inscripción." },
