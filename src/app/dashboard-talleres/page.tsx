@@ -419,10 +419,37 @@ export default function DashboardTalleresPage() {
   };
   const exportAudit = () => {
     const workbook = XLSX.utils.book_new();
-    const summary = XLSX.utils.json_to_sheet(auditWorkshops.map((workshop) => ({ Taller: workshop.title, Fecha: workshop.date, Lugar: workshop.place, Semáforo: workshop.deletedAt ? "ROJO · Cancelado" : "VERDE · Activo", Cupos: workshop.capacity, Confirmados: workshop.confirmed, "Lista de espera": workshop.waiting, "Registros cancelados": workshop.cancelled, Asistieron: workshop.attended, "No asistieron": workshop.absent, "Última actualización": workshop.updatedAt })));
-    const records = XLSX.utils.json_to_sheet(auditRegistrations.map((registration) => ({ Taller: registration.taller, Participante: registration.nombre, Correo: registration.email, Teléfono: registration.telefono, "Estado del registro": registration.estado, Asistencia: registration.asistencia, "Correo enviado": registration.correo_estado, Observación: registration.observaciones || "", "Fecha de registro": registration.created_at, "Última actualización": registration.updated_at })));
-    const movements = XLSX.utils.json_to_sheet(auditMovements.map((movement) => ({ Fecha: movement.created_at, Taller: movement.taller, Acción: movement.accion, Semáforo: movement.accion.includes("DESACTIVADO") ? "ROJO" : movement.accion.includes("APLAZADO") ? "AMARILLO" : "VERDE", Administrador: movement.administrador || "Sistema", Detalle: movement.detalle || "" })));
-    [[summary, "Resumen semáforo"], [records, "Registros"], [movements, "Movimientos"]].forEach(([sheet, name]) => { const worksheet = sheet as XLSX.WorkSheet; const range = XLSX.utils.decode_range(worksheet["!ref"] || "A1:A1"); for (let column = range.s.c; column <= range.e.c; column += 1) { const cell = worksheet[XLSX.utils.encode_cell({ r: 0, c: column })]; if (cell) cell.s = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "173F73" } } }; } worksheet["!autofilter"] = { ref: worksheet["!ref"] || "A1:A1" }; XLSX.utils.book_append_sheet(workbook, worksheet, name as string); });
+    const formatDate = (value: string) => value ? new Date(value).toLocaleString("es-CO", { dateStyle: "medium", timeStyle: "short" }) : "";
+    const colorFor = (value: string) => value === "red" ? "DC2626" : value === "yellow" ? "D97706" : "059669";
+    const dot = "●";
+    const summaryTones = auditWorkshops.map((workshop) => workshop.deletedAt ? "red" : "green");
+    const recordTones = auditRegistrations.map((registration) => registration.estado === "CANCELADA" ? "red" : registration.estado === "LISTA_ESPERA" ? "yellow" : "green");
+    const attendanceTones = auditRegistrations.map((registration) => registration.asistencia === "NO_ASISTIÓ" ? "red" : registration.asistencia === "ASISTIÓ" ? "green" : "yellow");
+    const emailTones = auditRegistrations.map((registration) => registration.correo_estado === "ERROR" ? "red" : registration.correo_estado === "ENVIADO" ? "green" : "yellow");
+    const movementTones = auditMovements.map((movement) => movement.accion.includes("DESACTIVADO") || movement.accion.includes("CANCEL") ? "red" : movement.accion.includes("APLAZADO") || movement.accion.includes("ESPERA") ? "yellow" : "green");
+    const summary = XLSX.utils.json_to_sheet(auditWorkshops.map((workshop) => ({ Taller: workshop.title, Fecha: workshop.date, Lugar: workshop.place, Estado: dot, Cupos: workshop.capacity, Confirmados: workshop.confirmed, "Lista de espera": workshop.waiting, "Registros cancelados": workshop.cancelled, Asistieron: workshop.attended, "No asistieron": workshop.absent, "Última actualización": formatDate(workshop.updatedAt) })));
+    const records = XLSX.utils.json_to_sheet(auditRegistrations.map((registration) => ({ Taller: registration.taller, Participante: registration.nombre, Correo: registration.email, Teléfono: registration.telefono, Reserva: dot, Asistencia: dot, "Correo enviado": dot, Observación: registration.observaciones || "", "Fecha de registro": formatDate(registration.created_at), "Última actualización": formatDate(registration.updated_at) })));
+    const movements = XLSX.utils.json_to_sheet(auditMovements.map((movement) => ({ Fecha: formatDate(movement.created_at), Taller: movement.taller, Acción: movement.accion.replaceAll("_", " "), Estado: dot, Administrador: movement.administrador || "Sistema", Detalle: movement.detalle || "" })));
+    const decorate = (worksheet: XLSX.WorkSheet, statusColumns: Array<{ column: number; tones: string[] }>, widths: number[]) => {
+      const range = XLSX.utils.decode_range(worksheet["!ref"] || "A1:A1");
+      for (let column = range.s.c; column <= range.e.c; column += 1) {
+        const cell = worksheet[XLSX.utils.encode_cell({ r: 0, c: column })];
+        if (cell) cell.s = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "173F73" } }, alignment: { horizontal: "center", vertical: "center" } };
+      }
+      for (let row = 1; row <= range.e.r; row += 1) for (let column = range.s.c; column <= range.e.c; column += 1) {
+        const cell = worksheet[XLSX.utils.encode_cell({ r: row, c: column })];
+        if (cell) cell.s = { fill: { fgColor: { rgb: row % 2 ? "F7FAFE" : "FFFFFF" } }, alignment: { vertical: "center", wrapText: true } };
+      }
+      statusColumns.forEach(({ column, tones }) => tones.forEach((tone, index) => {
+        const cell = worksheet[XLSX.utils.encode_cell({ r: index + 1, c: column })];
+        if (cell) cell.s = { font: { bold: true, color: { rgb: colorFor(tone) }, sz: 16 }, fill: { fgColor: { rgb: tone === "red" ? "FEE2E2" : tone === "yellow" ? "FEF3C7" : "D1FAE5" } }, alignment: { horizontal: "center", vertical: "center" } };
+      }));
+      worksheet["!autofilter"] = { ref: worksheet["!ref"] || "A1:A1" }; worksheet["!freeze"] = { xSplit: 0, ySplit: 1 }; worksheet["!cols"] = widths.map((width) => ({ wch: width })); worksheet["!rows"] = [{ hpt: 24 }];
+    };
+    decorate(summary, [{ column: 3, tones: summaryTones }], [34, 22, 30, 12, 10, 14, 18, 22, 14, 17, 25]);
+    decorate(records, [{ column: 4, tones: recordTones }, { column: 5, tones: attendanceTones }, { column: 6, tones: emailTones }], [30, 28, 34, 18, 12, 14, 16, 45, 24, 24]);
+    decorate(movements, [{ column: 3, tones: movementTones }], [24, 34, 28, 12, 28, 70]);
+    [[summary, "Resumen semáforo"], [records, "Registros"], [movements, "Movimientos"]].forEach(([sheet, name]) => XLSX.utils.book_append_sheet(workbook, sheet as XLSX.WorkSheet, name as string));
     XLSX.writeFile(workbook, `trazabilidad-talleres-${new Date().toISOString().slice(0, 10)}.xlsx`);
   };
   return (
@@ -587,56 +614,53 @@ export default function DashboardTalleresPage() {
           ))}
         </div>
       ) : tab === "galeria" ? (
-        <div
-          id="galeria"
-          className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2"
-        >
+        <div id="galeria" className="mt-5 grid grid-cols-1 gap-5">
           {albums.map((a) => (
             <article
               key={a.id}
-              className="overflow-hidden rounded-2xl border border-[#dce8f7] bg-white shadow-[0_18px_40px_-30px_rgba(21,60,112,.55)]"
+              className="group overflow-hidden rounded-3xl border border-[#d8e5f5] bg-white shadow-[0_20px_50px_-36px_rgba(21,60,112,.6)] transition hover:-translate-y-0.5 hover:shadow-[0_24px_55px_-32px_rgba(21,60,112,.7)] lg:flex"
             >
               <button
                 type="button"
                 onClick={() => setGalleryViewer(a)}
-                className="group grid h-48 w-full grid-cols-3 gap-1 bg-[#e9f1fb] p-1 text-left"
+                className={`grid h-64 w-full shrink-0 gap-1 bg-[#e8f1fc] p-2 text-left lg:h-[260px] lg:w-[46%] ${a.images.length <= 1 ? "grid-cols-1" : a.images.length === 2 ? "grid-cols-2" : "grid-cols-3"}`}
                 aria-label={`Abrir álbum ${a.titulo}`}
               >
                 {a.images.slice(0, 3).map((image, index) => (
-                  <div key={index} className="relative overflow-hidden rounded-lg">
-                    <img src={image.imagen} alt={image.alt} className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
+                  <div key={index} className="relative overflow-hidden rounded-2xl">
+                    <img src={image.imagen} alt={image.alt} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
                     {index === 2 && a.images.length > 3 && <span className="absolute inset-0 grid place-items-center bg-[#173f73]/70 text-lg font-black text-white">+{a.images.length - 3}</span>}
                   </div>
                 ))}
                 {a.images.length === 0 && (
-                  <div className="col-span-3 grid place-items-center text-sm text-[#5d7698]">
-                    Sin imágenes
+                  <div className="grid place-items-center rounded-2xl border border-dashed border-[#9ebce2] text-center text-sm font-semibold text-[#5d7698]">
+                    Aún no hay fotografías<br />para este álbum
                   </div>
                 )}
               </button>
-              <div className="p-5">
-                <div className="flex justify-between gap-3">
-                  <div>
-                    <h2 className="font-bold text-[#193d70]">{a.titulo}</h2>
-                    <p className="mt-1 text-sm text-[#5d7698]">
-                      {a.fecha_label} · {a.images.length} imágenes
-                    </p>
+              <div className="flex flex-1 flex-col p-6 lg:p-8">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div className="max-w-2xl">
+                    <p className="text-xs font-bold uppercase tracking-[.16em] text-[#4c74ad]">Memorias del encuentro</p>
+                    <h2 className="mt-2 text-2xl font-black text-[#173c70]">{a.titulo}</h2>
+                    <p className="mt-2 text-sm font-medium text-[#5d7698]">{a.fecha_label} · {a.images.length} {a.images.length === 1 ? "fotografía" : "fotografías"}</p>
+                    {a.descripcion && <p className="mt-4 text-sm leading-relaxed text-[#647a99]">{a.descripcion}</p>}
                   </div>
-                  <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${a.activo ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600"}`}>
+                  <span className={`rounded-full px-3 py-1.5 text-xs font-bold ${a.activo ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600"}`}>
                     {a.activo ? "Publicado" : "Oculto"}
                   </span>
                 </div>
-                <div className="mt-4 flex gap-2">
-                  <button onClick={() => setGalleryViewer(a)} className="rounded-lg bg-[#edf4ff] px-3 py-2 text-sm font-bold text-[#28569a]">Ver fotos</button>
+                <div className="mt-auto flex flex-wrap gap-2 pt-6">
+                  <button onClick={() => setGalleryViewer(a)} className="rounded-xl bg-[#234d8d] px-4 py-2.5 text-sm font-bold text-white shadow-md shadow-[#234d8d]/20">Ver álbum completo</button>
                   <button
                     onClick={() => openAlbum(a)}
-                    className="rounded-lg border border-[#a7c1e7] px-3 py-2 text-sm font-bold text-[#28569a]"
+                    className="rounded-xl border border-[#a7c1e7] bg-white px-4 py-2.5 text-sm font-bold text-[#28569a]"
                   >
                     Editar
                   </button>
                   <button
                     onClick={() => deleteItem("delete-album", a.id, a.titulo)}
-                    className="rounded-lg border border-red-200 px-3 py-2 text-sm font-bold text-red-600"
+                    className="rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-bold text-red-600"
                   >
                     Desactivar
                   </button>
