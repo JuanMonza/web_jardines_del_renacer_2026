@@ -54,6 +54,7 @@ type Registration = {
 };
 type PendingDelete = { action: "delete-taller" | "delete-album"; id: number; label: string };
 type PendingStatusChange = { registration: Registration; status: "CONFIRMADA" | "LISTA_ESPERA" | "CANCELADA" };
+type StatusSuccess = { name: string; status: PendingStatusChange["status"] };
 type AuditWorkshop = { id: number; title: string; date: string; dateISO: string | null; place: string; active: boolean; deletedAt: string | null; createdAt: string; updatedAt: string; capacity: number; confirmed: number; waiting: number; cancelled: number; attended: number; absent: number };
 type AuditMovement = { id: number; taller_id: number; taller: string; accion: string; detalle: string | null; administrador: string | null; created_at: string };
 type AuditRegistration = { taller_id: number; taller: string; nombre: string; email: string; telefono: string; estado: string; asistencia: string; observaciones: string | null; correo_estado: string; created_at: string; updated_at: string };
@@ -127,6 +128,7 @@ export default function DashboardTalleresPage() {
   const [deleting, setDeleting] = useState(false);
   const [postponing, setPostponing] = useState(false);
   const [pendingStatusChange, setPendingStatusChange] = useState<PendingStatusChange | null>(null);
+  const [statusSuccess, setStatusSuccess] = useState<StatusSuccess | null>(null);
   const [auditWorkshops, setAuditWorkshops] = useState<AuditWorkshop[]>([]);
   const [auditMovements, setAuditMovements] = useState<AuditMovement[]>([]);
   const [auditRegistrations, setAuditRegistrations] = useState<AuditRegistration[]>([]);
@@ -354,7 +356,10 @@ export default function DashboardTalleresPage() {
   const confirmStatusChange = async () => {
     if (!pendingStatusChange) return;
     const updated = await updateRegistration(pendingStatusChange.registration, { estado: pendingStatusChange.status });
-    if (updated) setPendingStatusChange(null);
+    if (updated) {
+      setStatusSuccess({ name: pendingStatusChange.registration.nombre, status: pendingStatusChange.status });
+      setPendingStatusChange(null);
+    }
   };
   const addManualRegistration = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -996,6 +1001,17 @@ export default function DashboardTalleresPage() {
             <h2 className="mt-2 text-2xl font-black text-[#173c70]">{pendingStatusChange.status === "CONFIRMADA" ? "Confirmar reserva" : pendingStatusChange.status === "CANCELADA" ? "Cancelar reserva" : "Enviar a lista de espera"}</h2>
             <p className="mt-3 text-sm leading-relaxed text-[#5d7698]">Se actualizará el estado de <strong className="text-[#173c70]">{pendingStatusChange.registration.nombre}</strong>, se enviará el correo correspondiente y la acción quedará registrada en la trazabilidad.</p>
             <div className="mt-7 flex justify-end gap-3"><button type="button" onClick={() => setPendingStatusChange(null)} className="rounded-xl border border-[#cbdcf3] bg-white px-4 py-2.5 text-sm font-bold text-[#31547d]">Volver</button><button type="button" onClick={() => void confirmStatusChange()} className={`rounded-xl px-4 py-2.5 text-sm font-bold text-white ${pendingStatusChange.status === "CONFIRMADA" ? "bg-emerald-600" : pendingStatusChange.status === "CANCELADA" ? "bg-red-600" : "bg-purple-600"}`}>{pendingStatusChange.status === "CONFIRMADA" ? "Sí, confirmar" : pendingStatusChange.status === "CANCELADA" ? "Sí, cancelar" : "Sí, enviar a espera"}</button></div>
+          </section>
+        </div>
+      )}
+      {statusSuccess && (
+        <div className="fixed inset-0 z-[125] grid place-items-center bg-slate-950/55 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
+          <section className={`w-full max-w-md rounded-[28px] bg-white p-7 text-center shadow-2xl ${statusSuccess.status === "CONFIRMADA" ? "border-t-4 border-emerald-500" : statusSuccess.status === "CANCELADA" ? "border-t-4 border-red-500" : "border-t-4 border-purple-500"}`}>
+            <div className={`mx-auto grid h-14 w-14 place-items-center rounded-full text-2xl font-black text-white ${statusSuccess.status === "CONFIRMADA" ? "bg-emerald-500" : statusSuccess.status === "CANCELADA" ? "bg-red-500" : "bg-purple-500"}`}>✓</div>
+            <p className="mt-5 text-xs font-bold uppercase tracking-[.16em] text-[#557190]">Movimiento registrado</p>
+            <h2 className="mt-2 text-2xl font-black text-[#173c70]">Modificación realizada</h2>
+            <p className="mt-3 text-sm leading-relaxed text-[#5d7698]">{statusSuccess.name} quedó <strong className="text-[#173c70]">{statusSuccess.status === "CONFIRMADA" ? "confirmado/a" : statusSuccess.status === "CANCELADA" ? "cancelado/a" : "en lista de espera"}</strong>. La notificación por correo y el historial del proceso fueron actualizados.</p>
+            <button type="button" onClick={() => setStatusSuccess(null)} className={`mt-7 rounded-xl px-5 py-2.5 text-sm font-bold text-white ${statusSuccess.status === "CONFIRMADA" ? "bg-emerald-600" : statusSuccess.status === "CANCELADA" ? "bg-red-600" : "bg-purple-600"}`}>Entendido</button>
           </section>
         </div>
       )}
