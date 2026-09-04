@@ -290,7 +290,9 @@ export async function POST(request: NextRequest) {
         adminUserId: session.userId,
         action:
           Number.isSafeInteger(id) && id > 0
-            ? "TALLER_ACTUALIZADO"
+            ? body.postponed === true
+              ? "TALLER_APLAZADO"
+              : "TALLER_ACTUALIZADO"
             : "TALLER_CREADO",
         detail: titulo,
       });
@@ -305,20 +307,12 @@ export async function POST(request: NextRequest) {
         ),
       );
       if (relevantChange) {
-        const notification = await notifyWorkshopRegistrations({
-          workshopId,
-          type: "updated",
-          title: repairMojibake(titulo),
-          date: repairMojibake(fechaLabel),
-          place: repairMojibake(lugar),
-          connectionUrl,
-        });
-        await recordWorkshopActivity({
-          workshopId,
-          adminUserId: session.userId,
-          action: "CORREO_ACTUALIZACION",
-          detail: `Actualización notificada a ${notification.sent} de ${notification.total} inscritos.`,
-        });
+        try {
+          const notification = await notifyWorkshopRegistrations({ workshopId, type: "updated", title: repairMojibake(titulo), date: repairMojibake(fechaLabel), place: repairMojibake(lugar), connectionUrl });
+          await recordWorkshopActivity({ workshopId, adminUserId: session.userId, action: "CORREO_ACTUALIZACION", detail: `Actualización notificada a ${notification.sent} de ${notification.total} inscritos.` });
+        } catch (notificationError) {
+          console.error("El taller se actualizó, pero no fue posible notificar el cambio:", notificationError);
+        }
       }
     } else if (action === "delete-taller") {
       const id = Number(body.id);
@@ -344,20 +338,12 @@ export async function POST(request: NextRequest) {
         action: "TALLER_DESACTIVADO",
         detail: "Taller desactivado desde el panel administrativo.",
       });
-      const notification = await notifyWorkshopRegistrations({
-        workshopId: id,
-        type: "cancelled",
-        title: repairMojibake(workshop.titulo),
-        date: repairMojibake(workshop.fecha_label),
-        place: repairMojibake(workshop.lugar),
-        connectionUrl: detail?.connectionUrl,
-      });
-      await recordWorkshopActivity({
-        workshopId: id,
-        adminUserId: session.userId,
-        action: "CORREO_CANCELACION",
-        detail: `Cancelación notificada a ${notification.sent} de ${notification.total} inscritos.`,
-      });
+      try {
+        const notification = await notifyWorkshopRegistrations({ workshopId: id, type: "cancelled", title: repairMojibake(workshop.titulo), date: repairMojibake(workshop.fecha_label), place: repairMojibake(workshop.lugar), connectionUrl: detail?.connectionUrl });
+        await recordWorkshopActivity({ workshopId: id, adminUserId: session.userId, action: "CORREO_CANCELACION", detail: `Cancelación notificada a ${notification.sent} de ${notification.total} inscritos.` });
+      } catch (notificationError) {
+        console.error("El taller se desactivó, pero no fue posible notificar la cancelación:", notificationError);
+      }
     } else if (action === "save-album") {
       const tallerId = Number(body.tallerId);
       const titulo = clean(body.titulo, 180);

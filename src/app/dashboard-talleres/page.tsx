@@ -52,6 +52,7 @@ type Registration = {
   correo_enviado_at?: string | null;
   created_at: string;
 };
+type PendingDelete = { action: "delete-taller" | "delete-album"; id: number; label: string };
 const blankTaller = {
   titulo: "",
   fechaLabel: "",
@@ -118,6 +119,9 @@ export default function DashboardTalleresPage() {
   const [manualRegistration, setManualRegistration] = useState({ nombre: "", telefono: "", email: "" });
   const [capacityInput, setCapacityInput] = useState("20");
   const [facilitatorNames, setFacilitatorNames] = useState<string[]>([""]);
+  const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [postponing, setPostponing] = useState(false);
   const load = async () => {
     setLoading(true);
     try {
@@ -188,6 +192,7 @@ export default function DashboardTalleresPage() {
       setTalleres(p.data.talleres);
       setAlbums(p.data.albums);
       setModal(null);
+      setPostponing(false);
       setMessage("Cambios guardados correctamente.");
     } catch {
       setMessage("No fue posible guardar. Intenta nuevamente.");
@@ -196,6 +201,7 @@ export default function DashboardTalleresPage() {
     }
   };
   const openTaller = (item?: Taller) => {
+    setPostponing(false);
     setEditTaller(item || null);
     setTallerForm(
       item
@@ -229,6 +235,10 @@ export default function DashboardTalleresPage() {
     );
     setModal("taller");
   };
+  const openPostpone = (item: Taller) => {
+    openTaller(item);
+    setPostponing(true);
+  };
   const openAlbum = (item?: Album) => {
     setEditAlbum(item || null);
     setAlbumForm(
@@ -246,26 +256,32 @@ export default function DashboardTalleresPage() {
     );
     setModal("album");
   };
-  const deleteItem = async (action: string, id: number) => {
-    if (
-      !confirm(
-        "¿Deseas desactivar este registro? Podrás conservar la trazabilidad en la base de datos.",
-      )
-    )
-      return;
-    const r = await fetch("/api/admin/talleres", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ action, id }),
-    });
-    const p = await r.json();
-    if (!r.ok) {
-      setMessage(p.message);
-      return;
+  const deleteItem = (action: PendingDelete["action"], id: number, label: string) => {
+    setPendingDelete({ action, id, label });
+  };
+  const confirmDelete = async () => {
+    if (!pendingDelete || deleting) return;
+    setDeleting(true);
+    try {
+      const r = await fetch("/api/admin/talleres", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ action: pendingDelete.action, id: pendingDelete.id }),
+      });
+      const p = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        setMessage(p.message || "No fue posible desactivar el registro.");
+        return;
+      }
+      setTalleres(p.data.talleres);
+      setAlbums(p.data.albums);
+      setMessage(`${pendingDelete.action === "delete-taller" ? "Taller" : "Álbum"} desactivado correctamente.`);
+      setPendingDelete(null);
+    } catch {
+      setMessage("No fue posible conectar con el servidor. Intenta nuevamente.");
+    } finally {
+      setDeleting(false);
     }
-    setTalleres(p.data.talleres);
-    setAlbums(p.data.albums);
-    setMessage("Registro desactivado correctamente.");
   };
   const openRegistrations = async (taller: Taller) => {
     setRegistrationWorkshop(taller);
@@ -510,13 +526,19 @@ export default function DashboardTalleresPage() {
                       Editar
                     </button>
                     <button
+                      onClick={() => openPostpone(t)}
+                      className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-bold text-amber-800"
+                    >
+                      Aplazar
+                    </button>
+                    <button
                       onClick={() => void openRegistrations(t)}
                       className="rounded-lg border border-emerald-200 px-3 py-2 text-sm font-bold text-emerald-700"
                     >
                       Inscritos ({t.confirmedCount || 0})
                     </button>
                     <button
-                      onClick={() => deleteItem("delete-taller", t.id)}
+                      onClick={() => deleteItem("delete-taller", t.id, t.titulo)}
                       className="rounded-lg border border-red-200 px-3 py-2 text-sm font-bold text-red-600"
                     >
                       <Trash2 className="mr-1 inline h-3.5 w-3.5" />
@@ -577,7 +599,7 @@ export default function DashboardTalleresPage() {
                     Editar
                   </button>
                   <button
-                    onClick={() => deleteItem("delete-album", a.id)}
+                    onClick={() => deleteItem("delete-album", a.id, a.titulo)}
                     className="rounded-lg border border-red-200 px-3 py-2 text-sm font-bold text-red-600"
                   >
                     Desactivar
@@ -592,7 +614,7 @@ export default function DashboardTalleresPage() {
         <div className="fixed inset-0 z-[90] grid place-items-center bg-slate-950/55 p-4 backdrop-blur-sm">
           <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-[28px] border border-white/70 bg-[#f7fbff] p-6 shadow-2xl">
             <button
-              onClick={() => setModal(null)}
+              onClick={() => { setModal(null); setPostponing(false); }}
               className="float-right rounded-full p-2 text-slate-500"
             >
               <X />
@@ -600,7 +622,7 @@ export default function DashboardTalleresPage() {
             <h2 className="text-2xl font-black text-[#173c70]">
               {modal === "taller"
                 ? editTaller
-                  ? "Editar taller"
+                  ? postponing ? "Aplazar evento" : "Editar taller"
                   : "Nuevo taller"
                 : editAlbum
                   ? "Editar álbum"
@@ -614,10 +636,12 @@ export default function DashboardTalleresPage() {
                     ...tallerForm,
                     cupos: capacityInput,
                     facilitador: facilitatorNames.filter(Boolean).join(", "),
+                    postponed: postponing,
                   })
                 }
                 className="mt-5 grid gap-4 md:grid-cols-2"
               >
+                {postponing && <div className="md:col-span-2 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"><strong>Reprogramación del evento.</strong> Actualiza al menos la fecha, el horario visible o el lugar. Al guardar se notificará por correo a las personas inscritas.</div>}
                 <Field
                   label="Título"
                   value={tallerForm.titulo}
@@ -879,6 +903,17 @@ export default function DashboardTalleresPage() {
               </form>
             )}
           </div>
+        </div>
+      )}
+      {pendingDelete && (
+        <div className="fixed inset-0 z-[110] grid place-items-center bg-slate-950/65 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="delete-dialog-title">
+          <section className="w-full max-w-md rounded-[28px] bg-white p-7 shadow-2xl">
+            <div className="grid h-12 w-12 place-items-center rounded-2xl bg-red-50 text-xl font-black text-red-600">!</div>
+            <p className="mt-5 text-xs font-bold uppercase tracking-[.16em] text-red-600">Confirmar desactivación</p>
+            <h2 id="delete-dialog-title" className="mt-2 text-2xl font-black text-[#173c70]">¿Desactivar este registro?</h2>
+            <p className="mt-3 text-sm leading-relaxed text-[#5d7698]">Se ocultará <strong className="text-[#173c70]">{pendingDelete.label}</strong> del sitio público. La información y trazabilidad se conservarán en el sistema.</p>
+            <div className="mt-7 flex justify-end gap-3"><button type="button" disabled={deleting} onClick={() => setPendingDelete(null)} className="rounded-xl border border-[#cbdcf3] bg-white px-4 py-2.5 text-sm font-bold text-[#31547d]">Cancelar</button><button type="button" disabled={deleting} onClick={() => void confirmDelete()} className="rounded-xl bg-red-600 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60">{deleting ? "Desactivando…" : "Sí, desactivar"}</button></div>
+          </section>
         </div>
       )}
       {galleryViewer && (
