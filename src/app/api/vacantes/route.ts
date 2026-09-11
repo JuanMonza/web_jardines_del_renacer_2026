@@ -66,11 +66,14 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     const id = await createVacancyInDB(body);
+    const templateSourceId = String(body.templateSourceId ?? "").trim();
     await recordVacancyAudit({
-      action: "VACANTE_CREADA",
+      action: templateSourceId ? "VACANTE_REUTILIZADA" : "VACANTE_CREADA",
       table: "vacantes",
       recordId: id,
-      description: `Administrador ${session.name} (ID ${session.userId}) creó la vacante “${body.title || "Sin título"}”.`,
+      description: templateSourceId
+        ? `Administrador ${session.name} (ID ${session.userId}) creó la vacante “${body.title || "Sin título"}” reutilizando la información de la vacante ${templateSourceId}. El registro original se conservó sin modificaciones.`
+        : `Administrador ${session.name} (ID ${session.userId}) creó la vacante “${body.title || "Sin título"}”.`,
     });
 
     return NextResponse.json(

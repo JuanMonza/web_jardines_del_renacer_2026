@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, useRef } from "react";
 import * as XLSX from "xlsx-js-style";
 import { createPortal } from "react-dom";
 import SelectionSteps from "@/components/vacantes/SelectionSteps";
+import ScreenDialog from "@/components/ui/ScreenDialog";
 import { useSearchParams } from "next/navigation";
 import { Toaster, toast } from "react-hot-toast";
 import {
@@ -449,10 +450,7 @@ function CandidateApplicationsModal({
   }, [user.candidateDocument]);
 
   return (
-    <div
-      className="fixed inset-0 z-[2147483647] flex items-center justify-center bg-[#07182e]/55 p-4 backdrop-blur-sm"
-      onClick={onClose}
-    >
+    <ScreenDialog ariaLabel={`Ficha de talento de ${user.candidateName}`} onClose={onClose}>
       <div
         className="flex w-full max-w-5xl max-h-[90vh] flex-col overflow-hidden rounded-[30px] border border-[#dbe5f3] bg-[#f8fbff] shadow-2xl"
         onClick={(e) => e.stopPropagation()}
@@ -651,7 +649,7 @@ function CandidateApplicationsModal({
           </Button>
         </div>
       </div>
-    </div>
+    </ScreenDialog>
   );
 }
 
@@ -1087,9 +1085,11 @@ function ApplicationProgressTrack({
 
 export default function VacantesAdminPanel() {
   const [vacancies, setVacancies] = useState<JobVacancy[]>([]);
+  const [closedVacancies, setClosedVacancies] = useState<JobVacancy[]>([]);
   const [applications, setApplications] = useState<JobApplication[]>([]);
   const [session, setSession] = useState<VacanciesSession | null>(null);
   const [draft, setDraft] = useState<VacancyDraft>(createInitialDraft());
+  const [reusedFromId, setReusedFromId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showVacancyForm, setShowVacancyForm] = useState(false);
   const [isModalMounted, setIsModalMounted] = useState(false);
@@ -1111,6 +1111,7 @@ export default function VacantesAdminPanel() {
     null,
   );
   const vacanciesListRef = useRef<HTMLDivElement>(null);
+  const reusedVacancyHandled = useRef(false);
   const loadVacancies = async () => {
     try {
       const response = await fetch("/api/vacantes?admin=1", {
@@ -1145,6 +1146,13 @@ export default function VacantesAdminPanel() {
       setApplications([]);
     }
   };
+  const loadClosedVacancies = async () => {
+    try {
+      const response = await fetch("/api/vacantes/historial", { cache: "no-store" });
+      const result = await response.json();
+      setClosedVacancies(response.ok && Array.isArray(result.data) ? result.data : []);
+    } catch { setClosedVacancies([]); }
+  };
 
   useEffect(() => {
     async function initialize() {
@@ -1161,13 +1169,26 @@ export default function VacantesAdminPanel() {
       } catch {
         setSession(null);
       }
-      await Promise.all([loadVacancies(), loadApplications()]);
+      await Promise.all([loadVacancies(), loadApplications(), loadClosedVacancies()]);
     }
 
     initialize();
 
     return undefined;
   }, []);
+
+  useEffect(() => {
+    const reuseId = searchParams.get("reuse");
+    if (!reuseId || reusedVacancyHandled.current) return;
+    const source = closedVacancies.find((vacancy) => vacancy.id === reuseId);
+    if (!source) return;
+    const now = new Date().toISOString();
+    setDraft({ ...createDraftFromVacancy(source), id: "", status: "Publicada", postedAt: now.slice(0, 10), createdAt: now, updatedAt: now });
+    setReusedFromId(source.id);
+    setEditingId(null);
+    setShowVacancyForm(true);
+    reusedVacancyHandled.current = true;
+  }, [closedVacancies, searchParams]);
 
   useEffect(() => {
     setIsModalMounted(true);
@@ -1212,6 +1233,7 @@ export default function VacantesAdminPanel() {
   const resetDraft = () => {
     setDraft(createInitialDraft());
     setEditingId(null);
+    setReusedFromId(null);
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -1282,13 +1304,13 @@ export default function VacantesAdminPanel() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(record),
+          body: JSON.stringify({ ...record, templateSourceId: reusedFromId }),
         });
         const result = await response.json().catch(() => ({}));
         if (!response.ok || !result.success) throw new Error(result.message || "No fue posible crear la vacante.");
         setOperationNotice({ title: "Vacante creada", description: `“${record.title}” quedó publicada y ya puede recibir postulaciones.`, variant: "success" });
       }
-      await loadVacancies();
+      await Promise.all([loadVacancies(), loadClosedVacancies()]);
       resetDraft();
       setShowVacancyForm(false);
     } catch (error) {
@@ -1331,7 +1353,7 @@ export default function VacantesAdminPanel() {
       });
       const result = await response.json();
       if (!response.ok || !result.success) throw new Error(result.message);
-      await loadVacancies();
+      await Promise.all([loadVacancies(), loadClosedVacancies()]);
       if (editingId === vacancy.id) {
         resetDraft();
       }
@@ -1639,7 +1661,14 @@ export default function VacantesAdminPanel() {
                 </header>
                 <div className="overflow-y-auto p-6 md:p-8">
                   <form onSubmit={handleSubmit} className="space-y-4">
-                    {!editingId&&<label className="block text-sm font-semibold">Reutilizar información de un cargo<select defaultValue="" onChange={e=>{const source=vacancies.find(item=>item.id===e.target.value);if(source)setDraft(createDraftFromVacancy(source));}} className="mt-2 w-full rounded-xl border bg-white p-3"><option value="">Crear desde cero o elegir un cargo existente</option>{vacancies.map(item=><option key={item.id} value={item.id}>{item.title} · {item.city}</option>)}</select></label>}
+                    {!editingId&&<label className="block rounded-2xl border border-blue-200 bg-blue-50/60 p-4 text-sm font-semibold">Reutilizar información de una vacante
+                      <select value={reusedFromId||""} onChange={event=>{const source=[...vacancies,...closedVacancies].find(item=>item.id===event.target.value);if(source){const now=new Date().toISOString();setDraft({...createDraftFromVacancy(source),id:"",status:"Publicada",postedAt:now.slice(0,10),createdAt:now,updatedAt:now});setReusedFromId(source.id);}else{resetDraft();}}} className="mt-2 w-full rounded-xl border border-blue-200 bg-white p-3">
+                        <option value="">Crear desde cero o seleccionar una vacante anterior</option>
+                        <optgroup label="Vacantes activas y pausadas">{vacancies.map(item=><option key={`active-${item.id}`} value={item.id}>{item.title} · {item.city}</option>)}</optgroup>
+                        <optgroup label="Vacantes cerradas conservadas">{closedVacancies.map(item=><option key={`closed-${item.id}`} value={item.id}>{item.title} · {item.city} · Cerrada</option>)}</optgroup>
+                      </select>
+                      <span className="mt-2 block text-xs font-normal text-textLight">Se copiarán todos los datos en una nueva vacante editable. El historial original permanecerá intacto.</span>
+                    </label>}
                     <SelectionSteps value={draft.selectionSteps} onChange={selectionSteps=>setDraft({...draft,selectionSteps})}/>
                     <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
                       Información principal

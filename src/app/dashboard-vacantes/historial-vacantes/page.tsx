@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Archive, ChevronDown, FileText, Search, Users } from "lucide-react";
+import Link from "next/link";
+import { Archive, ChevronDown, Copy, FileText, Search, Users } from "lucide-react";
+import type { JobVacancy } from "@/config/vacancies";
 
 type Application = {
   id: string;
@@ -13,11 +15,7 @@ type Application = {
   observation: string | null;
   appliedAt: string;
 };
-type ClosedVacancy = {
-  id: string;
-  title: string;
-  city: string;
-  department: string;
+type ClosedVacancy = JobVacancy & {
   closedAt: string;
   applications: Application[];
 };
@@ -101,11 +99,8 @@ export default function VacancyHistoryPage() {
                   key={vacancy.id}
                   className="overflow-hidden rounded-2xl border border-[#dbe5f3] bg-[#fbfdff]"
                 >
-                  <button
-                    type="button"
-                    onClick={() => setExpanded(isExpanded ? null : vacancy.id)}
-                    className="flex w-full items-center justify-between gap-4 p-5 text-left hover:bg-[#f5f9ff]"
-                  >
+                  <div className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center">
+                  <button type="button" onClick={() => setExpanded(isExpanded ? null : vacancy.id)} className="flex min-w-0 flex-1 items-center justify-between gap-4 text-left">
                     <div>
                       <p className="text-xs font-bold uppercase tracking-[.15em] text-primary">
                         Cerrada ·{" "}
@@ -124,6 +119,8 @@ export default function VacancyHistoryPage() {
                       className={`h-5 w-5 text-primary transition ${isExpanded ? "rotate-180" : ""}`}
                     />
                   </button>
+                  <Link href={`/dashboard-vacantes/vacantes?reuse=${encodeURIComponent(vacancy.id)}`} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-primary bg-white px-4 py-2.5 text-sm font-bold text-primary transition hover:bg-blue-50"><Copy size={16}/>Usar como nueva</Link>
+                  </div>
                   {isExpanded && (
                     <div className="border-t border-[#dbe5f3] bg-white p-4">
                       <div className="mb-3 flex items-center gap-2 text-sm font-bold text-text">

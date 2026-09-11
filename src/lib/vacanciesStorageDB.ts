@@ -9,6 +9,25 @@ import {
 // Se conserva junto a los requisitos para no depender de una migración pendiente
 // en instalaciones ya existentes de la base de datos.
 const DRIVERS_LICENSE_MARKER = "__jdr_requires_drivers_license__";
+let vacancyTemplateSchemaPromise: Promise<void> | null = null;
+
+export function ensureVacancyTemplateSchema() {
+  return vacancyTemplateSchemaPromise ??= (async () => {
+    await ensureSelectionSchema();
+    const columns = await query<{ Field: string }>("SHOW COLUMNS FROM vacantes LIKE 'template_data'");
+    if (!columns.length) await execute("ALTER TABLE vacantes ADD COLUMN template_data JSON NULL");
+  })().catch((error) => { vacancyTemplateSchemaPromise = null; throw error; });
+}
+
+function readTemplate(value: unknown): Partial<JobVacancy> {
+  if (!value) return {};
+  if (typeof value === "object" && !Array.isArray(value)) return value as Partial<JobVacancy>;
+  try { return JSON.parse(String(value)) as Partial<JobVacancy>; } catch { return {}; }
+}
+
+function templateForStorage(vacancy: Partial<JobVacancy>) {
+  return JSON.stringify({ title: vacancy.title, area: vacancy.area, department: vacancy.department, city: vacancy.city, modality: vacancy.modality, contractType: vacancy.contractType, schedule: vacancy.schedule, salary: vacancy.salary, experience: vacancy.experience, summary: vacancy.summary, requirements: vacancy.requirements, requiresDriversLicense: Boolean(vacancy.requiresDriversLicense), benefits: vacancy.benefits, featured: Boolean(vacancy.featured), selectionSteps: vacancy.selectionSteps });
+}
 
 function readRequirements(value: unknown): string[] {
   try {
@@ -37,23 +56,24 @@ function mapDbVacancyToJobVacancy(dbVacancy: any): JobVacancy | null {
   }
 
   const storedRequirements = readRequirements(dbVacancy.requisitos);
+  const template = readTemplate(dbVacancy.template_data);
   return {
     selectionSteps: selectionSteps(typeof dbVacancy.selection_steps === "string" ? JSON.parse(dbVacancy.selection_steps) : dbVacancy.selection_steps),
     id: String(dbVacancy.id),
-    title: dbVacancy.titulo,
-    area: "Talento humano",
+    title: String(template.title || dbVacancy.titulo),
+    area: String(template.area || "Talento humano"),
     department: normalizeVacancyDepartment(dbVacancy.departamento),
     city: dbVacancy.ciudad,
     modality:
       dbVacancy.modalidad === "Híbrido" ? "Hibrido" : dbVacancy.modalidad,
-    contractType: dbVacancy.tipo_contrato || "Tiempo completo",
-    schedule: "",
-    salary: dbVacancy.mostrar_salario
+    contractType: String(template.contractType || dbVacancy.tipo_contrato || "Tiempo completo"),
+    schedule: String(template.schedule || ""),
+    salary: String(template.salary || (dbVacancy.mostrar_salario
       ? [dbVacancy.salario_desde, dbVacancy.salario_hasta]
           .filter(Boolean)
           .join(" - ")
-      : "A convenir",
-    summary: dbVacancy.descripcion || "",
+      : "A convenir")),
+    summary: String(template.summary || dbVacancy.descripcion || ""),
     // Los campos JSON se parsean. Si están vacíos o nulos, se devuelve un array vacío.
     requirements: storedRequirements.filter((item) => item !== DRIVERS_LICENSE_MARKER),
     requiresDriversLicense: storedRequirements.includes(DRIVERS_LICENSE_MARKER),
@@ -65,8 +85,8 @@ function mapDbVacancyToJobVacancy(dbVacancy: any): JobVacancy | null {
     createdAt: new Date(dbVacancy.created_at).toISOString(),
     updatedAt: new Date(dbVacancy.updated_at).toISOString(),
     // El campo 'experience' no está en la tabla, se puede añadir o manejar por defecto.
-    experience: dbVacancy.experience ?? "",
-    status: dbVacancy.estado === "Pausada" ? "Pausada" : "Publicada",
+    experience: String(template.experience || dbVacancy.experience || ""),
+    status: dbVacancy.estado === "Cerrada" ? "Cerrada" : dbVacancy.estado === "Pausada" ? "Pausada" : "Publicada",
   };
 }
 
@@ -76,6 +96,7 @@ function mapDbVacancyToJobVacancy(dbVacancy: any): JobVacancy | null {
  */
 export async function getVacanciesFromDB(): Promise<JobVacancy[]> {
   try {
+    await ensureVacancyTemplateSchema();
     const rows = await query(
       "SELECT * FROM vacantes WHERE estado = ? AND deleted_at IS NULL ORDER BY destacada DESC, fecha_publicacion DESC",
       ["Publicada"],
@@ -89,6 +110,7 @@ export async function getVacanciesFromDB(): Promise<JobVacancy[]> {
 
 export async function getVacanciesForAdminFromDB(): Promise<JobVacancy[]> {
   try {
+    await ensureVacancyTemplateSchema();
     const rows = await query(
       "SELECT * FROM vacantes WHERE estado IN ('Publicada','Pausada') AND deleted_at IS NULL ORDER BY destacada DESC, fecha_publicacion DESC",
     );
@@ -99,6 +121,12 @@ export async function getVacanciesForAdminFromDB(): Promise<JobVacancy[]> {
   }
 }
 
+export async function getClosedVacanciesForAdminFromDB(): Promise<JobVacancy[]> {
+  await ensureVacancyTemplateSchema();
+  const rows = await query("SELECT * FROM vacantes WHERE estado='Cerrada' AND deleted_at IS NULL ORDER BY updated_at DESC");
+  return rows.map(mapDbVacancyToJobVacancy).filter(Boolean) as JobVacancy[];
+}
+
 /**
  * Busca y devuelve una sola vacante por su ID.
  * @param id - El UUID de la vacante a buscar.
@@ -107,6 +135,7 @@ export async function getVacanciesForAdminFromDB(): Promise<JobVacancy[]> {
 export async function getVacancyByIdFromDB(
   id: string,
 ): Promise<JobVacancy | null> {
+  await ensureVacancyTemplateSchema();
   const rows = await query(
     "SELECT * FROM vacantes WHERE id = ? AND estado = ? AND deleted_at IS NULL",
     [id, "Publicada"],
@@ -125,7 +154,7 @@ export async function getVacancyByIdFromDB(
 export async function createVacancyInDB(
   vacancyData: Omit<JobVacancy, "id" | "createdAt" | "updatedAt">,
 ) {
-  await ensureSelectionSchema();
+  await Promise.all([ensureSelectionSchema(), ensureVacancyTemplateSchema()]);
   const {
     title,
     area,
@@ -142,8 +171,8 @@ export async function createVacancyInDB(
     postedAt,
   } = vacancyData;
   const sql = `
-    INSERT INTO vacantes (titulo, descripcion, requisitos, beneficios, ciudad, departamento, modalidad, tipo_contrato, destacada, estado, fecha_publicacion, selection_steps)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Publicada', ?, ?)
+    INSERT INTO vacantes (titulo, descripcion, requisitos, beneficios, ciudad, departamento, modalidad, tipo_contrato, destacada, estado, fecha_publicacion, selection_steps, template_data)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Publicada', ?, ?, ?)
   `;
   const params = [
     title,
@@ -157,6 +186,7 @@ export async function createVacancyInDB(
     featured,
     postedAt,
     JSON.stringify(selectionSteps(vacancyData.selectionSteps)),
+    templateForStorage(vacancyData),
   ];
   const result = await execute(sql, params);
   return result.insertId;
@@ -189,7 +219,7 @@ export async function updateVacancyInDB(
   id: string,
   vacancyData: Omit<JobVacancy, "id" | "createdAt" | "updatedAt">,
 ): Promise<number> {
-  await ensureSelectionSchema();
+  await Promise.all([ensureSelectionSchema(), ensureVacancyTemplateSchema()]);
   const {
     title,
     area,
@@ -207,7 +237,7 @@ export async function updateVacancyInDB(
   } = vacancyData;
 
   const sql = `
-    UPDATE vacantes SET titulo = ?, descripcion = ?, requisitos = ?, beneficios = ?, ciudad = ?, departamento = ?, modalidad = ?, tipo_contrato = ?, destacada = ?, fecha_publicacion = ?, selection_steps = ?, updated_at = CURRENT_TIMESTAMP
+    UPDATE vacantes SET titulo = ?, descripcion = ?, requisitos = ?, beneficios = ?, ciudad = ?, departamento = ?, modalidad = ?, tipo_contrato = ?, destacada = ?, fecha_publicacion = ?, selection_steps = ?, template_data = ?, updated_at = CURRENT_TIMESTAMP
     WHERE id = ?
   `;
 
@@ -223,6 +253,7 @@ export async function updateVacancyInDB(
     featured,
     postedAt,
     JSON.stringify(selectionSteps(vacancyData.selectionSteps)),
+    templateForStorage(vacancyData),
     id,
   ]);
 

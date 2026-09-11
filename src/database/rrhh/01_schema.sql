@@ -107,6 +107,8 @@ CREATE TABLE IF NOT EXISTS vacantes (
     fecha_publicacion DATETIME,
     fecha_cierre DATETIME,
     created_by BIGINT UNSIGNED NULL,
+    selection_steps JSON NULL,
+    template_data JSON NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP NULL

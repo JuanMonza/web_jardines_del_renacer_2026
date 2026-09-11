@@ -32,7 +32,7 @@ export interface JobVacancy {
   updatedAt: string;
   createdByCedula?: string;
   createdByName?: string;
-  status?: "Publicada" | "Pausada";
+  status?: "Publicada" | "Pausada" | "Cerrada";
 }
 
 /** Clave utilizada para persistir las vacantes en el almacenamiento local (localStorage). */

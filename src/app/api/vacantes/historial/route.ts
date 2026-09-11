@@ -4,6 +4,7 @@ import {
   ADMIN_SESSION_COOKIE,
   requireAdminPermission,
 } from "@/lib/iam/admin-session";
+import { getClosedVacanciesForAdminFromDB } from "@/lib/vacanciesStorageDB";
 
 export const dynamic = "force-dynamic";
 
@@ -18,15 +19,7 @@ export async function GET(request: NextRequest) {
       { status: 403 },
     );
   try {
-    const vacancies = await query<{
-      id: string;
-      title: string;
-      city: string;
-      department: string;
-      closedAt: string;
-    }>(
-      "SELECT id,titulo AS title,ciudad AS city,departamento AS department,updated_at AS closedAt FROM vacantes WHERE estado='Cerrada' AND deleted_at IS NULL ORDER BY updated_at DESC",
-    );
+    const vacancies = await getClosedVacanciesForAdminFromDB();
     const applications = await query<{
       vacancyId: string;
       id: string;
@@ -44,6 +37,7 @@ export async function GET(request: NextRequest) {
       success: true,
       data: vacancies.map((vacancy) => ({
         ...vacancy,
+        closedAt: vacancy.updatedAt,
         applications: applications.filter(
           (application) => application.vacancyId === String(vacancy.id),
         ),
