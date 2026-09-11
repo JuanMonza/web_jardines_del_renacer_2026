@@ -31,7 +31,7 @@ function internalVacanciesRecipient() {
   return asText(
     process.env.VACANCIES_NOTIFICATION_EMAIL ||
       process.env.VACANCIES_TRANSFER_NOTIFICATION_EMAIL ||
-      "prueba.smtp@jardinesdelrenacer.co",
+      "psicologa@jardinesdelrenacer.co, prueba.smtp@jardinesdelrenacer.co",
   );
 }
 
