@@ -9,6 +9,9 @@ import {
 } from "@/config/candidates";
 import mysql from "mysql2/promise";
 import db, { query, execute } from "./db";
+import { recordHiring } from "@/lib/hiring-history";
+import { ensureSelectionSchema } from "@/lib/selection-followup";
+import { ensureHistoricalCandidateSchema } from "@/lib/historical-candidate-records";
 
 type DbApplicationRow = {
   id: string;
@@ -28,6 +31,7 @@ type DbApplicationRow = {
   documento?: string;
   created_at?: string | Date | null;
   estado?: string;
+  observaciones_rh?: string | null;
   vacante_id?: string | number;
 };
 
@@ -54,6 +58,7 @@ type CandidateAccountRow = {
   educacion: string | null;
   linkedin: string | null;
   portfolio: string | null;
+  tiene_licencia_conduccion?: number | boolean | null;
   cv_url: string | null;
   activo: number | boolean;
   ultimo_login: string | Date | null;
@@ -78,6 +83,9 @@ type CreateApplicationInput = Omit<
   candidateId?: string;
   candidateCity?: string;
   candidateDepartment?: string;
+  candidateProfessionalTitle?: string;
+  candidateEducation?: string;
+  applicationSource?: "Portal Web" | "Manual";
   resumeUrl?: string;
 };
 
@@ -113,6 +121,44 @@ function normalizeEmail(value: string) {
   return value.trim().toLowerCase();
 }
 
+let candidateLicenseSchemaPromise: Promise<void> | null = null;
+let applicationSnapshotSchemaPromise: Promise<void> | null = null;
+
+export async function ensureApplicationSnapshotSchema() {
+  if (!applicationSnapshotSchemaPromise) {
+    applicationSnapshotSchemaPromise = (async () => {
+      const columns = await query<{ Field: string }>("SHOW COLUMNS FROM postulaciones LIKE 'application_snapshot'");
+      if (!columns.length) await execute("ALTER TABLE postulaciones ADD COLUMN application_snapshot JSON NULL AFTER cv_url");
+      await execute(`UPDATE postulaciones p
+        LEFT JOIN candidatos c ON c.id=p.candidato_id
+        LEFT JOIN vacantes v ON v.id=p.vacante_id
+        SET p.application_snapshot=JSON_OBJECT(
+          'candidateDocument',COALESCE(c.documento,''),'candidateName',TRIM(CONCAT(COALESCE(c.nombres,''),' ',COALESCE(c.apellidos,''))),
+          'candidateEmail',COALESCE(c.email,''),'candidatePhone',COALESCE(c.telefono,''),'candidateCity',COALESCE(c.ciudad,''),
+          'candidateDepartment',COALESCE(c.departamento,''),'professionalTitle',COALESCE(c.profesion,''),'education',COALESCE(c.educacion,''),
+          'vacancyTitle',COALESCE(v.titulo,''),'source',COALESCE(p.fuente,''),'capturedAt',DATE_FORMAT(COALESCE(p.created_at,NOW()),'%Y-%m-%dT%H:%i:%s')
+        ) WHERE p.application_snapshot IS NULL`);
+    })().catch(error => { applicationSnapshotSchemaPromise = null; throw error; });
+  }
+  return applicationSnapshotSchemaPromise;
+}
+
+/** Mantiene compatible la base de datos ya instalada al incorporar este dato de perfil. */
+export async function ensureCandidateLicenseColumn() {
+  if (!candidateLicenseSchemaPromise) {
+    candidateLicenseSchemaPromise = (async () => {
+      const columns = await query<{ Field: string }>("SHOW COLUMNS FROM candidatos LIKE 'tiene_licencia_conduccion'");
+      if (!columns.length) {
+        await execute("ALTER TABLE candidatos ADD COLUMN tiene_licencia_conduccion BOOLEAN NOT NULL DEFAULT FALSE AFTER portfolio");
+      }
+    })().catch((error) => {
+      candidateLicenseSchemaPromise = null;
+      throw error;
+    });
+  }
+  return candidateLicenseSchemaPromise;
+}
+
 function createUuid() {
   return globalThis.crypto?.randomUUID?.() ?? `app-${Date.now().toString(36)}`;
 }
@@ -146,7 +192,7 @@ function splitFullName(fullName: string) {
 const CANDIDATE_ACCOUNT_COLUMNS = `
   id, documento, nombres AS nombre, apellidos AS apellido, email, telefono,
   password_hash, foto_url AS foto, fecha_nacimiento, direccion, ciudad,
-  departamento, profesion, experiencia, educacion, linkedin, portfolio, cv_url,
+  departamento, profesion, experiencia, educacion, linkedin, portfolio, tiene_licencia_conduccion, cv_url,
   activo, ultimo_login, reset_token_hash, reset_expires_at, deleted_at,
   created_at, updated_at
 `;
@@ -174,6 +220,7 @@ function mapCandidateAccount(row: CandidateAccountRow): CandidateAccount {
     about: "",
     linkedinUrl: row.linkedin ?? "",
     portfolioUrl: row.portfolio ?? "",
+    hasDriversLicense: Boolean(row.tiene_licencia_conduccion),
     cvUrl: row.cv_url ?? "",
     active: Boolean(row.activo) && !row.deleted_at,
     lastLoginAt: toIsoString(row.ultimo_login),
@@ -202,6 +249,7 @@ function mapCandidateProfile(row: CandidateAccountRow): CandidateProfile {
     education: account.education,
     linkedinUrl: account.linkedinUrl,
     portfolioUrl: account.portfolioUrl,
+    hasDriversLicense: account.hasDriversLicense,
     cvUrl: account.cvUrl,
     resumeFileName: account.cvUrl ? (account.cvUrl.split("/").pop() ?? "") : "",
     active: account.active,
@@ -239,6 +287,7 @@ function normalizeProfile(record: Partial<CandidateProfile>): CandidateProfile {
     about: record.about ?? "",
     linkedinUrl: record.linkedinUrl ?? "",
     portfolioUrl: record.portfolioUrl ?? "",
+    hasDriversLicense: record.hasDriversLicense ?? false,
     cvUrl: record.cvUrl ?? "",
     resumeFileName: record.resumeFileName ?? "",
     resumeFileData: record.resumeFileData ?? "",
@@ -378,25 +427,29 @@ export function readCandidateApplications() {
   }
 }
 export async function getAllApplicationsFromDB() {
+  await ensureApplicationSnapshotSchema();
   const sql = `
-    SELECT CAST(p.id AS CHAR) AS id, CAST(p.vacante_id AS CHAR) AS vacancyId, CONCAT(c.nombres, ' ', c.apellidos) AS candidateName,
-      c.documento AS candidateDocument, c.email AS candidateEmail, c.ciudad AS city, v.titulo AS vacancyTitle,
-      CASE p.estado
-        WHEN 'Postulado' THEN 'Recibida'
-        WHEN 'Recibido' THEN 'Recibida'
-        WHEN 'En revisión' THEN 'En revision'
-        WHEN 'Filtro RH' THEN 'En revision'
-        WHEN 'Prueba técnica' THEN 'Prueba tecnica'
-        WHEN 'Entrevista RH' THEN 'Entrevista'
-        WHEN 'Entrevista Técnica' THEN 'Entrevista'
-        WHEN 'Finalista' THEN 'Entrevista'
-        WHEN 'Contratado' THEN 'Seleccionado'
-        WHEN 'No seleccionado' THEN 'No continua'
-        WHEN 'Proceso cerrado' THEN 'No continua'
+    SELECT CAST(p.id AS CHAR) AS id, CAST(p.vacante_id AS CHAR) AS vacancyId,
+      COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(p.application_snapshot,'$.candidateName')),''),NULLIF(TRIM(CONCAT(COALESCE(c.nombres,''),' ',COALESCE(c.apellidos,''))),''),'Postulante sin nombre') AS candidateName,
+      COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(p.application_snapshot,'$.candidateDocument')),''),c.documento,'') AS candidateDocument,
+      COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(p.application_snapshot,'$.candidateEmail')),''),c.email,'') AS candidateEmail,
+      COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(p.application_snapshot,'$.candidatePhone')),''),c.telefono,'') AS candidatePhone,
+      COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(p.application_snapshot,'$.candidateCity')),''),c.ciudad,'') AS city,
+      COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(p.application_snapshot,'$.candidateDepartment')),''),c.departamento,'') AS department,
+      COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(p.application_snapshot,'$.vacancyTitle')),''),v.titulo,'Vacante no disponible') AS vacancyTitle,
+      p.fuente AS source,p.observaciones_rh AS observations,p.updated_at AS updatedAt,
+      CASE
+        WHEN p.estado IN ('Postulado','Recibido') THEN 'Recibida'
+        WHEN p.estado IN ('En revisión','Filtro RH') THEN 'En revision'
+        WHEN p.estado = 'Prueba técnica' THEN 'Prueba tecnica'
+        WHEN p.estado IN ('Entrevista RH','Entrevista Técnica','Finalista') THEN 'Entrevista'
+        WHEN p.estado = 'Contratado' THEN 'Seleccionado'
+        WHEN p.estado = 'No seleccionado' AND p.observaciones_rh LIKE 'Trasladado internamente%' THEN 'Trasladado'
+        WHEN p.estado IN ('No seleccionado','Proceso cerrado') THEN 'No continua'
         ELSE p.estado
       END AS status,
       p.created_at AS appliedAt
-    FROM postulaciones p INNER JOIN candidatos c ON c.id = p.candidato_id INNER JOIN vacantes v ON v.id = p.vacante_id
+    FROM postulaciones p LEFT JOIN candidatos c ON c.id = p.candidato_id LEFT JOIN vacantes v ON v.id = p.vacante_id
     WHERE p.deleted_at IS NULL ORDER BY p.created_at DESC
   `;
 
@@ -404,39 +457,24 @@ export async function getAllApplicationsFromDB() {
 }
 
 export async function updateApplicationStatusInDB(input: {
-  id: string;
-  status: JobApplication["status"];
-  notes?: string;
-  adminName?: string;
-  adminUserId?: number;
+  id: string; status: JobApplication["status"]; notes?: string; adminName?: string; adminUserId?: number;
 }) {
-  const note = input.notes?.trim() || "";
-  if (input.status !== "Recibida" && !note) return false;
-  const corporateStatus = {
-    Recibida: "Postulado",
-    "En revision": "En revisión",
-    Entrevista: "Entrevista RH",
-    "Prueba tecnica": "Prueba técnica",
-    Seleccionado: "Contratado",
-    "No continua": "No seleccionado",
-  }[input.status];
-  const result = await execute(
-    "UPDATE postulaciones SET estado = ?, observaciones_rh = ? WHERE id = ?",
-    [corporateStatus, note || null, input.id],
-  );
-  if (result.affectedRows > 0)
-    await execute(
-      "INSERT INTO activity_logs (usuario_tipo, accion, modulo, tabla_afectada, registro_id, descripcion) VALUES (?,?,?,?,?,?)",
-      [
-        "Admin",
-        "POSTULACION_ESTADO_ACTUALIZADO",
-        "Vacantes",
-        "postulaciones",
-        input.id,
-        `Administrador ${input.adminName || "no identificado"}${input.adminUserId ? ` (ID ${input.adminUserId})` : ""} actualizó el proceso. Estado informado: ${input.status}. Observación: ${note || "Sin observación."}`,
-      ],
-    );
-  return result.affectedRows > 0;
+  const note=input.notes?.trim()||"";
+  if(input.status!=="Recibida"&&!note)return false;
+  const corporateStatus={Recibida:"Postulado","En revision":"En revisión",Entrevista:"Entrevista RH","Prueba tecnica":"Prueba técnica",Seleccionado:"Contratado","No continua":"No seleccionado",Trasladado:"No seleccionado"}[input.status];
+  if(input.status==="Seleccionado"){await ensureSelectionSchema();await ensureHistoricalCandidateSchema();}
+  const connection=await db.getConnection();
+  try {
+    await connection.beginTransaction();
+    const [rows]=await connection.query<mysql.RowDataPacket[]>("SELECT id FROM postulaciones WHERE id=? AND deleted_at IS NULL FOR UPDATE",[input.id]);
+    if(!rows.length){await connection.rollback();return false;}
+    await connection.execute("UPDATE postulaciones SET estado=?,observaciones_rh=CONCAT(?, '\\n', COALESCE(observaciones_rh,'')) WHERE id=?",[corporateStatus,note,input.id]);
+    const admin=`${input.adminName||"Administrador"} (ID ${input.adminUserId||"No registrado"})`;
+    await connection.execute("INSERT INTO activity_logs(usuario_tipo,accion,modulo,tabla_afectada,registro_id,descripcion) VALUES ('Admin','POSTULACION_ESTADO_ACTUALIZADO','Vacantes','postulaciones',?,?)",[input.id,`Administrador ${admin} actualizó el proceso. Estado informado: ${input.status}. Observación: ${note}`]);
+    if(input.status==="Seleccionado")await recordHiring(connection,input.id,admin,note);
+    await connection.commit();return true;
+  } catch(error){await connection.rollback();throw error;}
+  finally {connection.release();}
 }
 
 /**
@@ -506,6 +544,7 @@ export async function getCandidateAccountByDocumentOrEmail(input: {
   documentNumber?: string;
   email?: string;
 }) {
+  await ensureCandidateLicenseColumn();
   const documentNumber = normalizeDocumentNumber(input.documentNumber ?? "");
   const email = normalizeEmail(input.email ?? "");
   const conditions: string[] = [];
@@ -541,6 +580,7 @@ export async function getCandidateAccountForLogin(input: {
   documentNumber?: string;
   email: string;
 }) {
+  await ensureCandidateLicenseColumn();
   const documentNumber = normalizeDocumentNumber(input.documentNumber ?? "");
   const email = normalizeEmail(input.email);
   const documentCondition = documentNumber ? "AND documento = ?" : "";
@@ -687,6 +727,7 @@ export async function updateCandidateProfileInDB(input: {
   email: string;
   profile: Partial<CandidateProfile>;
 }) {
+  await ensureCandidateLicenseColumn();
   const profile = input.profile;
   const nameParts = profile.fullName ? splitFullName(profile.fullName) : null;
   const firstName = profile.firstName?.trim() || nameParts?.firstName || "";
@@ -708,6 +749,7 @@ export async function updateCandidateProfileInDB(input: {
           educacion = ?,
           linkedin = ?,
           portfolio = ?,
+          tiene_licencia_conduccion = ?,
           cv_url = ?
       WHERE documento = ?
         AND LOWER(email) = ?
@@ -727,6 +769,7 @@ export async function updateCandidateProfileInDB(input: {
       profile.education?.trim() ?? "",
       profile.linkedinUrl?.trim() ?? "",
       profile.portfolioUrl?.trim() ?? "",
+      profile.hasDriversLicense ? 1 : 0,
       profile.cvUrl?.trim() ?? "",
       normalizeDocumentNumber(input.documentNumber),
       normalizeEmail(input.email),
@@ -827,7 +870,9 @@ function mapDbApplicationToJobApplication(
     "Proceso cerrado": "No continua",
   };
   const status =
-    statusMap[rawStatus] ??
+    (rawStatus === "No seleccionado" && String(dbApplication.observaciones_rh ?? "").startsWith("Trasladado internamente")
+      ? "Trasladado"
+      : statusMap[rawStatus]) ??
     (APPLICATION_STATUS_OPTIONS.includes(rawStatus as JobApplication["status"])
       ? (rawStatus as JobApplication["status"])
       : "Recibida");
@@ -861,29 +906,37 @@ export async function createApplicationInDB(
   const {
     candidateId,
     vacancyId,
+    vacancyTitle,
     candidateDocument,
     candidateName,
     candidateEmail,
     candidatePhone,
     candidateCity,
     candidateDepartment,
+    candidateProfessionalTitle,
+    candidateEducation,
+    applicationSource = "Portal Web",
     resumeFileName,
     resumeFileData, // Se espera en formato Base64
     resumeUrl,
   } = applicationData;
+  await ensureApplicationSnapshotSchema();
+  const applicationSnapshot = JSON.stringify({ candidateDocument, candidateName: candidateName.trim(), candidateEmail, candidatePhone, candidateCity: candidateCity || "", candidateDepartment: candidateDepartment || "", professionalTitle: candidateProfessionalTitle || "", education: candidateEducation || "", vacancyTitle, source: applicationSource, capturedAt: new Date().toISOString() });
 
   const sql = `
     INSERT INTO postulaciones (
-      candidato_id, vacante_id, estado, fuente, observaciones_candidato, cv_url
+      candidato_id, vacante_id, estado, fuente, observaciones_candidato, cv_url, application_snapshot
     )
-    VALUES (?, ?, 'Postulado', 'Portal Web', ?, ?)
+    VALUES (?, ?, 'Postulado', ?, ?, ?, ?)
   `;
 
   const params = [
     candidateId || null,
     vacancyId,
+    applicationSource,
     `Postulación de ${candidateName.trim()}`,
     resumeUrl || null,
+    applicationSnapshot,
   ];
 
   const result = await execute(sql, params);
@@ -898,6 +951,7 @@ export async function createApplicationInDB(
 export async function getApplicationsByCandidateFromDB(
   document: string,
   email?: string,
+  publicView = false,
 ): Promise<JobApplication[]> {
   try {
     const params: string[] = [normalizeDocumentNumber(document)];
@@ -911,12 +965,14 @@ export async function getApplicationsByCandidateFromDB(
       SELECT p.*, v.titulo as vacancy_title, c.documento, CONCAT(c.nombres, ' ', c.apellidos) AS candidate_name, c.email AS candidate_email, c.telefono AS candidate_phone
       FROM postulaciones p INNER JOIN candidatos c ON c.id = p.candidato_id INNER JOIN vacantes v ON p.vacante_id = v.id
       WHERE c.documento = ? AND p.deleted_at IS NULL
+      ${publicView ? "AND COALESCE(p.observaciones_candidato,'') <> 'Traslado interno sin correo automático.'" : ""}
       ${emailCondition}
       ORDER BY p.created_at DESC
     `;
     const rows = await query<DbApplicationRow>(sql, params);
     return rows
       .map(mapDbApplicationToJobApplication)
+      .filter(item => !publicView || item?.status !== "Trasladado")
       .filter(Boolean) as JobApplication[];
   } catch (error) {
     console.error("Error al leer las postulaciones del candidato:", error);

@@ -43,6 +43,7 @@ function normalizeProfile(record: Partial<CandidateProfile>): CandidateProfile {
 
     linkedinUrl: record.linkedinUrl ?? '',
     portfolioUrl: record.portfolioUrl ?? '',
+    hasDriversLicense: record.hasDriversLicense ?? false,
     cvUrl: record.cvUrl ?? '',
 
     resumeFileName: record.resumeFileName ?? '',

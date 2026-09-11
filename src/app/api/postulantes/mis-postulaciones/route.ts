@@ -40,6 +40,7 @@ export async function GET(request: NextRequest) {
   const applications = await getApplicationsByCandidateFromDB(
     session.documentNumber,
     session.email,
+    true,
   );
 
   return NextResponse.json({ success: true, data: applications });
@@ -54,6 +55,7 @@ export async function POST(request: NextRequest) {
         { status: 401 },
       );
     const body = await request.json();
+    if (body.dataConsent !== true) return NextResponse.json({ success:false, message:"Debes autorizar el tratamiento de tus datos para gestionar esta postulación." }, { status:422 });
     const vacancyId = asText(body.vacancyId);
     const vacancyTitle = asText(body.vacancyTitle);
     const resumeFileName = asText(body.resumeFileName);
@@ -78,6 +80,8 @@ export async function POST(request: NextRequest) {
     const candidatePhone = profile?.phone ?? "";
     const candidateCity = profile?.city ?? "";
     const candidateDepartment = profile?.department ?? "";
+    const missing = [[candidatePhone,"teléfono"],[candidateCity,"ciudad"],[candidateDepartment,"departamento"]].filter(([value])=>!value).map(([,label])=>label);
+    if(missing.length)return NextResponse.json({success:false,message:`Completa y guarda tu perfil: ${missing.join(", ")}.`},{status:422});
 
     if (!vacancyId || !vacancyTitle || !candidateName) {
       return NextResponse.json(
@@ -126,11 +130,14 @@ export async function POST(request: NextRequest) {
       candidatePhone,
       candidateCity,
       candidateDepartment,
+      candidateProfessionalTitle: profile.professionalTitle,
+      candidateEducation: profile.education,
       resumeFileName,
       resumeFileData,
       resumeUrl: profile.cvUrl,
     });
 
+    await recordVacancyAudit({ action:"POSTULANTE_AUTORIZACION_DATOS", table:"postulaciones", recordId:id, description:"El postulante autorizó el tratamiento de datos para gestionar esta postulación. Política: /legal/privacidad." });
     const application: JobApplication = {
       id,
       trackingCode: `JDR-${id.toUpperCase().slice(0, 8)}`,

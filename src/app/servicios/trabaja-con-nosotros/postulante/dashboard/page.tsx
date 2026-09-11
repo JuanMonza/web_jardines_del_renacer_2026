@@ -14,8 +14,8 @@ import {
   User,
 } from "lucide-react";
 import type { CandidateProfile, JobApplication } from "@/config/candidates";
-import { createEmptyCandidateProfile } from "@/config/candidates";
-import { VACANCY_DEPARTMENTS, type JobVacancy } from "@/config/vacancies";
+import { ACADEMIC_LEVEL_OPTIONS, createEmptyCandidateProfile } from "@/config/candidates";
+import { VACANCY_DEPARTMENTS, getVacancyCitiesByDepartment, type JobVacancy } from "@/config/vacancies";
 import Container from "@/components/ui/Container";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
@@ -47,6 +47,7 @@ function StatusBadge({ status }: { status: JobApplication["status"] }) {
 }
 
 function PostulanteDashboardContent() {
+  const [dataConsent,setDataConsent]=useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const requestedVacancyId = searchParams.get("vacante") ?? "";
@@ -271,6 +272,14 @@ function PostulanteDashboardContent() {
 
   const handleApplyToSelectedVacancy = async () => {
     if (!selectedVacancy || alreadyApplied) return;
+    if (!profile.cvUrl && !profile.resumeFileData) {
+      setNotice({
+        title: "Hoja de vida requerida",
+        description: "Carga tu hoja de vida antes de postularte. Es obligatoria para que Talento Humano revise tu perfil.",
+        variant: "error",
+      });
+      return;
+    }
     setApplying(true);
     try {
       const response = await fetch("/api/postulantes/mis-postulaciones", {
@@ -279,6 +288,7 @@ function PostulanteDashboardContent() {
         body: JSON.stringify({
           vacancyId: selectedVacancy.id,
           vacancyTitle: selectedVacancy.title,
+          dataConsent,
           resumeFileName: profile.resumeFileName,
           resumeFileData: profile.resumeFileData,
         }),
@@ -295,7 +305,9 @@ function PostulanteDashboardContent() {
         description: `Tu postulación para ${selectedVacancy.title} fue registrada correctamente.`,
         variant: "success",
       });
-      router.replace("/servicios/trabaja-con-nosotros/postulante/dashboard");
+      // Conserva la vacante elegida para que la persona vea de inmediato que
+      // su postulación ya quedó registrada, sin tener que volver al catálogo.
+      router.replace(`/servicios/trabaja-con-nosotros/postulante/dashboard?vacante=${encodeURIComponent(selectedVacancy.id)}`);
       router.refresh();
     } catch (error) {
       const message =
@@ -369,6 +381,7 @@ function PostulanteDashboardContent() {
             </div>
           </section>
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+            <a href="#completar-perfil" className="rounded-xl bg-primary px-4 py-2 font-bold text-white">Completar mi perfil</a>
             <Link href="/servicios/trabaja-con-nosotros">
               <Button variant="secondary">Ver vacantes</Button>
             </Link>
@@ -390,6 +403,7 @@ function PostulanteDashboardContent() {
 
           <div className="grid grid-cols-1 gap-8 xl:grid-cols-[0.9fr_1.1fr]">
             <form
+              id="completar-perfil"
               onSubmit={handleSaveProfile}
               className="rounded-[24px] border border-white/80 bg-white/75 p-6 shadow-[0_14px_36px_rgba(35,79,132,0.12)] backdrop-blur-xl"
             >
@@ -498,6 +512,9 @@ function PostulanteDashboardContent() {
                           setProfile((prev) => ({
                             ...prev,
                             department: event.target.value,
+                            city: getVacancyCitiesByDepartment(event.target.value).includes(prev.city)
+                              ? prev.city
+                              : "",
                           }))
                         }
                         className="w-full rounded-xl border border-border px-4 py-3 text-text outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-primary"
@@ -511,16 +528,20 @@ function PostulanteDashboardContent() {
                       </select>
                     </div>
 
-                    <Input
-                      label="Ciudad"
-                      value={profile.city}
-                      onChange={(event) =>
-                        setProfile((prev) => ({
-                          ...prev,
-                          city: event.target.value,
-                        }))
-                      }
-                    />
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-text">Ciudad</label>
+                      <select
+                        value={profile.city}
+                        disabled={!profile.department}
+                        onChange={(event) => setProfile((prev) => ({ ...prev, city: event.target.value }))}
+                        className="w-full rounded-xl border border-border bg-white px-4 py-3 text-text outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-primary disabled:cursor-not-allowed disabled:bg-slate-50"
+                      >
+                        <option value="">{profile.department ? "Selecciona una ciudad" : "Primero selecciona un departamento"}</option>
+                        {getVacancyCitiesByDepartment(profile.department).map((city) => (
+                          <option key={city} value={city}>{city}</option>
+                        ))}
+                      </select>
+                    </div>
                     <Input
                       label="Dirección"
                       value={profile.address}
@@ -542,7 +563,10 @@ function PostulanteDashboardContent() {
                   </summary>
                   <div className="mt-4 space-y-4">
                     <Input
-                      label="Cargo o profesión"
+                      required
+                      maxLength={120}
+                      label="Nombre del título o profesión"
+                      placeholder="Ej. Ingeniería de Sistemas"
                       value={profile.professionalTitle}
                       onChange={(event) =>
                         setProfile((prev) => ({
@@ -573,16 +597,33 @@ function PostulanteDashboardContent() {
                         }
                       />
                     </div>
-                    <Textarea
-                      label="Formación académica"
-                      value={profile.education}
-                      onChange={(event) =>
-                        setProfile((prev) => ({
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-text">
+                        ¿Tienes licencia de conducción vigente?
+                      </label>
+                      <select
+                        value={profile.hasDriversLicense ? "si" : "no"}
+                        onChange={(event) => setProfile((prev) => ({
                           ...prev,
-                          education: event.target.value,
-                        }))
-                      }
-                    />
+                          hasDriversLicense: event.target.value === "si",
+                        }))}
+                        className="w-full rounded-xl border border-border bg-white px-4 py-3 text-text outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-primary"
+                      >
+                        <option value="no">No</option>
+                        <option value="si">Sí, tengo licencia vigente</option>
+                      </select>
+                      <p className="mt-1 text-xs text-textLight">
+                        Este dato ayuda a validar vacantes que exigen licencia de conducción.
+                      </p>
+                    </div>
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-text">Nivel académico</label>
+                      <select required value={profile.education} onChange={(event) => setProfile((prev) => ({ ...prev, education: event.target.value }))} className="w-full rounded-xl border border-border bg-white px-4 py-3 text-text outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-primary">
+                        <option value="">Selecciona tu nivel académico</option>
+                        {profile.education && !(ACADEMIC_LEVEL_OPTIONS as readonly string[]).includes(profile.education) && <option value={profile.education}>Dato anterior: {profile.education}</option>}
+                        {ACADEMIC_LEVEL_OPTIONS.map((level) => <option key={level} value={level}>{level}</option>)}
+                      </select>
+                    </div>
                     <Textarea
                       label="Perfil profesional"
                       value={profile.about}
@@ -598,8 +639,8 @@ function PostulanteDashboardContent() {
                 <details className="group rounded-2xl border border-primary/10 bg-white/55 p-4">
                   <summary className="cursor-pointer list-none font-bold text-text">
                     Hoja de vida{" "}
-                    <span className="float-right text-xs font-semibold text-primary">
-                      {profile.resumeFileName ? "Cargada" : "Pendiente"}
+                        <span className="float-right text-xs font-semibold text-primary">
+                      {profile.resumeFileName ? "Cargada" : "Obligatoria"}
                     </span>
                   </summary>
                   <div className="mt-4">
@@ -608,7 +649,7 @@ function PostulanteDashboardContent() {
                         Hoja de vida / CV
                       </label>
                       <p className="mt-1 text-xs text-textLight">
-                        PDF o documento de máximo 5 MB.
+                        PDF o documento de máximo 5 MB. Este campo es obligatorio para postularte.
                       </p>
                       <input
                         type="file"
@@ -705,6 +746,7 @@ function PostulanteDashboardContent() {
                   <p className="mt-4 text-sm leading-6 text-textLight">
                     {selectedVacancy.summary}
                   </p>
+                  {!alreadyApplied && <label className="mt-4 flex items-start gap-3 rounded-xl border p-4 text-sm"><input type="checkbox" checked={dataConsent} onChange={e=>setDataConsent(e.target.checked)} className="mt-1"/><span>Autorizo el tratamiento de mis datos para gestionar esta postulación según la <Link href="/legal/privacidad" target="_blank" className="underline text-primary">política de tratamiento de datos</Link>.</span></label>}
                   {alreadyApplied ? (
                     <div className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
                       Ya registraste una postulación para esta vacante.
@@ -713,7 +755,7 @@ function PostulanteDashboardContent() {
                     <button
                       type="button"
                       onClick={() => void handleApplyToSelectedVacancy()}
-                      disabled={applying}
+                      disabled={applying || !dataConsent}
                       className="mt-5 w-full rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {applying

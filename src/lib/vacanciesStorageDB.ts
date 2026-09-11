@@ -1,8 +1,28 @@
 import { query, execute } from "./db";
+import { ensureSelectionSchema } from "@/lib/selection-followup";
+import { selectionSteps } from "@/config/selection-followup";
 import {
   normalizeVacancyDepartment,
   type JobVacancy,
 } from "@/config/vacancies";
+
+// Se conserva junto a los requisitos para no depender de una migración pendiente
+// en instalaciones ya existentes de la base de datos.
+const DRIVERS_LICENSE_MARKER = "__jdr_requires_drivers_license__";
+
+function readRequirements(value: unknown): string[] {
+  try {
+    const parsed = typeof value === "string" ? JSON.parse(value) : value;
+    return Array.isArray(parsed) ? parsed.map(String) : [];
+  } catch {
+    return [];
+  }
+}
+
+function requirementsForStorage(requirements: string[], requiresDriversLicense?: boolean) {
+  const visibleRequirements = requirements.filter((item) => item !== DRIVERS_LICENSE_MARKER);
+  return requiresDriversLicense ? [...visibleRequirements, DRIVERS_LICENSE_MARKER] : visibleRequirements;
+}
 
 /**
  * Mapea una fila de la tabla `vacantes` a la interfaz `JobVacancy`.
@@ -16,7 +36,9 @@ function mapDbVacancyToJobVacancy(dbVacancy: any): JobVacancy | null {
     return null;
   }
 
+  const storedRequirements = readRequirements(dbVacancy.requisitos);
   return {
+    selectionSteps: selectionSteps(typeof dbVacancy.selection_steps === "string" ? JSON.parse(dbVacancy.selection_steps) : dbVacancy.selection_steps),
     id: String(dbVacancy.id),
     title: dbVacancy.titulo,
     area: "Talento humano",
@@ -33,7 +55,8 @@ function mapDbVacancyToJobVacancy(dbVacancy: any): JobVacancy | null {
       : "A convenir",
     summary: dbVacancy.descripcion || "",
     // Los campos JSON se parsean. Si están vacíos o nulos, se devuelve un array vacío.
-    requirements: dbVacancy.requisitos ? JSON.parse(dbVacancy.requisitos) : [],
+    requirements: storedRequirements.filter((item) => item !== DRIVERS_LICENSE_MARKER),
+    requiresDriversLicense: storedRequirements.includes(DRIVERS_LICENSE_MARKER),
     benefits: dbVacancy.beneficios ? JSON.parse(dbVacancy.beneficios) : [],
     featured: Boolean(dbVacancy.destacada),
     postedAt: new Date(dbVacancy.fecha_publicacion || dbVacancy.created_at)
@@ -102,6 +125,7 @@ export async function getVacancyByIdFromDB(
 export async function createVacancyInDB(
   vacancyData: Omit<JobVacancy, "id" | "createdAt" | "updatedAt">,
 ) {
+  await ensureSelectionSchema();
   const {
     title,
     area,
@@ -118,13 +142,13 @@ export async function createVacancyInDB(
     postedAt,
   } = vacancyData;
   const sql = `
-    INSERT INTO vacantes (titulo, descripcion, requisitos, beneficios, ciudad, departamento, modalidad, tipo_contrato, destacada, estado, fecha_publicacion)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Publicada', ?)
+    INSERT INTO vacantes (titulo, descripcion, requisitos, beneficios, ciudad, departamento, modalidad, tipo_contrato, destacada, estado, fecha_publicacion, selection_steps)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Publicada', ?, ?)
   `;
   const params = [
     title,
     summary,
-    JSON.stringify(requirements),
+    JSON.stringify(requirementsForStorage(requirements, vacancyData.requiresDriversLicense)),
     JSON.stringify(benefits),
     city,
     department,
@@ -132,6 +156,7 @@ export async function createVacancyInDB(
     contractType === "Tiempo completo" ? "Indefinido" : "Fijo",
     featured,
     postedAt,
+    JSON.stringify(selectionSteps(vacancyData.selectionSteps)),
   ];
   const result = await execute(sql, params);
   return result.insertId;
@@ -164,6 +189,7 @@ export async function updateVacancyInDB(
   id: string,
   vacancyData: Omit<JobVacancy, "id" | "createdAt" | "updatedAt">,
 ): Promise<number> {
+  await ensureSelectionSchema();
   const {
     title,
     area,
@@ -181,14 +207,14 @@ export async function updateVacancyInDB(
   } = vacancyData;
 
   const sql = `
-    UPDATE vacantes SET titulo = ?, descripcion = ?, requisitos = ?, beneficios = ?, ciudad = ?, departamento = ?, modalidad = ?, tipo_contrato = ?, destacada = ?, fecha_publicacion = ?, updated_at = CURRENT_TIMESTAMP
+    UPDATE vacantes SET titulo = ?, descripcion = ?, requisitos = ?, beneficios = ?, ciudad = ?, departamento = ?, modalidad = ?, tipo_contrato = ?, destacada = ?, fecha_publicacion = ?, selection_steps = ?, updated_at = CURRENT_TIMESTAMP
     WHERE id = ?
   `;
 
   const result = await execute(sql, [
     title,
     summary,
-    JSON.stringify(requirements),
+    JSON.stringify(requirementsForStorage(requirements, vacancyData.requiresDriversLicense)),
     JSON.stringify(benefits),
     city,
     department,
@@ -196,6 +222,7 @@ export async function updateVacancyInDB(
     contractType === "Tiempo completo" ? "Indefinido" : "Fijo",
     featured,
     postedAt,
+    JSON.stringify(selectionSteps(vacancyData.selectionSteps)),
     id,
   ]);
 

@@ -19,6 +19,7 @@ export interface CandidateProfile {
   about: string;
   linkedinUrl: string;
   portfolioUrl: string;
+  hasDriversLicense: boolean;
   cvUrl: string;
   resumeFileName: string;
   resumeFileData: string;
@@ -26,6 +27,15 @@ export interface CandidateProfile {
   lastLoginAt: string;
   updatedAt: string;
 }
+
+export const ACADEMIC_LEVEL_OPTIONS = [
+  "Bachiller",
+  "Técnico",
+  "Tecnólogo",
+  "Profesional",
+] as const;
+
+export type AcademicLevel = (typeof ACADEMIC_LEVEL_OPTIONS)[number];
 
 export interface CandidateAccount {
   id: string;
@@ -47,6 +57,7 @@ export interface CandidateAccount {
   about: string;
   linkedinUrl: string;
   portfolioUrl: string;
+  hasDriversLicense: boolean;
   cvUrl: string;
   active: boolean;
   lastLoginAt: string;
@@ -60,7 +71,8 @@ export type ApplicationStatus =
   | 'Entrevista'
   | 'Prueba tecnica'
   | 'Seleccionado'
-  | 'No continua';
+  | 'No continua'
+  | 'Trasladado';
 
 export const APPLICATION_STATUS_OPTIONS: ApplicationStatus[] = [
   'Recibida',
@@ -111,6 +123,7 @@ export function createEmptyCandidateProfile(): CandidateProfile {
     about: '',
     linkedinUrl: '',
     portfolioUrl: '',
+    hasDriversLicense: false,
     cvUrl: '',
     resumeFileName: '',
     resumeFileData: '',

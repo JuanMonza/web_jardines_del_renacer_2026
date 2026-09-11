@@ -1,6 +1,6 @@
 import type { ApplicationStatus } from '@/config/candidates';
 
-export const APPLICATION_PROGRESS_STEPS: Array<Exclude<ApplicationStatus, 'No continua'>> = [
+export const APPLICATION_PROGRESS_STEPS: Array<Exclude<ApplicationStatus, 'No continua' | 'Trasladado'>> = [
   'Recibida',
   'En revision',
   'Entrevista',
@@ -16,7 +16,7 @@ export type ApplicationProgress = {
 };
 
 export function getApplicationProgress(status: ApplicationStatus): ApplicationProgress {
-  if (status === 'No continua') {
+  if (status === 'No continua' || status === 'Trasladado') {
     return {
       activeIndex: -1,
       percent: 100,

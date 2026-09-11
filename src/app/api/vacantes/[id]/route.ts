@@ -142,21 +142,39 @@ export async function DELETE(
       { status: 403 },
     );
   try {
-    const vacancy = await getVacancyByIdFromDB(params.id);
+    const vacancyRows = await query<{ title: string; status: string }>(
+      "SELECT titulo AS title, estado AS status FROM vacantes WHERE id=? AND deleted_at IS NULL LIMIT 1",
+      [params.id],
+    );
+    const vacancy = vacancyRows[0];
+    if (!vacancy)
+      return NextResponse.json(
+        { success: false, message: "Vacante no encontrada." },
+        { status: 404 },
+      );
+    if (vacancy.status === "Cerrada")
+      return NextResponse.json(
+        { success: false, message: `La vacante “${vacancy.title}” ya se encuentra cerrada.` },
+        { status: 409 },
+      );
     const applications = await query<{
       id: string;
       nombre: string;
       email: string;
     }>(
-      "SELECT p.id, CONCAT(c.nombres, ' ', c.apellidos) AS nombre, c.email FROM postulaciones p INNER JOIN candidatos c ON c.id=p.candidato_id WHERE p.vacante_id=? AND p.deleted_at IS NULL AND p.estado NOT IN ('Contratado','No seleccionado','Proceso cerrado')",
+      "SELECT p.id, CONCAT(c.nombres, ' ', c.apellidos) AS nombre, c.email FROM postulaciones p INNER JOIN candidatos c ON c.id=p.candidato_id WHERE p.vacante_id=? AND p.deleted_at IS NULL AND p.estado NOT IN ('Contratado','Seleccionado','No seleccionado','Proceso cerrado')",
       [params.id],
     );
+    const body = await request.json().catch(()=>({}));
+    const closureReason = body.closureReason;
+    if(!["Contratación con éxito","Cancelación de proceso","Modificación del proceso"].includes(closureReason))
+      return NextResponse.json({success:false,message:"Selecciona el motivo del cierre."},{status:422});
     let notified = 0;
     for (const application of applications) {
       await execute(
-        "UPDATE postulaciones SET estado='No seleccionado', observaciones_rh=? WHERE id=?",
+        "UPDATE postulaciones SET estado='Proceso cerrado', observaciones_rh=CONCAT(?, '\\n', COALESCE(observaciones_rh,'')) WHERE id=?",
         [
-          "Vacante cubierta; se conserva el perfil para futuras oportunidades.",
+          `Proceso cerrado: ${closureReason}. Responsable: ${session.name} (ID ${session.userId}).`,
           application.id,
         ],
       );
@@ -166,6 +184,7 @@ export async function DELETE(
             email: application.email,
             name: application.nombre,
             vacancyTitle: vacancy?.title || "la vacante",
+            closureReason,
           })
         )
           notified += 1;
@@ -179,7 +198,7 @@ export async function DELETE(
         action: "POSTULANTE_NO_CONTINUA_VACANTE_CUBIERTA",
         table: "postulaciones",
         recordId: application.id,
-        description: `La vacante “${vacancy?.title || params.id}” fue cubierta. Se notificó al postulante ${application.nombre} que su perfil se conservará para futuras oportunidades.`,
+        description: `Administrador ${session.name} (ID ${session.userId}) cerró la postulación de ${application.nombre} a “${vacancy?.title || params.id}”. Motivo: ${closureReason}.`,
       });
     }
     const affectedRows = await deactivateVacancyInDB(params.id);
@@ -192,11 +211,12 @@ export async function DELETE(
       action: "VACANTE_ELIMINADA",
       table: "vacantes",
       recordId: params.id,
-      description: `Administrador ${session.name} (ID ${session.userId}) cerró la vacante “${vacancy?.title || params.id}”. Se notificó a ${notified} postulante(s) no seleccionados y sus perfiles quedan disponibles para futuras oportunidades.`,
+      description: `Administrador ${session.name} (ID ${session.userId}) cerró la vacante “${vacancy?.title || params.id}”. Motivo: ${closureReason}. Se notificó a ${notified} postulante(s).`,
     });
     return NextResponse.json({
       success: true,
-      message: `Vacante cerrada. Se notificó a ${notified} postulante(s).`,
+      message: `“${vacancy?.title || "La vacante"}” quedó cerrada por ${String(closureReason).toLowerCase()}. Se enviaron ${notified} de ${applications.length} correo(s) correspondientes. La trazabilidad fue conservada.`,
+      data: { vacancyTitle: vacancy?.title || "", closureReason, notified, candidatesToNotify: applications.length },
     });
   } catch (error) {
     console.error("Error desactivando vacante:", error);

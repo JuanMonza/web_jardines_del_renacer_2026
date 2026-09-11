@@ -10,6 +10,7 @@ export type VacancyModality = "Presencial" | "Hibrido" | "Remoto";
  * Incluye datos básicos, requisitos, beneficios y metadatos de tiempo.
  */
 export interface JobVacancy {
+  selectionSteps?: import("@/config/selection-followup").FollowupKey[];
   id: string;
   title: string;
   area: string;
@@ -22,6 +23,8 @@ export interface JobVacancy {
   experience: string;
   summary: string;
   requirements: string[];
+  /** Indica si el cargo exige licencia de conducción vigente. */
+  requiresDriversLicense?: boolean;
   benefits: string[];
   featured: boolean;
   postedAt: string;
@@ -42,6 +45,18 @@ const ALL_DEPARTMENTS = getAllDepartamentos().map((item) => item.nombre);
 
 /** Lista de departamentos disponibles para las vacantes, extraída dinámicamente de las sedes. */
 export const VACANCY_DEPARTMENTS = ALL_DEPARTMENTS;
+
+/** Ciudades disponibles por departamento, tomadas del directorio institucional de sedes. */
+export const VACANCY_CITIES_BY_DEPARTMENT: Record<string, string[]> = Object.fromEntries(
+  getAllDepartamentos().map(({ nombre, ciudades }) => [
+    nombre,
+    [...ciudades].sort((a, b) => a.localeCompare(b, "es")),
+  ]),
+);
+
+export function getVacancyCitiesByDepartment(department: string) {
+  return VACANCY_CITIES_BY_DEPARTMENT[department] ?? [];
+}
 
 /** Departamento por defecto para los formularios de nuevas vacantes. */
 export const DEFAULT_VACANCY_DEPARTMENT = VACANCY_DEPARTMENTS[0] ?? "Risaralda";
@@ -310,6 +325,7 @@ export function createEmptyVacancy(): JobVacancy {
     experience: "",
     summary: "",
     requirements: [],
+    requiresDriversLicense: false,
     benefits: [],
     featured: false,
     postedAt: new Date().toISOString().slice(0, 10),

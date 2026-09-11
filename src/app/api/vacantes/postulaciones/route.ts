@@ -14,7 +14,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data,
-    });
+      total: data.length,
+    }, { headers: { "Cache-Control": "no-store, max-age=0" } });
 
   } catch (error) {
 
@@ -23,6 +24,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
+        message: "No fue posible consultar todas las postulaciones.",
       },
       {
         status: 500,

@@ -24,6 +24,11 @@ const navigation = [
     icon: Archive,
   },
   {
+    href: "/dashboard-vacantes/historial-laboral",
+    label: "Historial laboral",
+    icon: Archive,
+  },
+  {
     href: "/dashboard-vacantes/postulantes",
     label: "Postulantes",
     icon: Users,

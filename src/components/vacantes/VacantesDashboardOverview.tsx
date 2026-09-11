@@ -9,6 +9,7 @@ import {
   BriefcaseBusiness,
   ClipboardCheck,
   Clock3,
+  PauseCircle,
   Plus,
   Users,
 } from "lucide-react";
@@ -25,8 +26,11 @@ type Vacancy = {
   id: string;
   title: string;
   city: string;
+  status?: "Publicada" | "Pausada";
+  updatedAt?: string;
   applicationCount?: number;
 };
+type ClosedVacancy = { id: string; title: string; city: string; department: string; closedAt: string; applications?: unknown[] };
 type Audit = { createdAt: string; action: string; description: string };
 const date = new Intl.DateTimeFormat("es-CO", {
   dateStyle: "medium",
@@ -96,12 +100,15 @@ const statusSummaryStyle: Record<
 export default function VacantesDashboardOverview() {
   const [applications, setApplications] = useState<Application[]>([]);
   const [vacancies, setVacancies] = useState<Vacancy[]>([]);
+  const [closedVacancies, setClosedVacancies] = useState<ClosedVacancy[]>([]);
+  const [vacancyStatus, setVacancyStatus] = useState<"Publicada" | "Pausada" | "Cerrada">("Publicada");
   const [audit, setAudit] = useState<Audit[]>([]);
   const [adminName, setAdminName] = useState("Administrador");
   useEffect(() => {
     void Promise.all([
       fetch("/api/vacantes/postulaciones"),
-      fetch("/api/vacantes"),
+      fetch("/api/vacantes?admin=1"),
+      fetch("/api/vacantes/historial"),
       fetch("/api/vacantes/auditoria"),
       fetch("/api/iam/admin/session"),
     ])
@@ -109,23 +116,31 @@ export default function VacantesDashboardOverview() {
         async ([
           applicationsResponse,
           vacanciesResponse,
+          closedVacanciesResponse,
           auditResponse,
           sessionResponse,
         ]) => {
           const appData = await applicationsResponse.json();
+          const closedVacanciesData = await closedVacanciesResponse.json();
           const auditData = await auditResponse.json();
           const sessionData = await sessionResponse.json();
           setApplications(appData.data ?? []);
           setVacancies(await vacanciesResponse.json());
+          setClosedVacancies(closedVacanciesData.data ?? []);
           setAudit(auditData.data ?? []);
           setAdminName(sessionData.user?.name || "Administrador");
         },
       )
       .catch(() => undefined);
   }, []);
+  const publishedVacancies = vacancies.filter((item) => item.status !== "Pausada");
+  const pausedVacancies = vacancies.filter((item) => item.status === "Pausada");
+  const visibleVacancies = vacancyStatus === "Cerrada"
+    ? closedVacancies.map(item => ({ ...item, status: "Cerrada" as const, date: item.closedAt, applicationCount: item.applications?.length ?? 0 }))
+    : (vacancyStatus === "Pausada" ? pausedVacancies : publishedVacancies).map(item => ({ ...item, status: vacancyStatus, date: item.updatedAt || "", applicationCount: item.applicationCount ?? 0 }));
   const metrics = useMemo(
     () => ({
-      active: vacancies.length,
+      active: publishedVacancies.length,
       today: applications.filter(
         (item) =>
           new Date(item.appliedAt).toDateString() === new Date().toDateString(),
@@ -139,12 +154,12 @@ export default function VacantesDashboardOverview() {
           item.status === "Seleccionado" || item.status === "No continua",
       ).length,
     }),
-    [applications, vacancies],
+    [applications, publishedVacancies.length],
   );
   const attention = applications
     .filter((item) => item.status === "Recibida")
     .slice(0, 4);
-  const withoutMovement = vacancies
+  const withoutMovement = publishedVacancies
     .filter((item) => !item.applicationCount)
     .slice(0, 3);
   const statusSummary = Object.entries(statusSummaryStyle).map(
@@ -191,6 +206,36 @@ export default function VacantesDashboardOverview() {
             </Link>
           </div>
         </div>
+      </section>
+      <section className="rounded-3xl border border-[#dbe5f3] bg-white p-5 shadow-[0_10px_28px_rgba(32,69,113,.08)] md:p-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[.16em] text-[#315d98]">Control de vacantes</p>
+            <h2 className="mt-1 text-xl font-bold text-text">Consultar por estado</h2>
+            <p className="mt-1 text-sm text-textLight">Accede rápidamente a las vacantes publicadas, pausadas o cerradas.</p>
+          </div>
+          <div className="grid grid-cols-3 gap-2 rounded-2xl bg-[#f2f6fc] p-1.5">
+            {[
+              { status: "Publicada" as const, label: "Publicadas", value: publishedVacancies.length, tone: "text-emerald-700" },
+              { status: "Pausada" as const, label: "Pausadas", value: pausedVacancies.length, tone: "text-amber-700" },
+              { status: "Cerrada" as const, label: "Cerradas", value: closedVacancies.length, tone: "text-red-700" },
+            ].map(item => <button key={item.status} type="button" aria-pressed={vacancyStatus === item.status} onClick={() => setVacancyStatus(item.status)} className={`rounded-xl px-3 py-2.5 text-xs font-bold transition sm:text-sm ${vacancyStatus === item.status ? "bg-white shadow-sm ring-1 ring-[#dbe5f3] " + item.tone : "text-textLight hover:bg-white/70"}`}>{item.label} <span className="ml-1">{item.value}</span></button>)}
+          </div>
+        </div>
+        <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {visibleVacancies.slice(0, 6).map(item => {
+            const statusStyle = item.status === "Publicada" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : item.status === "Pausada" ? "border-amber-200 bg-amber-50 text-amber-800" : "border-red-200 bg-red-50 text-red-700";
+            const StatusIcon = item.status === "Pausada" ? PauseCircle : item.status === "Cerrada" ? ClipboardCheck : BriefcaseBusiness;
+            return <Link key={`${item.status}-${item.id}`} href={item.status === "Cerrada" ? "/dashboard-vacantes/historial-vacantes" : "/dashboard-vacantes/vacantes"} className="group rounded-2xl border border-[#e1e9f4] bg-[#fbfdff] p-4 transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md">
+              <div className="flex items-start justify-between gap-3"><span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold ${statusStyle}`}><StatusIcon size={14} />{item.status}</span><ArrowRight className="h-4 w-4 text-primary opacity-50 transition group-hover:translate-x-0.5 group-hover:opacity-100" /></div>
+              <h3 className="mt-3 line-clamp-2 font-bold text-text">{item.title}</h3>
+              <p className="mt-1 text-sm text-textLight">{item.city || "Ubicación no registrada"}</p>
+              <div className="mt-3 flex items-center justify-between border-t border-[#e8eef6] pt-3 text-xs text-textLight"><span>{item.applicationCount} postulación(es)</span><span>{item.date ? date.format(new Date(item.date)) : "Sin fecha"}</span></div>
+            </Link>;
+          })}
+          {!visibleVacancies.length && <div className="md:col-span-2 xl:col-span-3 rounded-2xl border border-dashed border-[#c8d8ee] bg-[#f8fbff] p-8 text-center"><BriefcaseBusiness className="mx-auto h-7 w-7 text-primary/50" /><p className="mt-2 font-bold text-text">No hay vacantes {vacancyStatus.toLowerCase()}s</p></div>}
+        </div>
+        {visibleVacancies.length > 6 && <div className="mt-4 text-right"><Link href={vacancyStatus === "Cerrada" ? "/dashboard-vacantes/historial-vacantes" : "/dashboard-vacantes/vacantes"} className="text-sm font-bold text-primary">Ver todas las vacantes <ArrowRight className="inline h-4 w-4" /></Link></div>}
       </section>
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
         {[

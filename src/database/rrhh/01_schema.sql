@@ -53,6 +53,7 @@ CREATE TABLE IF NOT EXISTS candidatos (
     linkedin VARCHAR(255),
     github VARCHAR(255),
     portfolio VARCHAR(255),
+    tiene_licencia_conduccion BOOLEAN DEFAULT FALSE,
     foto_url VARCHAR(255),
     cv_url VARCHAR(255),
     password_hash VARCHAR(255) NOT NULL,
@@ -164,6 +165,7 @@ CREATE TABLE IF NOT EXISTS postulaciones (
     observaciones_candidato TEXT,
     puntuacion DECIMAL(5, 2) DEFAULT 0,
     cv_url VARCHAR(255),
+    application_snapshot JSON NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP NULL

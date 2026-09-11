@@ -2,9 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import ApplicationFollowup from "@/components/vacantes/ApplicationFollowup";
+import InternalCandidate from "@/components/vacantes/InternalCandidate";
 import Link from "next/link";
 import {
   Eye,
+  ArrowRightLeft,
   Search,
   SlidersHorizontal,
   Trash2,
@@ -14,6 +17,7 @@ import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
 type Application = {
   id: string;
+  vacancyId?: string;
   candidateName: string;
   candidateEmail: string;
   candidateDocument?: string;
@@ -57,6 +61,24 @@ export default function PostulantesAdminPanel() {
   const [deletePassword, setDeletePassword] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [isModalMounted, setIsModalMounted] = useState(false);
+  const [availableVacancies, setAvailableVacancies] = useState<Array<{ id: string; title: string; status?: "Publicada" | "Pausada" | "Cerrada" }>>([]);
+  const [transferTargetId, setTransferTargetId] = useState("");
+  const [transferNotes, setTransferNotes] = useState("");
+  const [transferring, setTransferring] = useState(false);
+
+  const openCandidateDetail = (application: Application) => {
+    setSelectedApplication(application);
+    setCandidateDetail(null);
+    setCandidateHistory([]);
+    setTransferTargetId("");
+    setTransferNotes("");
+    void fetch(`/api/vacantes/postulaciones/${application.id}/candidate`)
+      .then((response) => response.json())
+      .then((result) => {
+        setCandidateDetail(result.data || null);
+        setCandidateHistory(result.history || []);
+      });
+  };
 
   const updateStatus = async (id: string, status: string, notes?: string) => {
     setUpdatingId(id);
@@ -203,8 +225,55 @@ export default function PostulantesAdminPanel() {
         setLoading(false);
       }
     }
-    loadApplications();
+    const refreshApplications = () => void loadApplications();
+    refreshApplications();
+    window.addEventListener("candidate-application-created", refreshApplications);
+    return () => window.removeEventListener("candidate-application-created", refreshApplications);
   }, []);
+  useEffect(() => {
+    void Promise.all([
+      fetch("/api/vacantes?admin=1", { cache: "no-store" }),
+      fetch("/api/vacantes/historial", { cache: "no-store" }),
+    ])
+      .then(async ([activeResponse, closedResponse]) => {
+        const active = await activeResponse.json();
+        const closed = await closedResponse.json();
+        setAvailableVacancies([
+          ...(Array.isArray(active) ? active : []),
+          ...((closed.data ?? []).map((item: { id: string; title: string }) => ({ id: String(item.id), title: item.title, status: "Cerrada" as const }))),
+        ]);
+      })
+      .catch(() => setAvailableVacancies([]));
+  }, []);
+
+  const transferInternally = async () => {
+    if (!selectedApplication || !transferTargetId || !transferNotes.trim()) return;
+    setTransferring(true);
+    try {
+      const response = await fetch(`/api/vacantes/postulaciones/${selectedApplication.id}/trasladar`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ targetVacancyId: transferTargetId, notes: transferNotes }),
+      });
+      const result = await response.json() as { success?: boolean; code?: string; message?: string; data?: { vacancyTitle?: string; internalNotificationSent?: boolean } };
+      if (!response.ok || !result.success) {
+        if (result.code === "VACANCY_PAUSED" || result.code === "VACANCY_CLOSED") {
+          setNotice({ title: result.code === "VACANCY_PAUSED" ? "Vacante pausada" : "Vacante cerrada", description: result.message || "La vacante no puede recibir el traslado.", variant: "error" });
+          return;
+        }
+        throw new Error(result.message || "No fue posible trasladar al postulante.");
+      }
+      setApplications((current) => current.map((item) => item.id === selectedApplication.id ? { ...item, status: "Trasladado" } : item));
+      setCandidateHistory((current) => [{ accion: "POSTULANTE_TRASLADADO_INTERNO", descripcion: `Trasladado internamente a “${result.data?.vacancyTitle || "vacante destino"}”. Sin correo automático; notificación pendiente por llamada. Observación: ${transferNotes}`, created_at: new Date().toISOString() }, ...current]);
+      setTransferTargetId("");
+      setTransferNotes("");
+      setNotice({ title: "Traslado interno registrado", description: result.data?.internalNotificationSent ? "El postulante fue llevado a la nueva vacante sin correo automático. Se envió el aviso interno de prueba y queda pendiente notificarlo por llamada." : "El postulante fue llevado a la nueva vacante sin correo automático. La trazabilidad deja constancia de que debe notificarse por llamada; el aviso interno no pudo enviarse.", variant: "success" });
+    } catch (error) {
+      setNotice({ title: "No fue posible trasladar", description: error instanceof Error ? error.message : "Intenta nuevamente.", variant: "error" });
+    } finally {
+      setTransferring(false);
+    }
+  };
   useEffect(() => {
     setIsModalMounted(true);
   }, []);
@@ -290,6 +359,11 @@ export default function PostulantesAdminPanel() {
       badge: "border-red-200 bg-red-50 text-red-700",
       dot: "bg-red-500",
     },
+    Trasladado: {
+      label: "Trasladado",
+      badge: "border-violet-200 bg-violet-50 text-violet-700",
+      dot: "bg-violet-500",
+    },
   };
   const historyStatus = (description: string) =>
     description
@@ -333,6 +407,7 @@ export default function PostulantesAdminPanel() {
         onCancel={() => setNotice(null)}
       />
       <div className="space-y-6">
+        <InternalCandidate/>
         <div className="overflow-hidden rounded-[28px] border border-white/70 bg-gradient-to-br from-[#163c70] via-[#285a96] to-[#6e94c2] p-7 text-white shadow-[0_20px_50px_rgba(20,57,106,0.22)]">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-100">
             Talento humano
@@ -557,7 +632,6 @@ export default function PostulantesAdminPanel() {
                       </td>
                       <td className="p-4">
                         <div className="space-y-2">
-                          {renderStatusPill(application.status)}
                           <select
                             value={application.status}
                             disabled={updatingId === application.id}
@@ -567,7 +641,7 @@ export default function PostulantesAdminPanel() {
                               setPendingStatusChange({ application, status });
                               setStatusReason("");
                             }}
-                            className="block rounded-lg border border-border bg-white px-2 py-1.5 text-xs text-text outline-none"
+                            className={`block rounded-full border px-3 py-2 text-xs font-bold outline-none ${statusStyle[application.status]?.badge || "border-slate-200 bg-white text-text"}`}
                           >
                             <option value="Recibida">Recibida</option>
                             <option value="En revision">En revisión</option>
@@ -597,22 +671,19 @@ export default function PostulantesAdminPanel() {
                           <button
                             type="button"
                             aria-label={`Ver ${application.candidateName}`}
-                            onClick={() => {
-                              setSelectedApplication(application);
-                              setCandidateDetail(null);
-                              setCandidateHistory([]);
-                              void fetch(
-                                `/api/vacantes/postulaciones/${application.id}/candidate`,
-                              )
-                                .then((r) => r.json())
-                                .then((j) => {
-                                  setCandidateDetail(j.data || null);
-                                  setCandidateHistory(j.history || []);
-                                });
-                            }}
+                            onClick={() => openCandidateDetail(application)}
                             className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-white transition hover:bg-primary-hover"
                           >
                             <Eye size={17} />
+                          </button>
+                          <button
+                            type="button"
+                            aria-label={`Trasladar ${application.candidateName}`}
+                            title="Trasladar a otra vacante"
+                            onClick={() => openCandidateDetail(application)}
+                            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-violet-200 bg-violet-50 text-violet-700 transition hover:bg-violet-100"
+                          >
+                            <ArrowRightLeft size={16} />
                           </button>
                           <button
                             type="button"
@@ -789,6 +860,7 @@ export default function PostulantesAdminPanel() {
                   </button>
                 </header>
                 <div className="grid overflow-y-auto p-6 md:grid-cols-[1.05fr_.95fr] md:gap-6 md:p-8">
+                  <ApplicationFollowup key={selectedApplication.id} id={selectedApplication.id} />
                   <div className="space-y-4 rounded-2xl border border-border bg-white p-5 text-sm">
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div>
@@ -809,7 +881,7 @@ export default function PostulantesAdminPanel() {
                       </div>
                       <div>
                         <p className="text-xs font-bold uppercase text-textLight">
-                          Perfil profesional
+                          Título o profesión
                         </p>
                         <p className="mt-1 font-semibold text-text">
                           {candidateDetail?.profesion || "No registrado"}
@@ -836,6 +908,42 @@ export default function PostulantesAdminPanel() {
                         Abrir hoja de vida
                       </a>
                     )}
+                    <div className="mt-5 rounded-2xl border border-violet-200 bg-violet-50/60 p-4">
+                      <div className="flex items-start gap-2">
+                        <ArrowRightLeft className="mt-0.5 h-4 w-4 shrink-0 text-violet-700" />
+                        <div>
+                          <p className="text-sm font-bold text-violet-950">Traslado interno a otra vacante</p>
+                          <p className="mt-1 text-xs leading-5 text-violet-800">No envía correo al postulante. Úsalo después de revisar su perfil y realizar la llamada de notificación.</p>
+                        </div>
+                      </div>
+                      <select
+                        value={transferTargetId}
+                        onChange={(event) => setTransferTargetId(event.target.value)}
+                        className="mt-3 w-full rounded-xl border border-violet-200 bg-white px-3 py-2.5 text-sm text-text outline-none focus:ring-2 focus:ring-violet-300"
+                      >
+                        <option value="">Selecciona vacante destino</option>
+                        {availableVacancies
+                          .filter((vacancy) => vacancy.id !== selectedApplication.vacancyId)
+                          .map((vacancy) => <option key={vacancy.id} value={vacancy.id} disabled={vacancy.status === "Pausada" || vacancy.status === "Cerrada"}>{vacancy.title}{vacancy.status === "Pausada" ? " · Pausada" : vacancy.status === "Cerrada" ? " · Cerrada" : " · Publicada"}</option>)}
+                      </select>
+                      <p className="mt-2 text-xs text-violet-800">Las vacantes pausadas y cerradas aparecen como referencia, pero no permiten recibir traslados.</p>
+                      <textarea
+                        value={transferNotes}
+                        onChange={(event) => setTransferNotes(event.target.value)}
+                        rows={3}
+                        placeholder="Observación obligatoria: revisión del perfil y llamada realizada..."
+                        className="mt-3 w-full rounded-xl border border-violet-200 bg-white p-3 text-sm outline-none focus:ring-2 focus:ring-violet-300"
+                      />
+                      <button
+                        type="button"
+                        disabled={transferring || !transferTargetId || !transferNotes.trim()}
+                        onClick={() => void transferInternally()}
+                        className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-violet-700 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <ArrowRightLeft size={16} />
+                        {transferring ? "Trasladando..." : "Trasladar sin notificar por correo"}
+                      </button>
+                    </div>
                     <textarea
                       value={note}
                       onChange={(e) => setNote(e.target.value)}

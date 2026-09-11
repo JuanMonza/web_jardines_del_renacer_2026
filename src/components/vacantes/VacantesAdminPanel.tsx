@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import * as XLSX from "xlsx-js-style";
 import { createPortal } from "react-dom";
+import SelectionSteps from "@/components/vacantes/SelectionSteps";
 import { useSearchParams } from "next/navigation";
 import { Toaster, toast } from "react-hot-toast";
 import {
@@ -56,6 +57,7 @@ import {
 } from "@/config/candidates";
 import {
   VACANCY_DEPARTMENTS,
+  getVacancyCitiesByDepartment,
   createEmptyVacancy,
   type JobVacancy,
 } from "@/config/vacancies";
@@ -531,7 +533,7 @@ function CandidateApplicationsModal({
                   </div>
                   <div>
                     <p className="text-xs font-bold text-textLight">
-                      Perfil profesional
+                      Título o profesión
                     </p>
                     <p className="mt-1 font-semibold text-text">
                       {profile?.professionalTitle || "No registrado"}
@@ -547,7 +549,7 @@ function CandidateApplicationsModal({
                   </div>
                   <div className="sm:col-span-2">
                     <p className="text-xs font-bold text-textLight">
-                      Formación académica
+                      Nivel académico
                     </p>
                     <p className="mt-1 font-semibold text-text">
                       {profile?.education || "No registrada"}
@@ -626,7 +628,7 @@ function CandidateApplicationsModal({
                         </p>
                         <div className="flex items-center justify-between mt-2">
                           <span
-                            className={`px-2 py-1 text-xs font-semibold rounded-full ${app.status === "Seleccionado" ? "bg-green-100 text-green-800" : app.status === "No continua" ? "bg-red-100 text-red-800" : "bg-blue-100 text-blue-800"}`}
+                            className={`px-2 py-1 text-xs font-semibold rounded-full ${app.status === "Seleccionado" ? "bg-green-100 text-green-800" : app.status === "No continua" ? "bg-red-100 text-red-800" : app.status === "Trasladado" ? "bg-violet-100 text-violet-800" : "bg-blue-100 text-blue-800"}`}
                           >
                             Estado: {app.status}
                           </span>
@@ -971,6 +973,12 @@ function parseLines(value: string) {
     .filter((item) => item.length > 0);
 }
 
+// Evita que campos descriptivos reciban números accidentales, conservando
+// espacios, tildes, la ñ y la puntuación habitual de un cargo o ciudad.
+function onlyLetters(value: string) {
+  return value.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s.,()&/-]/g, "");
+}
+
 function createDraftFromVacancy(vacancy: JobVacancy) {
   return {
     ...vacancy,
@@ -1086,6 +1094,8 @@ export default function VacantesAdminPanel() {
   const [showVacancyForm, setShowVacancyForm] = useState(false);
   const [isModalMounted, setIsModalMounted] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<JobVacancy | null>(null);
+  const [closureReason,setClosureReason]=useState("Contratación con éxito");
+  const [operationNotice, setOperationNotice] = useState<{ title: string; description: string; variant: "success" | "error" } | null>(null);
   const [pendingApplicationStatus, setPendingApplicationStatus] = useState<{
     applicationId: string;
     status: JobApplication["status"];
@@ -1245,6 +1255,7 @@ export default function VacantesAdminPanel() {
       experience: draft.experience.trim(),
       summary: draft.summary.trim(),
       requirements: parseLines(draft.requirementsText),
+      requiresDriversLicense: Boolean(draft.requiresDriversLicense),
       benefits: parseLines(draft.benefitsText),
       postedAt: draft.postedAt || now.slice(0, 10),
       createdAt: current?.createdAt || now,
@@ -1255,36 +1266,34 @@ export default function VacantesAdminPanel() {
 
     try {
       if (editingId) {
-        await fetch(`/api/vacantes/${editingId}`, {
+        const response = await fetch(`/api/vacantes/${editingId}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify(record),
         });
-        toast.success("¡Cambios guardados con éxito!", {
-          icon: "✨",
-          duration: 4500,
-        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(result.message || "No fue posible actualizar la vacante.");
+        setOperationNotice({ title: "Vacante actualizada", description: `Los cambios de “${record.title}” quedaron guardados correctamente.`, variant: "success" });
       } else {
-        await fetch("/api/vacantes", {
+        const response = await fetch("/api/vacantes", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify(record),
         });
-        toast.success(
-          "¡Vacante creada con éxito! Ya está disponible para recibir postulaciones.",
-          { icon: "🎉", duration: 5000 },
-        );
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || !result.success) throw new Error(result.message || "No fue posible crear la vacante.");
+        setOperationNotice({ title: "Vacante creada", description: `“${record.title}” quedó publicada y ya puede recibir postulaciones.`, variant: "success" });
       }
       await loadVacancies();
       resetDraft();
       setShowVacancyForm(false);
     } catch (error) {
       console.error(error);
-      toast.error("No fue posible guardar la vacante.");
+      setOperationNotice({ title: "No fue posible guardar", description: error instanceof Error ? error.message : "Revisa la información e intenta nuevamente.", variant: "error" });
     }
   };
 
@@ -1317,6 +1326,8 @@ export default function VacantesAdminPanel() {
     try {
       const response = await fetch(`/api/vacantes/${vacancy.id}`, {
         method: "DELETE",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({closureReason}),
       });
       const result = await response.json();
       if (!response.ok || !result.success) throw new Error(result.message);
@@ -1324,13 +1335,9 @@ export default function VacantesAdminPanel() {
       if (editingId === vacancy.id) {
         resetDraft();
       }
-      toast.success(result.message || "Vacante cerrada correctamente.");
+      setOperationNotice({ title: "Vacante cerrada", description: result.message || `“${vacancy.title}” quedó cerrada y conserva toda su trazabilidad.`, variant: "success" });
     } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "No fue posible cerrar la vacante.",
-      );
+      setOperationNotice({ title: "No fue posible cerrar la vacante", description: error instanceof Error ? error.message : "Intenta nuevamente.", variant: "error" });
     }
   };
   const handlePause = async (vacancy: JobVacancy) => {
@@ -1467,6 +1474,16 @@ export default function VacantesAdminPanel() {
         }}
       />
       <ConfirmDialog
+        open={Boolean(operationNotice)}
+        title={operationNotice?.title ?? ""}
+        description={operationNotice?.description ?? ""}
+        confirmLabel="Entendido"
+        showCancel={false}
+        variant={operationNotice?.variant}
+        onCancel={() => setOperationNotice(null)}
+        onConfirm={() => setOperationNotice(null)}
+      />
+      <ConfirmDialog
         open={Boolean(pendingDelete)}
         title="¿Cerrar esta vacante?"
         description={`La vacante “${pendingDelete?.title ?? ""}” dejará de estar disponible en el portal, pero conservará su trazabilidad.`}
@@ -1477,7 +1494,7 @@ export default function VacantesAdminPanel() {
           if (pendingDelete) void handleDelete(pendingDelete);
           setPendingDelete(null);
         }}
-      />
+      ><label className="block text-sm font-semibold">Motivo del cierre<select value={closureReason} onChange={e=>setClosureReason(e.target.value)} className="mt-2 w-full rounded-xl border bg-white p-3"><option>Contratación con éxito</option><option>Cancelación de proceso</option><option>Modificación del proceso</option></select></label></ConfirmDialog>
       {pendingApplicationStatus && (
         <div className="fixed inset-0 z-[2147483647] flex items-center justify-center bg-[#07182e]/55 p-4 backdrop-blur-sm">
           <section className="w-full max-w-xl rounded-[28px] border border-white/80 bg-[#f8fbff] p-6 shadow-2xl">
@@ -1622,6 +1639,8 @@ export default function VacantesAdminPanel() {
                 </header>
                 <div className="overflow-y-auto p-6 md:p-8">
                   <form onSubmit={handleSubmit} className="space-y-4">
+                    {!editingId&&<label className="block text-sm font-semibold">Reutilizar información de un cargo<select defaultValue="" onChange={e=>{const source=vacancies.find(item=>item.id===e.target.value);if(source)setDraft(createDraftFromVacancy(source));}} className="mt-2 w-full rounded-xl border bg-white p-3"><option value="">Crear desde cero o elegir un cargo existente</option>{vacancies.map(item=><option key={item.id} value={item.id}>{item.title} · {item.city}</option>)}</select></label>}
+                    <SelectionSteps value={draft.selectionSteps} onChange={selectionSteps=>setDraft({...draft,selectionSteps})}/>
                     <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
                       Información principal
                     </p>
@@ -1631,7 +1650,7 @@ export default function VacantesAdminPanel() {
                       onChange={(event) =>
                         setDraft((prev) => ({
                           ...prev,
-                          title: event.target.value,
+                          title: onlyLetters(event.target.value),
                         }))
                       }
                       placeholder="Ej: Auxiliar de servicio al cliente"
@@ -1645,7 +1664,7 @@ export default function VacantesAdminPanel() {
                         onChange={(event) =>
                           setDraft((prev) => ({
                             ...prev,
-                            area: event.target.value,
+                            area: onlyLetters(event.target.value),
                           }))
                         }
                         placeholder="Ej: Comercial"
@@ -1662,6 +1681,9 @@ export default function VacantesAdminPanel() {
                             setDraft((prev) => ({
                               ...prev,
                               department: event.target.value,
+                              city: getVacancyCitiesByDepartment(event.target.value).includes(prev.city)
+                                ? prev.city
+                                : "",
                             }))
                           }
                           className="w-full px-4 py-3 rounded-xl glass border border-border text-text focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-300"
@@ -1674,18 +1696,21 @@ export default function VacantesAdminPanel() {
                         </select>
                       </div>
 
-                      <Input
-                        label="Ciudad"
-                        value={draft.city}
-                        onChange={(event) =>
-                          setDraft((prev) => ({
-                            ...prev,
-                            city: event.target.value,
-                          }))
-                        }
-                        placeholder="Ej: Pereira"
-                        required
-                      />
+                      <div>
+                        <label className="mb-2 block text-sm font-medium text-text">Ciudad</label>
+                        <select
+                          value={draft.city}
+                          onChange={(event) => setDraft((prev) => ({ ...prev, city: event.target.value }))}
+                          disabled={!draft.department}
+                          required
+                          className="w-full rounded-xl border border-border bg-white px-4 py-3 text-text outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-primary disabled:cursor-not-allowed disabled:bg-slate-50"
+                        >
+                          <option value="">{draft.department ? "Selecciona una ciudad" : "Primero selecciona un departamento"}</option>
+                          {getVacancyCitiesByDepartment(draft.department).map((city) => (
+                            <option key={city} value={city}>{city}</option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
 
                     <div className="border-t border-primary/10 pt-5">
@@ -1739,7 +1764,7 @@ export default function VacantesAdminPanel() {
                         />
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
                         <Input
                           label="Horario"
                           value={draft.schedule}
@@ -1773,6 +1798,24 @@ export default function VacantesAdminPanel() {
                           }
                           placeholder="1+ ano"
                         />
+                        <div>
+                          <label className="mb-2 block text-sm font-medium text-text">
+                            ¿Requiere licencia de conducción?
+                          </label>
+                          <select
+                            value={draft.requiresDriversLicense ? "si" : "no"}
+                            onChange={(event) =>
+                              setDraft((prev) => ({
+                                ...prev,
+                                requiresDriversLicense: event.target.value === "si",
+                              }))
+                            }
+                            className="w-full rounded-xl border border-border bg-white px-4 py-3 text-text outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary"
+                          >
+                            <option value="no">No requerida</option>
+                            <option value="si">Sí, licencia vigente</option>
+                          </select>
+                        </div>
                       </div>
                     </div>
 
@@ -2119,6 +2162,11 @@ export default function VacantesAdminPanel() {
                                             {status}
                                           </option>
                                         ),
+                                      )}
+                                      {application.status === "Trasladado" && (
+                                        <option value="Trasladado" disabled>
+                                          Trasladado internamente
+                                        </option>
                                       )}
                                     </select>
                                   </div>

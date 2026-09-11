@@ -68,6 +68,12 @@ const flowStatusStyle: Record<
     inactive: "border-red-100 bg-white text-red-700",
     dot: "bg-red-500",
   },
+  Trasladado: {
+    label: "Trasladado",
+    active: "border-violet-200 bg-violet-50 text-violet-700",
+    inactive: "border-violet-100 bg-white text-violet-700",
+    dot: "bg-violet-500",
+  },
 };
 
 function Toggle({

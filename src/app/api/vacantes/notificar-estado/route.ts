@@ -6,6 +6,7 @@ import {
 } from "@/lib/iam/admin-session";
 import { recordVacancyAudit } from "@/lib/vacancy-audit";
 import { getVacancySettings } from "@/lib/vacancy-settings";
+import { institutionalEmailLayout } from "@/lib/institutional-email";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -109,14 +110,7 @@ function buildHtmlMail(payload: {
   candidateDocument: string;
 }) {
   const statusStyle = emailStatusStyle(payload.status);
-  return `
-  <div style="background:#f5f7fb;padding:24px;font-family:Arial,sans-serif;color:#1f2937;">
-    <div style="max-width:620px;margin:0 auto;background:#ffffff;border:1px solid #dbe5f6;border-radius:14px;overflow:hidden;">
-      <div style="padding:18px 22px;background:linear-gradient(135deg,#2f5bd6,#3c60a2);color:#fff;">
-        <h1 style="margin:0;font-size:20px;font-weight:700;">Jardines del Renacer</h1>
-        <p style="margin:6px 0 0;font-size:13px;opacity:0.92;">Actualizacion de estado de postulacion</p>
-      </div>
-      <div style="padding:22px;">
+  return institutionalEmailLayout(`
         <h2 style="margin:0 0 12px;font-size:20px;color:#0f172a;">${payload.headline}</h2>
         <p style="margin:0 0 18px;font-size:14px;line-height:1.6;color:#334155;">${payload.body}</p>
 
@@ -134,10 +128,7 @@ function buildHtmlMail(payload: {
         <p style="margin:16px 0 0;font-size:12px;color:#64748b;">
           Si necesitas soporte, responde este correo o comunicate con nuestro equipo de talento humano.
         </p>
-      </div>
-    </div>
-  </div>
-  `;
+  `, "Portal de postulantes · Actualización de estado");
 }
 
 export async function POST(request: NextRequest) {

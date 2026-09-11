@@ -10,6 +10,7 @@ import {
   updateCandidateProfileInDB,
 } from '@/lib/candidateStorageDB';
 import type { CandidateProfile } from '@/config/candidates';
+import { ACADEMIC_LEVEL_OPTIONS } from '@/config/candidates';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,6 +48,18 @@ export async function PUT(request: NextRequest) {
 
   try {
     const profile = (await request.json()) as Partial<CandidateProfile>;
+    const education = typeof profile.education === 'string' ? profile.education.trim() : '';
+    const professionalTitle = typeof profile.professionalTitle === 'string' ? profile.professionalTitle.trim() : '';
+    const currentProfile = await getCandidateProfileFromDB({ documentNumber: session.documentNumber, email: session.email });
+    if (education && !(ACADEMIC_LEVEL_OPTIONS as readonly string[]).includes(education) && education !== currentProfile?.education) {
+      return NextResponse.json({ success: false, message: 'Selecciona un nivel académico válido.' }, { status: 422 });
+    }
+    if ((ACADEMIC_LEVEL_OPTIONS as readonly string[]).includes(education) && !professionalTitle) {
+      return NextResponse.json({ success: false, message: 'Escribe el nombre del título o profesión.' }, { status: 422 });
+    }
+    if (professionalTitle.length > 120) {
+      return NextResponse.json({ success: false, message: 'El nombre del título o profesión es demasiado largo.' }, { status: 422 });
+    }
     await updateCandidateProfileInDB({
       documentNumber: session.documentNumber,
       email: session.email,

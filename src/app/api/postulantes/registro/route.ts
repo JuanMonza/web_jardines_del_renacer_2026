@@ -22,6 +22,10 @@ function normalizeDocumentNumber(value: string) {
   return value.replace(/\D/g, '');
 }
 
+function isHumanName(value: string) {
+  return /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s'-]+$/.test(value);
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -32,9 +36,9 @@ export async function POST(request: NextRequest) {
     const phone = asText(body.phone);
     const password = asText(body.password);
 
-    if (documentNumber.length < 6 || !firstName || !email.includes('@') || password.length < 8) {
+    if (documentNumber.length < 6 || !firstName || !isHumanName(firstName) || !email.includes('@') || password.length < 8) {
       return NextResponse.json(
-        { success: false, message: 'Documento, nombre, correo y contrasena son obligatorios.' },
+        { success: false, message: 'Documento, nombre válido, correo y contraseña son obligatorios.' },
         { status: 400 },
       );
     }

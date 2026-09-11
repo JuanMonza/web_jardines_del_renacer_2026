@@ -1,3 +1,5 @@
+import { institutionalEmailLayout } from "@/lib/institutional-email";
+
 type WorkshopMail = {
   email: string;
   name: string;
@@ -17,8 +19,7 @@ function siteUrl() {
 }
 
 function layout(title: string, content: string) {
-  const logo = `${siteUrl()}/logo-oficial.webp`;
-  return `<div style="font-family:Arial,sans-serif;background:#f4f7fb;padding:24px;color:#1f2937"><div style="max-width:600px;margin:auto;background:#fff;border-radius:16px;overflow:hidden;border:1px solid #dbe5f6"><div style="background:#173f73;color:#fff;padding:20px 24px;display:flex;align-items:center"><img src="${logo}" width="48" height="48" alt="Jardines del Renacer" style="display:block;object-fit:contain;margin-right:14px"><div><strong style="font-size:18px">Jardines del Renacer</strong><div style="font-size:13px;margin-top:4px;color:#dbeafe">Talleres de acompañamiento</div></div></div><div style="padding:26px 24px">${content}<p style="margin:24px 0 0;font-size:13px;line-height:1.5;color:#64748b">Si necesitas apoyo o no puedes asistir, comunícate con nuestro equipo.</p></div></div></div>`;
+  return institutionalEmailLayout(`${content}<p style="margin:24px 0 0;font-size:13px;line-height:1.5;color:#64748b">Si necesitas apoyo o no puedes asistir, comunícate con nuestro equipo.</p>`, "Talleres de acompañamiento");
 }
 
 async function send(input: WorkshopMail & { subject: string; body: string }) {

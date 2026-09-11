@@ -1,6 +1,7 @@
 'use client';
 
 import { createPortal } from 'react-dom';
+import type { ReactNode } from 'react';
 
 type DialogVariant = 'danger' | 'error' | 'success' | 'info';
 type Props = {
@@ -13,6 +14,7 @@ type Props = {
   variant?: DialogVariant;
   onConfirm: () => void;
   onCancel: () => void;
+  children?: ReactNode;
 };
 
 const variantStyles: Record<DialogVariant, { icon: string; iconClass: string; buttonClass: string }> = {
@@ -22,7 +24,7 @@ const variantStyles: Record<DialogVariant, { icon: string; iconClass: string; bu
   info: { icon: 'i', iconClass: 'bg-[#315d98]/10 text-[#315d98]', buttonClass: 'bg-[#244f8a] hover:bg-[#193f73] shadow-blue-900/15' },
 };
 
-export default function ConfirmDialog({ open, title, description, confirmLabel = 'Confirmar', cancelLabel = 'Cancelar', showCancel = true, variant = 'danger', onConfirm, onCancel }: Props) {
+export default function ConfirmDialog({ open, title, description, confirmLabel = 'Confirmar', cancelLabel = 'Cancelar', showCancel = true, variant = 'danger', onConfirm, onCancel, children }: Props) {
   if (!open) return null;
   const style = variantStyles[variant];
   return createPortal(<div className="fixed inset-0 z-[1000] flex items-center justify-center bg-[#07182e]/55 p-4 backdrop-blur-sm" style={{ zIndex: 2147483647 }} role="dialog" aria-modal="true" aria-labelledby="confirm-dialog-title">
@@ -30,6 +32,7 @@ export default function ConfirmDialog({ open, title, description, confirmLabel =
       <div className={`mb-5 flex h-11 w-11 items-center justify-center rounded-2xl text-xl font-bold ${style.iconClass}`}>{style.icon}</div>
       <h2 id="confirm-dialog-title" className="text-xl font-bold text-[#173861]">{title}</h2>
       <p className="mt-2 text-sm leading-6 text-[#58718f]">{description}</p>
+      {children && <div className="mt-4">{children}</div>}
       <div className="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
         {showCancel && <button type="button" onClick={onCancel} className="rounded-xl border border-[#b4c7df] bg-white px-5 py-3 text-sm font-bold text-[#345477] transition hover:bg-[#eef5fc]">{cancelLabel}</button>}
         <button type="button" onClick={onConfirm} className={`rounded-xl px-5 py-3 text-sm font-bold text-white shadow-lg transition ${style.buttonClass}`}>{confirmLabel}</button>

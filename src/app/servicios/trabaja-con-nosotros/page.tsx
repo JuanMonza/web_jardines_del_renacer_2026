@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Briefcase, Calendar, Loader2, MapPin, Users } from 'lucide-react';
+import { Briefcase, Calendar, CarFront, Loader2, MapPin, Users } from 'lucide-react';
 import type { JobVacancy } from '@/config/vacancies';
 import Container from '@/components/ui/Container';
 import PageHero from '@/components/ui/PageHero';
@@ -57,6 +57,12 @@ function VacancyCard({ vacancy }: { vacancy: PublicVacancy }) {
             <Users size={15} />
             {vacancy.applicationCount ?? 0} postulantes
           </span>
+          {vacancy.requiresDriversLicense && (
+            <span className="flex items-center gap-2 font-semibold text-amber-800">
+              <CarFront size={15} />
+              Requiere licencia de conducción vigente
+            </span>
+          )}
         </div>
 
         <p className="flex-1 text-sm leading-6 text-textLight">{vacancy.summary}</p>

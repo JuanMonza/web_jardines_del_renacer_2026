@@ -23,6 +23,7 @@ import {
   TrendingUp,
   UsersRound,
 } from "lucide-react";
+import SelectionReport from "@/components/vacantes/SelectionReport";
 
 type Application = {
   id: string;
@@ -94,6 +95,12 @@ const excelStatusStyles: Record<
     font: "B91C1C",
     meaning: "Proceso finalizado sin selección",
   },
+  Trasladado: {
+    label: "Trasladado",
+    color: "EDE9FE",
+    font: "6D28D9",
+    meaning: "Traslado interno a otra vacante; pendiente de seguimiento por llamada",
+  },
 };
 const cellBorder = {
   top: { style: "thin", color: { rgb: "D9E4F2" } },
@@ -133,6 +140,7 @@ function styleTableSheet(
   sheet["!cols"] = widths.map((wch) => ({ wch }));
 }
 function auditStatus(description: string) {
+  if (/Trasladado internamente/i.test(description)) return "Trasladado";
   const status = description.match(/Estado informado:\s*([^.]*)/i)?.[1]?.trim();
   return status && excelStatusStyles[status] ? status : "";
 }
@@ -177,6 +185,8 @@ function auditRow(item: AuditItem) {
           POSTULACION_ESTADO_ACTUALIZADO: "Actualizó un proceso",
           POSTULANTE_NOTIFICADO: "Envió una notificación",
           POSTULANTE_NO_CONTINUA_VACANTE_CUBIERTA: "Notificó cierre de vacante",
+          POSTULANTE_TRASLADADO_INTERNO: "Trasladó internamente al postulante",
+          POSTULANTE_RECIBIDO_POR_TRASLADO: "Recibió postulante trasladado",
         } as Record<string, string>
       )[action] || action.replaceAll("_", " "),
     Estado: auditStatus(description),
@@ -202,6 +212,8 @@ function auditLabel(action: string) {
         POSTULACION_ESTADO_ACTUALIZADO: "Seguimiento actualizado",
         POSTULANTE_NOTIFICADO: "Correo enviado",
         POSTULANTE_NO_CONTINUA_VACANTE_CUBIERTA: "Cierre notificado",
+        POSTULANTE_TRASLADADO_INTERNO: "Postulante trasladado",
+        POSTULANTE_RECIBIDO_POR_TRASLADO: "Traslado recibido",
       } as Record<string, string>
     )[action] || action.replaceAll("_", " ")
   );
@@ -414,17 +426,9 @@ export default function AnalyticsPage() {
               conserva la trazabilidad.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={exportReport}
-            disabled={isExporting}
-            className="inline-flex items-center gap-2 self-start rounded-xl bg-white px-4 py-3 text-sm font-bold text-[#173f73] shadow-sm disabled:opacity-70 md:self-auto"
-          >
-            <ArrowDownToLine size={17} />
-            {isExporting ? "Generando…" : "Descargar Excel"}
-          </button>
         </div>
       </section>
+      <SelectionReport />
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {[
           [
