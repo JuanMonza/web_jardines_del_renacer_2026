@@ -10,7 +10,7 @@ import {
   getApplicationsByCandidateFromDB,
 } from "@/lib/candidateStorageDB";
 import type { JobApplication } from "@/config/candidates";
-import { sendCandidateApplicationReceivedEmail } from "@/lib/candidateMailer";
+import { sendCandidateApplicationReceivedEmail, sendInternalVacancyMovementEmail } from "@/lib/candidateMailer";
 import { recordVacancyAudit } from "@/lib/vacancy-audit";
 
 export const dynamic = "force-dynamic";
@@ -180,6 +180,36 @@ export async function POST(request: NextRequest) {
         table: "postulaciones",
         recordId: id,
         description: `La postulación para “${vacancyTitle}” fue recibida, pero no fue posible enviar el acuse al correo ${candidateEmail}.`,
+      });
+    }
+
+    try {
+      const sent = await sendInternalVacancyMovementEmail({
+        eventTitle: "Nueva postulación recibida",
+        candidateName,
+        candidateDocument,
+        candidateEmail,
+        vacancyTitle,
+        status: "Recibida",
+        notes: "Postulación registrada desde el portal público.",
+        adminName: "Portal de postulantes",
+        applicationId: application.trackingCode,
+      });
+      await recordVacancyAudit({
+        action: sent ? "POSTULACION_INTERNA_NOTIFICADA" : "POSTULACION_INTERNA_PENDIENTE",
+        table: "postulaciones",
+        recordId: id,
+        description: sent
+          ? `Gestión Humana fue notificada de la nueva postulación de ${candidateName} a “${vacancyTitle}”.`
+          : `La notificación interna de la nueva postulación de ${candidateName} a “${vacancyTitle}” quedó pendiente por configuración SMTP.`,
+      });
+    } catch (internalEmailError) {
+      console.error("No se pudo enviar la notificación interna de postulación:", internalEmailError);
+      await recordVacancyAudit({
+        action: "POSTULACION_INTERNA_ERROR",
+        table: "postulaciones",
+        recordId: id,
+        description: `La postulación de ${candidateName} a “${vacancyTitle}” quedó registrada, pero falló el aviso interno por correo.`,
       });
     }
 

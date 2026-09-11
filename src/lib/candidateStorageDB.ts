@@ -1101,10 +1101,13 @@ export async function getApplicationByIdFromDB(
 ): Promise<JobApplication | null> {
   try {
     const sql = `
-      SELECT p.*, v.title as vacancy_title
+      SELECT p.*, v.titulo AS vacancy_title, c.documento,
+        CONCAT(c.nombres, ' ', c.apellidos) AS candidate_name,
+        c.email AS candidate_email, c.telefono AS candidate_phone
       FROM postulaciones p
-      LEFT JOIN vacantes v ON p.vacancy_id = v.id
-      WHERE p.id = ?
+      LEFT JOIN vacantes v ON p.vacante_id = v.id
+      LEFT JOIN candidatos c ON p.candidato_id = c.id
+      WHERE p.id = ? AND p.deleted_at IS NULL
     `;
     const rows = await query<DbApplicationRow>(sql, [id]);
     if (rows.length === 0) {

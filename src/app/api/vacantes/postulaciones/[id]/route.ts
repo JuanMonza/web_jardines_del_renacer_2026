@@ -5,8 +5,11 @@ import {
 } from "@/config/candidates";
 import {
   deactivateCandidateFromApplicationInDB,
+  getApplicationByIdFromDB,
   updateApplicationStatusInDB,
 } from "@/lib/candidateStorageDB";
+import { sendInternalVacancyMovementEmail } from "@/lib/candidateMailer";
+import { recordVacancyAudit } from "@/lib/vacancy-audit";
 import {
   ADMIN_SESSION_COOKIE,
   requireAdminPermission,
@@ -64,7 +67,34 @@ export async function PATCH(
         },
         { status: 422 },
       );
-    return NextResponse.json({ success: true });
+    const application = await getApplicationByIdFromDB(id);
+    let internalNotificationSent = false;
+    if (application) {
+      try {
+        internalNotificationSent = await sendInternalVacancyMovementEmail({
+          eventTitle: "Estado de postulación actualizado",
+          candidateName: application.candidateName,
+          candidateDocument: application.candidateDocument,
+          candidateEmail: application.candidateEmail,
+          vacancyTitle: application.vacancyTitle,
+          status: body.status,
+          notes: body.notes?.trim(),
+          adminName: session.name,
+          applicationId: application.trackingCode || id,
+        });
+      } catch (emailError) {
+        console.error("No se pudo enviar el aviso interno del movimiento:", emailError);
+      }
+      await recordVacancyAudit({
+        action: internalNotificationSent ? "MOVIMIENTO_INTERNO_NOTIFICADO" : "MOVIMIENTO_INTERNO_PENDIENTE",
+        table: "postulaciones",
+        recordId: id,
+        description: internalNotificationSent
+          ? `Gestión Humana fue notificada del cambio de ${application.candidateName} a “${body.status}”. Responsable: ${session.name}. Observación: ${body.notes?.trim() || "Sin observación"}.`
+          : `El cambio de ${application.candidateName} a “${body.status}” se guardó, pero el aviso interno quedó pendiente. Responsable: ${session.name}.`,
+      });
+    }
+    return NextResponse.json({ success: true, internalNotificationSent });
   } catch {
     return NextResponse.json(
       { success: false, message: "No fue posible actualizar la postulación." },

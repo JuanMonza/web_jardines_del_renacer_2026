@@ -17,7 +17,10 @@ export default function HistoricalRecordActions({ id, rawData, onSaved }: { id: 
       const response = await fetch("/api/vacantes/historial-hv/traslado", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, destination, notes }) });
       const result = await response.json();
       if (!response.ok) throw new Error(result.message);
-      setMessage("Traslado registrado en el historial y la auditoría."); setDestination(""); setNotes(""); onSaved();
+      setMessage(result.internalNotificationSent
+        ? "Traslado registrado en el historial y la auditoría. Gestión Humana fue notificada por correo."
+        : "Traslado registrado en el historial y la auditoría. El aviso interno por correo quedó pendiente.");
+      setDestination(""); setNotes(""); onSaved();
     } catch (error) { setMessage(error instanceof Error ? error.message : "No fue posible guardar."); }
     finally { setBusy(false); }
   }

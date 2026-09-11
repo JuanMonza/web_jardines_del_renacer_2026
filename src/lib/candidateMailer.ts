@@ -27,6 +27,54 @@ function getSmtpConfiguration() {
   return { host, port, secure, user, pass, from };
 }
 
+function internalVacanciesRecipient() {
+  return asText(
+    process.env.VACANCIES_NOTIFICATION_EMAIL ||
+      process.env.VACANCIES_TRANSFER_NOTIFICATION_EMAIL ||
+      "prueba.smtp@jardinesdelrenacer.co",
+  );
+}
+
+export async function sendInternalVacancyMovementEmail(input: {
+  eventTitle: string;
+  candidateName: string;
+  candidateDocument: string;
+  candidateEmail?: string;
+  vacancyTitle: string;
+  status: string;
+  notes?: string;
+  adminName: string;
+  applicationId: string;
+}) {
+  const smtp = getSmtpConfiguration();
+  const recipient = internalVacanciesRecipient();
+  if (!smtp.user || !smtp.pass || !smtp.from || !recipient) return false;
+  const nodemailer = require("nodemailer") as {
+    createTransport: (options: { host: string; port: number; secure: boolean; auth: { user: string; pass: string } }) => {
+      sendMail: (options: { from: string; to: string; subject: string; html: string }) => Promise<unknown>;
+    };
+  };
+  const transporter = nodemailer.createTransport({
+    host: smtp.host,
+    port: smtp.port,
+    secure: smtp.secure,
+    auth: { user: smtp.user, pass: smtp.pass },
+  });
+  const contact = input.candidateEmail
+    ? `<p style="margin:0 0 8px"><strong>Correo:</strong> ${escapeHtml(input.candidateEmail)}</p>`
+    : "";
+  const notes = input.notes
+    ? `<div style="margin-top:18px;padding:15px 17px;border-left:4px solid #2454a0;background:#f3f7fc"><strong>Observación</strong><p style="margin:7px 0 0">${escapeHtml(input.notes)}</p></div>`
+    : "";
+  await transporter.sendMail({
+    from: smtp.from,
+    to: recipient,
+    subject: `${input.eventTitle} | ${input.vacancyTitle}`,
+    html: institutionalEmailLayout(`<h1 style="font-size:24px;margin:0 0 8px">${escapeHtml(input.eventTitle)}</h1><p style="margin:0 0 20px;color:#526b8b">Se registró un movimiento en el módulo de Talento Humano.</p><div style="padding:18px;border-radius:12px;background:#edf3fc"><p style="margin:0 0 8px"><strong>Postulante:</strong> ${escapeHtml(input.candidateName)}</p><p style="margin:0 0 8px"><strong>Documento:</strong> ${escapeHtml(input.candidateDocument)}</p>${contact}<p style="margin:0 0 8px"><strong>Vacante:</strong> ${escapeHtml(input.vacancyTitle)}</p><p style="margin:0 0 8px"><strong>Estado:</strong> ${escapeHtml(input.status)}</p><p style="margin:0"><strong>Código de postulación:</strong> ${escapeHtml(input.applicationId)}</p></div>${notes}<p style="margin:18px 0 0;font-size:13px;color:#667085">Movimiento registrado por ${escapeHtml(input.adminName)}.</p>`, "Talento Humano · Notificación interna"),
+  });
+  return true;
+}
+
 function candidatePortalUrl() {
   const baseUrl = asText(process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || "https://jardinesdelrenacer.com").replace(/\/$/, "");
   return `${baseUrl}/servicios/trabaja-con-nosotros/postulante`;
@@ -227,8 +275,7 @@ export async function sendInternalCandidateTransferEmail(input: {
 }) {
   const smtp = getSmtpConfiguration();
   if (!smtp.user || !smtp.pass || !smtp.from) return false;
-  const configuredRecipient = asText(process.env.VACANCIES_TRANSFER_NOTIFICATION_EMAIL);
-  const recipient = configuredRecipient && configuredRecipient !== "prueba.smtp@jardinesdelrenacer.co" ? configuredRecipient : "psicologa@jardinesdelrenacer.co";
+  const recipient = internalVacanciesRecipient();
   const nodemailer = require("nodemailer") as {
     createTransport: (options: { host: string; port: number; secure: boolean; auth: { user: string; pass: string } }) => {
       sendMail: (options: { from: string; to: string; subject: string; html: string }) => Promise<unknown>;

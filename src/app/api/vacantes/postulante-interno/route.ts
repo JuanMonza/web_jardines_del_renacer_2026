@@ -3,13 +3,20 @@ import {ADMIN_SESSION_COOKIE,requireAdminPermission} from "@/lib/iam/admin-sessi
 import {hashCandidatePasswordForDB} from "@/lib/candidateAuth";
 import {createApplicationInDB,createCandidateAccountInDB,getCandidateAccountByDocumentOrEmail} from "@/lib/candidateStorageDB";
 import {getVacancyByIdFromDB} from "@/lib/vacanciesStorageDB";
-import {sendCandidateApplicationReceivedEmail,sendCandidateWelcomeEmail} from "@/lib/candidateMailer";
+import {sendCandidateApplicationReceivedEmail,sendCandidateWelcomeEmail,sendInternalVacancyMovementEmail} from "@/lib/candidateMailer";
 import {recordVacancyAudit} from "@/lib/vacancy-audit";
 import {ACADEMIC_LEVEL_OPTIONS} from "@/config/candidates";
 import {query} from "@/lib/db";
 function text(value:unknown){return typeof value==="string"?value.trim():"";}
 function validName(value:string){return /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s'-]+$/.test(value);}
 type ExistingCandidate={id:number;nombres:string;apellidos:string;documento:string;email:string;telefono:string;ciudad:string;departamento:string;profesion:string;educacion:string;cv_url:string;vacantes:string|null};
+async function notifyInternalApplication(input:{applicationId:string;candidateName:string;candidateDocument:string;candidateEmail:string;vacancyTitle:string;adminName:string}){
+  let sent=false;
+  try{sent=await sendInternalVacancyMovementEmail({eventTitle:"Postulante asignado a vacante",candidateName:input.candidateName,candidateDocument:input.candidateDocument,candidateEmail:input.candidateEmail,vacancyTitle:input.vacancyTitle,status:"Recibida",notes:"Postulación creada o asignada desde el dashboard administrativo.",adminName:input.adminName,applicationId:`JDR-${input.applicationId.padStart(6,"0")}`});}
+  catch(error){console.error("No se pudo enviar la notificación interna de asignación:",error);}
+  await recordVacancyAudit({action:sent?"POSTULACION_INTERNA_NOTIFICADA":"POSTULACION_INTERNA_PENDIENTE",table:"postulaciones",recordId:input.applicationId,description:sent?`Gestión Humana fue notificada de la asignación de ${input.candidateName} a “${input.vacancyTitle}”.`:`La asignación de ${input.candidateName} a “${input.vacancyTitle}” se guardó, pero el aviso interno quedó pendiente.`});
+  return sent;
+}
 
 export async function GET(request:NextRequest){
   const session=await requireAdminPermission(request.cookies.get(ADMIN_SESSION_COOKIE)?.value,"vacancies.applications.view");
@@ -49,7 +56,8 @@ export async function POST(request:NextRequest){
       let applicationEmailSent=false;
       try{applicationEmailSent=await sendCandidateApplicationReceivedEmail({email:candidate.email,name:fullName,vacancyTitle:vacancy.title,trackingCode:`JDR-${applicationId.padStart(6,"0")}`});}catch(error){console.error("No se pudo enviar el correo de nueva asignación:",error);}
       await recordVacancyAudit({action:applicationEmailSent?"REUTILIZACION_NOTIFICADA":"REUTILIZACION_CORREO_PENDIENTE",table:"postulaciones",recordId:applicationId,description:applicationEmailSent?`Se notificó a ${candidate.email} la nueva postulación en “${vacancy.title}”.`:`La nueva postulación en “${vacancy.title}” quedó guardada, pero el correo está pendiente.`});
-      return NextResponse.json({success:true,data:{candidateId:String(candidate.id),applicationId,vacancyTitle:vacancy.title,applicationEmailSent,reused:true}},{status:201});
+      const internalNotificationSent=await notifyInternalApplication({applicationId,candidateName:fullName,candidateDocument:candidate.documento,candidateEmail:candidate.email,vacancyTitle:vacancy.title,adminName:session.name});
+      return NextResponse.json({success:true,data:{candidateId:String(candidate.id),applicationId,vacancyTitle:vacancy.title,applicationEmailSent,internalNotificationSent,reused:true}},{status:201});
     }
     const firstName=text(body.firstName),lastName=text(body.lastName),documentNumber=text(body.documentNumber).replace(/\D/g,""),email=text(body.email).toLowerCase(),phone=text(body.phone).replace(/\D/g,""),city=text(body.city),department=text(body.department),education=text(body.education),professionalTitle=text(body.professionalTitle),password=text(body.password),vacancyId=text(body.vacancyId);
     if(!firstName||!lastName||!validName(firstName)||!validName(lastName)||!city||!department)return NextResponse.json({message:"Completa nombres, apellidos y ubicación con información válida."},{status:422});
@@ -64,13 +72,15 @@ export async function POST(request:NextRequest){
     const fullName=`${firstName} ${lastName}`;
     await recordVacancyAudit({action:"POSTULANTE_INTERNO_CREADO",table:"candidatos",recordId:id,description:`Administrador ${session.name} (ID ${session.userId}) creó la cuenta interna de ${fullName} (${documentNumber}).`});
     let welcomeEmailSent=false,applicationEmailSent=false,applicationId="";
+    let internalNotificationSent=false;
     try{welcomeEmailSent=await sendCandidateWelcomeEmail({email,name:fullName,loginWithPassword:true});}catch(error){console.error("No se pudo enviar el correo de bienvenida:",error);}
     if(vacancy){
       applicationId=await createApplicationInDB({candidateId:id,vacancyId:vacancy.id,vacancyTitle:vacancy.title,candidateDocument:documentNumber,candidateName:fullName,candidateEmail:email,candidatePhone:phone,candidateCity:city,candidateDepartment:department,candidateProfessionalTitle:professionalTitle,candidateEducation:education,applicationSource:"Manual",resumeFileName:"",resumeFileData:"",resumeUrl:""});
       await recordVacancyAudit({action:"POSTULANTE_INTERNO_ASIGNADO",table:"postulaciones",recordId:applicationId,description:`Administrador ${session.name} (ID ${session.userId}) asignó a ${fullName} (${documentNumber}) a la vacante “${vacancy.title}”. Estado informado: Recibida.`});
       try{applicationEmailSent=await sendCandidateApplicationReceivedEmail({email,name:fullName,vacancyTitle:vacancy.title,trackingCode:`JDR-${applicationId.padStart(6,"0")}`});}catch(error){console.error("No se pudo enviar el correo de asignación:",error);}
       await recordVacancyAudit({action:applicationEmailSent?"POSTULANTE_ACUSE_ENVIADO":"POSTULANTE_ACUSE_PENDIENTE",table:"postulaciones",recordId:applicationId,description:applicationEmailSent?`Se notificó a ${email} la asignación a “${vacancy.title}”.`:`La asignación a “${vacancy.title}” quedó guardada, pero el correo está pendiente.`});
+      internalNotificationSent=await notifyInternalApplication({applicationId,candidateName:fullName,candidateDocument:documentNumber,candidateEmail:email,vacancyTitle:vacancy.title,adminName:session.name});
     }
-    return NextResponse.json({success:true,data:{candidateId:id,applicationId:applicationId||null,vacancyTitle:vacancy?.title||null,welcomeEmailSent,applicationEmailSent}},{status:201});
+    return NextResponse.json({success:true,data:{candidateId:id,applicationId:applicationId||null,vacancyTitle:vacancy?.title||null,welcomeEmailSent,applicationEmailSent,internalNotificationSent}},{status:201});
   }catch(error){console.error("Error creando postulante interno:",error);const code=(error as {code?:string})?.code;return NextResponse.json({message:code==="ER_DUP_ENTRY"?"Ya existe una persona con ese documento o correo.":"No fue posible crear el postulante."},{status:code==="ER_DUP_ENTRY"?409:500});}
 }

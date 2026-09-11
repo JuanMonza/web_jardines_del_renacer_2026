@@ -3,6 +3,8 @@ import { randomUUID } from "crypto";
 import pool from "@/lib/db";
 import { ADMIN_SESSION_COOKIE, requireAdminPermission } from "@/lib/iam/admin-session";
 import { ensureHistoricalCandidateSchema } from "@/lib/historical-candidate-records";
+import { sendInternalVacancyMovementEmail } from "@/lib/candidateMailer";
+import { recordVacancyAudit } from "@/lib/vacancy-audit";
 import type { RowDataPacket } from "mysql2";
 
 export async function POST(request: NextRequest) {
@@ -17,7 +19,10 @@ export async function POST(request: NextRequest) {
   const connection = await pool.getConnection();
   try {
     await connection.beginTransaction();
-    const [rows] = await connection.query<RowDataPacket[]>("SELECT * FROM historical_candidate_movements WHERE id = ? FOR UPDATE", [body.id]);
+    const [rows] = await connection.query<RowDataPacket[]>(`SELECT hm.*, hc.nombre AS candidate_name, hc.documento AS candidate_document, hc.correo AS candidate_email
+      FROM historical_candidate_movements hm
+      INNER JOIN historical_candidates hc ON hc.identity_key = hm.identity_key
+      WHERE hm.id = ? FOR UPDATE`, [body.id]);
     const source = rows[0];
     if (!source) { await connection.rollback(); return NextResponse.json({ message: "Registro no encontrado." }, { status: 404 }); }
     if (source.vacante === destination) { await connection.rollback(); return NextResponse.json({ message: "El destino debe ser diferente al cargo de origen." }, { status: 422 }); }
@@ -27,7 +32,31 @@ export async function POST(request: NextRequest) {
       [randomUUID(), source.identity_key, destination, session.name, description, JSON.stringify({ "Cargo de origen": source.vacante, "Cargo destino": destination, "Fecha": date, "Responsable": session.name, "ID responsable": session.userId, "Motivo": notes, "Registro de origen": source.id }), source.id]);
     await connection.execute("INSERT INTO activity_logs (usuario_tipo,accion,modulo,tabla_afectada,registro_id,descripcion) VALUES ('Admin','HISTORICO_CARGO_TRASLADADO','Vacantes','candidatos',?,?)", [source.id, description]);
     await connection.commit();
-    return NextResponse.json({ success: true });
+    let internalNotificationSent = false;
+    try {
+      internalNotificationSent = await sendInternalVacancyMovementEmail({
+        eventTitle: "Traslado de historial laboral registrado",
+        candidateName: source.candidate_name || "Postulante histórico",
+        candidateDocument: source.candidate_document || "No registrado",
+        candidateEmail: source.candidate_email || "",
+        vacancyTitle: destination,
+        status: "Trasladado",
+        notes: description,
+        adminName: session.name,
+        applicationId: `HIST-${source.id}`,
+      });
+    } catch (emailError) {
+      console.error("No fue posible enviar el aviso interno del traslado histórico:", emailError);
+    }
+    await recordVacancyAudit({
+      action: internalNotificationSent ? "HISTORICO_TRASLADO_NOTIFICADO" : "HISTORICO_TRASLADO_PENDIENTE",
+      table: "candidatos",
+      recordId: source.id,
+      description: internalNotificationSent
+        ? `Gestión Humana fue notificada del traslado de ${source.candidate_name || "postulante histórico"} desde “${source.vacante || "Sin cargo"}” a “${destination}”. Responsable: ${session.name}. Observación: ${notes}.`
+        : `El traslado histórico hacia “${destination}” quedó registrado, pero el aviso interno por correo quedó pendiente. Responsable: ${session.name}.`,
+    });
+    return NextResponse.json({ success: true, internalNotificationSent });
   } catch {
     await connection.rollback();
     return NextResponse.json({ message: "No fue posible registrar el traslado." }, { status: 500 });

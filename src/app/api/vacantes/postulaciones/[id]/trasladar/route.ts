@@ -99,13 +99,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         action: "POSTULANTE_TRASLADADO_INTERNO",
         table: "postulaciones",
         recordId: source.id,
-        description: `${admin} trasladó internamente al postulante desde “${source.vacancy_title}” a “${target.titulo}”. Sin correo automático; notificación pendiente por llamada. Observación: ${notes}`,
+        description: `${admin} trasladó internamente al postulante desde “${source.vacancy_title}” a “${target.titulo}”. El postulante no recibió correo automático y queda pendiente la llamada. Aviso interno a Gestión Humana: ${internalNotificationSent ? "enviado" : "pendiente"}. Observación: ${notes}`,
       }),
       recordVacancyAudit({
         action: "POSTULANTE_RECIBIDO_POR_TRASLADO",
         table: "postulaciones",
         recordId: inserted.insertId,
-        description: `${admin} incorporó al postulante desde “${source.vacancy_title}” mediante traslado interno. Sin correo automático; notificación pendiente por llamada. Observación: ${notes}`,
+        description: `${admin} incorporó al postulante desde “${source.vacancy_title}” mediante traslado interno. El postulante no recibió correo automático y queda pendiente la llamada. Aviso interno a Gestión Humana: ${internalNotificationSent ? "enviado" : "pendiente"}. Observación: ${notes}`,
       }),
     ]);
 
