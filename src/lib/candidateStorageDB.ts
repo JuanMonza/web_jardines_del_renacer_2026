@@ -12,6 +12,7 @@ import db, { query, execute } from "./db";
 import { recordHiring } from "@/lib/hiring-history";
 import { ensureSelectionSchema } from "@/lib/selection-followup";
 import { ensureHistoricalCandidateSchema } from "@/lib/historical-candidate-records";
+import { ensureCandidateCvStorageSchema } from "@/lib/candidate-cv-storage";
 
 type DbApplicationRow = {
   id: string;
@@ -60,6 +61,7 @@ type CandidateAccountRow = {
   portfolio: string | null;
   tiene_licencia_conduccion?: number | boolean | null;
   cv_url: string | null;
+  cv_filename: string | null;
   activo: number | boolean;
   ultimo_login: string | Date | null;
   reset_token_hash: string | null;
@@ -192,7 +194,8 @@ function splitFullName(fullName: string) {
 const CANDIDATE_ACCOUNT_COLUMNS = `
   id, documento, nombres AS nombre, apellidos AS apellido, email, telefono,
   password_hash, foto_url AS foto, fecha_nacimiento, direccion, ciudad,
-  departamento, profesion, experiencia, educacion, linkedin, portfolio, tiene_licencia_conduccion, cv_url,
+  departamento, profesion, experiencia, educacion, linkedin, portfolio, tiene_licencia_conduccion,
+  CASE WHEN cv_filedata IS NOT NULL THEN cv_url ELSE NULL END AS cv_url, cv_filename,
   activo, ultimo_login, reset_token_hash, reset_expires_at, deleted_at,
   created_at, updated_at
 `;
@@ -251,7 +254,7 @@ function mapCandidateProfile(row: CandidateAccountRow): CandidateProfile {
     portfolioUrl: account.portfolioUrl,
     hasDriversLicense: account.hasDriversLicense,
     cvUrl: account.cvUrl,
-    resumeFileName: account.cvUrl ? (account.cvUrl.split("/").pop() ?? "") : "",
+    resumeFileName: row.cv_filename ?? "",
     active: account.active,
     lastLoginAt: account.lastLoginAt,
     updatedAt: account.updatedAt,
@@ -544,7 +547,10 @@ export async function getCandidateAccountByDocumentOrEmail(input: {
   documentNumber?: string;
   email?: string;
 }) {
-  await ensureCandidateLicenseColumn();
+  await Promise.all([
+    ensureCandidateLicenseColumn(),
+    ensureCandidateCvStorageSchema(),
+  ]);
   const documentNumber = normalizeDocumentNumber(input.documentNumber ?? "");
   const email = normalizeEmail(input.email ?? "");
   const conditions: string[] = [];
@@ -580,7 +586,10 @@ export async function getCandidateAccountForLogin(input: {
   documentNumber?: string;
   email: string;
 }) {
-  await ensureCandidateLicenseColumn();
+  await Promise.all([
+    ensureCandidateLicenseColumn(),
+    ensureCandidateCvStorageSchema(),
+  ]);
   const documentNumber = normalizeDocumentNumber(input.documentNumber ?? "");
   const email = normalizeEmail(input.email);
   const documentCondition = documentNumber ? "AND documento = ?" : "";
@@ -825,6 +834,7 @@ export async function setCandidatePasswordResetToken(input: {
 }
 
 export async function getCandidateByResetToken(tokenHash: string) {
+  await ensureCandidateCvStorageSchema();
   const rows = await query<CandidateAccountRow>(
     `
       SELECT ${CANDIDATE_ACCOUNT_COLUMNS}
