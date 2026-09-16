@@ -1,3 +1,19 @@
+import { institutionalEmailLayout } from "@/lib/institutional-email";
+import { prepareOutboundEmail, trainingEmailNotice } from "@/lib/training-environment";
+
+async function sendTrainingSafeEmail(
+  transporter: { sendMail: (options: { from: string; to: string; subject: string; html: string }) => Promise<unknown> },
+  options: { from: string; to: string; subject: string; html: string },
+) {
+  const delivery = prepareOutboundEmail(options.to, options.subject);
+  return transporter.sendMail({
+    ...options,
+    to: delivery.to,
+    subject: delivery.subject,
+    html: `${trainingEmailNotice(options.to)}${options.html}`,
+  });
+}
+
 function asText(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
@@ -66,7 +82,7 @@ export async function sendInternalVacancyMovementEmail(input: {
   const notes = input.notes
     ? `<div style="margin-top:18px;padding:15px 17px;border-left:4px solid #2454a0;background:#f3f7fc"><strong>Observación</strong><p style="margin:7px 0 0">${escapeHtml(input.notes)}</p></div>`
     : "";
-  await transporter.sendMail({
+  await sendTrainingSafeEmail(transporter, {
     from: smtp.from,
     to: recipient,
     subject: `${input.eventTitle} | ${input.vacancyTitle}`,
@@ -116,7 +132,7 @@ export async function sendCandidateWelcomeEmail({
     secure: smtp.secure,
     auth: { user: smtp.user, pass: smtp.pass },
   });
-  await transporter.sendMail({
+  await sendTrainingSafeEmail(transporter, {
     from: smtp.from,
     to: email,
     subject: "Bienvenido al Portal de Postulantes | Jardines del Renacer",
@@ -157,7 +173,7 @@ export async function sendCandidatePasswordChangedEmail({
     secure: smtp.secure,
     auth: { user: smtp.user, pass: smtp.pass },
   });
-  await transporter.sendMail({
+  await sendTrainingSafeEmail(transporter, {
     from: smtp.from,
     to: email,
     subject: "Tu contraseña fue actualizada | Jardines del Renacer",
@@ -204,7 +220,7 @@ export async function sendCandidateApplicationReceivedEmail({
     secure: smtp.secure,
     auth: { user: smtp.user, pass: smtp.pass },
   });
-  await transporter.sendMail({
+  await sendTrainingSafeEmail(transporter, {
     from: smtp.from,
     to: email,
     subject: `Recibimos tu postulación - ${vacancyTitle}`,
@@ -252,7 +268,7 @@ export async function sendCandidateVacancyClosedEmail({
     : closureReason === "Modificación del proceso"
       ? "El proceso fue cerrado temporalmente para realizar modificaciones en sus condiciones."
       : "El proceso de selección finalizó y en esta oportunidad no continuarás a la siguiente etapa.";
-  await transporter.sendMail({
+  await sendTrainingSafeEmail(transporter, {
     from: smtp.from,
     to: email,
     subject: `Actualización de tu postulación - ${vacancyTitle}`,
@@ -287,7 +303,7 @@ export async function sendInternalCandidateTransferEmail(input: {
     secure: smtp.secure,
     auth: { user: smtp.user, pass: smtp.pass },
   });
-  await transporter.sendMail({
+  await sendTrainingSafeEmail(transporter, {
     from: smtp.from,
     to: recipient,
     subject: `Traslado interno de postulante | ${input.targetVacancy}`,
@@ -295,4 +311,3 @@ export async function sendInternalCandidateTransferEmail(input: {
   });
   return true;
 }
-import { institutionalEmailLayout } from "@/lib/institutional-email";

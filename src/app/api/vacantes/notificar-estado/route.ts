@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { prepareOutboundEmail, trainingEmailNotice } from "@/lib/training-environment";
 import type { ApplicationStatus } from "@/config/candidates";
 import {
   ADMIN_SESSION_COOKIE,
@@ -244,11 +245,12 @@ export async function POST(request: NextRequest) {
       candidateDocument,
     });
 
+    const delivery = prepareOutboundEmail(candidateEmail, copy.subject);
     const result = await transporter.sendMail({
       from: fromEmail,
-      to: candidateEmail,
-      subject: copy.subject,
-      html,
+      to: delivery.to,
+      subject: delivery.subject,
+      html: `${trainingEmailNotice(candidateEmail)}${html}`,
     });
 
     await recordVacancyAudit({

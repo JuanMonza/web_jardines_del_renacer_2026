@@ -1,7 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { hasPermission, verifyAdminToken } from '@/lib/iam/admin-token';
+import { isTrainingEnvironment } from '@/lib/training-environment';
 const ADMIN_SESSION_COOKIE = 'jdr_admin_session';
 const routes = [{ prefix: '/dashboard/cotizaciones', permission: 'quotes.view', login: '/login/cotizaciones' }, { prefix: '/dashboard-vacantes', permission: 'dashboard.vacantes.view', login: '/login/admin-vacantes' }, { prefix: '/dashboard-aliados', permission: 'dashboard.aliados.view', login: '/login/admin-aliados' }, { prefix: '/dashboard-sedes', permission: 'dashboard.sedes.view', login: '/login/admin-sedes' }, { prefix: '/dashboard-talleres', permission: 'dashboard.talleres.view', login: '/login/admin-talleres' }, { prefix: '/dashboard-sorteos', permission: 'dashboard.sorteos.view', login: '/login/admin-sorteos' }, { prefix: '/dashboard', permission: 'dashboard.admin.view', login: '/login/admin' }];
+function environmentHeaders(response: NextResponse) {
+  if (isTrainingEnvironment()) {
+    response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive');
+    response.headers.set('X-Training-Environment', 'true');
+    response.headers.set('Cache-Control', 'no-store');
+  }
+  return response;
+}
 export async function middleware(request: NextRequest) {
   const route = routes.find(
     ({ prefix }) =>
@@ -9,7 +18,7 @@ export async function middleware(request: NextRequest) {
       request.nextUrl.pathname.startsWith(`${prefix}/`),
   );
 
-  if (!route) return NextResponse.next();
+  if (!route) return environmentHeaders(NextResponse.next());
 
   const session = await verifyAdminToken(
     request.cookies.get(ADMIN_SESSION_COOKIE)?.value,
@@ -37,9 +46,9 @@ export async function middleware(request: NextRequest) {
 
     // The public Host headers keep an internal proxy origin (for example,
     // localhost:3000) out of redirects returned to production browsers.
-    return NextResponse.redirect(url);
+    return environmentHeaders(NextResponse.redirect(url));
   }
 
-  return NextResponse.next();
+  return environmentHeaders(NextResponse.next());
 }
-export const config = { matcher: ['/dashboard/:path*', '/dashboard-aliados/:path*', '/dashboard-vacantes/:path*', '/dashboard-sedes/:path*', '/dashboard-talleres/:path*', '/dashboard-sorteos/:path*'] };
+export const config = { matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'] };

@@ -4,6 +4,9 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { ElementType } from 'react';
 import { LayoutDashboard, Building2, ClipboardList, BookHeart, LogOut, UserCog, ArrowUpRight, MessageSquare } from 'lucide-react';
+import TrainingHint from '@/components/training/TrainingHint';
+import { sectionNotice } from '@/components/training/TrainingStepGuide';
+import TrainingSidebarControls from '@/components/training/TrainingSidebarControls';
 
 export type AdminNavigationItem = {
   href: string;
@@ -28,6 +31,7 @@ interface DashboardSidebarProps {
   workspace?: string;
   navigation?: AdminNavigationItem[];
   onLogout: () => void;
+  onOpenTrainingGuide: () => void;
 }
 
 export default function DashboardSidebar({
@@ -36,6 +40,7 @@ export default function DashboardSidebar({
   workspace = 'Administración',
   navigation = defaultNavigation,
   onLogout,
+  onOpenTrainingGuide,
 }: DashboardSidebarProps) {
   const pathname = usePathname();
 
@@ -54,20 +59,23 @@ export default function DashboardSidebar({
         </div>
       </div>
 
-      <nav className="mt-6 flex-1 space-y-1.5" aria-label={`Navegación ${workspace}`}>
+      <nav className="mt-6 min-h-0 flex-1 space-y-1.5 overflow-y-auto" aria-label={`Navegación ${workspace}`}>
         <p className="px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#6a83a5]">Espacio de trabajo</p>
         {navigation.map(({ href, label, icon: Icon, external }) => {
           const active = !external && (pathname === href || (href !== '/dashboard' && pathname.startsWith(`${href}/`)));
+          const [targetPath, targetHash = ''] = href.split('#');
+          const notice = !external ? sectionNotice(workspace, targetPath, targetHash ? `#${targetHash}` : '') : null;
           return (
-            <Link
-              key={href}
-              href={href}
-              className={`group flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition-all ${active ? 'bg-[#214b86] text-white shadow-lg shadow-blue-950/15' : 'text-[#345477] hover:bg-white/70 hover:text-[#173c70]'}`}
-            >
-              <Icon className={`h-[18px] w-[18px] ${active ? 'text-white' : 'text-[#5e84b6] group-hover:text-[#204a85]'}`} />
-              <span>{label}</span>
-              {external && <ArrowUpRight className="ml-auto h-4 w-4" />}
-            </Link>
+            <TrainingHint key={href} text={notice ? `${notice.title}: ${notice.actions.join(' ')}` : `Abrir ${label}.`} className="w-full">
+              <Link
+                href={href}
+                className={`group flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition-all ${active ? 'bg-[#214b86] text-white shadow-lg shadow-blue-950/15' : 'text-[#345477] hover:bg-white/70 hover:text-[#173c70]'}`}
+              >
+                <Icon className={`h-[18px] w-[18px] ${active ? 'text-white' : 'text-[#5e84b6] group-hover:text-[#204a85]'}`} />
+                <span>{label}</span>
+                {external && <ArrowUpRight className="ml-auto h-4 w-4" />}
+              </Link>
+            </TrainingHint>
           );
         })}
       </nav>
@@ -76,6 +84,7 @@ export default function DashboardSidebar({
         <button onClick={onLogout} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-[#8c3345] transition-colors hover:bg-red-50/80">
           <LogOut className="h-[18px] w-[18px]" /> Cerrar sesión
         </button>
+        <TrainingSidebarControls onOpenGuide={onOpenTrainingGuide} />
         <p className="px-3 pt-2 text-[10px] text-[#7088a5]">Jardines del Renacer · Plataforma segura</p>
       </div>
     </aside>

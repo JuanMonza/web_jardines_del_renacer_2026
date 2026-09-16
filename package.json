@@ -6,13 +6,15 @@
   "author": "Juan Monsalve",
   "scripts": {
     "dev": "next dev",
+    "dev:training": "node scripts/run-training-dev.js",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
     "db:import-allies": "node scripts/import-allies-to-mysql.js",
     "db:import-sedes": "node scripts/import-sedes-to-mysql.js",
-    "db:migrate": "node scripts/run-sql-migration.js"
+    "db:migrate": "node scripts/run-sql-migration.js",
+    "training:setup": "node scripts/setup-training-database.js"
   },
   "dependencies": {
     "@lottiefiles/dotlottie-react": "^0.19.3",

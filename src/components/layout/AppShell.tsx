@@ -7,6 +7,7 @@ import FloatingButtons from '@/components/ui/FloatingButtons';
 import Preloader from '@/components/layout/Preloader';
 import MonthlyGiveawayPopup from '@/components/layout/MonthlyGiveawayPopup';
 import CookieConsentBanner from '@/components/legal/CookieConsentBanner';
+import TrainingEnvironmentBanner from '@/components/training/TrainingEnvironmentBanner';
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -18,6 +19,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const hideLayoutChrome = isDashboard || isLoginRoute;
   return (
     <>
+      {!isDashboard && <TrainingEnvironmentBanner />}
       <Preloader />
       {!hideLayoutChrome && <MonthlyGiveawayPopup />}
       {!hideLayoutChrome && <Navbar />}

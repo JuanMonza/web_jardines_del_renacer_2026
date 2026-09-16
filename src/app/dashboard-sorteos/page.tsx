@@ -132,7 +132,7 @@ export default function DashboardSorteosPage() {
         <div className="mt-3 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <h1 className="text-3xl font-black tracking-tight text-[#173c70] md:text-5xl">
-              Programa de incentivos
+              Mercadeo
             </h1>
             <p className="mt-2 max-w-2xl text-[#5d7698]">
               Administra la programación, registro directo, validación y

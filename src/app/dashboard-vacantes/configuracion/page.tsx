@@ -16,6 +16,7 @@ import {
   APPLICATION_STATUS_OPTIONS,
   type ApplicationStatus,
 } from "@/config/candidates";
+import TrainingHint from "@/components/training/TrainingHint";
 
 type Settings = {
   notificationsEnabled: boolean;
@@ -208,7 +209,8 @@ export default function Page() {
               <p className="mt-2 text-sm font-bold">Módulo operativo</p>
               <p className="text-xs text-blue-100">Auditoría activa</p>
             </div>
-            <div className="rounded-2xl border border-white/20 bg-white/10 p-4">
+            <TrainingHint text="Muestra si el sistema de correo está configurado y cuál remitente figura para este módulo. No permite modificar credenciales SMTP aquí." className="h-full">
+            <div className="h-full rounded-2xl border border-white/20 bg-white/10 p-4">
               <Mail
                 className={`h-5 w-5 ${smtp.configured ? "text-emerald-300" : "text-amber-200"}`}
               />
@@ -217,6 +219,7 @@ export default function Page() {
                 {smtp.configured ? smtp.sender : "Pendiente de configuración"}
               </p>
             </div>
+            </TrainingHint>
             <div className="rounded-2xl border border-white/20 bg-white/10 p-4">
               <ShieldCheck className="h-5 w-5 text-emerald-300" />
               <p className="mt-2 text-sm font-bold">Trazabilidad</p>
@@ -248,6 +251,7 @@ export default function Page() {
                 </p>
               </div>
             </div>
+            <TrainingHint text="Activa o desactiva el intento de notificación por correo al cambiar etapas. El cambio solo se aplica cuando guardas la configuración.">
             <Toggle
               checked={settings.notificationsEnabled}
               onChange={() =>
@@ -258,6 +262,7 @@ export default function Page() {
               }
               label="Activar notificaciones automáticas"
             />
+            </TrainingHint>
           </div>
           <div className="mt-5 rounded-xl border border-[#dbe5f3] bg-[#f8fbff] p-4">
             <p className="text-xs font-bold uppercase tracking-[.14em] text-primary">
@@ -300,6 +305,7 @@ export default function Page() {
               const active = settings.notificationStatuses.includes(status);
               return (
                 <div key={status} className="flex items-center gap-2">
+                  <TrainingHint text={`Define si la etapa ${style.label} generará correo automático al cambiar el estado, siempre que las notificaciones generales estén activas. Guarda la configuración al terminar.`}>
                   <button
                     type="button"
                     onClick={() => toggleStatus(status)}
@@ -310,6 +316,7 @@ export default function Page() {
                     />
                     {style.label}
                   </button>
+                  </TrainingHint>
                   {index < APPLICATION_STATUS_OPTIONS.length - 1 && (
                     <ChevronRight className="h-4 w-4 text-slate-300" />
                   )}
@@ -335,7 +342,7 @@ export default function Page() {
             </div>
           </div>
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
-            <label className="rounded-xl border border-[#dbe5f3] p-4 text-sm font-semibold text-text">
+            <TrainingHint text="Selecciona durante cuántos meses se conservarán los perfiles según la política aprobada. Guarda los cambios para aplicarlos."><label className="block rounded-xl border border-[#dbe5f3] p-4 text-sm font-semibold text-text">
               Conservación de perfiles
               <select
                 value={settings.retentionMonths}
@@ -352,7 +359,7 @@ export default function Page() {
                 <option value={36}>36 meses</option>
                 <option value={60}>60 meses</option>
               </select>
-            </label>
+            </label></TrainingHint>
             <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-4">
               <p className="text-sm font-bold text-emerald-900">
                 Eliminación lógica activa
@@ -377,16 +384,19 @@ export default function Page() {
                 </p>
               </div>
             </div>
+            <TrainingHint text="Abre Analítica para revisar los movimientos auditados y descargar el reporte con filtros por fechas.">
             <Link
               href="/dashboard-vacantes/analitica"
               className="rounded-xl border border-primary px-4 py-2 text-center text-sm font-bold text-primary transition hover:bg-blue-50"
             >
               Ver reporte de auditoría
             </Link>
+            </TrainingHint>
           </div>
         </article>
       </section>
       <div className="sticky bottom-4 z-10 flex justify-end">
+        <TrainingHint text="Guarda la activación de correos, las etapas notificables y el período de conservación. Revisa las opciones antes de confirmar.">
         <button
           type="button"
           disabled={loading || saving}
@@ -396,6 +406,7 @@ export default function Page() {
           <Save className="h-4 w-4" />
           {saving ? "Guardando..." : "Guardar configuración"}
         </button>
+        </TrainingHint>
       </div>
     </div>
   );

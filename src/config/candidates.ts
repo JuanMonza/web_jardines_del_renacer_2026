@@ -85,6 +85,7 @@ export const APPLICATION_STATUS_OPTIONS: ApplicationStatus[] = [
 
 export interface JobApplication {
   id: string;
+  historicalRecordId?: string;
   trackingCode: string;
   vacancyId: string;
   vacancyTitle: string;

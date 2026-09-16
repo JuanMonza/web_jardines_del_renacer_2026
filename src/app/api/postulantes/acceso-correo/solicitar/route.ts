@@ -8,6 +8,7 @@ import {
   createCandidateEmailAccessCode as saveCandidateEmailAccessCode,
   getCandidateAccountForLogin,
 } from '@/lib/candidateStorageDB';
+import { prepareOutboundEmail, trainingEmailNotice } from '@/lib/training-environment';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -70,13 +71,14 @@ export async function POST(request: NextRequest) {
       auth: { user: smtp.user, pass: smtp.pass },
     });
     await transporter.verify();
+    const safeDelivery = prepareOutboundEmail(email, 'Tu código de acceso | Jardines del Renacer');
     const delivery = await transporter.sendMail({
       from: smtp.from,
-      to: email,
-      subject: 'Tu código de acceso | Jardines del Renacer',
-      html: `<div style="font-family:Arial,sans-serif;color:#24344d;max-width:540px;margin:auto;padding:28px"><p style="color:#3c60a2;font-weight:700;letter-spacing:1.5px;font-size:12px">PORTAL DE POSTULANTES</p><h1 style="font-size:24px">Tu código de acceso</h1><p>Usa este código para ingresar de forma segura a tu portal de postulante:</p><p style="font-size:32px;letter-spacing:8px;font-weight:800;color:#244f91;background:#edf3fc;padding:18px 22px;border-radius:14px;text-align:center">${code}</p><p>El código vence en 10 minutos y solo puede utilizarse una vez.</p><p style="font-size:13px;color:#667085">Si no solicitaste este acceso, puedes ignorar este mensaje.</p></div>`,
+      to: safeDelivery.to,
+      subject: safeDelivery.subject,
+      html: `${trainingEmailNotice(email)}<div style="font-family:Arial,sans-serif;color:#24344d;max-width:540px;margin:auto;padding:28px"><p style="color:#3c60a2;font-weight:700;letter-spacing:1.5px;font-size:12px">PORTAL DE POSTULANTES</p><h1 style="font-size:24px">Tu código de acceso</h1><p>Usa este código para ingresar de forma segura a tu portal de postulante:</p><p style="font-size:32px;letter-spacing:8px;font-weight:800;color:#244f91;background:#edf3fc;padding:18px 22px;border-radius:14px;text-align:center">${code}</p><p>El código vence en 10 minutos y solo puede utilizarse una vez.</p><p style="font-size:13px;color:#667085">Si no solicitaste este acceso, puedes ignorar este mensaje.</p></div>`,
     });
-    if (!delivery.accepted?.some((recipient) => recipient.toLowerCase() === email) || delivery.rejected?.length) {
+    if (!delivery.accepted?.some((recipient) => recipient.toLowerCase() === safeDelivery.to.toLowerCase()) || delivery.rejected?.length) {
       throw new Error('El servidor SMTP no confirmó la aceptación del destinatario.');
     }
     await saveCandidateEmailAccessCode({
@@ -84,7 +86,7 @@ export async function POST(request: NextRequest) {
       codeHash: hashCandidateEmailAccessCode(email, code),
       expiresAt: new Date(Date.now() + 10 * 60 * 1000),
     });
-    console.info(`Código de acceso aceptado por SMTP. Destinatario: ${email}; mensaje: ${delivery.messageId || 'sin ID'}`);
+    console.info(`Código de acceso aceptado por SMTP. Bandeja de entrega: ${safeDelivery.to}; destinatario simulado: ${email}; mensaje: ${delivery.messageId || 'sin ID'}`);
 
     return NextResponse.json({ success: true, message: 'Te enviamos un código temporal. Revisa también la carpeta de spam.' });
   } catch (error) {

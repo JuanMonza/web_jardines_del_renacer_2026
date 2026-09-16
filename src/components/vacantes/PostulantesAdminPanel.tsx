@@ -14,6 +14,7 @@ import {
   UserRound,
 } from "lucide-react";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import TrainingHint from "@/components/training/TrainingHint";
 
 type Application = {
   id: string;
@@ -448,11 +449,11 @@ export default function PostulantesAdminPanel() {
               filter: "Seleccionado",
             },
           ].map((item) => (
+            <TrainingHint key={item.label} text={`Muestra las postulaciones de ${item.label.toLowerCase()}. Al seleccionarlo, la tabla se filtra sin cambiar los registros.`} className="h-full">
             <button
               type="button"
-              key={item.label}
               onClick={() => setStatusFilter(item.filter)}
-              className="rounded-2xl border border-white/80 bg-white/65 p-4 text-left shadow-sm backdrop-blur-xl transition hover:-translate-y-0.5 hover:shadow-md"
+              className="h-full w-full rounded-2xl border border-white/80 bg-white/65 p-4 text-left shadow-sm backdrop-blur-xl transition hover:-translate-y-0.5 hover:shadow-md"
             >
               <p className="text-[11px] font-bold uppercase tracking-wider text-textLight">
                 {item.label}
@@ -464,6 +465,7 @@ export default function PostulantesAdminPanel() {
                 Ver candidatos
               </span>
             </button>
+            </TrainingHint>
           ))}
         </div>
         <div className="sticky top-3 z-20 rounded-3xl border border-[#dbe5f3] bg-white p-5 shadow-[0_12px_30px_rgba(32,69,113,.12)]">
@@ -480,6 +482,7 @@ export default function PostulantesAdminPanel() {
                 </p>
               </div>
             </div>
+            <TrainingHint text="Quita los filtros de texto, estado, ciudad, vacante y fecha para volver a ver todas las postulaciones.">
             <button
               type="button"
               onClick={() => {
@@ -493,9 +496,10 @@ export default function PostulantesAdminPanel() {
             >
               Limpiar filtros
             </button>
+            </TrainingHint>
           </div>
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-            <label className="relative block">
+            <TrainingHint text="Escribe parte del nombre o correo del candidato para reducir la tabla mientras escribes."><label className="relative block">
               <Search className="pointer-events-none absolute left-3 top-3.5 h-4 w-4 text-textLight" />
               <input
                 type="text"
@@ -504,11 +508,11 @@ export default function PostulantesAdminPanel() {
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full rounded-xl border border-border py-3 pl-10 pr-4 outline-none focus:border-primary"
               />
-            </label>
-            <select
+            </label></TrainingHint>
+            <TrainingHint text="Filtra por la etapa actual del proceso: recibida, revisión, entrevista, prueba, selección o no continúa."><select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="rounded-xl border border-border bg-white px-4 py-3 outline-none focus:border-primary"
+              className="w-full rounded-xl border border-border bg-white px-4 py-3 outline-none focus:border-primary"
             >
               <option value="todos">Todos los estados</option>
               <option value="proceso">En proceso</option>
@@ -518,11 +522,11 @@ export default function PostulantesAdminPanel() {
               <option value="Prueba tecnica">Prueba técnica</option>
               <option value="Seleccionado">Seleccionado</option>
               <option value="No continua">No continúa</option>
-            </select>
-            <select
+            </select></TrainingHint>
+            <TrainingHint text="Muestra solo candidatos de la ciudad seleccionada."><select
               value={cityFilter}
               onChange={(e) => setCityFilter(e.target.value)}
-              className="rounded-xl border border-border bg-white px-4 py-3 outline-none focus:border-primary"
+              className="w-full rounded-xl border border-border bg-white px-4 py-3 outline-none focus:border-primary"
             >
               <option value="todas">Todas las ciudades</option>
               {cities.map((city) => (
@@ -530,11 +534,11 @@ export default function PostulantesAdminPanel() {
                   {city}
                 </option>
               ))}
-            </select>
-            <select
+            </select></TrainingHint>
+            <TrainingHint text="Muestra únicamente las personas postuladas a una vacante concreta."><select
               value={vacancyFilter}
               onChange={(e) => setVacancyFilter(e.target.value)}
-              className="rounded-xl border border-border bg-white px-4 py-3 outline-none focus:border-primary"
+              className="w-full rounded-xl border border-border bg-white px-4 py-3 outline-none focus:border-primary"
             >
               <option value="todas">Todas las vacantes</option>
               {vacancyTitles.map((vacancy) => (
@@ -542,17 +546,17 @@ export default function PostulantesAdminPanel() {
                   {vacancy}
                 </option>
               ))}
-            </select>
-            <select
+            </select></TrainingHint>
+            <TrainingHint text="Limita los resultados a postulaciones recibidas hoy, en los últimos 7 días o en los últimos 30 días."><select
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}
-              className="rounded-xl border border-border bg-white px-4 py-3 outline-none focus:border-primary"
+              className="w-full rounded-xl border border-border bg-white px-4 py-3 outline-none focus:border-primary"
             >
               <option value="todos">Cualquier fecha</option>
               <option value="hoy">Hoy</option>
               <option value="7dias">Últimos 7 días</option>
               <option value="30dias">Últimos 30 días</option>
-            </select>
+            </select></TrainingHint>
           </div>
         </div>
         <div className="overflow-x-auto rounded-3xl border border-[#dbe5f3] bg-white shadow-[0_10px_28px_rgba(32,69,113,.08)]">
@@ -632,6 +636,7 @@ export default function PostulantesAdminPanel() {
                       </td>
                       <td className="p-4">
                         <div className="space-y-2">
+                          <TrainingHint text="Selecciona la nueva etapa del postulante. Antes de guardar, deberás escribir el motivo; el movimiento quedará en el historial y podrá generar correo según la configuración.">
                           <select
                             value={application.status}
                             disabled={updatingId === application.id}
@@ -652,6 +657,7 @@ export default function PostulantesAdminPanel() {
                             <option value="Seleccionado">Seleccionado</option>
                             <option value="No continua">No continúa</option>
                           </select>
+                          </TrainingHint>
                         </div>
                       </td>
                       <td className="p-4 text-sm text-textLight">
@@ -668,6 +674,7 @@ export default function PostulantesAdminPanel() {
                       </td>
                       <td className="p-4 text-center">
                         <div className="flex justify-center gap-2">
+                          <TrainingHint text="Abre la ficha para consultar los datos, hoja de vida, seguimiento y movimientos de esta postulación.">
                           <button
                             type="button"
                             aria-label={`Ver ${application.candidateName}`}
@@ -676,6 +683,8 @@ export default function PostulantesAdminPanel() {
                           >
                             <Eye size={17} />
                           </button>
+                          </TrainingHint>
+                          <TrainingHint text="Abre la ficha para trasladar internamente a esta persona a otra vacante publicada. Se debe registrar la observación y realizar la llamada; no se envía correo al postulante.">
                           <button
                             type="button"
                             aria-label={`Trasladar ${application.candidateName}`}
@@ -685,6 +694,8 @@ export default function PostulantesAdminPanel() {
                           >
                             <ArrowRightLeft size={16} />
                           </button>
+                          </TrainingHint>
+                          <TrainingHint text="Solicita la baja lógica de esta cuenta y sus postulaciones activas. Exige contraseña y deja auditoría; úsalo solo cuando corresponda.">
                           <button
                             type="button"
                             aria-label={`Eliminar ${application.candidateName}`}
@@ -696,6 +707,7 @@ export default function PostulantesAdminPanel() {
                           >
                             <Trash2 size={16} />
                           </button>
+                          </TrainingHint>
                         </div>
                       </td>
                     </tr>
@@ -729,6 +741,7 @@ export default function PostulantesAdminPanel() {
                 </strong>
                 . Explica el motivo: quedará en el historial, auditoría y Excel.
               </p>
+              <TrainingHint text="Escribe una razón concreta y respetuosa para el cambio de etapa: evidencia revisada, resultado de entrevista o motivo de la decisión. Quedará en historial, auditoría y Excel.">
               <textarea
                 autoFocus
                 value={statusReason}
@@ -737,6 +750,7 @@ export default function PostulantesAdminPanel() {
                 placeholder="Ej.: Cumple el perfil comercial y la experiencia requerida; se agenda entrevista con RR. HH."
                 className="mt-5 w-full rounded-xl border border-border bg-white p-4 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
               />
+              </TrainingHint>
               <div className="mt-2 flex items-start gap-2 rounded-xl bg-primary/5 p-3 text-xs leading-5 text-primary">
                 Esta observación es obligatoria para conservar una trazabilidad
                 clara.
@@ -749,6 +763,7 @@ export default function PostulantesAdminPanel() {
                 >
                   Cancelar
                 </button>
+                <TrainingHint text="Confirma el cambio de etapa y guarda la observación. El correo se intentará enviar si esta etapa tiene notificación habilitada.">
                 <button
                   type="button"
                   disabled={!statusReason.trim() || updatingId !== null}
@@ -765,6 +780,7 @@ export default function PostulantesAdminPanel() {
                 >
                   Guardar y notificar
                 </button>
+                </TrainingHint>
               </div>
             </section>
           </div>
@@ -793,7 +809,7 @@ export default function PostulantesAdminPanel() {
                 postulaciones activas. Los datos no se borran físicamente: la
                 acción queda registrada para auditoría.
               </p>
-              <label className="mt-5 block text-sm font-bold text-text">
+              <TrainingHint text="Introduce tu contraseña administrativa para confirmar la baja lógica. No se borra la trazabilidad histórica de la acción."><label className="mt-5 block text-sm font-bold text-text">
                 Confirma tu contraseña de administrador
                 <input
                   autoFocus
@@ -803,7 +819,7 @@ export default function PostulantesAdminPanel() {
                   className="mt-2 w-full rounded-xl border border-border bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-red-300"
                   placeholder="Tu contraseña"
                 />
-              </label>
+              </label></TrainingHint>
               <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                 <button
                   type="button"
@@ -900,6 +916,7 @@ export default function PostulantesAdminPanel() {
                       </div>
                     </div>
                     {candidateDetail?.cv_url && (
+                      <TrainingHint text="Abre la hoja de vida adjunta por el postulante para revisar formación y experiencia antes de tomar una decisión.">
                       <a
                         href={candidateDetail.cv_url}
                         target="_blank"
@@ -907,6 +924,7 @@ export default function PostulantesAdminPanel() {
                       >
                         Abrir hoja de vida
                       </a>
+                      </TrainingHint>
                     )}
                     <div className="mt-5 rounded-2xl border border-violet-200 bg-violet-50/60 p-4">
                       <div className="flex items-start gap-2">
@@ -916,6 +934,7 @@ export default function PostulantesAdminPanel() {
                           <p className="mt-1 text-xs leading-5 text-violet-800">No envía correo al postulante. Úsalo después de revisar su perfil y realizar la llamada de notificación.</p>
                         </div>
                       </div>
+                      <TrainingHint text="Selecciona una vacante publicada diferente de la actual. Las pausadas y cerradas aparecen para consulta, pero no aceptan traslados.">
                       <select
                         value={transferTargetId}
                         onChange={(event) => setTransferTargetId(event.target.value)}
@@ -926,7 +945,9 @@ export default function PostulantesAdminPanel() {
                           .filter((vacancy) => vacancy.id !== selectedApplication.vacancyId)
                           .map((vacancy) => <option key={vacancy.id} value={vacancy.id} disabled={vacancy.status === "Pausada" || vacancy.status === "Cerrada"}>{vacancy.title}{vacancy.status === "Pausada" ? " · Pausada" : vacancy.status === "Cerrada" ? " · Cerrada" : " · Publicada"}</option>)}
                       </select>
+                      </TrainingHint>
                       <p className="mt-2 text-xs text-violet-800">Las vacantes pausadas y cerradas aparecen como referencia, pero no permiten recibir traslados.</p>
+                      <TrainingHint text="Explica la revisión del perfil y deja constancia de la llamada de notificación. El traslado es interno y no genera correo automático al postulante.">
                       <textarea
                         value={transferNotes}
                         onChange={(event) => setTransferNotes(event.target.value)}
@@ -934,6 +955,8 @@ export default function PostulantesAdminPanel() {
                         placeholder="Observación obligatoria: revisión del perfil y llamada realizada..."
                         className="mt-3 w-full rounded-xl border border-violet-200 bg-white p-3 text-sm outline-none focus:ring-2 focus:ring-violet-300"
                       />
+                      </TrainingHint>
+                      <TrainingHint text="Registra una nueva postulación interna a la vacante destino y conserva el origen, responsable y observación en auditoría.">
                       <button
                         type="button"
                         disabled={transferring || !transferTargetId || !transferNotes.trim()}
@@ -943,7 +966,9 @@ export default function PostulantesAdminPanel() {
                         <ArrowRightLeft size={16} />
                         {transferring ? "Trasladando..." : "Trasladar sin notificar por correo"}
                       </button>
+                      </TrainingHint>
                     </div>
+                    <TrainingHint text="Escribe información interna útil para el seguimiento, sin cambiar el estado del postulante.">
                     <textarea
                       value={note}
                       onChange={(e) => setNote(e.target.value)}
@@ -951,6 +976,8 @@ export default function PostulantesAdminPanel() {
                       className="mt-5 w-full rounded-xl border border-border bg-[#fbfdff] p-3 text-sm"
                       rows={4}
                     />
+                    </TrainingHint>
+                    <TrainingHint text="Añade la nota al historial y a la auditoría sin mover a la persona de etapa.">
                     <button
                       type="button"
                       onClick={() =>
@@ -964,11 +991,14 @@ export default function PostulantesAdminPanel() {
                     >
                       Guardar nota en trazabilidad
                     </button>
+                    </TrainingHint>
                   </div>
                   <section className="mt-5 rounded-2xl border border-border bg-white p-5 md:mt-0">
+                    <TrainingHint text="Aquí ves cada movimiento registrado con su fecha, responsable, estado y observación. Es el historial de esta postulación, no de otras vacantes.">
                     <p className="text-xs font-bold uppercase tracking-wider text-primary">
                       Historial del proceso
                     </p>
+                    </TrainingHint>
                     <div className="mt-4 space-y-3">
                       {candidateHistory.length ? (
                         candidateHistory.map((item, index) => {

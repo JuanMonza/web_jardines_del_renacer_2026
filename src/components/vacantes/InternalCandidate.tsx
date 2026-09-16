@@ -7,7 +7,7 @@ import { VACANCY_DEPARTMENTS,getVacancyCitiesByDepartment } from "@/config/vacan
 import { ACADEMIC_LEVEL_OPTIONS } from "@/config/candidates";
 
 type Vacancy={id:string;title:string;city?:string;status?:string};
-type Candidate={id:string;nombres:string;apellidos:string;documento:string;email:string;telefono?:string;ciudad?:string;departamento?:string;profesion?:string;educacion?:string;cv_url?:string;vacantes?:string|null};
+type Candidate={id:string;nombres:string;apellidos:string;documento:string;email:string;telefono?:string;ciudad?:string;departamento?:string;profesion?:string;educacion?:string;cv_url?:string;vacantes?:string|null;createdFromDashboard?:number};
 type Fields={firstName:string;lastName:string;documentNumber:string;email:string;phone:string;department:string;city:string;education:string;professionalTitle:string;password:string;passwordConfirmation:string;vacancyId:string};
 type Notice={tone:"success"|"error";text:string};
 const emptyFields:Fields={firstName:"",lastName:"",documentNumber:"",email:"",phone:"",department:"",city:"",education:"",professionalTitle:"",password:"",passwordConfirmation:"",vacancyId:""};
@@ -16,6 +16,7 @@ export default function InternalCandidate(){
   const [open,setOpen]=useState(false),[busy,setBusy]=useState(false),[loadingVacancies,setLoadingVacancies]=useState(false),[showPassword,setShowPassword]=useState(false);
   const [mode,setMode]=useState<"new"|"reuse">("new"),[fields,setFields]=useState<Fields>(emptyFields),[vacancies,setVacancies]=useState<Vacancy[]>([]),[professions,setProfessions]=useState<string[]>([]),[notice,setNotice]=useState<Notice|null>(null);
   const [candidateSearch,setCandidateSearch]=useState(""),[searching,setSearching]=useState(false),[candidates,setCandidates]=useState<Candidate[]>([]),[selectedCandidateId,setSelectedCandidateId]=useState(""),[reuseVacancyId,setReuseVacancyId]=useState("");
+  const [editingDocumentId,setEditingDocumentId]=useState(""),[newDocumentNumber,setNewDocumentNumber]=useState(""),[adminPassword,setAdminPassword]=useState("");
 
   useEffect(()=>{
     if(!open||vacancies.length)return;
@@ -70,6 +71,21 @@ export default function InternalCandidate(){
     }catch(error){setNotice({tone:"error",text:error instanceof Error?error.message:"No fue posible asignar el perfil."});}finally{setBusy(false);}
   }
 
+  async function correctDocument(){
+    if(!editingDocumentId||!/^\d{6,20}$/.test(newDocumentNumber)||!adminPassword||busy)return;
+    setBusy(true);setNotice(null);
+    try{
+      const response=await fetch(`/api/vacantes/postulante-interno/${editingDocumentId}/documento`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({documentNumber:newDocumentNumber,password:adminPassword})});
+      const result=await response.json() as {message?:string;documentNumber?:string};
+      if(!response.ok)throw new Error(result.message||"No fue posible corregir la cédula.");
+      setCandidates(current=>current.map(candidate=>candidate.id===editingDocumentId?{...candidate,documento:result.documentNumber||newDocumentNumber}:candidate));
+      setEditingDocumentId("");setNewDocumentNumber("");setAdminPassword("");
+      setNotice({tone:"success",text:"Cédula corregida. El perfil y sus postulaciones conservaron su trazabilidad; la acción quedó en auditoría. Si la persona tenía una sesión abierta, deberá ingresar nuevamente."});
+      window.dispatchEvent(new Event("candidate-application-created"));
+    }catch(error){setNotice({tone:"error",text:error instanceof Error?error.message:"No fue posible corregir la cédula."});}
+    finally{setBusy(false);}
+  }
+
   return <>
     <button type="button" onClick={()=>{setOpen(true);setNotice(null);}} className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-3 font-bold text-white shadow-sm transition hover:brightness-110"><UserPlus size={18}/>Gestionar postulante</button>
     {open&&<ScreenDialog ariaLabel="Gestionar postulante interno" onClose={()=>!busy&&setOpen(false)}>
@@ -85,6 +101,10 @@ export default function InternalCandidate(){
           <NoticeBox notice={notice}/><Footer busy={busy} close={()=>setOpen(false)} label={fields.vacancyId?"Crear cuenta y asignar":"Crear cuenta"}/>
         </div>:<div className="space-y-5 p-5 sm:p-7">
           <section className="rounded-2xl border border-[#dbe5f3] bg-white p-5"><SectionTitle icon={<Search size={20}/>} title="Buscar perfil guardado" text="Busca por nombre, cédula, correo o profesión."/><div className="relative"><Search className="absolute left-3 top-3.5 text-textLight" size={18}/><input autoFocus value={candidateSearch} onChange={event=>{setCandidateSearch(event.target.value);setSelectedCandidateId("");}} placeholder="Empieza a escribir para buscar..." className="field pl-10"/></div><div className="mt-4 space-y-2">{searching&&<p className="py-5 text-center text-sm text-textLight">Buscando perfiles...</p>}{!searching&&candidateSearch.trim().length>=2&&!candidates.length&&<p className="rounded-xl border border-dashed p-5 text-center text-sm text-textLight">No encontramos perfiles con ese criterio.</p>}{candidates.map(candidate=><button type="button" key={candidate.id} onClick={()=>setSelectedCandidateId(candidate.id)} className={`w-full rounded-xl border p-4 text-left transition ${selectedCandidateId===candidate.id?"border-emerald-400 bg-emerald-50 ring-2 ring-emerald-100":"border-border bg-white hover:border-blue-300"}`}><div className="flex items-start justify-between gap-3"><div><p className="font-bold text-text">{candidate.nombres} {candidate.apellidos}</p><p className="mt-1 text-xs text-textLight">C.C. {candidate.documento} · {candidate.email}</p><p className="mt-1 text-xs font-medium text-primary">{candidate.profesion||"Profesión no registrada"} · {candidate.ciudad||"Ciudad no registrada"}</p>{candidate.vacantes&&<p className="mt-2 text-xs text-textLight">Procesos anteriores: {candidate.vacantes}</p>}</div>{selectedCandidateId===candidate.id&&<CheckCircle2 className="shrink-0 text-emerald-600" size={22}/>}</div></button>)}</div></section>
+          {process.env.NEXT_PUBLIC_APP_ENV==="training"&&selectedCandidateId&&Boolean(candidates.find(candidate=>candidate.id===selectedCandidateId)?.createdFromDashboard)&&<section className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+            <button type="button" onClick={()=>{setEditingDocumentId(selectedCandidateId);setNewDocumentNumber(candidates.find(candidate=>candidate.id===selectedCandidateId)?.documento||"");setAdminPassword("");}} className="rounded-xl border border-amber-300 bg-white px-4 py-2 text-sm font-bold text-amber-900">Corregir cédula de este perfil</button>
+            {editingDocumentId===selectedCandidateId&&<div className="mt-4 grid gap-3 sm:grid-cols-2" onKeyDown={event=>{if(event.key==="Enter")event.preventDefault();}}><Field label="Cédula corregida"><input inputMode="numeric" maxLength={20} value={newDocumentNumber} onChange={event=>setNewDocumentNumber(event.target.value.replace(/\D/g,""))} className="field"/></Field><Field label="Contraseña del administrador asignado"><input type="password" autoComplete="current-password" value={adminPassword} onChange={event=>setAdminPassword(event.target.value)} className="field"/></Field><p className="sm:col-span-2 text-xs text-amber-900">Solo se corrige la cédula de cuentas creadas aquí. La contraseña debe pertenecer al administrador que inició sesión; el cambio queda auditado.</p><div className="flex gap-2 sm:col-span-2"><button type="button" disabled={busy||!/^\d{6,20}$/.test(newDocumentNumber)||!adminPassword} onClick={()=>void correctDocument()} className="rounded-xl bg-amber-700 px-4 py-2 text-sm font-bold text-white disabled:opacity-50">Guardar corrección</button><button type="button" onClick={()=>{setEditingDocumentId("");setAdminPassword("");}} className="rounded-xl border border-amber-300 bg-white px-4 py-2 text-sm font-bold">Cancelar</button></div></div>}
+          </section>}
           <VacancySelector value={reuseVacancyId} onChange={setReuseVacancyId} vacancies={availableVacancies} loading={loadingVacancies}/>
           <NoticeBox notice={notice}/><Footer busy={busy} close={()=>setOpen(false)} label="Asignar perfil a la vacante" disabled={!selectedCandidateId||!reuseVacancyId}/>
         </div>}

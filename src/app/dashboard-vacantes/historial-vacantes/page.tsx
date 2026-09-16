@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Archive, ChevronDown, Copy, FileText, Search, Users } from "lucide-react";
 import type { JobVacancy } from "@/config/vacancies";
+import TrainingHint from "@/components/training/TrainingHint";
 
 type Application = {
   id: string;
@@ -71,7 +72,7 @@ export default function VacancyHistoryPage() {
         </p>
       </section>
       <section className="rounded-3xl border border-[#dbe5f3] bg-white p-6 shadow-[0_10px_28px_rgba(32,69,113,.08)]">
-        <label className="relative block">
+        <TrainingHint text="Busca entre vacantes cerradas por cargo, ciudad, nombre, cédula o correo de una persona postulada. El archivo original no se modifica."><label className="relative block">
           <Search className="absolute left-4 top-3.5 h-4 w-4 text-textLight" />
           <input
             value={search}
@@ -79,7 +80,7 @@ export default function VacancyHistoryPage() {
             placeholder="Buscar vacante, nombre, documento o correo..."
             className="w-full rounded-xl border border-border py-3 pl-10 pr-4 outline-none focus:border-primary"
           />
-        </label>
+        </label></TrainingHint>
         <p className="mt-3 text-sm text-textLight">
           {visible.length} vacante(s) cerrada(s). El historial no se elimina.
         </p>
@@ -100,7 +101,8 @@ export default function VacancyHistoryPage() {
                   className="overflow-hidden rounded-2xl border border-[#dbe5f3] bg-[#fbfdff]"
                 >
                   <div className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center">
-                  <button type="button" onClick={() => setExpanded(isExpanded ? null : vacancy.id)} className="flex min-w-0 flex-1 items-center justify-between gap-4 text-left">
+                  <TrainingHint text="Despliega la vacante cerrada para consultar quiénes se postularon, sus estados finales, observaciones y fechas." className="min-w-0 flex-1">
+                  <button type="button" onClick={() => setExpanded(isExpanded ? null : vacancy.id)} className="flex w-full min-w-0 items-center justify-between gap-4 text-left">
                     <div>
                       <p className="text-xs font-bold uppercase tracking-[.15em] text-primary">
                         Cerrada ·{" "}
@@ -119,7 +121,8 @@ export default function VacancyHistoryPage() {
                       className={`h-5 w-5 text-primary transition ${isExpanded ? "rotate-180" : ""}`}
                     />
                   </button>
-                  <Link href={`/dashboard-vacantes/vacantes?reuse=${encodeURIComponent(vacancy.id)}`} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-primary bg-white px-4 py-2.5 text-sm font-bold text-primary transition hover:bg-blue-50"><Copy size={16}/>Usar como nueva</Link>
+                  </TrainingHint>
+                  <TrainingHint text="Copia los datos de esta vacante cerrada a un formulario nuevo y editable. El proceso histórico queda intacto."><Link href={`/dashboard-vacantes/vacantes?reuse=${encodeURIComponent(vacancy.id)}`} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-primary bg-white px-4 py-2.5 text-sm font-bold text-primary transition hover:bg-blue-50"><Copy size={16}/>Usar como nueva</Link></TrainingHint>
                   </div>
                   {isExpanded && (
                     <div className="border-t border-[#dbe5f3] bg-white p-4">

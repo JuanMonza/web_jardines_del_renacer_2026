@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, useRef } from "react";
 import * as XLSX from "xlsx-js-style";
 import { createPortal } from "react-dom";
 import SelectionSteps from "@/components/vacantes/SelectionSteps";
+import TrainingHint from "@/components/training/TrainingHint";
 import ScreenDialog from "@/components/ui/ScreenDialog";
 import { useSearchParams } from "next/navigation";
 import { Toaster, toast } from "react-hot-toast";
@@ -42,7 +43,7 @@ import {
   MapPin,
   MonitorSmartphone,
   Pencil,
-  Trash2,
+  Archive,
   ChevronDown,
   Pause,
   Play,
@@ -1112,6 +1113,7 @@ export default function VacantesAdminPanel() {
   );
   const vacanciesListRef = useRef<HTMLDivElement>(null);
   const reusedVacancyHandled = useRef(false);
+  const linkedVacancyHandled = useRef(false);
   const loadVacancies = async () => {
     try {
       const response = await fetch("/api/vacantes?admin=1", {
@@ -1189,6 +1191,16 @@ export default function VacantesAdminPanel() {
     setShowVacancyForm(true);
     reusedVacancyHandled.current = true;
   }, [closedVacancies, searchParams]);
+
+  useEffect(() => {
+    const vacancyId = searchParams.get("vacancy");
+    if (!vacancyId || linkedVacancyHandled.current || !vacancies.some((vacancy) => vacancy.id === vacancyId)) return;
+    linkedVacancyHandled.current = true;
+    setActiveTab("vacancies");
+    setSearch("");
+    setExpandedVacancyId(vacancyId);
+    setTimeout(() => vacanciesListRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
+  }, [searchParams, vacancies]);
 
   useEffect(() => {
     setIsModalMounted(true);
@@ -1590,6 +1602,7 @@ export default function VacantesAdminPanel() {
                 : "Administra oportunidades, candidatos y decisiones en un solo lugar."}
             </p>
           </div>
+          <TrainingHint text="Abre el formulario para crear una oportunidad. Primero define cargo y ubicación; después condiciones, descripción, requisitos y beneficios. Puedes reutilizar una vacante anterior y revisar todo antes de guardarla.">
           <Button
             type="button"
             variant="secondary"
@@ -1601,6 +1614,7 @@ export default function VacantesAdminPanel() {
           >
             Nueva vacante
           </Button>
+          </TrainingHint>
         </div>
       </section>
 
@@ -1661,18 +1675,30 @@ export default function VacantesAdminPanel() {
                 </header>
                 <div className="overflow-y-auto p-6 md:p-8">
                   <form onSubmit={handleSubmit} className="space-y-4">
-                    {!editingId&&<label className="block rounded-2xl border border-blue-200 bg-blue-50/60 p-4 text-sm font-semibold">Reutilizar información de una vacante
+                    {process.env.NEXT_PUBLIC_APP_ENV === "training" && <div className="rounded-2xl border-2 border-[#55ee89] bg-[#effff3] p-4 text-sm text-[#145231] shadow-[0_0_18px_rgba(54,255,123,.22)]">
+                      <p className="font-black">Cómo llenar esta vacante de prueba</p>
+                      <ol className="mt-2 list-inside list-decimal space-y-1">
+                        <li>Escribe el cargo, área, departamento y ciudad.</li>
+                        <li>Define modalidad, contrato, horario, salario, experiencia y licencia si aplica.</li>
+                        <li>Describe la oportunidad y escribe un requisito o beneficio por línea. Revisa antes de crearla.</li>
+                      </ol>
+                      <p className="mt-2 font-semibold">Pasa el mouse por cada campo o toca el icono verde para ver un ejemplo.</p>
+                    </div>}
+                    {!editingId&&<TrainingHint text="Si seleccionas una vacante anterior, se copiarán sus datos al formulario actual. Podrás cambiarlos antes de crear la nueva; el historial original no se altera."><label className="block rounded-2xl border border-blue-200 bg-blue-50/60 p-4 text-sm font-semibold">Reutilizar información de una vacante
                       <select value={reusedFromId||""} onChange={event=>{const source=[...vacancies,...closedVacancies].find(item=>item.id===event.target.value);if(source){const now=new Date().toISOString();setDraft({...createDraftFromVacancy(source),id:"",status:"Publicada",postedAt:now.slice(0,10),createdAt:now,updatedAt:now});setReusedFromId(source.id);}else{resetDraft();}}} className="mt-2 w-full rounded-xl border border-blue-200 bg-white p-3">
                         <option value="">Crear desde cero o seleccionar una vacante anterior</option>
                         <optgroup label="Vacantes activas y pausadas">{vacancies.map(item=><option key={`active-${item.id}`} value={item.id}>{item.title} · {item.city}</option>)}</optgroup>
                         <optgroup label="Vacantes cerradas conservadas">{closedVacancies.map(item=><option key={`closed-${item.id}`} value={item.id}>{item.title} · {item.city} · Cerrada</option>)}</optgroup>
                       </select>
                       <span className="mt-2 block text-xs font-normal text-textLight">Se copiarán todos los datos en una nueva vacante editable. El historial original permanecerá intacto.</span>
-                    </label>}
-                    <SelectionSteps value={draft.selectionSteps} onChange={selectionSteps=>setDraft({...draft,selectionSteps})}/>
+                    </label></TrainingHint>}
+                    <TrainingHint text="Elige qué apartados de seguimiento deberá completar el equipo cuando una persona avance en el proceso. Puedes ajustarlos antes de publicar la vacante.">
+                      <SelectionSteps value={draft.selectionSteps} onChange={selectionSteps=>setDraft({...draft,selectionSteps})}/>
+                    </TrainingHint>
                     <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
                       Información principal
                     </p>
+                    <TrainingHint text="Nombre del puesto que verá el postulante. Escribe solo letras y espacios; por ejemplo: Auxiliar de servicio al cliente.">
                     <Input
                       label="Cargo"
                       value={draft.title}
@@ -1685,8 +1711,10 @@ export default function VacantesAdminPanel() {
                       placeholder="Ej: Auxiliar de servicio al cliente"
                       required
                     />
+                    </TrainingHint>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                      <TrainingHint text="Área interna a la que pertenece el cargo, por ejemplo Comercial, Operaciones o Talento Humano.">
                       <Input
                         label="Area"
                         value={draft.area}
@@ -1699,7 +1727,9 @@ export default function VacantesAdminPanel() {
                         placeholder="Ej: Comercial"
                         required
                       />
+                      </TrainingHint>
 
+                      <TrainingHint text="Selecciona primero el departamento. La lista de ciudades se actualizará según esta elección.">
                       <div>
                         <label className="block text-sm font-medium text-text mb-2">
                           Departamento
@@ -1724,7 +1754,9 @@ export default function VacantesAdminPanel() {
                           ))}
                         </select>
                       </div>
+                      </TrainingHint>
 
+                      <TrainingHint text="Elige la ciudad donde se realizará el trabajo. Debe corresponder al departamento seleccionado.">
                       <div>
                         <label className="mb-2 block text-sm font-medium text-text">Ciudad</label>
                         <select
@@ -1740,6 +1772,7 @@ export default function VacantesAdminPanel() {
                           ))}
                         </select>
                       </div>
+                      </TrainingHint>
                     </div>
 
                     <div className="border-t border-primary/10 pt-5">
@@ -1747,6 +1780,7 @@ export default function VacantesAdminPanel() {
                         Condiciones de la vacante
                       </p>
                       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                        <TrainingHint text="Indica si el puesto exige presencia física, combina presencial y remoto o puede hacerse completamente a distancia.">
                         <div>
                           <label className="block text-sm font-medium text-text mb-2">
                             Modalidad
@@ -1767,7 +1801,9 @@ export default function VacantesAdminPanel() {
                             <option value="Remoto">Remoto</option>
                           </select>
                         </div>
+                        </TrainingHint>
 
+                        <TrainingHint text="Especifica el tipo de vínculo ofrecido, por ejemplo contrato indefinido, término fijo o prestación de servicios.">
                         <Input
                           label="Tipo de contrato"
                           value={draft.contractType}
@@ -1779,7 +1815,9 @@ export default function VacantesAdminPanel() {
                           }
                           placeholder="Tiempo completo"
                         />
+                        </TrainingHint>
 
+                        <TrainingHint text="Fecha desde la cual quieres mostrar la vacante como publicada. Verifica que corresponda al anuncio que estás preparando.">
                         <Input
                           label="Fecha de publicacion"
                           type="date"
@@ -1791,9 +1829,11 @@ export default function VacantesAdminPanel() {
                             }))
                           }
                         />
+                        </TrainingHint>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                        <TrainingHint text="Horario esperado, por ejemplo lunes a viernes de 8:00 a. m. a 5:00 p. m.">
                         <Input
                           label="Horario"
                           value={draft.schedule}
@@ -1805,6 +1845,8 @@ export default function VacantesAdminPanel() {
                           }
                           placeholder="Lunes a viernes"
                         />
+                        </TrainingHint>
+                        <TrainingHint text="Indica el salario o escribe ‘A convenir’ si no se publicará una cifra. No incluyas datos de contacto privados aquí.">
                         <Input
                           label="Salario"
                           value={draft.salary}
@@ -1816,6 +1858,8 @@ export default function VacantesAdminPanel() {
                           }
                           placeholder="A convenir"
                         />
+                        </TrainingHint>
+                        <TrainingHint text="Describe la experiencia mínima necesaria, por ejemplo seis meses en atención al cliente.">
                         <Input
                           label="Experiencia"
                           value={draft.experience}
@@ -1827,6 +1871,8 @@ export default function VacantesAdminPanel() {
                           }
                           placeholder="1+ ano"
                         />
+                        </TrainingHint>
+                        <TrainingHint text="Marca ‘Sí’ solo cuando conducir sea realmente necesario para desempeñar el cargo.">
                         <div>
                           <label className="mb-2 block text-sm font-medium text-text">
                             ¿Requiere licencia de conducción?
@@ -1845,6 +1891,7 @@ export default function VacantesAdminPanel() {
                             <option value="si">Sí, licencia vigente</option>
                           </select>
                         </div>
+                        </TrainingHint>
                       </div>
                     </div>
 
@@ -1852,6 +1899,7 @@ export default function VacantesAdminPanel() {
                       <p className="mb-4 text-xs font-bold uppercase tracking-[0.16em] text-primary">
                         Descripción y propuesta de valor
                       </p>
+                      <TrainingHint text="Resume en pocas líneas qué hará la persona y por qué esta oportunidad es relevante. Este texto se muestra en la publicación pública.">
                       <Textarea
                         label="Resumen de la vacante"
                         value={draft.summary}
@@ -1865,8 +1913,10 @@ export default function VacantesAdminPanel() {
                         rows={3}
                         required
                       />
+                      </TrainingHint>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <TrainingHint text="Escribe un requisito por línea: formación, conocimientos, experiencia o habilidades indispensables. Evita pedir datos sensibles.">
                         <Textarea
                           label="Requisitos (uno por linea)"
                           value={draft.requirementsText}
@@ -1881,7 +1931,9 @@ export default function VacantesAdminPanel() {
                           }
                           rows={5}
                         />
+                        </TrainingHint>
 
+                        <TrainingHint text="Escribe un beneficio por línea, por ejemplo formación interna, estabilidad o bienestar. Menciona solo lo que la organización ofrece realmente.">
                         <Textarea
                           label="Beneficios (uno por linea)"
                           value={draft.benefitsText}
@@ -1896,9 +1948,11 @@ export default function VacantesAdminPanel() {
                           }
                           rows={5}
                         />
+                        </TrainingHint>
                       </div>
                     </div>
 
+                    <TrainingHint text="Destaca esta vacante solo si debe tener mayor visibilidad en el portal público.">
                     <div className="flex items-center justify-between gap-4 rounded-2xl border border-primary/10 bg-primary/[0.035] p-4">
                       <label className="flex items-center gap-2 text-sm font-semibold text-text">
                         <input
@@ -1918,11 +1972,14 @@ export default function VacantesAdminPanel() {
                         Se publicará en el portal de empleo.
                       </span>
                     </div>
+                    </TrainingHint>
 
                     <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 flex flex-wrap gap-3 border-t border-[#dbe5f3] bg-white px-6 py-4 md:-mx-8 md:-mb-8 md:px-8">
+                      <TrainingHint text="Antes de crearla, revisa cargo, ciudad, condiciones, resumen y requisitos. Al guardar, quedará registrada para consultarla o reutilizarla después.">
                       <Button type="submit" variant="primary">
                         {editingId ? "Guardar cambios" : "Crear vacante"}
                       </Button>
+                      </TrainingHint>
                       <Button
                         type="button"
                         variant="secondary"
@@ -1982,9 +2039,11 @@ export default function VacantesAdminPanel() {
                     <p className="text-xs font-bold uppercase tracking-[.16em] text-primary">
                       Catálogo operativo
                     </p>
-                    <h3 className="mt-1 text-xl font-display text-text">
-                      Vacantes publicadas
-                    </h3>
+                    <TrainingHint text="Aquí aparecen las vacantes que siguen abiertas, incluidas las pausadas. Puedes corregir sus datos, detener temporalmente nuevas postulaciones o cerrar el proceso sin borrar su historial.">
+                      <h3 className="mt-1 text-xl font-display text-text">
+                        Vacantes publicadas
+                      </h3>
+                    </TrainingHint>
                   </div>
                   <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
                     {filteredVacancies.length} resultados
@@ -2092,32 +2151,38 @@ export default function VacantesAdminPanel() {
                       </div>
 
                       <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-[#edf2f8] pt-4">
-                        <button
-                          type="button"
-                          onClick={() => handleEdit(vacancy)}
-                          className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-primary-hover"
-                        >
-                          <Pencil size={14} /> Editar
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => void handlePause(vacancy)}
-                          className="inline-flex items-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs font-bold text-amber-800 transition hover:bg-amber-100"
-                        >
-                          {vacancy.status === "Pausada" ? (
-                            <Play size={14} />
-                          ) : (
-                            <Pause size={14} />
-                          )}
-                          {vacancy.status === "Pausada" ? "Reanudar" : "Pausar"}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setPendingDelete(vacancy)}
-                          className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-xs font-bold text-red-700 transition hover:bg-red-100"
-                        >
-                          <Trash2 size={14} /> Cerrar
-                        </button>
+                        <TrainingHint text="Editar abre el formulario con los datos actuales de esta vacante. Corrige la información y guarda los cambios; no crea una vacante nueva." className="mr-2 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => handleEdit(vacancy)}
+                            className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-primary-hover"
+                          >
+                            <Pencil size={14} /> Editar
+                          </button>
+                        </TrainingHint>
+                        <TrainingHint text={vacancy.status === "Pausada" ? "Reanudar vuelve a mostrar la vacante y permite recibir nuevas postulaciones. Conserva las postulaciones y movimientos anteriores." : "Pausar retira temporalmente la vacante del portal y detiene nuevas postulaciones. Conserva sus datos y postulantes; después puedes reanudarla."} className="mr-2 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => void handlePause(vacancy)}
+                            className="inline-flex items-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs font-bold text-amber-800 transition hover:bg-amber-100"
+                          >
+                            {vacancy.status === "Pausada" ? (
+                              <Play size={14} />
+                            ) : (
+                              <Pause size={14} />
+                            )}
+                            {vacancy.status === "Pausada" ? "Reanudar" : "Pausar"}
+                          </button>
+                        </TrainingHint>
+                        <TrainingHint text="Cerrar finaliza esta vacante y la quita del portal. No elimina el registro: el proceso, los postulantes y su trazabilidad siguen disponibles en Historial de vacantes. Deberás indicar el motivo de cierre." className="mr-2 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => setPendingDelete(vacancy)}
+                            className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-xs font-bold text-red-700 transition hover:bg-red-100"
+                          >
+                            <Archive size={14} /> Cerrar
+                          </button>
+                        </TrainingHint>
                         <button
                           type="button"
                           onClick={() =>
@@ -2158,6 +2223,7 @@ export default function VacantesAdminPanel() {
                                     {application.candidateDocument ||
                                       "No registrado"}
                                   </p>
+                                  {application.historicalRecordId && <a href={`/dashboard-vacantes/historial-laboral?q=${encodeURIComponent(application.candidateDocument)}`} className="mt-2 inline-flex rounded-lg border border-violet-200 bg-violet-50 px-2.5 py-1.5 text-xs font-bold text-violet-800">Vinculada al historial laboral · ver ficha</a>}
 
                                   <div className="mt-2 flex flex-wrap gap-2">
                                     <a

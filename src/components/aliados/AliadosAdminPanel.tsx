@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { useEffect, useMemo, useState } from 'react';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import TrainingHint from '@/components/training/TrainingHint';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Textarea from '@/components/ui/Textarea';
@@ -550,7 +551,10 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
         <section className="mb-8 overflow-hidden rounded-[30px] border border-white/80 bg-gradient-to-br from-white/85 via-[#eef5fc]/90 to-[#dceafa]/80 p-6 shadow-[0_16px_40px_rgba(34,76,125,0.1)] backdrop-blur-xl md:p-8">
           <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
             <div><p className="text-xs font-bold uppercase tracking-[0.22em] text-[#5c80ad]">Administración comercial</p><h1 className="mt-2 text-3xl font-bold tracking-tight text-[#173861] md:text-4xl">Aliados comerciales</h1><p className="mt-3 max-w-2xl text-sm leading-6 text-[#5c7190]">Gestiona el catálogo, las credenciales y la trazabilidad de descuentos desde un solo lugar.</p></div>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center"><select value={reportPeriod} onChange={(event) => setReportPeriod(event.target.value as 'day' | 'week' | 'month')} className="rounded-xl border border-[#bfd1e5] bg-white/85 px-4 py-3 text-sm font-semibold text-[#315d98] outline-none"><option value="day">Reporte de hoy</option><option value="week">Últimos 7 días</option><option value="month">Últimos 30 días</option></select><button type="button" onClick={downloadReport} className="rounded-xl bg-[#244f8a] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-blue-900/15 transition hover:bg-[#193f73]">Descargar Excel</button></div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <TrainingHint text="Elige si el reporte incluirá los movimientos de hoy, de los últimos 7 días o de los últimos 30 días."><select value={reportPeriod} onChange={(event) => setReportPeriod(event.target.value as 'day' | 'week' | 'month')} className="rounded-xl border border-[#bfd1e5] bg-white/85 px-4 py-3 text-sm font-semibold text-[#315d98] outline-none"><option value="day">Reporte de hoy</option><option value="week">Últimos 7 días</option><option value="month">Últimos 30 días</option></select></TrainingHint>
+              <TrainingHint text="Descarga un Excel de códigos, usos y consumos del período seleccionado para revisar la actividad comercial."><button type="button" onClick={downloadReport} className="rounded-xl bg-[#244f8a] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-blue-900/15 transition hover:bg-[#193f73]">Descargar Excel</button></TrainingHint>
+            </div>
           </div>
         </section>
       )}
@@ -660,24 +664,24 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
 
             <form onSubmit={handleFindDiscount} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input
+                <TrainingHint text="Escribe la cédula del cliente tal como se registró al generar el descuento. Es necesaria para consultar su código."><Input
                   label="Cedula del cliente"
                   value={verifyCedula}
                   onChange={(event) => setVerifyCedula(event.target.value)}
                   placeholder="Ej: 1234567890"
                   required
-                />
-                <Input
+                /></TrainingHint>
+                <TrainingHint text="Ingresa el código entregado al cliente para consultar si está activo y a qué aliado pertenece."><Input
                   label="Codigo de descuento"
                   value={verifyCode}
                   onChange={(event) => setVerifyCode(event.target.value.toUpperCase())}
                   placeholder="JR-ABC123"
-                />
+                /></TrainingHint>
               </div>
 
-              <Button type="submit" variant="primary">
+              <TrainingHint text="Comprueba la vigencia del código y muestra el beneficio asociado. La consulta no registra todavía ningún consumo."><Button type="submit" variant="primary">
                 Consultar código activo
-              </Button>
+              </Button></TrainingHint>
             </form>
 
             {activeRequest && (
@@ -696,16 +700,16 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
 
                 {isAllyUser ? (
                   <div className={`mt-4 grid grid-cols-1 gap-3 items-end ${hasFlexibleDiscount ? 'md:grid-cols-[1fr_1fr_auto]' : 'md:grid-cols-[1fr_auto]'}`}>
-                    <Input
+                    <TrainingHint text="Registra el valor real de la compra antes de aplicar el beneficio. Solo el aliado autorizado puede hacer el canje."><Input
                       label="Valor consumido"
                       type="number"
                       min="0"
                       value={consumedValue}
                       onChange={(event) => setConsumedValue(event.target.value)}
                       placeholder="Ej: 85000"
-                    />
+                    /></TrainingHint>
                     {canSetManualDiscount && (
-                      <Input
+                      <TrainingHint text="Cuando el beneficio es flexible, indica el valor autorizado para descontar. No puede superar el valor consumido."><Input
                         label="Valor a descontar"
                         type="number"
                         min="0"
@@ -713,11 +717,11 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
                         value={manualDiscountValue}
                         onChange={(event) => setManualDiscountValue(event.target.value)}
                         placeholder="Ej: 15000"
-                      />
+                      /></TrainingHint>
                     )}
-                    <Button type="button" variant="primary" onClick={handleRedeemDiscount}>
+                    <TrainingHint text="Confirma el canje, registra el consumo y deja el movimiento en la trazabilidad. Comprueba los importes antes de aplicarlo."><Button type="button" variant="primary" onClick={handleRedeemDiscount}>
                       Aplicar descuento
-                    </Button>
+                    </Button></TrainingHint>
                   </div>
                 ) : (
                   <div className="mt-4 rounded-2xl border border-[#c9d9ed] bg-[#eef5fc]/75 p-4 text-sm leading-6 text-[#42668f]">
@@ -858,13 +862,13 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
                       )}
                     </div>
                     {!isAllyUser && request.status === 'active' && (
-                      <button
+                      <TrainingHint text="Anula este código activo para impedir que vuelva a canjearse. El movimiento queda registrado en la trazabilidad."><button
                         type="button"
                         onClick={() => handleDeleteDiscount(request)}
                         className="mt-3 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-red-300 text-red-600 hover:bg-red-50 transition-colors"
                       >
                         Eliminar codigo
-                      </button>
+                      </button></TrainingHint>
                     )}
                   </article>
                 ))
@@ -907,14 +911,14 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
                       </div>
                     </div>
                   </div>
-                  <button
+                  <TrainingHint text="Despliega los usos y consumos de este cliente, agrupados por aliado, sin modificar los registros."><button
                     onClick={() => setExpandedClientCedula(
                       expandedClientCedula === client.cedula ? null : client.cedula
                     )}
                     className="px-4 py-2.5 rounded-xl border border-primary/25 bg-white text-primary font-semibold hover:bg-primary/10 transition-colors text-sm"
                   >
                     {expandedClientCedula === client.cedula ? 'Contraer' : 'Ver más'}
-                  </button>
+                  </button></TrainingHint>
                 </div>
 
                 {/* DESGLOSE EXPANDIDO */}
@@ -984,9 +988,11 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
           <div className="mb-4 flex items-start justify-between gap-4">
             <div>
               {editingId && <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Edición de aliado</p>}
-              <h3 className="mt-1 text-xl font-display text-text sm:text-2xl">
-                {editingId ? 'Editar aliado' : 'Crear nuevo aliado'}
-              </h3>
+              <TrainingHint text={editingId ? 'Modifica esta ficha y guarda los cambios. Se conserva el registro y la trazabilidad anterior.' : 'Registra un aliado nuevo en tres apartados: datos comerciales, acceso al portal y contenido público. Revisa la vista previa antes de guardarlo.'}>
+                <h3 className="mt-1 text-xl font-display text-text sm:text-2xl">
+                  {editingId ? 'Editar aliado' : 'Crear nuevo aliado'}
+                </h3>
+              </TrainingHint>
             </div>
             {editingId && <button type="button" onClick={resetDraft} className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-[#d6e2f2] bg-white/85 text-xl leading-none text-[#58718f] transition hover:border-primary/30 hover:text-primary" aria-label="Cerrar edición">×</button>}
           </div>
@@ -997,11 +1003,11 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
                 ['commercial', 'Comercial'],
                 ['access', 'Acceso'],
                 ['content', 'Contenido'],
-              ] as const).map(([tab, label]) => <button key={tab} type="button" onClick={() => setFormTab(tab)} className={`rounded-xl px-2 py-2.5 text-xs font-bold transition sm:text-sm ${formTab === tab ? 'bg-white text-[#244f8a] shadow-[0_5px_14px_rgba(35,79,132,0.12)]' : 'text-[#7089a5] hover:text-[#315d98]'}`}>{label}</button>)}
+              ] as const).map(([tab, label]) => <TrainingHint key={tab} text={tab === 'commercial' ? 'Completa la identidad, ubicación, categoría y beneficio ofrecido por el aliado.' : tab === 'access' ? 'Configura el correo de recuperación, el ID de ingreso y una contraseña provisional o nueva.' : 'Define el logo y los textos que verá el público en la ficha del aliado.'} className="min-w-0"><button type="button" onClick={() => setFormTab(tab)} className={`w-full rounded-xl px-2 py-2.5 text-xs font-bold transition sm:text-sm ${formTab === tab ? 'bg-white text-[#244f8a] shadow-[0_5px_14px_rgba(35,79,132,0.12)]' : 'text-[#7089a5] hover:text-[#315d98]'}`}>{label}</button></TrainingHint>)}
             </div>
 
             {formTab === 'commercial' && <div className="space-y-4 animate-fade-in">
-            <Input
+            <TrainingHint text="Escribe el nombre comercial que aparecerá en el catálogo público y en los reportes."><Input
               label="Nombre del aliado"
               value={draft.name}
               onChange={(event) =>
@@ -1009,10 +1015,10 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
               }
               placeholder="Ej: Guarderia Huellas Felices"
               required
-            />
+            /></TrainingHint>
 
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              <div>
+              <TrainingHint text="Selecciona el sector principal del aliado. La subcategoría disponible se ajusta a esta elección."><div>
                 <label className="block text-sm font-medium text-text mb-2">Categoria</label>
                 <select
                   value={draft.categorySlug}
@@ -1031,9 +1037,9 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
                     </option>
                   ))}
                 </select>
-              </div>
+              </div></TrainingHint>
 
-              <div>
+              <TrainingHint text="Selecciona el departamento donde está ubicado el establecimiento."><div>
                 <label className="block text-sm font-medium text-text mb-2">Departamento</label>
                 <select
                   value={draft.departamento}
@@ -1048,9 +1054,9 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
                     </option>
                   ))}
                 </select>
-              </div>
+              </div></TrainingHint>
 
-              <Input
+              <TrainingHint text="Escribe el municipio o la ciudad que se mostrará en la ficha pública."><Input
                 label="Municipio / ciudad"
                 value={draft.municipio}
                 onChange={(event) =>
@@ -1058,9 +1064,9 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
                 }
                 placeholder="Ej: Pereira"
                 required
-              />
+              /></TrainingHint>
 
-              <div>
+              <TrainingHint text="Elige la especialidad del aliado dentro de la categoría seleccionada."><div>
                 <label className="block text-sm font-medium text-text mb-2">Subcategoria</label>
                 <select
                   value={draft.subcategory}
@@ -1075,19 +1081,19 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
                     </option>
                   ))}
                 </select>
-              </div>
+              </div></TrainingHint>
             </div>
 
-            <Input
+            <TrainingHint text="Indica el beneficio tal como debe verlo el cliente, por ejemplo ‘10 % de descuento’. Si queda vacío se mostrará que depende de condiciones."><Input
               label="Descuento registrado"
               value={draft.discountLabel}
               onChange={(event) =>
                 setDraft((prev) => ({ ...prev, discountLabel: event.target.value }))
               }
               placeholder="Ej: 10% de descuento"
-            />
+            /></TrainingHint>
 
-            <Input
+            <TrainingHint text="Escribe la dirección física del establecimiento para orientar a los clientes."><Input
               label="Direccion"
               value={draft.address}
               onChange={(event) =>
@@ -1095,10 +1101,10 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
               }
               placeholder="Ej: Carrera 15 # 102 - 45, Pereira"
               required
-            />
+            /></TrainingHint>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input
+              <TrainingHint text="Número de WhatsApp que recibirá las consultas enviadas desde la ficha pública del aliado."><Input
                 label="WhatsApp del administrador"
                 value={draft.whatsappNumber}
                 onChange={(event) =>
@@ -1106,30 +1112,30 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
                 }
                 placeholder="573001112233"
                 required
-              />
+              /></TrainingHint>
 
-              <Input
+              <TrainingHint text="Texto del botón que verá el cliente para contactar al aliado, por ejemplo ‘Más información’."><Input
                 label="Texto del boton"
                 value={draft.actionLabel}
                 onChange={(event) =>
                   setDraft((prev) => ({ ...prev, actionLabel: event.target.value }))
                 }
                 placeholder="Mas informacion"
-              />
+              /></TrainingHint>
             </div>
             </div>}
 
             {formTab === 'access' && <div className="space-y-4 animate-fade-in">
-            <Input
+            <TrainingHint text="Correo del aliado para recuperar el acceso al portal. Verifica que pertenezca al establecimiento."><Input
               label="Correo de recuperación del aliado"
               type="email"
               value={draft.email ?? ''}
               onChange={(event) => setDraft((prev) => ({ ...prev, email: event.target.value }))}
               placeholder="correo@aliado.com"
-            />
+            /></TrainingHint>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 rounded-2xl border border-primary/15 bg-primary/5 p-4">
-              <div>
+              <TrainingHint text="Identificador que usará el aliado para entrar a su portal. El prefijo JDR- se agrega automáticamente."><div>
                 <label className="mb-2 block text-sm font-medium text-text">Usuario / ID de ingreso</label>
                 <div className="flex overflow-hidden rounded-xl border border-border bg-white focus-within:border-transparent focus-within:ring-2 focus-within:ring-primary">
                   <span className="flex items-center border-r border-border bg-primary/10 px-3 text-sm font-bold text-primary">JDR-</span>
@@ -1141,8 +1147,8 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
                   />
                 </div>
                 <p className="mt-1 text-xs text-textLight">El prefijo JDR- es fijo y se agrega automáticamente.</p>
-              </div>
-              <div>
+              </div></TrainingHint>
+              <TrainingHint text="Crea una contraseña provisional o escribe una nueva para restablecer el acceso. Por seguridad, después de guardar no podrás verla de nuevo."><div>
                 <div className="relative">
                   <Input label="Contraseña provisional o nueva" type={showAccessPassword ? 'text' : 'password'} value={accessPassword} onChange={(event) => setAccessPassword(event.target.value)} placeholder="Mínimo 10 caracteres" />
                   <button type="button" onClick={() => setShowAccessPassword((value) => !value)} className="absolute bottom-3 right-3 rounded-md px-2 py-1 text-xs font-semibold text-primary hover:bg-primary/10">
@@ -1150,21 +1156,21 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
                   </button>
                 </div>
                 <p className="mt-1 text-xs text-textLight">Al guardar se crea o restablece el acceso. Por seguridad la contraseña no vuelve a mostrarse.</p>
-              </div>
+              </div></TrainingHint>
             </div>
             </div>}
 
             {formTab === 'content' && <div className="space-y-4 animate-fade-in">
-            <Input
+            <TrainingHint text="Ruta o URL del logo que se mostrará en el catálogo. Puedes usar el campo de carga de archivo de abajo en lugar de escribirla."><Input
               label="Logo (URL o ruta publica)"
               value={draft.logo}
               onChange={(event) =>
                 setDraft((prev) => ({ ...prev, logo: event.target.value }))
               }
               placeholder="/images/logos_aliados_jr/tu_logo.png"
-            />
+            /></TrainingHint>
 
-            <div>
+            <TrainingHint text="Selecciona una imagen del logo para verla en la vista previa. Comprueba que corresponda al aliado antes de guardar."><div>
               <label className="block text-sm font-medium text-text mb-2">
                 Subir logo desde archivo (opcional)
               </label>
@@ -1174,9 +1180,9 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
                 onChange={handleLogoFileUpload}
                 className="w-full text-sm text-textLight file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-primary/15 file:text-primary file:font-semibold hover:file:bg-primary/25"
               />
-            </div>
+            </div></TrainingHint>
 
-            <Textarea
+            <TrainingHint text="Mensaje inicial de WhatsApp. La variable {{nombre}} se reemplaza por el nombre del aliado cuando el cliente usa el botón público."><Textarea
               label='Mensaje WhatsApp (usa "{{nombre}}" para insertar el nombre)'
               value={draft.whatsappTemplate}
               onChange={(event) =>
@@ -1184,9 +1190,9 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
               }
               placeholder='Hola, quiero conocer los descuentos y beneficios de "{{nombre}}".'
               rows={3}
-            />
+            /></TrainingHint>
 
-            <Textarea
+            <TrainingHint text="Resumen breve del servicio que se mostrará en la ficha pública."><Textarea
               label="Descripcion corta (opcional)"
               value={draft.description}
               onChange={(event) =>
@@ -1194,9 +1200,9 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
               }
               placeholder="Describe brevemente el servicio del aliado."
               rows={2}
-            />
+            /></TrainingHint>
 
-            <label className="flex items-center gap-2 text-sm text-text">
+            <TrainingHint text="Activa esta opción si el aliado debe aparecer destacado en la página de inicio."><label className="flex items-center gap-2 text-sm text-text">
               <input
                 type="checkbox"
                 checked={draft.featured}
@@ -1206,20 +1212,20 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
                 className="accent-primary"
               />
               Mostrar como destacado (aparece en Home)
-            </label>
+            </label></TrainingHint>
             </div>}
 
             <div className="flex flex-wrap gap-3 pt-2">
-              <Button type="submit" variant="primary" disabled={savingAlly}>
+              <TrainingHint text={editingId ? 'Guarda los cambios de la ficha. Si escribiste una contraseña nueva, también se actualizará el acceso del aliado.' : 'Crea la ficha del aliado y, si configuraste sus credenciales, habilita su acceso al portal.'}><Button type="submit" variant="primary" disabled={savingAlly}>
                 {savingAlly ? 'Guardando...' : editingId ? 'Guardar cambios' : 'Crear aliado'}
-              </Button>
-              <Button type="button" variant="secondary" onClick={resetDraft}>
+              </Button></TrainingHint>
+              <TrainingHint text="Borra los datos del formulario actual sin eliminar aliados ya guardados."><Button type="button" variant="secondary" onClick={resetDraft}>
                 Limpiar formulario
-              </Button>
+              </Button></TrainingHint>
               {editingId && (
-                <Button type="button" variant="ghost" onClick={resetDraft} disabled={savingAlly}>
+                <TrainingHint text="Sale de la edición sin guardar cambios nuevos. El aliado conserva su información anterior."><Button type="button" variant="ghost" onClick={resetDraft} disabled={savingAlly}>
                   Cancelar edición
-                </Button>
+                </Button></TrainingHint>
               )}
             </div>
           </form>
@@ -1229,7 +1235,7 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
 
         <section className="space-y-6">
           <article className="glass rounded-3xl border border-primary/15 p-6">
-            <h3 className="text-lg font-semibold text-text mb-4">Vista previa CTA</h3>
+            <TrainingHint text="Así se verá la presentación del aliado con el logo, beneficio, ubicación y botón de contacto que estás configurando."><h3 className="text-lg font-semibold text-text mb-4">Vista previa CTA</h3></TrainingHint>
             <div className="rounded-2xl border border-primary/15 bg-white/40 p-4">
               <div className="mb-3 flex items-start gap-3">
                 <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-primary/20 bg-white/80 p-2 shadow-sm">
@@ -1275,13 +1281,13 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
 
           <article className="glass rounded-3xl border border-primary/15 p-6">
             <div className="flex items-center justify-between gap-4 mb-4">
-              <h3 className="text-lg font-semibold text-text">Aliados cargados</h3>
+              <TrainingHint text="Consulta los aliados registrados, su ubicación, beneficio y estado de acceso. Desde cada ficha puedes editar los datos o retirarla del catálogo."><h3 className="text-lg font-semibold text-text">Aliados cargados</h3></TrainingHint>
               <span className="text-xs font-semibold px-2.5 py-1 rounded-full border border-primary/20 bg-primary/10 text-primary">
                 {filteredAllies.length} de {allies.length}
               </span>
             </div>
 
-            <div className="relative mb-4"><input value={allySearch} onChange={(event) => setAllySearch(event.target.value)} placeholder="Buscar por nombre, ID, ciudad, departamento o categoría…" className="w-full rounded-xl border border-[#cbd9e8] bg-white/80 px-4 py-3 pr-10 text-sm text-[#173861] outline-none transition placeholder:text-[#88a0ba] focus:border-[#5a83b7] focus:ring-4 focus:ring-[#5a83b7]/10" /><span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#6384aa]">⌕</span></div>
+            <TrainingHint text="Filtra los aliados mientras escribes su nombre, ID, ciudad, departamento o categoría. La búsqueda no modifica ningún registro."><div className="relative mb-4"><input value={allySearch} onChange={(event) => setAllySearch(event.target.value)} placeholder="Buscar por nombre, ID, ciudad, departamento o categoría…" className="w-full rounded-xl border border-[#cbd9e8] bg-white/80 px-4 py-3 pr-10 text-sm text-[#173861] outline-none transition placeholder:text-[#88a0ba] focus:border-[#5a83b7] focus:ring-4 focus:ring-[#5a83b7]/10" /><span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#6384aa]">⌕</span></div></TrainingHint>
 
             <div className="space-y-3 max-h-[640px] overflow-y-auto pr-1 custom-scrollbar">
               {filteredAllies.length === 0 ? <div className="rounded-2xl border border-dashed border-[#bfd1e5] bg-white/50 p-6 text-center text-sm text-[#6384aa]">No encontramos aliados con esa búsqueda.</div> : filteredAllies.map((ally) => (
@@ -1318,20 +1324,20 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
                         </div>;
                       })()}
                       <div className="flex gap-2 mt-3">
-                        <button
+                        <TrainingHint text="Abre la ficha de este aliado con sus datos actuales para corregir información comercial, credenciales o contenido. Debes guardar los cambios para aplicarlos."><button
                           type="button"
                           onClick={() => handleEdit(ally)}
                           className="text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-primary/25 text-primary hover:bg-primary/10 transition-colors"
                         >
                           Editar
-                        </button>
-                        <button
+                        </button></TrainingHint>
+                        <TrainingHint text="Retira al aliado del catálogo público tras confirmar. Su registro no se borra definitivamente de MySQL; la recuperación requiere una gestión administrativa."><button
                           type="button"
                           onClick={() => handleDelete(ally)}
                           className="text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-red-300 text-red-600 hover:bg-red-50 transition-colors"
                         >
                           Eliminar
-                        </button>
+                        </button></TrainingHint>
                       </div>
                     </div>
                   </div>
@@ -1342,7 +1348,7 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
 
           <article className="glass rounded-3xl border border-primary/15 p-6">
             <div className="mb-4 flex items-center justify-between gap-3">
-              <div><p className="text-xs font-bold uppercase tracking-[0.18em] text-[#6283aa]">Control operativo</p><h3 className="mt-1 text-lg font-semibold text-text">Bitácora reciente</h3></div>
+              <TrainingHint text="Muestra los movimientos más recientes del módulo, con el aliado, responsable y fecha. Es una consulta de auditoría; no cambia información."><div><p className="text-xs font-bold uppercase tracking-[0.18em] text-[#6283aa]">Control operativo</p><h3 className="mt-1 text-lg font-semibold text-text">Bitácora reciente</h3></div></TrainingHint>
               <span className="rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">MySQL</span>
             </div>
             <div className="space-y-2.5">

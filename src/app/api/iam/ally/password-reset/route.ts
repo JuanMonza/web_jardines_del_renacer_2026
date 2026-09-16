@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { execute, query } from '@/lib/db';
+import { prepareOutboundEmail, trainingEmailNotice } from '@/lib/training-environment';
 
 export const runtime = 'nodejs';
 const generic = { message: 'Si el correo está registrado, recibirás instrucciones para restablecer tu contraseña.' };
@@ -18,7 +19,8 @@ export async function POST(request: NextRequest) {
     await execute('INSERT INTO ally_password_resets (ally_account_id, token_hash, expira_en) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 30 MINUTE))', [rows[0].accountId, hash(token)]);
     const origin = process.env.NEXTAUTH_URL || request.nextUrl.origin;
     const url = `${origin}/login/aliado/restablecer?token=${token}`;
-    await fetch('https://api.resend.com/emails', { method: 'POST', headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ from: process.env.EMAIL_FROM || 'Jardines del Renacer <onboarding@resend.dev>', to: [normalized], subject: 'Restablece tu contraseña de aliado', html: `<p>Hola ${rows[0].name},</p><p>Solicitaste restablecer tu contraseña. El enlace vence en 30 minutos:</p><p><a href="${url}">Restablecer contraseña</a></p><p>Si no lo solicitaste, ignora este correo.</p>` }) });
+    const delivery = prepareOutboundEmail(normalized, 'Restablece tu contraseña de aliado');
+    await fetch('https://api.resend.com/emails', { method: 'POST', headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ from: process.env.EMAIL_FROM || 'Jardines del Renacer <onboarding@resend.dev>', to: [delivery.to], subject: delivery.subject, html: `${trainingEmailNotice(normalized)}<p>Hola ${rows[0].name},</p><p>Solicitaste restablecer tu contraseña. El enlace vence en 30 minutos:</p><p><a href="${url}">Restablecer contraseña</a></p><p>Si no lo solicitaste, ignora este correo.</p>` }) });
     return NextResponse.json(generic);
   } catch { return NextResponse.json(generic); }
 }

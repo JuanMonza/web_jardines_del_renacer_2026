@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { BellRing, CheckCircle2, Mail, Send, UserRound } from "lucide-react";
+import TrainingHint from "@/components/training/TrainingHint";
 
 type Audit = { createdAt: string; action: string; description: string };
 const formatDate = new Intl.DateTimeFormat("es-CO", {
@@ -114,17 +115,21 @@ export default function NotificationsPage() {
             seguimiento, envía el correo desde no-reply y registra el movimiento
             en auditoría.
           </p>
+          <TrainingHint text="Te lleva a Postulantes, donde puedes cambiar una etapa y registrar la observación. El envío de correo depende de las etapas habilitadas en Configuración.">
           <Link
             href="/dashboard-vacantes/postulantes"
             className="mt-5 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white"
           >
             <Send size={16} /> Gestionar postulantes
           </Link>
+          </TrainingHint>
         </article>
         <article className="rounded-3xl border border-[#dbe5f3] bg-white p-6 shadow-[0_10px_28px_rgba(32,69,113,.08)]">
+          <TrainingHint text="Los colores indican el estado comunicado: azul recibida, amarillo revisión, morado entrevista, naranja prueba, verde seleccionado y rojo no continúa.">
           <p className="text-xs font-bold uppercase tracking-[.16em] text-primary">
             Semáforo del proceso
           </p>
+          </TrainingHint>
           <h2 className="mt-2 text-lg font-bold text-text">
             Estado informado en cada correo
           </h2>
@@ -166,7 +171,7 @@ export default function NotificationsPage() {
           </span>
         </div>
         <div className="mt-5 grid gap-3 rounded-2xl border border-[#dbe5f3] bg-[#f8fbff] p-4 sm:grid-cols-[1fr_1fr_auto]">
-          <label className="text-xs font-bold text-textLight">
+          <TrainingHint text="Fecha inicial para consultar los correos registrados. El filtro solo cambia la lista visible."><label className="block text-xs font-bold text-textLight">
             Desde
             <input
               type="date"
@@ -174,8 +179,8 @@ export default function NotificationsPage() {
               onChange={(event) => setStartDate(event.target.value)}
               className="mt-1 block w-full rounded-xl border border-border bg-white px-3 py-2 text-sm text-text"
             />
-          </label>
-          <label className="text-xs font-bold text-textLight">
+          </label></TrainingHint>
+          <TrainingHint text="Fecha final para consultar los correos registrados. No elimina información anterior."><label className="block text-xs font-bold text-textLight">
             Hasta
             <input
               type="date"
@@ -183,8 +188,8 @@ export default function NotificationsPage() {
               onChange={(event) => setEndDate(event.target.value)}
               className="mt-1 block w-full rounded-xl border border-border bg-white px-3 py-2 text-sm text-text"
             />
-          </label>
-          <button
+          </label></TrainingHint>
+          <TrainingHint text="Quita el rango de fechas y vuelve a mostrar todo el historial de correos disponibles." className="self-end"><button
             type="button"
             onClick={() => {
               setStartDate("");
@@ -194,6 +199,7 @@ export default function NotificationsPage() {
           >
             Limpiar fechas
           </button>
+          </TrainingHint>
         </div>
         <div className="mt-5 space-y-3">
           {visibleNotifications.length ? (
@@ -201,8 +207,8 @@ export default function NotificationsPage() {
               const status = notificationStatus(item.description || "");
               const style = status ? statusStyle[status] : null;
               return (
+                <TrainingHint key={`${item.createdAt}-${index}`} text="Este registro muestra el estado comunicado, el detalle del movimiento y cuándo quedó guardado. Revisa el texto completo para identificar a quién se notificó y por qué.">
                 <article
-                  key={`${item.createdAt}-${index}`}
                   className="flex gap-3 rounded-2xl border border-slate-100 p-4"
                 >
                   <span
@@ -234,6 +240,7 @@ export default function NotificationsPage() {
                     </p>
                   </div>
                 </article>
+                </TrainingHint>
               );
             })
           ) : (

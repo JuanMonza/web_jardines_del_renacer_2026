@@ -433,6 +433,7 @@ export async function getAllApplicationsFromDB() {
   await ensureApplicationSnapshotSchema();
   const sql = `
     SELECT CAST(p.id AS CHAR) AS id, CAST(p.vacante_id AS CHAR) AS vacancyId,
+      NULLIF(JSON_UNQUOTE(JSON_EXTRACT(p.application_snapshot,'$.historicalRecordId')),'') AS historicalRecordId,
       COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(p.application_snapshot,'$.candidateName')),''),NULLIF(TRIM(CONCAT(COALESCE(c.nombres,''),' ',COALESCE(c.apellidos,''))),''),'Postulante sin nombre') AS candidateName,
       COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(p.application_snapshot,'$.candidateDocument')),''),c.documento,'') AS candidateDocument,
       COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(p.application_snapshot,'$.candidateEmail')),''),c.email,'') AS candidateEmail,

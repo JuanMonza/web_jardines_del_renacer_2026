@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { hashCandidateResetToken } from '@/lib/candidateAuth';
 import { setCandidatePasswordResetToken } from '@/lib/candidateStorageDB';
+import { prepareOutboundEmail, trainingEmailNotice } from '@/lib/training-environment';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,7 +32,8 @@ export async function POST(request: NextRequest) {
 
     if (process.env.RESEND_API_KEY) {
       const url = `${request.nextUrl.origin}/login/usuario-vacantes/restablecer?token=${token}`;
-      await fetch('https://api.resend.com/emails', { method: 'POST', headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ from: process.env.EMAIL_FROM || 'Jardines del Renacer <onboarding@resend.dev>', to: [email], subject: 'Restablece tu contraseña de postulante', html: `<p>Solicitaste restablecer tu contraseña.</p><p><a href="${url}">Restablecer contraseña</a></p><p>El enlace vence en 30 minutos.</p>` }) });
+      const delivery = prepareOutboundEmail(email, 'Restablece tu contraseña de postulante');
+      await fetch('https://api.resend.com/emails', { method: 'POST', headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ from: process.env.EMAIL_FROM || 'Jardines del Renacer <onboarding@resend.dev>', to: [delivery.to], subject: delivery.subject, html: `${trainingEmailNotice(email)}<p>Solicitaste restablecer tu contraseña.</p><p><a href="${url}">Restablecer contraseña</a></p><p>El enlace vence en 30 minutos.</p>` }) });
     }
 
     return NextResponse.json({

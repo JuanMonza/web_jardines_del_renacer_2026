@@ -9,7 +9,7 @@ import {ACADEMIC_LEVEL_OPTIONS} from "@/config/candidates";
 import {query} from "@/lib/db";
 function text(value:unknown){return typeof value==="string"?value.trim():"";}
 function validName(value:string){return /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s'-]+$/.test(value);}
-type ExistingCandidate={id:number;nombres:string;apellidos:string;documento:string;email:string;telefono:string;ciudad:string;departamento:string;profesion:string;educacion:string;cv_url:string;vacantes:string|null};
+type ExistingCandidate={id:number;nombres:string;apellidos:string;documento:string;email:string;telefono:string;ciudad:string;departamento:string;profesion:string;educacion:string;cv_url:string;vacantes:string|null;createdFromDashboard?:number};
 async function notifyInternalApplication(input:{applicationId:string;candidateName:string;candidateDocument:string;candidateEmail:string;vacancyTitle:string;adminName:string}){
   let sent=false;
   try{sent=await sendInternalVacancyMovementEmail({eventTitle:"Postulante asignado a vacante",candidateName:input.candidateName,candidateDocument:input.candidateDocument,candidateEmail:input.candidateEmail,vacancyTitle:input.vacancyTitle,status:"Recibida",notes:"Postulación creada o asignada desde el dashboard administrativo.",adminName:input.adminName,applicationId:`JDR-${input.applicationId.padStart(6,"0")}`});}
@@ -27,6 +27,7 @@ export async function GET(request:NextRequest){
     if(search.length<2)return NextResponse.json({data:[],professions:professions.map(item=>item.profession)});
     const term=`%${search}%`;
     const candidates=await query<ExistingCandidate>(`SELECT c.id,c.nombres,c.apellidos,c.documento,c.email,c.telefono,c.ciudad,c.departamento,c.profesion,c.educacion,c.cv_url,
+      EXISTS(SELECT 1 FROM activity_logs a WHERE a.tabla_afectada='candidatos' AND a.registro_id=c.id AND a.accion='POSTULANTE_INTERNO_CREADO') AS createdFromDashboard,
       GROUP_CONCAT(DISTINCT v.titulo ORDER BY p.created_at DESC SEPARATOR ' · ') AS vacantes
       FROM candidatos c LEFT JOIN postulaciones p ON p.candidato_id=c.id AND p.deleted_at IS NULL LEFT JOIN vacantes v ON v.id=p.vacante_id
       WHERE c.deleted_at IS NULL AND c.activo=TRUE AND (c.documento LIKE ? OR c.email LIKE ? OR CONCAT(c.nombres,' ',c.apellidos) LIKE ? OR c.profesion LIKE ?)

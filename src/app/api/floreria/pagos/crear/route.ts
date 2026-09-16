@@ -5,6 +5,7 @@ import {
   getWompiConfig,
   isWompiConfigured,
 } from '@/lib/wompi';
+import { isTrainingEnvironment } from '@/lib/training-environment';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -38,6 +39,9 @@ function asTrimmedText(value: unknown) {
  */
 export async function POST(request: NextRequest) {
   try {
+    if (isTrainingEnvironment()) {
+      return NextResponse.json({ ok: false, mode: 'training', message: 'Los pagos reales están desactivados en el ambiente de capacitación.' }, { status: 409 });
+    }
     // 1. Extraer y tipar el payload recibido del cliente
     const payload = (await request.json()) as CreateFlowerCheckoutPayload;
     // Normalizamos desde el inicio para no guardar ruido (espacios, mayúsculas/minúsculas).

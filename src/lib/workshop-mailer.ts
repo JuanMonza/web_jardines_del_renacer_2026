@@ -1,4 +1,5 @@
 import { institutionalEmailLayout } from "@/lib/institutional-email";
+import { prepareOutboundEmail, trainingEmailNotice } from "@/lib/training-environment";
 
 type WorkshopMail = {
   email: string;
@@ -36,7 +37,8 @@ async function send(input: WorkshopMail & { subject: string; body: string }) {
   });
   const details = `<div style="background:#f8fbff;border:1px solid #dbe5f6;border-radius:12px;padding:14px;margin:18px 0"><p style="margin:0 0 8px"><strong>Taller:</strong> ${escapeHtml(input.title)}</p><p style="margin:0 0 8px"><strong>Fecha y horario:</strong> ${escapeHtml(input.date)}</p><p style="margin:0"><strong>Lugar:</strong> ${escapeHtml(input.place)}</p></div>`;
   const connection = input.connectionUrl ? `<p style="margin:22px 0"><a href="${escapeHtml(input.connectionUrl)}" style="display:inline-block;background:#2454a0;color:#fff;padding:12px 18px;border-radius:8px;text-decoration:none;font-weight:bold">Conectarme al taller</a></p>` : "";
-  await transporter.sendMail({ from, to: input.email, subject: input.subject, html: layout(input.subject, `<h2 style="margin-top:0">Hola, ${escapeHtml(input.name)}</h2>${input.body}${details}${connection}`) });
+  const delivery = prepareOutboundEmail(input.email, input.subject);
+  await transporter.sendMail({ from, to: delivery.to, subject: delivery.subject, html: `${trainingEmailNotice(input.email)}${layout(input.subject, `<h2 style="margin-top:0">Hola, ${escapeHtml(input.name)}</h2>${input.body}${details}${connection}`)}` });
   return "ENVIADO" as const;
 }
 

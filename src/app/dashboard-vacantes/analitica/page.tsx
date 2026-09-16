@@ -24,6 +24,7 @@ import {
   UsersRound,
 } from "lucide-react";
 import SelectionReport from "@/components/vacantes/SelectionReport";
+import TrainingHint from "@/components/training/TrainingHint";
 
 type Application = {
   id: string;
@@ -465,9 +466,9 @@ export default function AnalyticsPage() {
         ].map(([Icon, label, value, detail, tone]) => {
           const MetricIcon = Icon as typeof FileText;
           return (
+            <TrainingHint key={label as string} text={`${label as string}: ${detail as string}. Esta tarjeta resume los datos actuales; no cambia ningún estado.`} className="h-full">
             <article
-              key={label as string}
-              className="rounded-2xl border border-[#dbe5f3] bg-white p-5 shadow-[0_8px_22px_rgba(32,69,113,.07)]"
+              className="h-full rounded-2xl border border-[#dbe5f3] bg-white p-5 shadow-[0_8px_22px_rgba(32,69,113,.07)]"
             >
               <span
                 className={`flex h-10 w-10 items-center justify-center rounded-xl ${tone as string}`}
@@ -482,20 +483,21 @@ export default function AnalyticsPage() {
               </p>
               <p className="mt-2 text-xs text-textLight">{detail as string}</p>
             </article>
+            </TrainingHint>
           );
         })}
       </section>
       <div className="grid gap-6 xl:grid-cols-[1.1fr_.9fr]">
         <section className="rounded-3xl border border-[#dbe5f3] bg-white p-6 shadow-[0_10px_28px_rgba(32,69,113,.08)]">
           <div className="flex items-end justify-between">
-            <div>
+            <TrainingHint text="Este embudo muestra cuántas postulaciones hay en cada etapa. Compara las barras para detectar dónde se concentra el proceso; los cambios de estado se realizan desde Postulantes." className="min-w-0">
               <p className="text-xs font-bold uppercase tracking-[.16em] text-primary">
                 Embudo de selección
               </p>
               <h2 className="mt-1 text-xl font-bold text-text">
                 Dónde están los postulantes
               </h2>
-            </div>
+            </TrainingHint>
             <span className="text-sm font-bold text-primary">
               {apps.length} total
             </span>
@@ -520,12 +522,14 @@ export default function AnalyticsPage() {
           </div>
         </section>
         <section className="rounded-3xl border border-[#dbe5f3] bg-white p-6 shadow-[0_10px_28px_rgba(32,69,113,.08)]">
+          <TrainingHint text="Aquí aparecen vacantes sin postulaciones y procesos pendientes de revisión. Abre Vacantes o Postulantes para actuar; esta lista solo informa.">
           <p className="text-xs font-bold uppercase tracking-[.16em] text-primary">
             Atención requerida
           </p>
           <h2 className="mt-1 text-xl font-bold text-text">
             Procesos para revisar
           </h2>
+          </TrainingHint>
           <div className="mt-5 space-y-3">
             {alerts.length ? (
               alerts.map((alert, index) => {
@@ -567,12 +571,14 @@ export default function AnalyticsPage() {
       </div>
       <div className="grid gap-6 xl:grid-cols-[1.1fr_.9fr]">
         <section className="rounded-3xl border border-[#dbe5f3] bg-white p-6 shadow-[0_10px_28px_rgba(32,69,113,.08)]">
+          <TrainingHint text="Este gráfico compara cuántas postulaciones se recibieron en cada uno de los últimos seis meses. Sirve para observar la tendencia, no para cambiar procesos.">
           <p className="text-xs font-bold uppercase tracking-[.16em] text-primary">
             Tendencia
           </p>
           <h2 className="mt-1 text-xl font-bold text-text">
             Postulaciones de los últimos 6 meses
           </h2>
+          </TrainingHint>
           <div className="mt-5 h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={trend}>
@@ -605,27 +611,34 @@ export default function AnalyticsPage() {
           </div>
         </section>
         <section className="rounded-3xl border border-[#dbe5f3] bg-white p-6 shadow-[0_10px_28px_rgba(32,69,113,.08)]">
+          <TrainingHint text="Consulta los movimientos recientes del proceso, ordenados por fecha. Puedes acotar el período sin borrar ningún registro.">
           <p className="text-xs font-bold uppercase tracking-[.16em] text-primary">
             Trazabilidad reciente
           </p>
           <h2 className="mt-1 text-xl font-bold text-text">
             Últimos movimientos
           </h2>
+          </TrainingHint>
           <div className="mt-4 grid gap-2 rounded-2xl border border-[#dbe5f3] bg-[#f8fbff] p-3 sm:grid-cols-[1fr_1fr_auto]">
+            <TrainingHint text="Fecha inicial de los movimientos que quieres revisar.">
             <input
               type="date"
               value={auditStartDate}
               onChange={(event) => setAuditStartDate(event.target.value)}
-              className="rounded-xl border border-border bg-white px-3 py-2 text-sm"
+              className="w-full rounded-xl border border-border bg-white px-3 py-2 text-sm"
               aria-label="Movimientos desde"
             />
+            </TrainingHint>
+            <TrainingHint text="Fecha final de los movimientos que quieres revisar.">
             <input
               type="date"
               value={auditEndDate}
               onChange={(event) => setAuditEndDate(event.target.value)}
-              className="rounded-xl border border-border bg-white px-3 py-2 text-sm"
+              className="w-full rounded-xl border border-border bg-white px-3 py-2 text-sm"
               aria-label="Movimientos hasta"
             />
+            </TrainingHint>
+            <TrainingHint text="Quita las fechas para volver a mostrar todos los movimientos cargados.">
             <button
               type="button"
               onClick={() => {
@@ -636,6 +649,7 @@ export default function AnalyticsPage() {
             >
               Limpiar
             </button>
+            </TrainingHint>
           </div>
           <p className="mt-3 text-xs font-semibold text-textLight">
             {visibleAudit.length} de {audit.length} movimiento(s), ordenados por
