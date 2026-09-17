@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { ElementType } from 'react';
-import { LayoutDashboard, Building2, ClipboardList, BookHeart, LogOut, UserCog, ArrowUpRight, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, Building2, ClipboardList, LogOut, UserCog, ArrowUpRight, MessageSquare } from 'lucide-react';
 import TrainingHint from '@/components/training/TrainingHint';
 import { sectionNotice } from '@/components/training/TrainingStepGuide';
 import TrainingSidebarControls from '@/components/training/TrainingSidebarControls';
@@ -18,7 +18,6 @@ export type AdminNavigationItem = {
 
 const defaultNavigation: AdminNavigationItem[] = [
   { href: '/dashboard', label: 'Resumen', icon: LayoutDashboard },
-  { href: '/dashboard/obituarios', label: 'Homenajes', icon: BookHeart },
   { href: '/dashboard/sedes', label: 'Sedes', icon: Building2 },
   { href: '/dashboard/talleres', label: 'Talleres', icon: ClipboardList },
   { href: '/dashboard/cotizaciones', label: 'Cotizaciones', icon: MessageSquare },

@@ -51,7 +51,6 @@ export default function AdminGlassShell({ children, loginPath, workspace, naviga
   const greeting = buildAdminGreeting(user?.name);
   const allowedNavigation: AdminNavigationItem[] = (navigation ?? ([
     { href: '/dashboard', label: 'Resumen', icon: () => null },
-    { href: '/dashboard/obituarios', label: 'Homenajes', icon: () => null },
     { href: '/dashboard/sedes', label: 'Sedes', icon: () => null },
   ] as AdminNavigationItem[])).filter((item) => !item.permission || user?.permissions?.includes(item.permission));
   return (

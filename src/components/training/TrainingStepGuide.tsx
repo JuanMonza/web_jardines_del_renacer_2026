@@ -89,7 +89,6 @@ export function sectionNotice(workspace: string, pathname: string, hash: string)
     const sections: Record<string, SectionNotice> = {
       "/dashboard": { title: "Centro de control", actions: ["Revisar los módulos disponibles y sus responsables.", "Abrir el panel que practicarás hoy."] },
       "/dashboard/usuarios": { title: "Usuarios", actions: ["Consultar cuentas, roles y accesos.", "Trabajar únicamente con identidades ficticias."] },
-      "/dashboard/obituarios": { title: "Homenajes", actions: ["Revisar y administrar publicaciones de prueba.", "Comprobar la información antes de publicarla."] },
       "/dashboard/sedes": { title: "Sedes", actions: ["Consultar los puntos de atención.", "Verificar cambios en el directorio público."] },
       "/dashboard/talleres": { title: "Talleres", actions: ["Consultar la programación y galerías.", "Abrir el panel especializado para practicar la gestión."] },
     };

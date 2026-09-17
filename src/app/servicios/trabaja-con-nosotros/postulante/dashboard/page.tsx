@@ -272,6 +272,14 @@ function PostulanteDashboardContent() {
 
   const handleApplyToSelectedVacancy = async () => {
     if (!selectedVacancy || alreadyApplied) return;
+    if (!dataConsent) {
+      setNotice({
+        title: "Autorización requerida",
+        description: "Autoriza el tratamiento de tus datos antes de enviar la postulación.",
+        variant: "error",
+      });
+      return;
+    }
     if (!profile.cvUrl && !profile.resumeFileData) {
       setNotice({
         title: "Hoja de vida requerida",
@@ -282,6 +290,18 @@ function PostulanteDashboardContent() {
     }
     setApplying(true);
     try {
+      // La postulación debe incluir también los cambios profesionales que la
+      // persona acaba de escribir, aunque no haya pulsado Guardar cambios.
+      const profileResponse = await fetch("/api/postulantes/perfil", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(profile),
+      });
+      const savedProfile = (await profileResponse.json()) as ApiResponse<CandidateProfile>;
+      if (!profileResponse.ok || !savedProfile.success || !savedProfile.data) {
+        throw new Error(savedProfile.message || "No fue posible guardar tu información profesional.");
+      }
+      setProfile(savedProfile.data);
       const response = await fetch("/api/postulantes/mis-postulaciones", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -289,8 +309,8 @@ function PostulanteDashboardContent() {
           vacancyId: selectedVacancy.id,
           vacancyTitle: selectedVacancy.title,
           dataConsent,
-          resumeFileName: profile.resumeFileName,
-          resumeFileData: profile.resumeFileData,
+          resumeFileName: savedProfile.data.resumeFileName,
+          resumeFileData: savedProfile.data.resumeFileData,
         }),
       });
       const result = (await response.json()) as ApiResponse<JobApplication>;
@@ -471,6 +491,7 @@ function PostulanteDashboardContent() {
                   <div className="mt-4 space-y-4">
                     <Input
                       label="Nombre completo"
+                      maxLength={240}
                       value={profile.fullName}
                       onChange={(event) =>
                         setProfile((prev) => ({
@@ -493,6 +514,7 @@ function PostulanteDashboardContent() {
                     />
                     <Input
                       label="Telefono"
+                      maxLength={30}
                       value={profile.phone}
                       onChange={(event) =>
                         setProfile((prev) => ({
@@ -544,6 +566,7 @@ function PostulanteDashboardContent() {
                     </div>
                     <Input
                       label="Dirección"
+                      maxLength={250}
                       value={profile.address}
                       onChange={(event) =>
                         setProfile((prev) => ({
@@ -578,6 +601,7 @@ function PostulanteDashboardContent() {
                     <div className="grid gap-4 sm:grid-cols-2">
                       <Input
                         label="Años de experiencia"
+                        maxLength={30}
                         value={profile.yearsExperience}
                         onChange={(event) =>
                           setProfile((prev) => ({
@@ -588,6 +612,7 @@ function PostulanteDashboardContent() {
                       />
                       <Input
                         label="LinkedIn"
+                        maxLength={255}
                         value={profile.linkedinUrl}
                         onChange={(event) =>
                           setProfile((prev) => ({
@@ -626,6 +651,7 @@ function PostulanteDashboardContent() {
                     </div>
                     <Textarea
                       label="Perfil profesional"
+                      maxLength={2000}
                       value={profile.about}
                       onChange={(event) =>
                         setProfile((prev) => ({
@@ -634,6 +660,7 @@ function PostulanteDashboardContent() {
                         }))
                       }
                     />
+                    <p className="text-right text-xs text-textLight">{profile.about.length}/2000 caracteres</p>
                   </div>
                 </details>
                 <details className="group rounded-2xl border border-primary/10 bg-white/55 p-4">

@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
-  Newspaper,
   Building2,
   Briefcase,
   Users,
@@ -14,7 +13,6 @@ import {
 
 const mainRoutes = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/dashboard/obituarios', label: 'Obituarios', icon: Newspaper },
   { href: '/dashboard/sedes', label: 'Sedes', icon: Building2 },
   { href: '/dashboard/vacantes', label: 'Vacantes', icon: Briefcase },
   { href: '/dashboard/vacantes?tab=users', label: 'Usuarios Registrados', icon: Users },

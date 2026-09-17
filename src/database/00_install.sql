@@ -43,6 +43,7 @@ SOURCE rrhh/04_views.sql;
 SOURCE rrhh/05_kpis.sql;
 SOURCE rrhh/06_triggers.sql;
 SOURCE rrhh/07_seed.sql;
+SOURCE rrhh/08_candidate_professional_summary.sql;
 
 SOURCE aliados/01_schema.sql;
 SOURCE aliados/02_access_schema.sql;

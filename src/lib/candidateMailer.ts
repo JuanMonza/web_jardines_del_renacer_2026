@@ -44,11 +44,18 @@ function getSmtpConfiguration() {
 }
 
 function internalVacanciesRecipient() {
-  return asText(
-    process.env.VACANCIES_NOTIFICATION_EMAIL ||
-      process.env.VACANCIES_TRANSFER_NOTIFICATION_EMAIL ||
-      "psicologa@jardinesdelrenacer.co, prueba.smtp@jardinesdelrenacer.co",
-  );
+  const configured = [
+    process.env.VACANCIES_NOTIFICATION_EMAIL,
+    process.env.VACANCIES_TRANSFER_NOTIFICATION_EMAIL,
+  ].flatMap(value => asText(value).split(/[;,]/).map(address => address.trim()).filter(Boolean));
+  const recipients = [
+    "psicologa@jardinesdelrenacer.co",
+    "prueba.smtp@jardinesdelrenacer.co",
+    ...configured,
+  ];
+  return recipients.filter((address, index) =>
+    recipients.findIndex(candidate => candidate.toLowerCase() === address.toLowerCase()) === index,
+  ).join(", ");
 }
 
 export async function sendInternalVacancyMovementEmail(input: {

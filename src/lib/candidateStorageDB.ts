@@ -57,6 +57,8 @@ type CandidateAccountRow = {
   profesion: string | null;
   experiencia: string | null;
   educacion: string | null;
+  habilidades: string | null;
+  resumen_profesional: string | null;
   linkedin: string | null;
   portfolio: string | null;
   tiene_licencia_conduccion?: number | boolean | null;
@@ -124,6 +126,7 @@ function normalizeEmail(value: string) {
 }
 
 let candidateLicenseSchemaPromise: Promise<void> | null = null;
+let candidateProfessionalSummarySchemaPromise: Promise<void> | null = null;
 let applicationSnapshotSchemaPromise: Promise<void> | null = null;
 
 export async function ensureApplicationSnapshotSchema() {
@@ -161,6 +164,22 @@ export async function ensureCandidateLicenseColumn() {
   return candidateLicenseSchemaPromise;
 }
 
+/** Mantiene el resumen profesional disponible en instalaciones existentes. */
+export async function ensureCandidateProfessionalSummaryColumn() {
+  if (!candidateProfessionalSummarySchemaPromise) {
+    candidateProfessionalSummarySchemaPromise = (async () => {
+      const columns = await query<{ Field: string }>("SHOW COLUMNS FROM candidatos LIKE 'resumen_profesional'");
+      if (!columns.length) {
+        await execute('ALTER TABLE candidatos ADD COLUMN resumen_profesional TEXT NULL AFTER habilidades');
+      }
+    })().catch(error => {
+      candidateProfessionalSummarySchemaPromise = null;
+      throw error;
+    });
+  }
+  return candidateProfessionalSummarySchemaPromise;
+}
+
 function createUuid() {
   return globalThis.crypto?.randomUUID?.() ?? `app-${Date.now().toString(36)}`;
 }
@@ -194,7 +213,8 @@ function splitFullName(fullName: string) {
 const CANDIDATE_ACCOUNT_COLUMNS = `
   id, documento, nombres AS nombre, apellidos AS apellido, email, telefono,
   password_hash, foto_url AS foto, fecha_nacimiento, direccion, ciudad,
-  departamento, profesion, experiencia, educacion, linkedin, portfolio, tiene_licencia_conduccion,
+  departamento, profesion, experiencia, educacion, habilidades, resumen_profesional,
+  linkedin, portfolio, tiene_licencia_conduccion,
   CASE WHEN cv_filedata IS NOT NULL THEN cv_url ELSE NULL END AS cv_url, cv_filename,
   activo, ultimo_login, reset_token_hash, reset_expires_at, deleted_at,
   created_at, updated_at
@@ -219,8 +239,8 @@ function mapCandidateAccount(row: CandidateAccountRow): CandidateAccount {
     professionalTitle: row.profesion ?? "",
     yearsExperience: row.experiencia ?? "",
     education: row.educacion ?? "",
-    skills: "",
-    about: "",
+    skills: row.habilidades ?? "",
+    about: row.resumen_profesional ?? "",
     linkedinUrl: row.linkedin ?? "",
     portfolioUrl: row.portfolio ?? "",
     hasDriversLicense: Boolean(row.tiene_licencia_conduccion),
@@ -250,6 +270,8 @@ function mapCandidateProfile(row: CandidateAccountRow): CandidateProfile {
     professionalTitle: account.professionalTitle,
     yearsExperience: account.yearsExperience,
     education: account.education,
+    skills: account.skills,
+    about: account.about,
     linkedinUrl: account.linkedinUrl,
     portfolioUrl: account.portfolioUrl,
     hasDriversLicense: account.hasDriversLicense,
@@ -550,6 +572,7 @@ export async function getCandidateAccountByDocumentOrEmail(input: {
 }) {
   await Promise.all([
     ensureCandidateLicenseColumn(),
+    ensureCandidateProfessionalSummaryColumn(),
     ensureCandidateCvStorageSchema(),
   ]);
   const documentNumber = normalizeDocumentNumber(input.documentNumber ?? "");
@@ -589,6 +612,7 @@ export async function getCandidateAccountForLogin(input: {
 }) {
   await Promise.all([
     ensureCandidateLicenseColumn(),
+    ensureCandidateProfessionalSummaryColumn(),
     ensureCandidateCvStorageSchema(),
   ]);
   const documentNumber = normalizeDocumentNumber(input.documentNumber ?? "");
@@ -737,11 +761,11 @@ export async function updateCandidateProfileInDB(input: {
   email: string;
   profile: Partial<CandidateProfile>;
 }) {
-  await ensureCandidateLicenseColumn();
+  await Promise.all([ensureCandidateLicenseColumn(), ensureCandidateProfessionalSummaryColumn()]);
   const profile = input.profile;
   const nameParts = profile.fullName ? splitFullName(profile.fullName) : null;
-  const firstName = profile.firstName?.trim() || nameParts?.firstName || "";
-  const lastName = profile.lastName?.trim() || nameParts?.lastName || "";
+  const firstName = nameParts ? nameParts.firstName : profile.firstName?.trim() || "";
+  const lastName = nameParts ? nameParts.lastName : profile.lastName?.trim() || "";
 
   const result = await execute(
     `
@@ -749,7 +773,6 @@ export async function updateCandidateProfileInDB(input: {
       SET nombres = ?,
           apellidos = ?,
           telefono = ?,
-          foto_url = ?,
           fecha_nacimiento = ?,
           direccion = ?,
           ciudad = ?,
@@ -757,10 +780,10 @@ export async function updateCandidateProfileInDB(input: {
           profesion = ?,
           experiencia = ?,
           educacion = ?,
+          habilidades = ?,
+          resumen_profesional = ?,
           linkedin = ?,
-          portfolio = ?,
-          tiene_licencia_conduccion = ?,
-          cv_url = ?
+          tiene_licencia_conduccion = ?
       WHERE documento = ?
         AND LOWER(email) = ?
         AND deleted_at IS NULL
@@ -769,7 +792,6 @@ export async function updateCandidateProfileInDB(input: {
       firstName,
       lastName,
       profile.phone?.trim() ?? "",
-      profile.photoUrl?.trim() ?? "",
       profile.birthDate?.trim() || null,
       profile.address?.trim() ?? "",
       profile.city?.trim() ?? "",
@@ -777,10 +799,10 @@ export async function updateCandidateProfileInDB(input: {
       profile.professionalTitle?.trim() ?? "",
       profile.yearsExperience?.trim() ?? "",
       profile.education?.trim() ?? "",
+      profile.skills?.trim() ?? "",
+      profile.about?.trim() ?? "",
       profile.linkedinUrl?.trim() ?? "",
-      profile.portfolioUrl?.trim() ?? "",
       profile.hasDriversLicense ? 1 : 0,
-      profile.cvUrl?.trim() ?? "",
       normalizeDocumentNumber(input.documentNumber),
       normalizeEmail(input.email),
     ],
@@ -835,7 +857,7 @@ export async function setCandidatePasswordResetToken(input: {
 }
 
 export async function getCandidateByResetToken(tokenHash: string) {
-  await ensureCandidateCvStorageSchema();
+  await Promise.all([ensureCandidateCvStorageSchema(), ensureCandidateProfessionalSummaryColumn()]);
   const rows = await query<CandidateAccountRow>(
     `
       SELECT ${CANDIDATE_ACCOUNT_COLUMNS}

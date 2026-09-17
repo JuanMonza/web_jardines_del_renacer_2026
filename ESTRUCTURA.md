@@ -64,7 +64,6 @@
 ## Dashboard Admin
 - src/app/dashboard/layout.tsx
 - src/app/dashboard/page.tsx
-- src/app/dashboard/obituarios/page.tsx
 
 ---
 
@@ -82,8 +81,6 @@
 - [ ] src/app/dashboard/clientes/page.tsx
 - [ ] src/app/dashboard/pagos/page.tsx
 - [ ] src/app/dashboard/configuracion/page.tsx
-- [ ] src/app/dashboard/obituarios/crear/page.tsx
-- [ ] src/app/dashboard/obituarios/[id]/editar/page.tsx
 
 ## API Routes
 - [ ] src/app/api/obituarios/route.ts

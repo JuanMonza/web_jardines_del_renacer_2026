@@ -118,7 +118,6 @@ Ambos portales de login comparten el **mismo diseño premium** con:
 ### Administración (requiere login admin)
 - `/login/admin` - Login administrativo
 - `/dashboard` - Dashboard simplificado
-- `/dashboard/obituarios` - CRUD completo de obituarios con estadísticas
 - `/dashboard/sedes` - CRUD completo de sedes
 
 ---

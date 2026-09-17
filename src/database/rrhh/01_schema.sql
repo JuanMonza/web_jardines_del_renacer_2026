@@ -49,6 +49,7 @@ CREATE TABLE IF NOT EXISTS candidatos (
     experiencia TEXT,
     educacion TEXT,
     habilidades TEXT,
+    resumen_profesional TEXT,
     idiomas TEXT,
     linkedin VARCHAR(255),
     github VARCHAR(255),
