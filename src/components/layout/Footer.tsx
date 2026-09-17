@@ -60,7 +60,7 @@ export default function Footer() {
       { label: "Política de Privacidad", href: "/legal/privacidad" },
       { label: "Política de Cookies", href: "/legal/cookies" },
       { label: "Incentivos", href: "/incentivos" },
-      { label: "T&C Incentivos Afiliados", href: "/legal/incentivos-afiliados" },
+      { label: "T & C Programa de Incentivos por Fidelización", href: "/legal/incentivos-afiliados" },
     ],
     redes: [
 

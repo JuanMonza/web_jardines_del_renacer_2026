@@ -50,7 +50,7 @@ export default function IncentivosAfiliadosPage() {
   return (
     <>
       <PageHero
-        title="T&C Incentivos Afiliados"
+        title="T & C Programa de Incentivos por Fidelización"
         subtitle="Procedimiento de selección, validación y comunicación de ganadores."
         description="Conoce cómo cuidamos la transparencia y trazabilidad del programa de incentivos por fidelización."
         image="/images/images-baners/sorteos.webp"

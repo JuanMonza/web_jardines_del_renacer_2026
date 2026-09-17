@@ -10,8 +10,8 @@ import PlanFlipCard from '@/components/cards/PlanFlipCard';
 import AlliesMarquee from '@/components/animations/AlliesMarquee';
 import FadeIn from '@/components/animations/FadeIn';
 import { PLANS_CONFIG } from '@/config/plans';
-import { CONTACT_INFO, buildWhatsAppUrl } from '@/config/contact';
-import { CalendarDays, ChevronRight, MapPinned, MessageCircle, Phone, Send } from 'lucide-react';
+import { CONTACT_INFO, buildPlansWhatsAppUrl } from '@/config/contact';
+import { ChevronRight, MapPinned, Phone, Send } from 'lucide-react';
 
 // NOTA: Preparado para utilizar una única imagen corporativa y limpia (Suministrada por Hugo).
 const heroImages = [
@@ -92,9 +92,9 @@ export default function HomePage() {
           </FadeIn>
           <FadeIn delay={0.6}>
             <div className="flex flex-col sm:flex-row gap-4 justify-center animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-500">
-              <a href={buildWhatsAppUrl('Hola, Jardines del Renacer. Quisiera más información sobre planes.')} target="_blank" rel="noopener noreferrer">
+              <a href={buildPlansWhatsAppUrl()} target="_blank" rel="noopener noreferrer">
                 <Button variant="primary" size="lg">
-                  ¡ Afíliate Ya !
+                  ¡Conoce nuestros planes!
                 </Button>
               </a>
               <Link href="/proximamente">
@@ -384,16 +384,20 @@ export default function HomePage() {
                     </div>
                   </div>
 
-                  <div className="p-5 sm:p-7">
-                    <p className="mb-4 text-sm font-semibold text-text">Elige la forma más cómoda de contactarnos</p>
+                  <div className="p-5 sm:p-7 lg:flex lg:flex-col lg:justify-center">
+                    <p className="mb-5 text-center text-lg font-semibold text-text">Elige la forma más cómoda de contactarnos</p>
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <a
-                      href={buildWhatsAppUrl()}
+                      href={buildPlansWhatsAppUrl()}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="group flex items-center justify-between rounded-2xl bg-[#22c55e] px-5 py-4 font-bold text-white shadow-lg shadow-green-500/20 transition-all hover:-translate-y-1 hover:bg-[#16a34a]"
+                      className="group flex min-h-16 items-center gap-3 rounded-[20px] bg-gradient-to-r from-[#0fbb58] to-[#00a94c] px-5 py-3 text-white shadow-[0_10px_26px_rgba(4,157,77,0.18)] transition-all hover:-translate-y-0.5 hover:from-[#0da84f] hover:to-[#009b45] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#009b45]"
                     >
-                      <span className="flex items-center gap-2"><MessageCircle className="h-5 w-5" /> WhatsApp</span><ChevronRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+                      <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" className="h-8 w-8 shrink-0">
+                        <path d="M20.52 3.48A11.88 11.88 0 0 0 12.05 0C5.5 0 .16 5.34.16 11.9c0 2.1.55 4.15 1.6 5.95L0 24l6.3-1.65a11.9 11.9 0 0 0 5.75 1.46h.01c6.55 0 11.9-5.34 11.9-11.9a11.8 11.8 0 0 0-3.44-8.43ZM12.06 21.8c-1.76 0-3.49-.47-5-1.36l-.36-.21-3.73.98.99-3.64-.23-.37a9.83 9.83 0 0 1-1.5-5.29c0-5.44 4.43-9.87 9.88-9.87a9.8 9.8 0 0 1 6.98 2.9 9.8 9.8 0 0 1 2.89 6.99c0 5.44-4.43 9.87-9.87 9.87Zm5.42-7.4c-.3-.15-1.77-.88-2.04-.98-.27-.1-.47-.15-.66.15-.2.29-.76.98-.93 1.18-.17.2-.34.22-.64.07-.3-.15-1.26-.46-2.4-1.48-.89-.8-1.49-1.78-1.66-2.08-.17-.3-.02-.46.13-.6.14-.14.3-.34.44-.51.15-.17.2-.29.3-.49.1-.2.05-.37-.03-.52-.07-.15-.66-1.59-.9-2.18-.24-.57-.48-.49-.66-.5h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.5s1.07 2.91 1.22 3.11c.15.2 2.1 3.21 5.08 4.5.71.3 1.27.49 1.7.63.71.23 1.35.2 1.86.12.57-.09 1.77-.72 2.02-1.42.25-.7.25-1.3.17-1.42-.07-.12-.27-.2-.57-.35Z" />
+                      </svg>
+                      <span className="min-w-0 flex-1 text-[15px] font-bold leading-[1.2]"><span className="block">Consulta por</span><span className="block">nuestros planes</span></span>
+                      <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-1" />
                     </a>
                     <Link
                       href={CONTACT_INFO.locationsHref}
@@ -401,11 +405,8 @@ export default function HomePage() {
                     >
                       <span className="flex items-center gap-2"><MapPinned className="h-5 w-5" /> Ver sedes</span><ChevronRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
                     </Link>
-                    <Link href="/contacto" className="group flex items-center justify-between rounded-2xl border border-primary/15 bg-white px-5 py-4 font-bold text-text transition-all hover:-translate-y-1 hover:border-primary/30 hover:bg-primary/5">
-                      <span className="flex items-center gap-2"><Send className="h-5 w-5 text-primary" /> Formulario</span><ChevronRight className="h-5 w-5 text-primary transition-transform group-hover:translate-x-1" />
-                    </Link>
-                    <Link href="/agendar-visita" className="group flex items-center justify-between rounded-2xl border border-primary/15 bg-white px-5 py-4 font-bold text-text transition-all hover:-translate-y-1 hover:border-primary/30 hover:bg-primary/5">
-                      <span className="flex items-center gap-2"><CalendarDays className="h-5 w-5 text-primary" /> Agendar visita</span><ChevronRight className="h-5 w-5 text-primary transition-transform group-hover:translate-x-1" />
+                    <Link href="/cotizar" className="group flex items-center justify-between rounded-2xl border border-primary/15 bg-white px-5 py-4 font-bold text-text transition-all hover:-translate-y-1 hover:border-primary/30 hover:bg-primary/5">
+                      <span className="flex items-center gap-2"><Send className="h-5 w-5 text-primary" /> Cotiza aquí</span><ChevronRight className="h-5 w-5 text-primary transition-transform group-hover:translate-x-1" />
                     </Link>
                     </div>
                     <p className="mt-5 flex items-center gap-2 text-xs text-textLight"><span className="h-2 w-2 rounded-full bg-green-500" /> Atención humana, inmediata y confidencial.</p>

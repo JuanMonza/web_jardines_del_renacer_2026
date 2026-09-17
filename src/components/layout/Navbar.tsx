@@ -249,8 +249,8 @@ export default function Navbar() {
 
               {/* Desktop Navigation - Derecha */}
               <div className="hidden lg:flex items-center space-x-6 flex-1 pl-32">
-                <Link href="/cotizar" className="text-white hover:text-white/80 transition-colors duration-300 text-sm uppercase tracking-wide font-medium">
-                  Afíliate Ya
+                <Link href="/planes" className="whitespace-nowrap text-white hover:text-white/80 transition-colors duration-300 text-sm uppercase tracking-wide font-medium">
+                  Cotiza aquí!
                 </Link>
 
                 {/* Aliados Dropdown */}
@@ -476,11 +476,11 @@ export default function Navbar() {
             </Link>
 
             <Link
-              href="/cotizar"
+              href="/planes"
               className="block px-2 py-2 text-white/90 hover:text-white transition-colors"
               onClick={() => setIsOpen(false)}
             >
-              Afíliate Ya
+              Cotiza aquí!
             </Link>
 
             <div className="space-y-1">

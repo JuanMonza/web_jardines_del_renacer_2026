@@ -50,6 +50,7 @@ SOURCE aliados/03_password_reset_schema.sql;
 SOURCE aliados/04_expand_logo_column.sql;
 SOURCE aliados/05_seed.sql;
 SOURCE aliados/06_audit_schema.sql;
+SOURCE aliados/07_report_access.sql;
 SOURCE aliados/07_membership_clients.sql;
 SOURCE aliados/08_client_access_schema.sql;
 

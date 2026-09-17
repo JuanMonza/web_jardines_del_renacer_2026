@@ -60,3 +60,10 @@ export function buildWhatsAppUrl(
 ) {
   return `https://wa.me/${normalizeWhatsAppNumber(whatsappNumber)}?text=${encodeURIComponent(message)}`;
 }
+
+export function buildPlansWhatsAppUrl() {
+  return buildWhatsAppUrl(
+    'Hola, Jardines del Renacer. Quisiera conocer sus planes.',
+    '573226943667',
+  );
+}

@@ -197,7 +197,7 @@ export default function SorteosPage() {
                                 href="/legal/incentivos-afiliados"
                                 className="shrink-0 rounded-xl border border-primary/25 bg-primary/10 px-5 py-3 text-sm font-semibold text-primary transition-colors hover:bg-primary hover:text-white"
                             >
-                                Ver T&C Incentivos Afiliados
+                                Ver T & C Programa de Incentivos por Fidelización
                             </Link>
                         </article>
                     </FadeIn>

@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { useEffect, useMemo, useState } from 'react';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import AllyTraceabilityReport from '@/components/aliados/AllyTraceabilityReport';
 import TrainingHint from '@/components/training/TrainingHint';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -558,6 +559,8 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
           </div>
         </section>
       )}
+
+      {!isAllyUser && <AllyTraceabilityReport />}
 
       {isAllyUser && (
         <section className="mb-8 overflow-hidden rounded-[28px] border border-white/70 bg-gradient-to-br from-[#173861]/95 via-[#24548f]/92 to-[#5f89bc]/85 p-6 text-white shadow-[0_20px_55px_rgba(22,58,104,0.25)] backdrop-blur-xl md:p-8">
