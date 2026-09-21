@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import * as XLSX from "xlsx-js-style";
+import TrainingHint from "@/components/training/TrainingHint";
 
 type QuoteStatus =
   "nuevo" | "contactado" | "en_negociacion" | "convertido" | "descartado";
@@ -446,6 +447,7 @@ export default function CotizacionesDashboardPage() {
 
   return (
     <div className="p-6 md:p-8">
+      <TrainingHint text="Este panel reúne las solicitudes de planes. El coordinador puede consultar todo el equipo y descargar un Excel con cotizaciones, seguimiento y trazabilidad." className="block">
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div>
           <p className="text-xs font-bold uppercase tracking-[.16em] text-primary">
@@ -467,6 +469,7 @@ export default function CotizacionesDashboardPage() {
           </button>
         )}
       </div>
+      </TrainingHint>
       {canExport && (
         <>
           <div className="mt-6 grid gap-3 sm:grid-cols-3 xl:grid-cols-6">
@@ -588,6 +591,7 @@ export default function CotizacionesDashboardPage() {
           ))}
         </div>
       )}
+      <TrainingHint text="Filtra por estado, urgencia, texto, fechas o asesor. Sin gestionar identifica prospectos nuevos; Vencidos muestra seguimientos que ya debieron atenderse." className="block">
       <div className="mt-6 flex flex-wrap gap-2">
         {(
           [
@@ -658,6 +662,7 @@ export default function CotizacionesDashboardPage() {
           ))}
         </select>
       </div>
+      </TrainingHint>
       {feedback && (
         <p className="mt-4 text-sm font-medium text-primary" role="status">
           {feedback}

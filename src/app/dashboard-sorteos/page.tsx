@@ -2,6 +2,7 @@
 
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import { Gift, Plus, UserRoundCheck, X } from "lucide-react";
+import TrainingHint from "@/components/training/TrainingHint";
 
 type Winner = { nombre: string; numero_contrato: string; validado: boolean };
 type Sorteo = {
@@ -125,6 +126,7 @@ export default function DashboardSorteosPage() {
   };
   return (
     <div className="p-5 md:p-8">
+      <TrainingHint text="Aquí ves cuántos incentivos, participantes y ganadores existen. Nuevo incentivo crea una actividad ficticia con fecha, premio, términos e imagen." className="block">
       <section className="rounded-[28px] border border-white/70 bg-gradient-to-br from-white/80 via-white/55 to-[#dceafb]/65 p-6 shadow-[0_22px_65px_-45px_rgba(12,57,117,.8)] backdrop-blur-xl md:p-8">
         <p className="text-xs font-bold uppercase tracking-[.22em] text-[#436da7]">
           Promoción transparente
@@ -160,6 +162,7 @@ export default function DashboardSorteosPage() {
           />
         </div>
       </section>
+      </TrainingHint>
       {message && (
         <div className="mt-4 rounded-xl border border-[#8fb2e3] bg-white/80 px-4 py-3 text-sm font-semibold text-[#234d8d]">
           {message}
@@ -170,6 +173,7 @@ export default function DashboardSorteosPage() {
           Cargando información protegida…
         </div>
       ) : (
+        <TrainingHint text="Cada tarjeta permite editar el incentivo, revisar participantes, registrar un ganador y, después de verificarlo, publicar el resultado." className="block">
         <div id="sorteos" className="mt-6 grid gap-5 xl:grid-cols-2">
           {sorteos.map((s) => (
             <article
@@ -278,6 +282,7 @@ export default function DashboardSorteosPage() {
             </div>
           )}
         </div>
+        </TrainingHint>
       )}
       {showForm && (
         <div className="fixed inset-0 z-[90] grid place-items-center bg-slate-950/55 p-4 backdrop-blur-sm">

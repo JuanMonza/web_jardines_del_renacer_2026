@@ -5,7 +5,19 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import DashboardSidebar, { type AdminNavigationItem } from '@/components/admin/DashboardSidebar';
 import { buildAdminGreeting } from '@/lib/adminGreeting';
-import { Menu, X, LogOut } from 'lucide-react';
+import {
+  BadgeCheck,
+  BriefcaseBusiness,
+  Building2,
+  Handshake,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  MessageSquare,
+  UsersRound,
+  UserCog,
+  X,
+} from 'lucide-react';
 import TrainingStepGuide from '@/components/training/TrainingStepGuide';
 import TrainingSidebarControls from '@/components/training/TrainingSidebarControls';
 
@@ -18,6 +30,22 @@ type AdminGlassShellProps = {
 };
 
 type SessionUser = { name?: string; email?: string; permissions?: string[] };
+
+const generalNavigation: AdminNavigationItem[] = [
+  { href: '/dashboard', label: 'Resumen', icon: LayoutDashboard },
+  { href: '/dashboard/sedes', label: 'Sedes', icon: Building2 },
+];
+
+const trainingGeneralNavigation: AdminNavigationItem[] = [
+  { href: '/dashboard', label: 'Resumen', icon: LayoutDashboard },
+  { href: '/dashboard/usuarios', label: 'Usuarios y permisos', icon: UserCog, permission: 'dashboard.admin.view' },
+  { href: '/dashboard-vacantes', label: 'Talento humano', icon: BriefcaseBusiness, permission: 'dashboard.vacantes.view' },
+  { href: '/dashboard-aliados', label: 'Aliados', icon: Handshake, permission: 'dashboard.aliados.view' },
+  { href: '/dashboard-sedes', label: 'Sedes', icon: Building2, permission: 'dashboard.sedes.view' },
+  { href: '/dashboard-talleres', label: 'Talleres', icon: UsersRound, permission: 'dashboard.talleres.view' },
+  { href: '/dashboard-sorteos', label: 'Mercadeo', icon: BadgeCheck, permission: 'dashboard.sorteos.view' },
+  { href: '/dashboard/cotizaciones', label: 'Cotizaciones', icon: MessageSquare, permission: 'quotes.view' },
+];
 
 export default function AdminGlassShell({ children, loginPath, workspace, navigation, requiredPermission }: AdminGlassShellProps) {
   const router = useRouter();
@@ -49,10 +77,12 @@ export default function AdminGlassShell({ children, loginPath, workspace, naviga
   }
 
   const greeting = buildAdminGreeting(user?.name);
-  const allowedNavigation: AdminNavigationItem[] = (navigation ?? ([
-    { href: '/dashboard', label: 'Resumen', icon: () => null },
-    { href: '/dashboard/sedes', label: 'Sedes', icon: () => null },
-  ] as AdminNavigationItem[])).filter((item) => !item.permission || user?.permissions?.includes(item.permission));
+  const defaultNavigation = process.env.NEXT_PUBLIC_APP_ENV === 'training'
+    ? trainingGeneralNavigation
+    : generalNavigation;
+  const canManageSystem = user?.permissions?.includes('system.manage');
+  const allowedNavigation: AdminNavigationItem[] = (navigation ?? defaultNavigation)
+    .filter((item) => !item.permission || canManageSystem || user?.permissions?.includes(item.permission));
   return (
     <div className="admin-liquid-bg relative min-h-screen overflow-hidden p-2 sm:p-3">
       <div className="pointer-events-none absolute -top-32 right-[15%] h-[30rem] w-[30rem] rounded-full bg-[#94b9e8]/35 blur-3xl" />

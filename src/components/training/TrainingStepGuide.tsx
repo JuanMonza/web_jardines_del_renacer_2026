@@ -89,8 +89,12 @@ export function sectionNotice(workspace: string, pathname: string, hash: string)
     const sections: Record<string, SectionNotice> = {
       "/dashboard": { title: "Centro de control", actions: ["Revisar los módulos disponibles y sus responsables.", "Abrir el panel que practicarás hoy."] },
       "/dashboard/usuarios": { title: "Usuarios", actions: ["Consultar cuentas, roles y accesos.", "Trabajar únicamente con identidades ficticias."] },
-      "/dashboard/sedes": { title: "Sedes", actions: ["Consultar los puntos de atención.", "Verificar cambios en el directorio público."] },
-      "/dashboard/talleres": { title: "Talleres", actions: ["Consultar la programación y galerías.", "Abrir el panel especializado para practicar la gestión."] },
+      "/dashboard-vacantes": { title: "Talento humano", actions: ["Administrar vacantes, postulantes e historial laboral.", "Practicar traslados, entrevistas, notificaciones y reportes."] },
+      "/dashboard-aliados": { title: "Aliados", actions: ["Gestionar convenios y beneficios.", "Consultar trazabilidad y permisos de descarga."] },
+      "/dashboard-sedes": { title: "Sedes", actions: ["Administrar puntos de atención, datos de contacto y ubicación.", "Comprobar la presentación en el directorio público."] },
+      "/dashboard-talleres": { title: "Talleres", actions: ["Programar encuentros y administrar inscritos.", "Gestionar galerías y consultar la trazabilidad."] },
+      "/dashboard-sorteos": { title: "Mercadeo", actions: ["Crear incentivos y revisar participantes.", "Validar ganadores y publicación de resultados."] },
+      "/dashboard/cotizaciones": { title: "Cotizaciones", actions: ["Distribuir prospectos entre gestores.", "Registrar seguimiento, estados y próximos contactos."] },
     };
     return sections[pathname] || null;
   }

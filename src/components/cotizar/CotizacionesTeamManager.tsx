@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import TrainingHint from "@/components/training/TrainingHint";
 
 type Adviser = {
   id: number;
@@ -157,6 +158,7 @@ export default function CotizacionesTeamManager() {
       <p className="mt-2 text-textLight">
         Crea y administra únicamente gestores y coordinadores de cotizaciones.
       </p>
+      <TrainingHint text="Crea coordinadores o gestores ficticios. La contraseña temporal debe tener al menos 12 caracteres y se guarda cifrada." className="block">
       <section className="mt-6 rounded-2xl border border-primary/15 bg-white/70 p-5">
         <h2 className="font-bold text-text">Nuevo integrante</h2>
         <form
@@ -232,6 +234,8 @@ export default function CotizacionesTeamManager() {
           </button>
         </form>
       </section>
+      </TrainingHint>
+      <TrainingHint text="Aquí puedes actualizar nombre, cargo, correo, rol y estado del equipo. Eliminar exige confirmación y conserva la trazabilidad administrativa." className="block">
       <section className="mt-5 rounded-2xl border border-primary/15 bg-white/70 p-5">
         <h2 className="font-bold text-text">Integrantes registrados</h2>
         <div className="mt-4 space-y-3">
@@ -310,6 +314,7 @@ export default function CotizacionesTeamManager() {
           ))}
         </div>
       </section>
+      </TrainingHint>
     </div>
   );
 }

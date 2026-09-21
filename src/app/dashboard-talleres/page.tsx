@@ -3,6 +3,7 @@
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import { CalendarDays, Clock3, FileDown, ImagePlus, Pencil, Plus, Trash2, X } from "lucide-react";
 import * as XLSX from "xlsx-js-style";
+import TrainingHint from "@/components/training/TrainingHint";
 
 type Taller = {
   id: number;
@@ -465,6 +466,7 @@ export default function DashboardTalleresPage() {
   };
   return (
     <div className="p-5 md:p-8">
+      <TrainingHint text="Este resumen muestra talleres, inscripciones, cupos y álbumes. Nuevo taller abre el formulario para programar una actividad ficticia." className="block">
       <section className="rounded-[28px] border border-white/70 bg-gradient-to-br from-white/80 via-white/55 to-[#dceafb]/65 p-6 shadow-[0_22px_65px_-45px_rgba(12,57,117,.8)] backdrop-blur-xl md:p-8">
         <p className="text-xs font-bold uppercase tracking-[.22em] text-[#436da7]">
           Acompañamiento humano
@@ -499,6 +501,7 @@ export default function DashboardTalleresPage() {
           <Metric label="Álbumes fotográficos" value={albums.length} />
         </div>
       </section>
+      </TrainingHint>
       {message && (
         <div role="status" className={`fixed right-5 top-5 z-[200] max-w-md animate-[slide-in_0.25s_ease-out] rounded-2xl border px-5 py-4 text-sm font-semibold shadow-2xl ${message.startsWith("No fue posible") ? "border-red-200 bg-red-50 text-red-700" : "border-emerald-200 bg-white text-emerald-800"}`}>
           {message}
@@ -518,27 +521,35 @@ export default function DashboardTalleresPage() {
         </article>
       )}
       <div className="mt-6 flex gap-2">
+        <TrainingHint text="Programación muestra los talleres y permite editar, aplazar, revisar inscritos o desactivar cada actividad." className="inline-flex">
         <button
           onClick={() => setTab("talleres")}
           className={`rounded-xl px-4 py-2 text-sm font-bold ${tab === "talleres" ? "bg-[#234d8d] text-white" : "bg-white/65 text-[#436da7]"}`}
         >
           Programación
         </button>
+        </TrainingHint>
+        <TrainingHint text="Galería administra los álbumes y fotografías que acompañan cada taller." className="inline-flex">
         <button
           onClick={() => setTab("galeria")}
           className={`rounded-xl px-4 py-2 text-sm font-bold ${tab === "galeria" ? "bg-[#234d8d] text-white" : "bg-white/65 text-[#436da7]"}`}
         >
           Galería
         </button>
-        <button onClick={() => setTab("trazabilidad")} className={`rounded-xl px-4 py-2 text-sm font-bold ${tab === "trazabilidad" ? "bg-[#234d8d] text-white" : "bg-white/65 text-[#436da7]"}`}><Clock3 className="mr-1 inline h-4 w-4" />Trazabilidad</button>
+        </TrainingHint>
+        <TrainingHint text="Trazabilidad conserva talleres activos, aplazamientos, cancelaciones, asistentes, correos y permite descargar el Excel." className="inline-flex">
+          <button onClick={() => setTab("trazabilidad")} className={`rounded-xl px-4 py-2 text-sm font-bold ${tab === "trazabilidad" ? "bg-[#234d8d] text-white" : "bg-white/65 text-[#436da7]"}`}><Clock3 className="mr-1 inline h-4 w-4" />Trazabilidad</button>
+        </TrainingHint>
         {tab === "galeria" && (
+          <TrainingHint text="Crea un álbum de práctica, relaciónalo con un taller y carga únicamente imágenes ficticias." className="ml-auto inline-flex">
           <button
             onClick={() => openAlbum()}
-            className="ml-auto rounded-xl border border-[#7ea5dc] bg-white/80 px-4 py-2 text-sm font-bold text-[#234d8d]"
+            className="rounded-xl border border-[#7ea5dc] bg-white/80 px-4 py-2 text-sm font-bold text-[#234d8d]"
           >
             <ImagePlus className="mr-1 inline h-4 w-4" />
             Nuevo álbum
           </button>
+          </TrainingHint>
         )}
       </div>
       {loading ? (
