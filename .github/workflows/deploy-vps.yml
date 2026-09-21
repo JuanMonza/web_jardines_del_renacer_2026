@@ -43,6 +43,7 @@ jobs:
           git fetch origin main
           git checkout main
           git reset --hard origin/main
+          rm -rf -- .next
           npm ci
           npm run db:migrate -- src/lib/migrations/20260914_candidate_cv_storage.sql
           npm run type-check
