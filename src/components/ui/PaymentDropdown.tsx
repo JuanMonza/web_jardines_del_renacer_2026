@@ -62,7 +62,7 @@ export default function PaymentDropdown({ wompiUrl, className, buttonVariant = '
             className="flex items-center gap-4 px-5 py-4 font-medium text-text transition-colors hover:bg-primary/10 hover:text-primary"
           >
             <span className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-gray-100 bg-white">
-              <Image src="/images/Wompi_logo.jpg" alt="Wompi" fill className="object-contain p-0.5" />
+              <Image src={`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/images/Wompi_logo.jpg`} alt="Wompi" fill className="object-contain p-0.5" />
             </span>
             Pagar con Wompi
           </a>

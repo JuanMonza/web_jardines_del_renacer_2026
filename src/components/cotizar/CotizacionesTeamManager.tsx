@@ -20,7 +20,7 @@ export default function CotizacionesTeamManager() {
   );
   const [deleteCandidate, setDeleteCandidate] = useState<Adviser | null>(null);
   const load = async () => {
-    const response = await fetch("/api/cotizaciones/asesores");
+    const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/cotizaciones/asesores`);
     const payload = (await response.json()) as { data?: Adviser[] };
     setAdvisers(payload.data || []);
   };
@@ -37,7 +37,7 @@ export default function CotizacionesTeamManager() {
     window.setTimeout(() => setNotice(null), 3200);
   };
   const create = async (form: HTMLFormElement) => {
-    const response = await fetch("/api/cotizaciones/asesores", {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/cotizaciones/asesores`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(Object.fromEntries(new FormData(form))),
@@ -50,7 +50,7 @@ export default function CotizacionesTeamManager() {
     }
   };
   const update = async (adviser: Adviser, form: HTMLFormElement) => {
-    const response = await fetch(`/api/cotizaciones/asesores/${adviser.id}`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/cotizaciones/asesores/${adviser.id}`, {
       method: "PATCH",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(Object.fromEntries(new FormData(form))),
@@ -63,8 +63,7 @@ export default function CotizacionesTeamManager() {
     adviser: Adviser,
     type: "suspend" | "activate" | "delete",
   ) => {
-    const response = await fetch(
-      `/api/cotizaciones/asesores/${adviser.id}`,
+    const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/cotizaciones/asesores/${adviser.id}`,
       type === "delete"
         ? { method: "DELETE" }
         : {

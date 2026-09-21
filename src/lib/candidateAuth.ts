@@ -8,7 +8,7 @@ export interface VacantesCandidateSession {
   createdAt: string;
 }
 
-export const CANDIDATE_SESSION_COOKIE_NAME = 'jdr.vacantes.candidate.session';
+export const CANDIDATE_SESSION_COOKIE_NAME = process.env.APP_ENV === 'training' ? 'jdr.training.vacantes.candidate.session' : 'jdr.vacantes.candidate.session';
 export const CANDIDATE_SESSION_MAX_AGE_SECONDS = 60 * 60 * 8;
 
 function normalizeDocumentNumber(value: string) {

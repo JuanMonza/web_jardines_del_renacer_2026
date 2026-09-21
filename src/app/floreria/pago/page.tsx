@@ -107,7 +107,7 @@ function FlowerPaymentResultContent() {
       }
 
       try {
-        const response = await fetch(`/api/floreria/pagos/verificar?${params.toString()}`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/floreria/pagos/verificar?${params.toString()}`, {
           method: 'GET',
           cache: 'no-store',
         });

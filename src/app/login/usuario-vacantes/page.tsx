@@ -50,7 +50,7 @@ function VacantesUserLoginContent() {
     if (!normalizedEmail.includes('@')) { setError('Ingresa el correo de tu cuenta.'); return; }
     setLoading(true);
     try {
-      const response = await fetch('/api/postulantes/acceso-correo/solicitar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: normalizedEmail }) });
+      const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/postulantes/acceso-correo/solicitar`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: normalizedEmail }) });
       const result = await response.json() as { success?: boolean; message?: string };
       if (!response.ok || !result.success) throw new Error(result.message || 'No pudimos enviar el código.');
       setEmail(normalizedEmail); setStep('code'); setNotice(result.message || 'Revisa tu correo para continuar.');
@@ -63,7 +63,7 @@ function VacantesUserLoginContent() {
     if (code.replace(/\D/g, '').length !== 6) { setError('Ingresa el código de 6 dígitos que enviamos a tu correo.'); return; }
     setLoading(true);
     try {
-      const response = await fetch('/api/postulantes/acceso-correo/verificar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: normalizedEmail, code }) });
+      const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/postulantes/acceso-correo/verificar`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: normalizedEmail, code }) });
       const result = await response.json() as { success?: boolean; message?: string };
       if (!response.ok || !result.success) throw new Error(result.message || 'No pudimos validar el código.');
       rememberEmail(normalizedEmail); router.push(nextPath); router.refresh();
@@ -76,7 +76,7 @@ function VacantesUserLoginContent() {
     if (!normalizedEmail.includes('@') || password.length < 8) { setError('Ingresa tu correo y contraseña.'); return; }
     setLoading(true);
     try {
-      const response = await fetch('/api/postulantes/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: normalizedEmail, password }) });
+      const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/postulantes/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: normalizedEmail, password }) });
       const result = await response.json() as { success?: boolean; message?: string };
       if (!response.ok || !result.success) throw new Error(result.message || 'No pudimos iniciar sesión.');
       rememberEmail(normalizedEmail); router.push(nextPath); router.refresh();

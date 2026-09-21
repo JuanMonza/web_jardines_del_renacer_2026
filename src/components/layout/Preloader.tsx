@@ -44,7 +44,7 @@ export default function Preloader() {
             style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
           >
             <Image
-              src="/logo-oficial.webp"
+              src={`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/logo-oficial.webp`}
               alt="Jardines del Renacer"
               width={88}
               height={88}

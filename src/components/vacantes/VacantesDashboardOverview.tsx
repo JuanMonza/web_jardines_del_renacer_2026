@@ -106,11 +106,11 @@ export default function VacantesDashboardOverview() {
   const [adminName, setAdminName] = useState("Administrador");
   useEffect(() => {
     void Promise.all([
-      fetch("/api/vacantes/postulaciones"),
-      fetch("/api/vacantes?admin=1"),
-      fetch("/api/vacantes/historial"),
-      fetch("/api/vacantes/auditoria"),
-      fetch("/api/iam/admin/session"),
+      fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes/postulaciones`),
+      fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes?admin=1`),
+      fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes/historial`),
+      fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes/auditoria`),
+      fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/iam/admin/session`),
     ])
       .then(
         async ([

@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import { execute, query } from '@/lib/db';
 import { hasPermission, signAdminToken, type AdminTokenSession, verifyAdminToken } from '@/lib/iam/admin-token';
 
-export const ADMIN_SESSION_COOKIE = 'jdr_admin_session';
+export const ADMIN_SESSION_COOKIE = process.env.APP_ENV === 'training' ? 'jdr_training_admin_session' : 'jdr_admin_session';
 const SESSION_DURATION_SECONDS = 60 * 60 * 8;
 
 type AdminUserRow = { id: number; uuid: string; nombres: string; apellidos: string; email: string; password_hash: string; activo: number; bloqueado_hasta: Date | null };

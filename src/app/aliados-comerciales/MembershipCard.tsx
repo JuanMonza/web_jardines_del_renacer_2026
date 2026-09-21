@@ -73,7 +73,7 @@ export default function MembershipCard({
 
                 {/* Logo centrado y desvanecido como marca de agua */}
                 <Image
-                  src="/logo-oficial.webp"
+                  src={`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/logo-oficial.webp`}
                   alt="Logo Jardines del Renacer"
                   width={140}
                   height={140}

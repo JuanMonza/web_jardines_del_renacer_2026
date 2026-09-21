@@ -80,7 +80,7 @@ export default function CotizacionesDashboardPage() {
       if (toDate) params.set("hasta", toDate);
       if (quickFilter) params.set("filtro", quickFilter);
       if (adviserFilter) params.set("asesor", adviserFilter);
-      const response = await fetch(`/api/cotizaciones?${params}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/cotizaciones?${params}`);
       const payload = (await response.json()) as {
         data?: Quote[];
         message?: string;
@@ -105,12 +105,12 @@ export default function CotizacionesDashboardPage() {
     void loadQuotes();
   }, [loadQuotes]);
   useEffect(() => {
-    fetch("/api/cotizaciones/asesores")
+    fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/cotizaciones/asesores`)
       .then((response) => (response.ok ? response.json() : { data: [] }))
       .then((payload: { data?: Adviser[] }) => setAdvisers(payload.data || []));
   }, []);
   useEffect(() => {
-    fetch("/api/iam/admin/session")
+    fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/iam/admin/session`)
       .then((response) =>
         response.ok ? response.json() : { user: { permissions: [] } },
       )
@@ -122,7 +122,7 @@ export default function CotizacionesDashboardPage() {
       });
   }, []);
   useEffect(() => {
-    fetch("/api/cotizaciones/notificaciones")
+    fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/cotizaciones/notificaciones`)
       .then((response) => (response.ok ? response.json() : { data: [] }))
       .then(
         (payload: {
@@ -138,7 +138,7 @@ export default function CotizacionesDashboardPage() {
       if (fromDate) params.set("desde", fromDate);
       if (toDate) params.set("hasta", toDate);
       if (adviserFilter) params.set("asesor", adviserFilter);
-      const response = await fetch(`/api/cotizaciones/reporte?${params}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/cotizaciones/reporte?${params}`);
       const payload = (await response.json()) as {
         cotizaciones?: Array<Record<string, unknown>>;
         historial?: Array<Record<string, unknown>>;
@@ -387,7 +387,7 @@ export default function CotizacionesDashboardPage() {
     );
   const saveFollowUp = async (quote: Quote, form: HTMLFormElement) => {
     const data = new FormData(form);
-    const response = await fetch(`/api/cotizaciones/${quote.id}/estado`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/cotizaciones/${quote.id}/estado`, {
       method: "PATCH",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
@@ -410,7 +410,7 @@ export default function CotizacionesDashboardPage() {
     }
   };
   const loadHistory = async (quote: Quote) => {
-    const response = await fetch(`/api/cotizaciones/${quote.id}/estado`);
+    const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/cotizaciones/${quote.id}/estado`);
     const raw = await response.text();
     let payload: { data?: typeof history; message?: string } = {};
     try {
@@ -430,7 +430,7 @@ export default function CotizacionesDashboardPage() {
     await loadHistory(quote);
   };
   const assignSelected = async () => {
-    const response = await fetch("/api/cotizaciones/asignar", {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/cotizaciones/asignar`, {
       method: "PATCH",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ ids: selectedIds, asesorId: Number(bulkAdviser) }),

@@ -33,7 +33,7 @@ export default function AliadoLoginPage() {
     setLoading(true);
 
     try {
-      const response = await fetch("/api/iam/ally/login", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/iam/ally/login`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ loginId, password }),
@@ -57,7 +57,7 @@ export default function AliadoLoginPage() {
   const requestRecovery = async (event: React.FormEvent) => {
     event.preventDefault();
     setLoading(true);
-    const response = await fetch("/api/iam/ally/password-reset", {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/iam/ally/password-reset`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ email }),

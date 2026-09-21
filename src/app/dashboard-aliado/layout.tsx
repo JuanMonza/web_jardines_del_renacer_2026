@@ -14,7 +14,7 @@ export default function DashboardAliadoLayout({ children }: { children: React.Re
 
   useEffect(() => {
     let active = true;
-    fetch('/api/iam/ally/session')
+    fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/iam/ally/session`)
       .then(async (response) => {
         if (!response.ok) throw new Error('Sesión no válida');
         return response.json() as Promise<{ user: AllyPortalUser }>;
@@ -29,7 +29,7 @@ export default function DashboardAliadoLayout({ children }: { children: React.Re
   }, [router]);
 
   const handleLogout = async () => {
-    await fetch('/api/iam/ally/logout', { method: 'POST' });
+    await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/iam/ally/logout`, { method: 'POST' });
     router.replace('/login/aliado');
   };
 

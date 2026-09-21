@@ -203,7 +203,7 @@ export default function HomePage() {
                   conditions={plan.conditions}
                   featured={plan.featured}
                   onQuote={(planId) => {
-                    window.location.href = `/cotizar?plan=${planId}`;
+                    window.location.href = `${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ''}/cotizar?plan=${planId}`;
                   }}
                 />
               </FadeIn>
@@ -229,7 +229,7 @@ export default function HomePage() {
       <section className="py-20 relative overflow-hidden">
         <div className="absolute inset-0 z-0">
           <Image
-            src="/img_1 (21).webp"
+            src={`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/img_1 (21).webp`}
             alt="Recorrido 360"
             fill
             className="object-cover"
@@ -264,7 +264,7 @@ export default function HomePage() {
               <div className="group relative rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-1">
                 <div className="relative h-80 overflow-hidden">
                   <Image
-                    src="/images/commemorativo.jpeg"
+                    src={`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/images/commemorativo.jpeg`}
                     alt="Parque Conmemorativo"
                     fill
                     className="object-cover group-hover:scale-105 transition-transform duration-700"
@@ -301,7 +301,7 @@ export default function HomePage() {
               <div className="group relative rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-1">
                 <div className="relative h-80 overflow-hidden">
                   <Image
-                    src="/images/Repatriaciones.webp"
+                    src={`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/images/Repatriaciones.webp`}
                     alt="Servicio de repatriaciones"
                     fill
                     className="object-cover group-hover:scale-105 transition-transform duration-700"

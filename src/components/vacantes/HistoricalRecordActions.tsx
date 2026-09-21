@@ -27,7 +27,7 @@ export default function HistoricalRecordActions({ id, rawData, status, onSaved }
   const [hasError, setHasError] = useState(false);
   useEffect(() => {
     let active = true;
-    void Promise.all([fetch("/api/vacantes?admin=1", { cache: "no-store" }), fetch(`/api/vacantes/historial-hv/editar?id=${id}`, { cache: "no-store" })]).then(async ([vacancyResponse, profileResponse]) => {
+    void Promise.all([fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes?admin=1`, { cache: "no-store" }), fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes/historial-hv/editar?id=${id}`, { cache: "no-store" })]).then(async ([vacancyResponse, profileResponse]) => {
       if (!vacancyResponse.ok || !profileResponse.ok) throw new Error();
       const data = await vacancyResponse.json();
       const profile = await profileResponse.json();
@@ -52,7 +52,7 @@ export default function HistoricalRecordActions({ id, rawData, status, onSaved }
     setConfirmTransfer(false);
     setBusy(true); setMessage(""); setHasError(false);
     try {
-      const response = await fetch("/api/vacantes/historial-hv/traslado", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, targetVacancyId, candidateDocument, candidateEmail, notes }) });
+      const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes/historial-hv/traslado`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, targetVacancyId, candidateDocument, candidateEmail, notes }) });
       const result = await response.json();
       if (!response.ok) throw new Error(result.message);
       setMessage(`${result.linkedExistingTransfer ? "Traslado histórico vinculado" : "Postulación creada"} en “${result.vacancyTitle}”. Ya aparece entre las postulaciones de la vacante. ${result.internalNotificationSent ? "Gestión Humana recibió el aviso interno." : "El aviso interno quedó pendiente."}`);

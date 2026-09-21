@@ -56,7 +56,7 @@ export default function DashboardSorteosPage() {
   const load = async () => {
     setLoading(true);
     try {
-      const r = await fetch("/api/admin/sorteos");
+      const r = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/admin/sorteos`);
       const p = await r.json();
       if (!r.ok) throw Error(p.message);
       setSorteos(p.data);
@@ -80,7 +80,7 @@ export default function DashboardSorteosPage() {
   );
   const request = async (action: string, body: Record<string, unknown>) => {
     setMessage("");
-    const r = await fetch("/api/admin/sorteos", {
+    const r = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/admin/sorteos`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ action, ...body }),

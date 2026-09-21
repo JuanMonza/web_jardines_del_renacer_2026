@@ -236,7 +236,7 @@ export default function Navbar() {
                   }}
                 >
                   <Image
-                    src="/logo-oficial.webp"
+                    src={`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/logo-oficial.webp`}
                     alt="Jardines del Renacer"
                     width={75}
                     height={75}

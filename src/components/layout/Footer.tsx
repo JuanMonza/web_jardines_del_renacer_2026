@@ -224,7 +224,7 @@ export default function Footer() {
                 <div className="flex items-center gap-3">
                   <div className="relative w-20 h-20 md:w-24 md:h-24">
                     <Image
-                      src="/log_footer.webp"
+                      src={`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/log_footer.webp`}
                       alt="Jardines del Renacer"
                       fill
                       className="object-contain group-hover:scale-110 transition-transform duration-500"
@@ -232,7 +232,7 @@ export default function Footer() {
                   </div>
                   <div className="relative w-28 h-28 md:w-32 md:h-32">
                     <Image
-                      src="/images/25años_since.png"
+                      src={`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/images/25años_since.png`}
                       alt="26 años Jardines del Renacer"
                       fill
                       className="object-contain group-hover:scale-110 transition-transform duration-500"

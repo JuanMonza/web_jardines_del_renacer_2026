@@ -15,7 +15,7 @@ export default function ClienteDashboardPage() {
 
   useEffect(() => {
     let mounted = true;
-    fetch('/api/iam/client/session')
+    fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/iam/client/session`)
       .then(async (response) => {
         if (!response.ok) throw new Error('Sesión no válida');
         return response.json() as Promise<{ user: { name: string; documentNumber: string } }>;
@@ -26,7 +26,7 @@ export default function ClienteDashboardPage() {
   }, [router]);
 
   const handleLogout = async () => {
-    await fetch('/api/iam/client/logout', { method: 'POST' });
+    await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/iam/client/logout`, { method: 'POST' });
     router.push('/');
   };
 

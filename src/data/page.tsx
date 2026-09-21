@@ -9,6 +9,7 @@ import Input from '@/components/ui/Input';
 import { motion, AnimatePresence } from 'framer-motion';
 import SedeFormModal from '@/data/SedeFormModal';
 import { CONTACT_INFO } from '@/config/contact';
+import { appUrl } from '@/lib/app-url';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 
 const DEFAULT_SEDE_IMAGE = '/logos_jr_favico.png';
@@ -38,14 +39,14 @@ export default function AdminSedesPage() {
   };
 
   const loadSedes = async () => {
-    const response = await fetch('/api/sedes');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/sedes`);
     const payload = await response.json() as { data?: Sede[]; message?: string };
     if (!response.ok) throw new Error(payload.message ?? 'No fue posible cargar las sedes.');
     setSedes(payload.data ?? []);
   };
 
   const loadActivity = async () => {
-    const response = await fetch('/api/sedes/audit');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/sedes/audit`);
     const payload = response.ok ? await response.json() as { data?: SedeActivity[] } : { data: [] };
     setActivity(payload.data ?? []);
   };
@@ -134,7 +135,7 @@ export default function AdminSedesPage() {
 
   const handleSave = async (sedeToSave: Sede) => {
     try {
-      const response = await fetch(selectedSede ? `/api/sedes/${selectedSede.id}` : '/api/sedes', { method: selectedSede ? 'PATCH' : 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(sedeToSave) });
+      const response = await fetch(appUrl(selectedSede ? `/api/sedes/${selectedSede.id}` : '/api/sedes'), { method: selectedSede ? 'PATCH' : 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(sedeToSave) });
       const payload = await response.json() as { data?: Sede; message?: string };
       if (!response.ok || !payload.data) throw new Error(payload.message ?? 'No fue posible guardar la sede.');
       setSedes((current) => selectedSede ? current.map((item) => item.id === payload.data!.id ? payload.data! : item) : [payload.data!, ...current]);
@@ -152,7 +153,7 @@ export default function AdminSedesPage() {
   const confirmDelete = async () => {
     if (confirmDeleteId) {
       try {
-        const response = await fetch(`/api/sedes/${confirmDeleteId}`, { method: 'DELETE' });
+        const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/sedes/${confirmDeleteId}`, { method: 'DELETE' });
         if (!response.ok) throw new Error('No fue posible desactivar la sede.');
         setSedes((current) => current.filter((sede) => sede.id !== confirmDeleteId));
         await loadActivity();

@@ -7,6 +7,10 @@ export function isTrainingEnvironment() {
   return TRAINING_VALUES.has(value);
 }
 
+export function trainingCookiePath() {
+  return isTrainingEnvironment() ? (process.env.TRAINING_BASE_PATH || '/') : '/';
+}
+
 export function prepareOutboundEmail(originalRecipient: string, subject: string) {
   if (!isTrainingEnvironment()) {
     return { to: originalRecipient, subject, redirected: false };

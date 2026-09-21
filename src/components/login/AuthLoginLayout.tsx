@@ -22,7 +22,7 @@ export default function AuthLoginLayout({
   return (
     <div className="relative flex min-h-screen items-center overflow-hidden bg-[#07182e] py-8">
       <Image
-        src="/fondos_login.jpg"
+        src={`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/fondos_login.jpg`}
         alt="Fondo login"
         fill
         priority
@@ -46,7 +46,7 @@ export default function AuthLoginLayout({
 
               <div className="mb-6 flex items-center gap-3">
                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/25 bg-white/10 p-2">
-                  <Image src="/logos_jr_favico.png" alt="Jardines del Renacer" width={30} height={30} className="object-contain brightness-0 invert" />
+                  <Image src={`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/logos_jr_favico.png`} alt="Jardines del Renacer" width={30} height={30} className="object-contain brightness-0 invert" />
                 </div>
                 <div><p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#c5dbf3]">Jardines del Renacer</p><p className="text-xs text-white/60">Acceso seguro</p></div>
               </div>

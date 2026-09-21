@@ -73,7 +73,7 @@ export default function PostulantesAdminPanel() {
     setCandidateHistory([]);
     setTransferTargetId("");
     setTransferNotes("");
-    void fetch(`/api/vacantes/postulaciones/${application.id}/candidate`)
+    void fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes/postulaciones/${application.id}/candidate`)
       .then((response) => response.json())
       .then((result) => {
         setCandidateDetail(result.data || null);
@@ -85,7 +85,7 @@ export default function PostulantesAdminPanel() {
     setUpdatingId(id);
     let statusSaved = false;
     try {
-      const response = await fetch(`/api/vacantes/postulaciones/${id}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes/postulaciones/${id}`, {
         method: "PATCH",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ status, notes }),
@@ -97,7 +97,7 @@ export default function PostulantesAdminPanel() {
       );
       const target = applications.find((item) => item.id === id);
       if (target?.candidateEmail) {
-        const notification = await fetch("/api/vacantes/notificar-estado", {
+        const notification = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes/notificar-estado`, {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
@@ -165,8 +165,7 @@ export default function PostulantesAdminPanel() {
     if (!candidateToDelete || !deletePassword) return;
     setDeleting(true);
     try {
-      const response = await fetch(
-        `/api/vacantes/postulaciones/${candidateToDelete.id}`,
+      const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes/postulaciones/${candidateToDelete.id}`,
         {
           method: "DELETE",
           headers: { "content-type": "application/json" },
@@ -212,7 +211,7 @@ export default function PostulantesAdminPanel() {
   useEffect(() => {
     async function loadApplications() {
       try {
-        const response = await fetch("/api/vacantes/postulaciones");
+        const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes/postulaciones`);
         const json = await response.json();
         if (json.success) {
           setApplications(Array.isArray(json.data) ? json.data : []);
@@ -233,8 +232,8 @@ export default function PostulantesAdminPanel() {
   }, []);
   useEffect(() => {
     void Promise.all([
-      fetch("/api/vacantes?admin=1", { cache: "no-store" }),
-      fetch("/api/vacantes/historial", { cache: "no-store" }),
+      fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes?admin=1`, { cache: "no-store" }),
+      fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes/historial`, { cache: "no-store" }),
     ])
       .then(async ([activeResponse, closedResponse]) => {
         const active = await activeResponse.json();
@@ -251,7 +250,7 @@ export default function PostulantesAdminPanel() {
     if (!selectedApplication || !transferTargetId || !transferNotes.trim()) return;
     setTransferring(true);
     try {
-      const response = await fetch(`/api/vacantes/postulaciones/${selectedApplication.id}/trasladar`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes/postulaciones/${selectedApplication.id}/trasladar`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ targetVacancyId: transferTargetId, notes: transferNotes }),

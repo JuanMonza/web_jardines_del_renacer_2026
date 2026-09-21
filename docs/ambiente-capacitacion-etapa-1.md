@@ -4,7 +4,7 @@ Este ambiente ejecuta el mismo sistema con una base de datos independiente, dato
 
 ## Preparación local
 
-1. Opcionalmente copiar `.env.training.example` como `.env.training.local` si la base de capacitación usará otra conexión. Si no existe, se usa el mismo servidor local y se crea otra base con el sufijo `_capacitacion_local`.
+1. Copiar `.env.training.example` como `.env.training.local` y completar una base, usuario MySQL y contraseña exclusivos de capacitación. Ya no se heredan credenciales de la base real.
 2. Ejecutar `npm run training:setup`. El proceso crea una base separada, copia únicamente la estructura y los catálogos de permisos y genera cuentas y postulantes ficticios.
 3. Si no se definió `TRAINING_ADMIN_PASSWORD`, el proceso genera una contraseña segura en `.training-access.local.txt`. Este archivo está excluido de Git.
 4. Cerrar previamente cualquier proceso del proyecto que esté usando el puerto 3000 y ejecutar `npm run dev:training`. El comando usa obligatoriamente el puerto 3000 y nunca cambia al 3001.
@@ -36,7 +36,7 @@ Todos usan la contraseña definida en `TRAINING_ADMIN_PASSWORD` o generada local
 
 ## Protecciones activas
 
-- El sistema rechaza usar el mismo nombre de base configurado para producción.
+- El sistema rechaza usar el mismo nombre de base o usuario MySQL configurado para producción. El usuario de capacitación debe tener permisos únicamente sobre su propia base.
 - Todos los correos SMTP y Resend se redirigen a `TRAINING_EMAIL_RECIPIENT` y llevan el prefijo `[CAPACITACIÓN]`.
 - El correo muestra el destinatario ficticio original para validar el ejercicio.
 - Los pagos Wompi están bloqueados.

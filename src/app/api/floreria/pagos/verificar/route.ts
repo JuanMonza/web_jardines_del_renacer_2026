@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getWompiConfig } from '@/lib/wompi';
+import { isTrainingEnvironment } from '@/lib/training-environment';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -16,6 +17,7 @@ function parseAsPositiveInt(value: string | null) {
 }
 
 export async function GET(request: NextRequest) {
+  if (isTrainingEnvironment()) return NextResponse.json({ message: 'Pagos desactivados en capacitación.' }, { status: 403 });
   try {
     const { searchParams } = new URL(request.url);
     const transactionId =

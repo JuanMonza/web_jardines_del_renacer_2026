@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { isTrainingEnvironment } from '@/lib/training-environment';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -96,6 +97,7 @@ function toWebsiteObituary(obituary: AuraObituary) {
 }
 
 export async function GET() {
+  if (isTrainingEnvironment()) return NextResponse.json({ success: true, data: [] });
   try {
     const response = await fetch(`${AURA_PUBLIC_URL}/api/public/obituarios`, {
       cache: 'no-store',

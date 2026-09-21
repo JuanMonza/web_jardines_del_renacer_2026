@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { hasPermission, verifyAdminToken } from '@/lib/iam/admin-token';
 import { isTrainingEnvironment } from '@/lib/training-environment';
-const ADMIN_SESSION_COOKIE = 'jdr_admin_session';
+const ADMIN_SESSION_COOKIE = isTrainingEnvironment() ? 'jdr_training_admin_session' : 'jdr_admin_session';
 const routes = [{ prefix: '/dashboard/cotizaciones', permission: 'quotes.view', login: '/login/cotizaciones' }, { prefix: '/dashboard-vacantes', permission: 'dashboard.vacantes.view', login: '/login/admin-vacantes' }, { prefix: '/dashboard-aliados', permission: 'dashboard.aliados.view', login: '/login/admin-aliados' }, { prefix: '/dashboard-sedes', permission: 'dashboard.sedes.view', login: '/login/admin-sedes' }, { prefix: '/dashboard-talleres', permission: 'dashboard.talleres.view', login: '/login/admin-talleres' }, { prefix: '/dashboard-sorteos', permission: 'dashboard.sorteos.view', login: '/login/admin-sorteos' }, { prefix: '/dashboard', permission: 'dashboard.admin.view', login: '/login/admin' }];
 function environmentHeaders(response: NextResponse) {
   if (isTrainingEnvironment()) {
@@ -42,7 +42,8 @@ export async function middleware(request: NextRequest) {
     const protocol = forwardedProtocol === 'http' || forwardedProtocol === 'https'
       ? forwardedProtocol
       : request.nextUrl.protocol.replace(':', '');
-    const url = new URL(`${route.login}?${params.toString()}`, `${protocol}://${host}`);
+    const basePath = isTrainingEnvironment() ? (process.env.TRAINING_BASE_PATH || '') : '';
+    const url = new URL(`${basePath}${route.login}?${params.toString()}`, `${protocol}://${host}`);
 
     // The public Host headers keep an internal proxy origin (for example,
     // localhost:3000) out of redirects returned to production browsers.

@@ -3,6 +3,7 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import AllyReportAccessManager from '@/components/aliados/AllyReportAccessManager';
+import { appUrl } from '@/lib/app-url';
 import { CheckCircle2, Download, Edit3, Eye, EyeOff, KeyRound, Loader2, Mail, Plus, Search, ShieldCheck, Trash2, UserCog, UsersRound, X } from 'lucide-react';
 
 type AdminUser = { id: number; cedula: string; nombres: string; apellidos: string; email: string; activo: number; ultimo_login: string | null; bloqueado_hasta: string | null; roles: string | null };
@@ -35,7 +36,7 @@ export default function DashboardUsuariosPage() {
   const loadUsers = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/iam/admin/users', { cache: 'no-store' });
+      const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/iam/admin/users`, { cache: 'no-store' });
       const payload = await response.json() as { data?: AdminUser[]; roles?: Role[]; message?: string };
       if (!response.ok) throw new Error(payload.message || 'No fue posible cargar los administradores.');
       setUsers(payload.data || []);
@@ -65,7 +66,7 @@ export default function DashboardUsuariosPage() {
   const saveUser = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault(); setSaving(true);
     try {
-      const response = await fetch(editingUser ? `/api/iam/admin/users/${editingUser.id}` : '/api/iam/admin/users', { method: editingUser ? 'PATCH' : 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ...form, roleId: Number(form.roleId) }) });
+      const response = await fetch(appUrl(editingUser ? `/api/iam/admin/users/${editingUser.id}` : '/api/iam/admin/users'), { method: editingUser ? 'PATCH' : 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ...form, roleId: Number(form.roleId) }) });
       const payload = await response.json() as { message?: string };
       if (!response.ok) throw new Error(payload.message || 'No fue posible guardar el administrador.');
       setShowForm(false); notify(true, payload.message || 'Administrador guardado correctamente.'); await loadUsers();
@@ -74,7 +75,7 @@ export default function DashboardUsuariosPage() {
   const deleteUser = async () => {
     if (!confirmDelete) return; setSaving(true);
     try {
-      const response = await fetch(`/api/iam/admin/users/${confirmDelete.id}`, { method: 'DELETE' });
+      const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/iam/admin/users/${confirmDelete.id}`, { method: 'DELETE' });
       const payload = await response.json() as { message?: string };
       if (!response.ok) throw new Error(payload.message || 'No fue posible desactivar el administrador.');
       setConfirmDelete(null); notify(true, payload.message || 'Administrador desactivado correctamente.'); await loadUsers();
@@ -85,7 +86,7 @@ export default function DashboardUsuariosPage() {
     event.preventDefault();
     setExporting(true);
     try {
-      const response = await fetch('/api/iam/admin/users/export', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/iam/admin/users/export`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ password: exportPassword }),

@@ -35,7 +35,7 @@ export default function VacancyHistoryPage() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   useEffect(() => {
-    void fetch("/api/vacantes/historial")
+    void fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes/historial`)
       .then((response) => response.json())
       .then((result) => setVacancies(result.data ?? []))
       .catch(() => setVacancies([]))

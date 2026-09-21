@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { query } from "@/lib/db";
+import { appUrl } from '@/lib/app-url';
 import { ensureCandidateCvStorageSchema } from "@/lib/candidate-cv-storage";
 import {
   ADMIN_SESSION_COOKIE,
@@ -72,7 +73,7 @@ export async function GET(
       success: true,
       data: {
         ...candidate,
-        cvUrl: candidate.hasCv ? `/api/postulantes/cv/${candidate.id}` : null,
+        cvUrl: candidate.hasCv ? appUrl(`/api/postulantes/cv/${candidate.id}`) : null,
         hasCv: undefined,
       },
       applications,

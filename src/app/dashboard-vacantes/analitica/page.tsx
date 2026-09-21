@@ -229,9 +229,9 @@ export default function AnalyticsPage() {
   const [isExporting, setIsExporting] = useState(false);
   useEffect(() => {
     void Promise.all([
-      fetch("/api/vacantes/postulaciones"),
-      fetch("/api/vacantes"),
-      fetch("/api/vacantes/auditoria"),
+      fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes/postulaciones`),
+      fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes`),
+      fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes/auditoria`),
     ])
       .then(
         async ([applicationsResponse, vacanciesResponse, auditResponse]) => {

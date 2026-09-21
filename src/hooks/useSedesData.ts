@@ -18,7 +18,7 @@ export function useSedesData(): { sedes: Sede[]; departamentos: DepartamentoInfo
     let mounted = true;
     const update = async () => {
       try {
-        const response = await fetch('/api/sedes/public');
+        const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/sedes/public`);
         const payload = await response.json() as { data?: Sede[] };
         if (mounted && response.ok) setSedes(payload.data ?? []);
       } catch { /* Se mantiene el catálogo de respaldo hasta que la API esté disponible. */ }

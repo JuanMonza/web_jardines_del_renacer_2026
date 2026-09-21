@@ -20,7 +20,7 @@ export default function ObituariosPage() {
 
     const cargarObituarios = async () => {
       try {
-        const response = await fetch('/api/obituarios', { cache: 'no-store' });
+        const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/obituarios`, { cache: 'no-store' });
         const result = (await response.json()) as { success?: boolean; data?: Obituary[] };
 
         if (!response.ok || !result.success || !Array.isArray(result.data)) {

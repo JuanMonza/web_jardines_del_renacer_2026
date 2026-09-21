@@ -200,7 +200,7 @@ export default function CotizarQuoteForm({
     setIsSubmitting(true);
     setSubmitFeedback("");
     try {
-      const response = await fetch("/api/cotizaciones", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/cotizaciones`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({

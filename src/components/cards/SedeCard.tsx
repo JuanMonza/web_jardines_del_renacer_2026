@@ -62,7 +62,7 @@ export default function SedeCard({ sede }: SedeCardProps) {
         <div className="absolute top-4 right-3 z-10">
           <div className="w-10 h-10 rounded-full bg-primary shadow-lg flex items-center justify-center border border-white/20 overflow-hidden">
             <Image
-              src="/logo-oficial.webp"
+              src={`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/logo-oficial.webp`}
               alt="JR"
               width={32}
               height={32}

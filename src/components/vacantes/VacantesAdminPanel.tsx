@@ -432,8 +432,7 @@ function CandidateApplicationsModal({
       const fetchApplications = async () => {
         setLoading(true);
         try {
-          const response = await fetch(
-            `/api/users/${encodeURIComponent(documentNumber)}`,
+          const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/users/${encodeURIComponent(documentNumber)}`,
           );
           const result = await response.json();
           if (result.success) {
@@ -680,7 +679,7 @@ function RegisteredUsersList() {
       setLoading(true);
       setError("");
       try {
-        const response = await fetch("/api/users");
+        const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/users`);
         const result = await response.json();
 
         if (response.ok && result.success) {
@@ -1116,7 +1115,7 @@ export default function VacantesAdminPanel() {
   const linkedVacancyHandled = useRef(false);
   const loadVacancies = async () => {
     try {
-      const response = await fetch("/api/vacantes?admin=1", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes?admin=1`, {
         cache: "no-store",
       });
 
@@ -1131,7 +1130,7 @@ export default function VacantesAdminPanel() {
 
   const loadApplications = async () => {
     try {
-      const response = await fetch("/api/vacantes/postulaciones", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes/postulaciones`, {
         cache: "no-store",
       });
       const result = (await response.json()) as {
@@ -1150,7 +1149,7 @@ export default function VacantesAdminPanel() {
   };
   const loadClosedVacancies = async () => {
     try {
-      const response = await fetch("/api/vacantes/historial", { cache: "no-store" });
+      const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes/historial`, { cache: "no-store" });
       const result = await response.json();
       setClosedVacancies(response.ok && Array.isArray(result.data) ? result.data : []);
     } catch { setClosedVacancies([]); }
@@ -1159,7 +1158,7 @@ export default function VacantesAdminPanel() {
   useEffect(() => {
     async function initialize() {
       try {
-        const response = await fetch("/api/iam/admin/session", {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/iam/admin/session`, {
           cache: "no-store",
         });
         const result = (await response.json()) as { user?: { name?: string } };
@@ -1300,7 +1299,7 @@ export default function VacantesAdminPanel() {
 
     try {
       if (editingId) {
-        const response = await fetch(`/api/vacantes/${editingId}`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes/${editingId}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -1311,7 +1310,7 @@ export default function VacantesAdminPanel() {
         if (!response.ok) throw new Error(result.message || "No fue posible actualizar la vacante.");
         setOperationNotice({ title: "Vacante actualizada", description: `Los cambios de “${record.title}” quedaron guardados correctamente.`, variant: "success" });
       } else {
-        const response = await fetch("/api/vacantes", {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -1358,7 +1357,7 @@ export default function VacantesAdminPanel() {
 
   const handleDelete = async (vacancy: JobVacancy) => {
     try {
-      const response = await fetch(`/api/vacantes/${vacancy.id}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes/${vacancy.id}`, {
         method: "DELETE",
         headers: {"Content-Type":"application/json"},
         body: JSON.stringify({closureReason}),
@@ -1377,7 +1376,7 @@ export default function VacantesAdminPanel() {
   const handlePause = async (vacancy: JobVacancy) => {
     const nextStatus = vacancy.status === "Pausada" ? "Publicada" : "Pausada";
     try {
-      const response = await fetch(`/api/vacantes/${vacancy.id}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes/${vacancy.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: nextStatus }),
@@ -1421,8 +1420,7 @@ export default function VacantesAdminPanel() {
 
     void (async () => {
       try {
-        const updateResponse = await fetch(
-          `/api/vacantes/postulaciones/${applicationId}`,
+        const updateResponse = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes/postulaciones/${applicationId}`,
           {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
@@ -1442,7 +1440,7 @@ export default function VacantesAdminPanel() {
               : application,
           ),
         );
-        const response = await fetch("/api/vacantes/notificar-estado", {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes/notificar-estado`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

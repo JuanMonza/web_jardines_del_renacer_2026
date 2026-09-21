@@ -15,7 +15,7 @@ function RestablecerAliadoForm() {
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     setLoading(true);
-    const response = await fetch('/api/iam/ally/password-reset/confirm', {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/iam/ally/password-reset/confirm`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ token: params.get('token'), password }),

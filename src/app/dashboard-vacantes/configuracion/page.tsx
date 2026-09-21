@@ -118,7 +118,7 @@ export default function Page() {
   useEffect(() => {
     void (async () => {
       try {
-        const response = await fetch("/api/vacantes/configuracion");
+        const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes/configuracion`);
         const result = await response.json();
         if (!response.ok || !result.success)
           throw new Error(
@@ -161,7 +161,7 @@ export default function Page() {
     setSaving(true);
     setNotice(null);
     try {
-      const response = await fetch("/api/vacantes/configuracion", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes/configuracion`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(settings),

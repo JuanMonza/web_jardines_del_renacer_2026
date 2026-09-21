@@ -132,7 +132,7 @@ export default function AcompanamientoDueloPage() {
     };
 
     syncData();
-    fetch("/api/talleres-duelo/public")
+    fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/talleres-duelo/public`)
       .then(async (response) => (response.ok ? response.json() : null))
       .then((payload) => {
         if (!payload?.data?.talleres?.length) return;
@@ -214,7 +214,7 @@ export default function AcompanamientoDueloPage() {
     setRegistering(true);
     setRegistrationMessage("");
     try {
-      const response = await fetch("/api/talleres-duelo/inscripciones", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/talleres-duelo/inscripciones`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -236,7 +236,7 @@ export default function AcompanamientoDueloPage() {
         result.message || "Tu inscripción fue registrada correctamente.",
       );
       form.reset();
-      const workshopsResponse = await fetch("/api/talleres-duelo/public");
+      const workshopsResponse = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/talleres-duelo/public`);
       const workshopsPayload = workshopsResponse.ok
         ? await workshopsResponse.json()
         : null;

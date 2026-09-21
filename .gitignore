@@ -8,6 +8,7 @@
 
 # next.js
 /.next/
+/.next-training/
 /out/
 .next-cache-incompatible-*/
 .next-validation-backup/
@@ -31,6 +32,8 @@ yarn-error.log*
 .env*.local
 .env
 .training-access.local.txt
+jdr-training-release.tar.gz
+jdr-training-security-patch.tar.gz
 
 # vercel
 .vercel

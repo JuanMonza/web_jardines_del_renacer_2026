@@ -13,6 +13,9 @@ if (trainingMode) {
   if (environmentValue("DATABASE") === process.env.DB_DATABASE) {
     throw new Error("La base de capacitación debe ser diferente de DB_DATABASE.");
   }
+  if (environmentValue("USER") === process.env.DB_USER) {
+    throw new Error("La base de capacitación requiere un usuario MySQL distinto del de producción.");
+  }
 }
 
 // En capacitación solo se aceptan credenciales de una base separada.

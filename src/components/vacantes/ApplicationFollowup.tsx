@@ -18,14 +18,14 @@ type Interview={id:string;fecha:string;modalidad:string;duracion:number;lugar:st
 type Data={profile:Record<string,string>;fields:Record<string,string>;revision:number;steps:string[];canEdit:boolean;history:{descripcion:string;created_at:string}[];interviews:Interview[]};
 export default function ApplicationFollowup({id}:{id:string}){
   const [data,setData]=useState<Data|null>(null),[fields,setFields]=useState<Record<string,string>>({}),[message,setMessage]=useState(""),[busy,setBusy]=useState(false);
-  const load=useCallback(async()=>{try{const response=await fetch(`/api/vacantes/postulaciones/${id}/seguimiento`,{cache:"no-store"});const result=await response.json();if(!response.ok)throw new Error(result.message);setData(result);setFields(result.fields);}catch(e){setMessage(e instanceof Error?e.message:"No fue posible cargar.");}},[id]);
+  const load=useCallback(async()=>{try{const response=await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes/postulaciones/${id}/seguimiento`,{cache:"no-store"});const result=await response.json();if(!response.ok)throw new Error(result.message);setData(result);setFields(result.fields);}catch(e){setMessage(e instanceof Error?e.message:"No fue posible cargar.");}},[id]);
   useEffect(()=>{void load();},[load]);
   const [interviewDate,setInterviewDate]=useState(""),[mode,setMode]=useState("Presencial"),[duration,setDuration]=useState("60"),[interviewState,setInterviewState]=useState("Programada"),[result,setResult]=useState("Pendiente"),[place,setPlace]=useState(""),[link,setLink]=useState(""),[interviewNotes,setInterviewNotes]=useState("");
   async function addInterview(){
     if(!interviewDate||!interviewNotes.trim()){setMessage("Completa la fecha y la observación de la entrevista.");return;}
     setBusy(true);setMessage("");
     try{
-      const response=await fetch(`/api/vacantes/postulaciones/${id}/seguimiento`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({date:interviewDate,modality:mode,duration:Number(duration),state:interviewState,result,place,link,notes:interviewNotes})});
+      const response=await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes/postulaciones/${id}/seguimiento`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({date:interviewDate,modality:mode,duration:Number(duration),state:interviewState,result,place,link,notes:interviewNotes})});
       const responseData=await response.json();if(!response.ok)throw new Error(responseData.message||"No fue posible registrar la entrevista.");
       setInterviewDate("");setDuration("60");setInterviewState("Programada");setResult("Pendiente");setPlace("");setLink("");setInterviewNotes("");await load();setMessage("Entrevista registrada y añadida a la trazabilidad.");
     }catch(error){setMessage(error instanceof Error?error.message:"No fue posible registrar la entrevista.");}finally{setBusy(false);}
@@ -33,7 +33,7 @@ export default function ApplicationFollowup({id}:{id:string}){
   async function save(){
     if(!data||busy)return;
     setBusy(true);setMessage("");
-    try{const response=await fetch(`/api/vacantes/postulaciones/${id}/seguimiento`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({fields,revision:data.revision})});const result=await response.json();if(!response.ok)throw new Error(result.message);await load();setMessage("Ficha guardada. Los cambios quedaron en el historial y la auditoría.");}catch(e){setMessage(e instanceof Error?e.message:"No fue posible guardar.");}finally{setBusy(false);}
+    try{const response=await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes/postulaciones/${id}/seguimiento`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({fields,revision:data.revision})});const result=await response.json();if(!response.ok)throw new Error(result.message);await load();setMessage("Ficha guardada. Los cambios quedaron en el historial y la auditoría.");}catch(e){setMessage(e instanceof Error?e.message:"No fue posible guardar.");}finally{setBusy(false);}
   }
   return <section className="col-span-full mt-6 rounded-2xl border border-blue-200 bg-white p-5">
     <h3 className="text-lg font-bold text-primary">Ficha de seguimiento de esta postulación</h3>

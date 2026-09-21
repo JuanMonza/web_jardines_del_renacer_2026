@@ -94,7 +94,7 @@ export default function PagarPlanPage() {
         
         // Redirigir a página de éxito con datos de la transacción
         const transactionId = `TXN-${Date.now()}`;
-        window.location.href = `/pago-exitoso?id=${transactionId}&amount=${formData.monto}&method=${selectedMethod}`;
+        window.location.href = `${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ''}/pago-exitoso?id=${transactionId}&amount=${formData.monto}&method=${selectedMethod}`;
       }, 3000);
 
     } catch (error) {

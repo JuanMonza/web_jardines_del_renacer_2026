@@ -505,7 +505,7 @@ export default function ServiciosClient() {
               <FadeIn>
                 <div className="relative rounded-[40px] overflow-hidden h-[620px] group">
                   <Image
-                    src="/images/commemorativo.jpeg"
+                    src={`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/images/commemorativo.jpeg`}
                     alt="Parque Conmemorativo Espiritual"
                     fill
                     className="object-cover group-hover:scale-105 transition duration-700"

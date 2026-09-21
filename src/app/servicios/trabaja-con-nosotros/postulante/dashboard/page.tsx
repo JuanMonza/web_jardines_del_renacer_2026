@@ -79,7 +79,7 @@ function PostulanteDashboardContent() {
   useEffect(() => {
     async function refreshApplications() {
       try {
-        const response = await fetch("/api/postulantes/mis-postulaciones", {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/postulantes/mis-postulaciones`, {
           cache: "no-store",
         });
         if (!response.ok) return;
@@ -98,9 +98,9 @@ function PostulanteDashboardContent() {
       try {
         const [profileResponse, applicationsResponse, vacanciesResponse] =
           await Promise.all([
-            fetch("/api/postulantes/perfil", { cache: "no-store" }),
-            fetch("/api/postulantes/mis-postulaciones", { cache: "no-store" }),
-            fetch("/api/vacantes", { cache: "no-store" }),
+            fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/postulantes/perfil`, { cache: "no-store" }),
+            fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/postulantes/mis-postulaciones`, { cache: "no-store" }),
+            fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes`, { cache: "no-store" }),
           ]);
 
         if (
@@ -173,7 +173,7 @@ function PostulanteDashboardContent() {
   }, [requestedVacancyId, router]);
 
   const handleLogout = async () => {
-    await fetch("/api/postulantes/logout", { method: "POST" });
+    await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/postulantes/logout`, { method: "POST" });
     router.replace("/login/usuario-vacantes");
     router.refresh();
   };
@@ -184,7 +184,7 @@ function PostulanteDashboardContent() {
     setFeedback("");
 
     try {
-      const response = await fetch("/api/postulantes/perfil", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/postulantes/perfil`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(profile),
@@ -242,7 +242,7 @@ function PostulanteDashboardContent() {
     const reader = new FileReader();
     reader.onload = async () => {
       try {
-        const response = await fetch("/api/postulantes/foto", {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/postulantes/foto`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ fileData: String(reader.result || "") }),
@@ -292,7 +292,7 @@ function PostulanteDashboardContent() {
     try {
       // La postulación debe incluir también los cambios profesionales que la
       // persona acaba de escribir, aunque no haya pulsado Guardar cambios.
-      const profileResponse = await fetch("/api/postulantes/perfil", {
+      const profileResponse = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/postulantes/perfil`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(profile),
@@ -302,7 +302,7 @@ function PostulanteDashboardContent() {
         throw new Error(savedProfile.message || "No fue posible guardar tu información profesional.");
       }
       setProfile(savedProfile.data);
-      const response = await fetch("/api/postulantes/mis-postulaciones", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/postulantes/mis-postulaciones`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -688,8 +688,7 @@ function PostulanteDashboardContent() {
                           const reader = new FileReader();
                           reader.onload = async () => {
                             const fileData = String(reader.result || "");
-                            const response = await fetch(
-                              "/api/postulantes/cv",
+                            const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/postulantes/cv`,
                               {
                                 method: "POST",
                                 headers: { "Content-Type": "application/json" },

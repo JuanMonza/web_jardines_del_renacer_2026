@@ -27,7 +27,7 @@ export default function AdminGlassShell({ children, loginPath, workspace, naviga
   const [trainingGuideOpen, setTrainingGuideOpen] = useState(false);
 
   useEffect(() => {
-    fetch('/api/iam/admin/session')
+    fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/iam/admin/session`)
       .then(async (response) => {
         if (!response.ok) throw new Error('No autorizado');
         return response.json() as Promise<{ user: SessionUser }>;
@@ -41,7 +41,7 @@ export default function AdminGlassShell({ children, loginPath, workspace, naviga
   }, [loginPath, requiredPermission, router]);
 
   const handleLogout = () => {
-    fetch('/api/iam/admin/logout', { method: 'POST' }).finally(() => router.replace(loginPath));
+    fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/iam/admin/logout`, { method: 'POST' }).finally(() => router.replace(loginPath));
   };
 
   if (checkingAccess) {

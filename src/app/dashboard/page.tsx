@@ -27,7 +27,7 @@ export default function DashboardPage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    Promise.all([fetch('/api/iam/admin/session'), fetch('/api/iam/admin/users', { cache: 'no-store' })])
+    Promise.all([fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/iam/admin/session`), fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/iam/admin/users`, { cache: 'no-store' })])
       .then(async ([sessionResponse, usersResponse]) => {
         const sessionPayload = await sessionResponse.json() as { user?: SessionUser; message?: string };
         const usersPayload = await usersResponse.json() as { data?: AdminUser[]; message?: string };

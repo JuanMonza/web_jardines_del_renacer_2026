@@ -46,7 +46,7 @@ export default function AdminDatabaseLoginForm({
     setLoading(true);
     setError("");
     try {
-      const response = await fetch("/api/iam/admin/login", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/iam/admin/login`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ cedula: document, password, destination }),

@@ -5,7 +5,9 @@ const path = require("path");
 const { randomBytes } = require("crypto");
 const { prepareTrainingEnvironment } = require("./training-env");
 
-const root = prepareTrainingEnvironment();
+// Este comando usa producción solo como fuente de esquema/catálogos, nunca como
+// destino de escritura. La conexión fuente se fuerza a transacciones READ ONLY.
+const root = prepareTrainingEnvironment({ schemaSource: true });
 
 const source = {
   host: process.env.DB_HOST, port: Number(process.env.DB_PORT || 3306), user: process.env.DB_USER,
@@ -49,9 +51,7 @@ async function run() {
   if (password.length < 12) throw new Error("TRAINING_ADMIN_PASSWORD debe tener mínimo 12 caracteres.");
 
   const sourceConnection = await mysql.createConnection(source);
-  const serverConnection = await mysql.createConnection({ ...target, database: undefined, multipleStatements: true });
-  await serverConnection.query(`CREATE DATABASE IF NOT EXISTS \`${target.database.replace(/`/g, "``")}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
-  await serverConnection.end();
+  await sourceConnection.query("SET SESSION TRANSACTION READ ONLY");
   const targetConnection = await mysql.createConnection({ ...target, multipleStatements: true });
   try {
     await targetConnection.query("SET FOREIGN_KEY_CHECKS=0");
@@ -61,6 +61,12 @@ async function run() {
       const [definitionRows] = await sourceConnection.query(`SHOW CREATE TABLE \`${table}\``);
       const definition = definitionRows[0]["Create Table"].replace(/^CREATE TABLE /, "CREATE TABLE IF NOT EXISTS ");
       await targetConnection.query(definition);
+    }
+    // Algunas instalaciones aún no aplicaron esta migración. Solo se ajusta
+    // la copia de capacitación; la base de origen permanece en solo lectura.
+    const [cargoColumns] = await targetConnection.query("SHOW COLUMNS FROM admin_users LIKE 'cargo'");
+    if (!cargoColumns.length) {
+      await targetConnection.query("ALTER TABLE admin_users ADD COLUMN cargo VARCHAR(120) NULL AFTER email");
     }
     for (const table of ["permissions", "roles", "role_permissions"]) {
       if (tables.some((row) => Object.values(row)[0] === table)) await copyRows(sourceConnection, targetConnection, table);

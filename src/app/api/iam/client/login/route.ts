@@ -1,3 +1,4 @@
+import { trainingCookiePath } from '@/lib/training-environment';
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateClient, CLIENT_SESSION_COOKIE, signClientSession } from '@/lib/iam/client-session';
 
@@ -13,7 +14,7 @@ export async function POST(request: NextRequest) {
     const session = await authenticateClient(cedula, password, request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? request.headers.get('x-real-ip') ?? '', request.headers.get('user-agent') ?? '');
     if (!session) return NextResponse.json({ message: 'Cédula o contraseña incorrectas.' }, { status: 401 });
     const response = NextResponse.json({ data: { name: session.name, documentNumber: session.documentNumber } });
-    response.cookies.set(CLIENT_SESSION_COOKIE, await signClientSession(session), { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', path: '/', maxAge: 60 * 60 * 8 });
+    response.cookies.set(CLIENT_SESSION_COOKIE, await signClientSession(session), { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', path: trainingCookiePath(), maxAge: 60 * 60 * 8 });
     return response;
   } catch { return NextResponse.json({ message: 'No fue posible iniciar sesión.' }, { status: 500 }); }
 }

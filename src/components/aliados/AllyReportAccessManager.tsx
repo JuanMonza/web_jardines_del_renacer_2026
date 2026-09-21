@@ -15,7 +15,7 @@ export default function AllyReportAccessManager() {
   const [error, setError] = useState(false);
 
   async function load() {
-    const response = await fetch('/api/iam/admin/ally-report-access', { cache: 'no-store' });
+    const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/iam/admin/ally-report-access`, { cache: 'no-store' });
     const body = await response.json();
     if (!response.ok) throw new Error(body.message || 'No fue posible cargar permisos.');
     setPeople(body.data || []);
@@ -26,7 +26,7 @@ export default function AllyReportAccessManager() {
     if (!userId) return;
     setSaving(true); setMessage('');
     try {
-      const response = await fetch('/api/iam/admin/ally-report-access', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: Number(userId), canView, canExport }) });
+      const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/iam/admin/ally-report-access`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: Number(userId), canView, canExport }) });
       const body = await response.json();
       if (!response.ok) throw new Error(body.message || 'No fue posible guardar el permiso.');
       await load();

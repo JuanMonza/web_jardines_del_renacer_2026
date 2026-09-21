@@ -22,7 +22,7 @@ export default function PerfilPostulantePage() {
     async function fetchProfile() {
       setIsLoading(true);
       try {
-        const response = await fetch('/api/postulantes/perfil');
+        const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/postulantes/perfil`);
         if (response.status === 401) {
           router.push('/login/usuario-vacantes?next=/servicios/trabaja-con-nosotros/perfil');
           return;
@@ -56,7 +56,7 @@ export default function PerfilPostulantePage() {
     toast.dismiss();
 
     try {
-      const response = await fetch('/api/postulantes/perfil', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/postulantes/perfil`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(profile),
@@ -76,7 +76,7 @@ export default function PerfilPostulantePage() {
   };
 
   const handleLogout = async () => {
-    await fetch('/api/postulantes/logout', { method: 'POST' });
+    await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/postulantes/logout`, { method: 'POST' });
     router.replace('/login/usuario-vacantes');
     router.refresh();
   };

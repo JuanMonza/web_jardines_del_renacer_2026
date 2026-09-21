@@ -1,3 +1,4 @@
+import { trainingCookiePath } from '@/lib/training-environment';
 import { NextRequest, NextResponse } from 'next/server';
 import { ALLY_SESSION_COOKIE, getActiveAllySession, revokeAllySession } from '@/lib/iam/ally-session';
 
@@ -8,6 +9,6 @@ export async function POST(request: NextRequest) {
   const session = await getActiveAllySession(token);
   if (session) await revokeAllySession(session.sessionId);
   const response = NextResponse.json({ ok: true });
-  response.cookies.set(ALLY_SESSION_COOKIE, '', { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', path: '/', maxAge: 0 });
+  response.cookies.set(ALLY_SESSION_COOKIE, '', { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', path: trainingCookiePath(), maxAge: 0 });
   return response;
 }

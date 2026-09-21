@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import { SignJWT, jwtVerify } from 'jose';
 import { execute, query } from '@/lib/db';
 
-export const CLIENT_SESSION_COOKIE = 'jdr_client_session';
+export const CLIENT_SESSION_COOKIE = process.env.APP_ENV === 'training' ? 'jdr_training_client_session' : 'jdr_client_session';
 const SESSION_DURATION_SECONDS = 60 * 60 * 8;
 type ClientSession = { sessionId: string; clientId: number; documentNumber: string; name: string };
 

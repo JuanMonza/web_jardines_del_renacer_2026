@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import AllyTraceabilityReport from '@/components/aliados/AllyTraceabilityReport';
 import TrainingHint from '@/components/training/TrainingHint';
+import { appUrl } from '@/lib/app-url';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Textarea from '@/components/ui/Textarea';
@@ -142,10 +143,10 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
     
     const sessionEndpoint = mode === 'ally' ? '/api/iam/ally/session' : '/api/iam/admin/session';
     const alliesEndpoint = mode === 'ally' ? '/api/aliados/public' : '/api/aliados';
-    const requestsPromise = fetch(mode === 'ally' ? '/api/iam/ally/codes' : '/api/codigos-descuento');
-    const accessStatusPromise = mode === 'admin' ? fetch('/api/aliados/access-status') : null;
-    const activityPromise = mode === 'admin' ? fetch('/api/aliados/audit') : null;
-    Promise.all([fetch(sessionEndpoint), fetch(alliesEndpoint), requestsPromise, accessStatusPromise, activityPromise])
+    const requestsPromise = fetch(appUrl(mode === 'ally' ? '/api/iam/ally/codes' : '/api/codigos-descuento'));
+    const accessStatusPromise = mode === 'admin' ? fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/aliados/access-status`) : null;
+    const activityPromise = mode === 'admin' ? fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/aliados/audit`) : null;
+    Promise.all([fetch(appUrl(sessionEndpoint)), fetch(appUrl(alliesEndpoint)), requestsPromise, accessStatusPromise, activityPromise])
       .then(async ([sessionResponse, alliesResponse, requestsResponse, accessStatusResponse, activityResponse]) => {
         if (!sessionResponse.ok || !alliesResponse.ok || (requestsResponse && !requestsResponse.ok)) throw new Error('No fue posible cargar el panel.');
         const sessionPayload = await sessionResponse.json() as { user: { name: string; allyId?: number; loginId?: string } };
@@ -361,7 +362,7 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
       const patch = editingId && existing ? Object.fromEntries(editableFields.filter((field) => allyRecord[field] !== existing[field]).map((field) => [field, allyRecord[field]])) : allyRecord;
       let payload: { data?: CommercialAlly; message?: string } = { data: existing ?? undefined };
       if (!editingId || Object.keys(patch).length > 0) {
-        const response = await fetch(editingId ? `/api/aliados/${editingId}` : '/api/aliados', {
+        const response = await fetch(appUrl(editingId ? `/api/aliados/${editingId}` : '/api/aliados'), {
           method: editingId ? 'PATCH' : 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(patch),
         });
         payload = await response.json() as { data?: CommercialAlly; message?: string };
@@ -372,7 +373,7 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
       }
       setAllies((current) => editingId ? current.map((ally) => ally.id === editingId ? payload.data! : ally) : [...current, payload.data!]);
       if (accessPassword) {
-        const accessResponse = await fetch(`/api/aliados/${editingId || payload.data!.id}/access`, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ loginId: allyRecord.loginId, password: accessPassword }) });
+        const accessResponse = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/aliados/${editingId || payload.data!.id}/access`, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ loginId: allyRecord.loginId, password: accessPassword }) });
         if (!accessResponse.ok) { const accessPayload = await accessResponse.json() as { message?: string }; throw new Error(accessPayload.message); }
         setAccessStatuses((current) => ({ ...current, [editingId || payload.data!.id]: { allyId: editingId || payload.data!.id, accountConfigured: true, accessActive: true, lockedUntil: null, lastLogin: current[editingId || payload.data!.id]?.lastLogin ?? null } }));
       }
@@ -391,7 +392,7 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
 
   const deactivateAlly = async (ally: CommercialAlly) => {
     try {
-      const response = await fetch(`/api/aliados/${ally.id}`, { method: 'DELETE' });
+      const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/aliados/${ally.id}`, { method: 'DELETE' });
       if (!response.ok) throw new Error('No fue posible eliminar el aliado.');
       setAllies((current) => current.filter((item) => item.id !== ally.id));
       if (editingId === ally.id) resetDraft();
@@ -434,7 +435,7 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
   };
 
   const refreshRequests = async () => {
-    const response = await fetch(mode === 'ally' ? '/api/iam/ally/codes' : '/api/codigos-descuento');
+    const response = await fetch(appUrl(mode === 'ally' ? '/api/iam/ally/codes' : '/api/codigos-descuento'));
     const payload = await response.json() as { data?: AllyDiscountRequest[] };
     if (response.ok && payload.data) setRequests(payload.data);
   };
@@ -447,12 +448,12 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
     let request: AllyDiscountRequest | null;
     if (mode === 'ally') {
       const params = new URLSearchParams({ cedula: verifyCedula, code: verifyCode });
-      const response = await fetch(`/api/iam/ally/codes?${params.toString()}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/iam/ally/codes?${params.toString()}`);
       const payload = await response.json() as { data?: AllyDiscountRequest };
       request = response.ok ? payload.data ?? null : null;
     } else {
       const params = new URLSearchParams({ cedula: verifyCedula });
-      const response = await fetch(`/api/codigos-descuento/${encodeURIComponent(verifyCode)}?${params.toString()}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/codigos-descuento/${encodeURIComponent(verifyCode)}?${params.toString()}`);
       const payload = await response.json() as { data?: AllyDiscountRequest };
       request = response.ok ? payload.data ?? null : null;
     }
@@ -496,11 +497,11 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
 
     let redeemed: AllyDiscountRequest | null;
     if (mode === 'ally') {
-      const response = await fetch(`/api/iam/ally/codes/${activeRequest.id}/redeem`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ consumedValue: value, discountValue: canSetManualDiscount ? manualValue : undefined }) });
+      const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/iam/ally/codes/${activeRequest.id}/redeem`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ consumedValue: value, discountValue: canSetManualDiscount ? manualValue : undefined }) });
       const payload = await response.json() as { data?: AllyDiscountRequest };
       redeemed = response.ok ? payload.data ?? null : null;
     } else {
-      const response = await fetch(`/api/codigos-descuento/${activeRequest.id}/canjear`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ consumedValue: value, discountValue: canSetManualDiscount ? manualValue : undefined }) });
+      const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/codigos-descuento/${activeRequest.id}/canjear`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ consumedValue: value, discountValue: canSetManualDiscount ? manualValue : undefined }) });
       const payload = await response.json() as { data?: AllyDiscountRequest };
       redeemed = response.ok ? payload.data ?? null : null;
     }
@@ -518,7 +519,7 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
   };
 
   const deleteDiscount = async (request: AllyDiscountRequest) => {
-    const response = await fetch(`/api/codigos-descuento/${request.id}`, { method: 'DELETE' });
+    const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/codigos-descuento/${request.id}`, { method: 'DELETE' });
     if (!response.ok) { setVerificationFeedback('No fue posible anular el código.'); return; }
     await refreshRequests();
     setVerificationFeedback('Código anulado correctamente.');
@@ -532,7 +533,7 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
     setFeedback('Actualizando aliados desde MySQL...');
     setLoadingError('');
     try {
-      const response = await fetch('/api/aliados');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/aliados`);
       const payload = await response.json() as { data?: CommercialAlly[]; message?: string };
       if (!response.ok || !payload.data) throw new Error(payload.message);
       setAllies(payload.data);
@@ -979,7 +980,7 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
       {isAllyUser && (
         <section id="perfil" className="scroll-mt-6 mb-8 grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
           <article className="rounded-[28px] border border-white/80 bg-white/65 p-6 shadow-[0_14px_36px_rgba(35,79,132,0.1)] backdrop-blur-xl"><p className="text-xs font-bold uppercase tracking-[0.18em] text-[#6283aa]">Mi perfil comercial</p><h3 className="mt-2 text-2xl font-bold text-[#173861]">{currentAlly?.name ?? session?.name}</h3><div className="mt-5 grid gap-4 sm:grid-cols-2"><div className="rounded-2xl bg-[#f2f6fb] p-4"><p className="text-xs text-[#7189a4]">Beneficio registrado</p><p className="mt-1 font-semibold text-[#173861]">{currentAlly?.discountLabel ?? 'Por confirmar'}</p></div><div className="rounded-2xl bg-[#f2f6fb] p-4"><p className="text-xs text-[#7189a4]">Ubicación</p><p className="mt-1 font-semibold text-[#173861]">{currentAlly ? `${currentAlly.municipio}, ${currentAlly.departamento}` : 'Por confirmar'}</p></div><div className="rounded-2xl bg-[#f2f6fb] p-4"><p className="text-xs text-[#7189a4]">ID de acceso</p><p className="mt-1 font-mono text-sm font-semibold text-[#173861]">{session?.loginId}</p></div><div className="rounded-2xl bg-[#f2f6fb] p-4"><p className="text-xs text-[#7189a4]">Correo registrado</p><p className="mt-1 break-all font-semibold text-[#173861]">{currentAlly?.email ?? 'No registrado'}</p></div></div></article>
-          <article className="rounded-[28px] border border-[#d8e6f4] bg-gradient-to-br from-[#edf5fd] to-white p-6 shadow-[0_14px_36px_rgba(35,79,132,0.08)]"><p className="text-xs font-bold uppercase tracking-[0.18em] text-[#6283aa]">Acompañamiento</p><h3 className="mt-2 text-xl font-bold text-[#173861]">¿Necesitas ayuda?</h3><p className="mt-3 text-sm leading-6 text-[#607b99]">Solicita actualización de datos comerciales o apoyo durante una validación de descuento.</p><a href="/contacto" className="mt-6 inline-flex rounded-xl bg-[#315d98] px-4 py-3 text-sm font-bold text-white shadow-lg shadow-blue-900/15 transition hover:bg-[#244f8a]">Contactar soporte</a></article>
+          <article className="rounded-[28px] border border-[#d8e6f4] bg-gradient-to-br from-[#edf5fd] to-white p-6 shadow-[0_14px_36px_rgba(35,79,132,0.08)]"><p className="text-xs font-bold uppercase tracking-[0.18em] text-[#6283aa]">Acompañamiento</p><h3 className="mt-2 text-xl font-bold text-[#173861]">¿Necesitas ayuda?</h3><p className="mt-3 text-sm leading-6 text-[#607b99]">Solicita actualización de datos comerciales o apoyo durante una validación de descuento.</p><a href={appUrl('/contacto')} className="mt-6 inline-flex rounded-xl bg-[#315d98] px-4 py-3 text-sm font-bold text-white shadow-lg shadow-blue-900/15 transition hover:bg-[#244f8a]">Contactar soporte</a></article>
         </section>
       )}
 

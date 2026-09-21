@@ -57,7 +57,7 @@ export default function NotificationsPage() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   useEffect(() => {
-    void fetch("/api/vacantes/auditoria")
+    void fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes/auditoria`)
       .then((response) => response.json())
       .then((result) =>
         setNotifications(

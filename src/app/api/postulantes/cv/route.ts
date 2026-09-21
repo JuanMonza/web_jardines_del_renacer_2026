@@ -3,6 +3,7 @@ import { CANDIDATE_SESSION_COOKIE_NAME, verifyVacantesCandidateJwt } from '@/lib
 import { execute } from '@/lib/db';
 import { getCandidateAccountForLogin } from '@/lib/candidateStorageDB';
 import { ensureCandidateCvStorageSchema } from '@/lib/candidate-cv-storage';
+import { appUrl } from '@/lib/app-url';
 
 export const runtime = 'nodejs';
 export async function POST(request: NextRequest) {
@@ -29,5 +30,5 @@ export async function POST(request: NextRequest) {
      WHERE id = ? AND deleted_at IS NULL`,
     [url, fileName.slice(0, 255), mime, buffer, candidate.id],
   );
-  return NextResponse.json({ success: true, data: { url, fileName } });
+  return NextResponse.json({ success: true, data: { url: appUrl(url), fileName } });
 }

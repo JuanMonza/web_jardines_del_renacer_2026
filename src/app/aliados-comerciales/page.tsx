@@ -49,7 +49,7 @@ function AliadosComercialesPageContent() {
     setSelectedCategory(initialCategory);
     setSelectedSubcategory(initialSubcategory);
     setSelectedDepartment(initialDepartment);
-    fetch('/api/aliados/public')
+    fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/aliados/public`)
       .then(async (response) => {
         if (!response.ok) throw new Error('No fue posible cargar aliados.');
         return response.json() as Promise<{ data: CommercialAlly[] }>;
@@ -110,7 +110,7 @@ function AliadosComercialesPageContent() {
     setGeneratedCode(null);
     setFixedCode(null);
     try {
-      const response = await fetch('/api/codigos-descuento/public/validate', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cedula }) });
+      const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/codigos-descuento/public/validate`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cedula }) });
       const payload = await response.json() as { data?: ClientData; message?: string };
       if (!response.ok || !payload.data) throw new Error(payload.message);
       const client = payload.data;
@@ -129,7 +129,7 @@ function AliadosComercialesPageContent() {
     }
 
     try {
-      const response = await fetch('/api/codigos-descuento/public', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cedula: verifiedClient.cedula, allyId: ally.id }) });
+      const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/codigos-descuento/public`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cedula: verifiedClient.cedula, allyId: ally.id }) });
       const payload = await response.json() as { data?: AllyDiscountRequest; message?: string };
       if (!response.ok || !payload.data) throw new Error(payload.message);
       setGeneratedCode(payload.data);

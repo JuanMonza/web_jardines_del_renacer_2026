@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import { SignJWT, jwtVerify } from 'jose';
 import { execute, query } from '@/lib/db';
 
-export const ALLY_SESSION_COOKIE = 'jdr_ally_session';
+export const ALLY_SESSION_COOKIE = process.env.APP_ENV === 'training' ? 'jdr_training_ally_session' : 'jdr_ally_session';
 const duration = 60 * 60 * 8;
 type AllySession = { sessionId: string; accountId: number; allyId: number; name: string; loginId: string };
 const hash = (value: string) => createHash('sha256').update(value).digest('hex');

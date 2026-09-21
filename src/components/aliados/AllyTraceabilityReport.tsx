@@ -34,7 +34,7 @@ export default function AllyTraceabilityReport() {
       setLoading(false);
       return () => controller.abort();
     }
-    void fetch(`/api/aliados/trazabilidad?${params}`, { signal: controller.signal, cache: 'no-store' })
+    void fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/aliados/trazabilidad?${params}`, { signal: controller.signal, cache: 'no-store' })
       .then(async response => {
         if (response.status === 403) { setDenied(true); return; }
         const body = await response.json();
@@ -54,7 +54,7 @@ export default function AllyTraceabilityReport() {
       const params = new URLSearchParams({ format: 'xlsx' });
       if (from) params.set('from', from);
       if (to) params.set('to', to);
-      const response = await fetch(`/api/aliados/trazabilidad?${params}`, { cache: 'no-store' });
+      const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/aliados/trazabilidad?${params}`, { cache: 'no-store' });
       if (!response.ok) { const body = await response.json(); throw new Error(body.message || 'No fue posible descargar el Excel.'); }
       const url = URL.createObjectURL(await response.blob());
       const anchor = document.createElement('a');

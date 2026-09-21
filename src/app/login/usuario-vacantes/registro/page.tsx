@@ -23,7 +23,7 @@ function RegistroPostulanteForm() {
   const submit = async (event: React.FormEvent) => {
     event.preventDefault(); setLoading(true); setError('');
     try {
-      const response = await fetch('/api/postulantes/registro', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...form, documentNumber: form.documentNumber.replace(/\D/g, ''), email: form.email.trim().toLowerCase() }) });
+      const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/postulantes/registro`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...form, documentNumber: form.documentNumber.replace(/\D/g, ''), email: form.email.trim().toLowerCase() }) });
       const result = await response.json() as { success?: boolean; message?: string };
       if (!response.ok || !result.success) throw new Error(result.message || 'No fue posible crear la cuenta.');
       const next = searchParams.get('next');

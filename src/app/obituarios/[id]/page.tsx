@@ -76,7 +76,7 @@ export default function ObituarioDetallePage() {
 
     const cargarObituario = async () => {
       try {
-        const response = await fetch('/api/obituarios', { cache: 'no-store' });
+        const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/obituarios`, { cache: 'no-store' });
         const result = (await response.json()) as { success?: boolean; data?: Obituary[] };
         const encontrado = response.ok && result.success && Array.isArray(result.data)
           ? result.data.find((item) => item.id === obituaryId) || null
@@ -322,7 +322,7 @@ export default function ObituarioDetallePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
               <Button
                 onClick={() => {
-                  window.location.href = '/proximamente';
+                  window.location.href = `${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ''}/proximamente`;
                 }}
                 variant="primary"
                 className="w-full h-14 text-lg bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600"

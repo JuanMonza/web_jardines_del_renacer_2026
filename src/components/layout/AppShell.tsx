@@ -8,6 +8,7 @@ import Preloader from '@/components/layout/Preloader';
 import MonthlyGiveawayPopup from '@/components/layout/MonthlyGiveawayPopup';
 import CookieConsentBanner from '@/components/legal/CookieConsentBanner';
 import TrainingEnvironmentBanner from '@/components/training/TrainingEnvironmentBanner';
+import TrainingExternalActionGuard from '@/components/training/TrainingExternalActionGuard';
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -19,6 +20,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const hideLayoutChrome = isDashboard || isLoginRoute;
   return (
     <>
+      <TrainingExternalActionGuard />
       {!isDashboard && <TrainingEnvironmentBanner />}
       <Preloader />
       {!hideLayoutChrome && <MonthlyGiveawayPopup />}

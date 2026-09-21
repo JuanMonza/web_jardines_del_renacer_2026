@@ -68,7 +68,7 @@ export default function ClientLoginPage() {
     }
 
     try {
-      const response = await fetch("/api/iam/client/login", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/iam/client/login`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({

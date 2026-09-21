@@ -2,6 +2,10 @@
 
 const nextConfig = {
   reactStrictMode: true,
+  // El despliegue de capacitación se compila aparte; local sigue en :3000 sin prefijo.
+  ...(process.env.APP_ENV === 'training' && process.env.TRAINING_BASE_PATH
+    ? { basePath: process.env.TRAINING_BASE_PATH, distDir: '.next-training' }
+    : {}),
 
   experimental: {
     serverComponentsExternalPackages: ['mysql2'],

@@ -1,3 +1,4 @@
+import { trainingCookiePath } from '@/lib/training-environment';
 import { NextRequest, NextResponse } from 'next/server';
 import {
   hashCandidateEmailAccessCode,
@@ -52,7 +53,7 @@ export async function POST(request: NextRequest) {
     const passwordResetAuthorized = purpose === 'password_reset';
     const token = await signVacantesCandidateJwt({ candidateId: candidate.id, documentNumber: candidate.documento, email: candidate.email, name, role: 'vacantes_usuario', passwordResetAuthorized });
     const response = NextResponse.json({ success: true, data: { email: candidate.email, name, passwordResetAuthorized } });
-    response.cookies.set(CANDIDATE_SESSION_COOKIE_NAME, token, { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', path: '/', maxAge: CANDIDATE_SESSION_MAX_AGE_SECONDS });
+    response.cookies.set(CANDIDATE_SESSION_COOKIE_NAME, token, { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', path: trainingCookiePath(), maxAge: CANDIDATE_SESSION_MAX_AGE_SECONDS });
     return response;
   } catch (error) {
     console.error('Error en POST /api/postulantes/acceso-correo/verificar:', error);

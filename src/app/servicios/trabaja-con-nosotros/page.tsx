@@ -177,7 +177,7 @@ export default function TrabajaConNosotrosPage() {
   useEffect(() => {
     async function fetchVacancies() {
       try {
-        const response = await fetch('/api/vacantes', { cache: 'no-store' });
+        const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes`, { cache: 'no-store' });
         if (!response.ok) {
           throw new Error('No se pudieron cargar las vacantes.');
         }

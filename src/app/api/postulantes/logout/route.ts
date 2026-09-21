@@ -1,3 +1,4 @@
+import { trainingCookiePath } from '@/lib/training-environment';
 import { NextResponse } from 'next/server';
 import { CANDIDATE_SESSION_COOKIE_NAME } from '@/lib/candidateAuth';
 
@@ -9,7 +10,7 @@ export async function POST() {
     httpOnly: true,
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',
-    path: '/',
+    path: trainingCookiePath(),
     maxAge: 0,
   });
   return response;

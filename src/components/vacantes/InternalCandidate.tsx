@@ -21,7 +21,7 @@ export default function InternalCandidate(){
   useEffect(()=>{
     if(!open||vacancies.length)return;
     setLoadingVacancies(true);
-    void Promise.all([fetch("/api/vacantes?admin=1",{cache:"no-store"}),fetch("/api/vacantes/postulante-interno",{cache:"no-store"})])
+    void Promise.all([fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes?admin=1`,{cache:"no-store"}),fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes/postulante-interno`,{cache:"no-store"})])
       .then(async([vacancyResponse,profileResponse])=>{
         if(!vacancyResponse.ok||!profileResponse.ok)throw new Error();
         const vacancyData=await vacancyResponse.json(),profileData=await profileResponse.json();
@@ -33,7 +33,7 @@ export default function InternalCandidate(){
     if(!open||mode!=="reuse"||candidateSearch.trim().length<2){setCandidates([]);setSearching(false);return;}
     const controller=new AbortController(),timer=setTimeout(()=>{
       setSearching(true);
-      void fetch(`/api/vacantes/postulante-interno?q=${encodeURIComponent(candidateSearch.trim())}`,{cache:"no-store",signal:controller.signal})
+      void fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes/postulante-interno?q=${encodeURIComponent(candidateSearch.trim())}`,{cache:"no-store",signal:controller.signal})
         .then(async response=>{const result=await response.json();if(!response.ok)throw new Error(result.message);setCandidates(Array.isArray(result.data)?result.data:[]);if(Array.isArray(result.professions))setProfessions(result.professions);})
         .catch(error=>{if(error instanceof Error&&error.name!=="AbortError")setNotice({tone:"error",text:error.message||"No fue posible buscar perfiles."});})
         .finally(()=>setSearching(false));
@@ -49,7 +49,7 @@ export default function InternalCandidate(){
     if(fields.password!==fields.passwordConfirmation){setNotice({tone:"error",text:"Las contraseñas no coinciden."});return;}
     setBusy(true);
     try{
-      const response=await fetch("/api/vacantes/postulante-interno",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(fields)});
+      const response=await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes/postulante-interno`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(fields)});
       const result=await response.json() as {message?:string;data?:{vacancyTitle?:string|null;welcomeEmailSent?:boolean;applicationEmailSent?:boolean}};
       if(!response.ok)throw new Error(result.message||"No fue posible guardar la cuenta.");
       const assigned=Boolean(result.data?.vacancyTitle),expectedEmails=assigned?2:1,sentEmails=Number(Boolean(result.data?.welcomeEmailSent))+Number(assigned&&result.data?.applicationEmailSent);
@@ -63,7 +63,7 @@ export default function InternalCandidate(){
     if(!selectedCandidateId||!reuseVacancyId){setNotice({tone:"error",text:"Selecciona un perfil guardado y una vacante disponible."});return;}
     setBusy(true);
     try{
-      const response=await fetch("/api/vacantes/postulante-interno",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({existingCandidateId:selectedCandidateId,vacancyId:reuseVacancyId})});
+      const response=await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes/postulante-interno`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({existingCandidateId:selectedCandidateId,vacancyId:reuseVacancyId})});
       const result=await response.json() as {message?:string;data?:{vacancyTitle?:string;applicationEmailSent?:boolean}};
       if(!response.ok)throw new Error(result.message||"No fue posible asignar el perfil.");
       setNotice({tone:"success",text:`Perfil reutilizado y asignado a “${result.data?.vacancyTitle}”. ${result.data?.applicationEmailSent?"El correo de postulación fue enviado.":"La asignación quedó guardada; el correo está pendiente por configuración SMTP."}`});
@@ -75,7 +75,7 @@ export default function InternalCandidate(){
     if(!editingDocumentId||!/^\d{6,20}$/.test(newDocumentNumber)||!adminPassword||busy)return;
     setBusy(true);setNotice(null);
     try{
-      const response=await fetch(`/api/vacantes/postulante-interno/${editingDocumentId}/documento`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({documentNumber:newDocumentNumber,password:adminPassword})});
+      const response=await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes/postulante-interno/${editingDocumentId}/documento`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({documentNumber:newDocumentNumber,password:adminPassword})});
       const result=await response.json() as {message?:string;documentNumber?:string};
       if(!response.ok)throw new Error(result.message||"No fue posible corregir la cédula.");
       setCandidates(current=>current.map(candidate=>candidate.id===editingDocumentId?{...candidate,documento:result.documentNumber||newDocumentNumber}:candidate));

@@ -56,7 +56,7 @@ export default function PlanesPage() {
         imageAlt="Planes funerarios Jardines del Renacer"
       >
         <div className="flex flex-col gap-3 sm:flex-row">
-          <Button as="a" href="/cotizar" variant="primary" size="lg" className="w-full sm:w-auto">
+          <Button as="a" href={`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ''}/cotizar`} variant="primary" size="lg" className="w-full sm:w-auto">
             Cotizar plan
           </Button>
           <a
@@ -120,7 +120,7 @@ export default function PlanesPage() {
                 <PlanFlipCard
                   {...plan}
                   onQuote={(planId) => {
-                    window.location.href = `/cotizar?plan=${planId}`;
+                    window.location.href = `${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ''}/cotizar?plan=${planId}`;
                   }}
                 />
               </FadeIn>

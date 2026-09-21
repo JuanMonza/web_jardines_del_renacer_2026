@@ -18,7 +18,7 @@ function ResetContent() {
     if (password !== confirmPassword) { setMessage('Las contraseñas no coinciden.'); return; }
     setLoading(true);
     try {
-      const response = await fetch('/api/postulantes/cambiar-password', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/postulantes/cambiar-password`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ resetToken: searchParams.get('token'), newPassword: password }),
       });

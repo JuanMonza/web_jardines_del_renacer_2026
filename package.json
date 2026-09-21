@@ -7,6 +7,8 @@
   "scripts": {
     "dev": "next dev",
     "dev:training": "node scripts/run-training-dev.js",
+    "build:training:vps": "node scripts/run-training-vps.js build",
+    "start:training:vps": "node scripts/run-training-vps.js start",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",

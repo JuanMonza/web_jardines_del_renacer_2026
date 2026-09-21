@@ -20,7 +20,7 @@ import Link from 'next/link';
 export default function SorteosPage() {
     const [managedGiveaways, setManagedGiveaways] = useState<readonly Giveaway[]>(giveawaysData);
     useEffect(() => {
-        fetch('/api/sorteos/public')
+        fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/sorteos/public`)
             .then(async (response) => response.ok ? response.json() : null)
             .then((payload) => { if (payload?.data?.length) setManagedGiveaways(payload.data as Giveaway[]); })
             .catch(() => undefined);

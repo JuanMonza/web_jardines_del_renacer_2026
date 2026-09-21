@@ -1,0 +1,25 @@
+[Unit]
+Description=Jardines del Renacer - ambiente de capacitacion
+Wants=network-online.target docker.service
+After=network-online.target docker.service
+
+[Service]
+Type=simple
+User=jdr-training
+Group=jdr-training
+WorkingDirectory=/opt/jdr-training
+Environment=NODE_ENV=production
+Environment=NEXT_TELEMETRY_DISABLED=1
+ExecStart=/usr/bin/node /opt/jdr-training/scripts/run-training-vps.js start
+Restart=on-failure
+RestartSec=5
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/opt/jdr-training/.next-training /opt/jdr-training/public/uploads
+InaccessiblePaths=/var/www/jardines-renacer /var/www/aura /root
+
+[Install]
+WantedBy=multi-user.target

@@ -136,7 +136,7 @@ export default function DashboardTalleresPage() {
   const load = async () => {
     setLoading(true);
     try {
-      const r = await fetch("/api/admin/talleres");
+      const r = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/admin/talleres`);
       const p = await r.json();
       if (!r.ok) throw new Error(p.message);
       setTalleres(p.data.talleres);
@@ -160,7 +160,7 @@ export default function DashboardTalleresPage() {
   const loadAudit = async () => {
     setLoadingAudit(true);
     try {
-      const response = await fetch("/api/admin/talleres/auditoria");
+      const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/admin/talleres/auditoria`);
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.message);
       setAuditWorkshops(payload.data.workshops || []);
@@ -208,7 +208,7 @@ export default function DashboardTalleresPage() {
     setSaving(true);
     setMessage("");
     try {
-      const r = await fetch("/api/admin/talleres", {
+      const r = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/admin/talleres`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ action, ...body }),
@@ -292,7 +292,7 @@ export default function DashboardTalleresPage() {
     if (!pendingDelete || deleting) return;
     setDeleting(true);
     try {
-      const r = await fetch("/api/admin/talleres", {
+      const r = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/admin/talleres`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ action: pendingDelete.action, id: pendingDelete.id }),
@@ -315,8 +315,7 @@ export default function DashboardTalleresPage() {
   const openRegistrations = async (taller: Taller) => {
     setRegistrationWorkshop(taller);
     setRegistrations([]);
-    const response = await fetch(
-      `/api/admin/talleres/${taller.id}/inscripciones`,
+    const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/admin/talleres/${taller.id}/inscripciones`,
     );
     const result = await response.json();
     if (response.ok && result.success) setRegistrations(result.data || []);
@@ -327,8 +326,7 @@ export default function DashboardTalleresPage() {
     changes: Partial<Registration>,
   ): Promise<boolean> => {
     if (!registrationWorkshop) return false;
-    const response = await fetch(
-      `/api/admin/talleres/${registrationWorkshop.id}/inscripciones`,
+    const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/admin/talleres/${registrationWorkshop.id}/inscripciones`,
       {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -364,7 +362,7 @@ export default function DashboardTalleresPage() {
   const addManualRegistration = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!registrationWorkshop) return;
-    const response = await fetch(`/api/admin/talleres/${registrationWorkshop.id}/inscripciones`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/admin/talleres/${registrationWorkshop.id}/inscripciones`, {
       method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(manualRegistration),
     });
     const result = await response.json();

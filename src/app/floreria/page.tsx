@@ -321,7 +321,7 @@ export default function FloreriaPage() {
     setTrackingFeedback('Preparando pago seguro...');
 
     try {
-      const response = await fetch('/api/floreria/pagos/crear', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/floreria/pagos/crear`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

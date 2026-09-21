@@ -65,7 +65,7 @@ export default function SiempreContigoPage() {
                 <h3 className="text-2xl font-display text-text mb-3">Vista previa del módulo 360</h3>
                 <div className="relative overflow-hidden rounded-2xl border border-primary/15 bg-black/70 h-64 md:h-80">
                   <Image
-                    src="/img_1 (21).webp"
+                    src={`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/img_1 (21).webp`}
                     alt="Vista previa Siempre Contigo"
                     fill
                     className="object-cover opacity-45"

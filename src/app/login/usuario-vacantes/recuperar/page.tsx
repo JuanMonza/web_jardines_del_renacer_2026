@@ -27,7 +27,7 @@ function RecuperarContrasenaContent() {
     if (!normalizedEmail.includes('@')) { setError('Ingresa el correo asociado a tu cuenta.'); return; }
     setLoading(true);
     try {
-      const response = await fetch('/api/postulantes/acceso-correo/solicitar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: normalizedEmail }) });
+      const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/postulantes/acceso-correo/solicitar`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: normalizedEmail }) });
       const result = await response.json() as { success?: boolean; message?: string };
       if (!response.ok || !result.success) throw new Error(result.message || 'No pudimos enviar el código.');
       setEmail(normalizedEmail); setStep('code'); setMessage('Si el correo está registrado como postulante, recibirás un código de seguridad. Revisa también Spam y Promociones.');
@@ -39,7 +39,7 @@ function RecuperarContrasenaContent() {
     if (code.length !== 6) { setError('Ingresa el código de 6 dígitos.'); return; }
     setLoading(true);
     try {
-      const response = await fetch('/api/postulantes/acceso-correo/verificar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, code, purpose: 'password_reset' }) });
+      const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/postulantes/acceso-correo/verificar`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, code, purpose: 'password_reset' }) });
       const result = await response.json() as { success?: boolean; message?: string };
       if (!response.ok || !result.success) throw new Error(result.message || 'No pudimos validar el código.');
       router.replace(`/login/usuario-vacantes/restablecer?next=${encodeURIComponent(nextPath)}`); router.refresh();
