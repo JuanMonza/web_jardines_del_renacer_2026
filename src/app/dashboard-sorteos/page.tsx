@@ -1,10 +1,24 @@
 "use client";
 
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
-import { Gift, Plus, UserRoundCheck, X } from "lucide-react";
+import {
+  BadgeCheck,
+  Gift,
+  Pencil,
+  Plus,
+  Trash2,
+  UserRoundCheck,
+  X,
+} from "lucide-react";
 import TrainingHint from "@/components/training/TrainingHint";
 
-type Winner = { nombre: string; numero_contrato: string; validado: boolean };
+type Winner = {
+  id: number;
+  posicion: number;
+  nombre: string;
+  numero_contrato: string;
+  validado: boolean;
+};
 type Sorteo = {
   id: number;
   titulo: string;
@@ -12,6 +26,7 @@ type Sorteo = {
   fecha_sorteo: string;
   premio: string | null;
   imagen: string | null;
+  terminos_url: string | null;
   estado: string;
   participantes: { total: number; habilitados: number };
   ganadores: Winner[];
@@ -41,8 +56,8 @@ function readImage(
   r.readAsDataURL(file);
 }
 const emptyWinner = {
-  nombres: "",
-  apellidos: "",
+  id: null as number | null,
+  nombre: "",
   numeroContrato: "",
 };
 export default function DashboardSorteosPage() {
@@ -109,7 +124,8 @@ export default function DashboardSorteosPage() {
     if (
       await request("winner", {
         sorteoId: winnerFor.id,
-        nombre: `${winnerForm.nombres} ${winnerForm.apellidos}`.trim(),
+        winnerId: winnerForm.id,
+        nombre: winnerForm.nombre,
         numeroContrato: winnerForm.numeroContrato,
       })
     ) {
@@ -123,6 +139,26 @@ export default function DashboardSorteosPage() {
   const validate = async (s: Sorteo) => {
     if (await request("validate", { id: s.id, sorteoId: s.id }))
       setMessage("Ganador validado y resultado publicado.");
+  };
+  const removeWinner = async (s: Sorteo, winner: Winner) => {
+    if (!window.confirm(`¿Quitar a ${winner.nombre} de “${s.titulo}”?`)) return;
+    if (
+      await request("remove_winner", {
+        sorteoId: s.id,
+        winnerId: winner.id,
+      })
+    )
+      setMessage("Ganador retirado. Ya puedes registrar uno nuevo.");
+  };
+  const removeSorteo = async (s: Sorteo) => {
+    if (
+      !window.confirm(
+        `¿Eliminar “${s.titulo}”? Dejará de mostrarse en el panel y en la página pública.`,
+      )
+    )
+      return;
+    if (await request("delete", { id: s.id }))
+      setMessage("Incentivo eliminado correctamente.");
   };
   return (
     <div className="p-5 md:p-8">
@@ -141,6 +177,10 @@ export default function DashboardSorteosPage() {
               publicación de ganadores con trazabilidad.
             </p>
           </div>
+          <TrainingHint
+            text="Crea un incentivo o sorteo nuevo. Podrás definir nombre, premio, fecha, estado, descripción, términos e imagen."
+            className="inline-flex"
+          >
           <button
             onClick={() => {
               setEditing(null);
@@ -152,6 +192,7 @@ export default function DashboardSorteosPage() {
             <Plus className="mr-2 inline h-4 w-4" />
             Nuevo incentivo
           </button>
+          </TrainingHint>
         </div>
         <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
           <Metric label="Incentivos activos" value={active} />
@@ -221,19 +262,64 @@ export default function DashboardSorteosPage() {
                     value={s.participantes.habilitados}
                   />
                 </div>
-                {s.ganadores[0] ? (
-                  <div className="mt-4 rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800">
-                    <b>Ganador:</b> {s.ganadores[0].nombre} · Contrato{" "}
-                    {s.ganadores[0].numero_contrato}
-                    <br />
-                    <span className="text-xs">
-                      {s.ganadores[0].validado
-                        ? "Validado y publicado"
-                        : "Pendiente de validación"}
-                    </span>
+                {s.ganadores.length > 0 && (
+                  <div className="mt-4 space-y-2">
+                    {s.ganadores.map((winner) => (
+                      <div
+                        key={winner.id}
+                        className="rounded-xl border border-emerald-100 bg-emerald-50 p-3 text-sm text-emerald-800"
+                      >
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                          <div>
+                            <b>Ganador {winner.posicion}:</b> {winner.nombre}
+                            <br />
+                            <span className="text-xs">
+                              Contrato {winner.numero_contrato} · {winner.validado
+                                ? "Validado y publicado"
+                                : "Pendiente de validación"}
+                            </span>
+                          </div>
+                          <div className="flex gap-1.5">
+                            <TrainingHint
+                              text="Corrige el nombre o el contrato de este ganador sin modificar los demás."
+                              className="inline-flex"
+                            >
+                              <button
+                                onClick={() => {
+                                  setWinnerFor(s);
+                                  setWinnerForm({
+                                    id: winner.id,
+                                    nombre: winner.nombre,
+                                    numeroContrato: winner.numero_contrato,
+                                  });
+                                }}
+                                className="rounded-lg border border-amber-200 bg-white px-2 py-1 text-xs font-bold text-amber-800"
+                              >
+                                Editar
+                              </button>
+                            </TrainingHint>
+                            <TrainingHint
+                              text="Retira solamente este ganador; los demás permanecen registrados."
+                              className="inline-flex"
+                            >
+                              <button
+                                onClick={() => removeWinner(s, winner)}
+                                className="rounded-lg border border-rose-200 bg-white px-2 py-1 text-xs font-bold text-rose-700"
+                              >
+                                Quitar
+                              </button>
+                            </TrainingHint>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ) : null}
+                )}
                 <div className="mt-4 flex flex-wrap gap-2">
+                  <TrainingHint
+                    text="Editar permite corregir los datos del incentivo, cambiar o quitar su imagen y actualizar su estado."
+                    className="inline-flex"
+                  >
                   <button
                     onClick={() => {
                       setEditing(s);
@@ -243,16 +329,21 @@ export default function DashboardSorteosPage() {
                         fechaSorteo: s.fecha_sorteo.slice(0, 16),
                         premio: s.premio || "",
                         estado: s.estado,
-                        terminosUrl: "",
+                        terminosUrl: s.terminos_url || "",
                         imagen: s.imagen,
                       });
                       setShowForm(true);
                     }}
                     className="rounded-lg border border-[#a7c1e7] px-3 py-2 text-sm font-bold text-[#28569a]"
                   >
+                    <Pencil className="mr-1 inline h-3.5 w-3.5" />
                     Editar
                   </button>
-                  {!s.ganadores[0] && (
+                  </TrainingHint>
+                  <TrainingHint
+                    text="Agrega uno o varios ganadores. Cada registro conserva su nombre, contrato, posición y validación."
+                    className="inline-flex"
+                  >
                     <button
                       onClick={() => {
                         setWinnerFor(s);
@@ -261,17 +352,35 @@ export default function DashboardSorteosPage() {
                       className="rounded-lg bg-[#234d8d] px-3 py-2 text-sm font-bold text-white disabled:opacity-40"
                     >
                       <UserRoundCheck className="mr-1 inline h-3.5 w-3.5" />
-                      Registrar ganador
+                      {s.ganadores.length ? "Agregar otro ganador" : "Registrar ganador"}
                     </button>
-                  )}
-                  {s.ganadores[0] && !s.ganadores[0].validado && (
+                  </TrainingHint>
+                  {s.ganadores.some((winner) => !winner.validado) && (
+                    <TrainingHint
+                      text="Confirma que el ganador cumple las condiciones y publica el resultado en la sección pública."
+                      className="inline-flex"
+                    >
                     <button
                       onClick={() => validate(s)}
                       className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-bold text-white"
                     >
+                      <BadgeCheck className="mr-1 inline h-3.5 w-3.5" />
                       Validar y publicar
                     </button>
+                    </TrainingHint>
                   )}
+                  <TrainingHint
+                    text="Elimina el incentivo del panel y evita que continúe visible públicamente. Solicita confirmación antes de hacerlo."
+                    className="inline-flex"
+                  >
+                  <button
+                    onClick={() => removeSorteo(s)}
+                    className="rounded-lg border border-rose-200 px-3 py-2 text-sm font-bold text-rose-700 hover:bg-rose-50"
+                  >
+                    <Trash2 className="mr-1 inline h-3.5 w-3.5" />
+                    Eliminar
+                  </button>
+                  </TrainingHint>
                 </div>
               </div>
             </article>
@@ -348,6 +457,19 @@ export default function DashboardSorteosPage() {
                   }
                 />
               </label>
+              <Field
+                label="Enlace de términos y condiciones"
+                type="url"
+                value={form.terminosUrl}
+                onChange={(v) => setForm({ ...form, terminosUrl: v })}
+              />
+              <div className="flex items-end text-xs leading-5 text-[#607a9d]">
+                Opcional. Permite conservar el enlace oficial aplicable al incentivo.
+              </div>
+              <TrainingHint
+                text="Selecciona una imagen para agregarla o reemplazar la actual. Admite JPG, PNG o WEBP de máximo 2 MB."
+                className="md:col-span-2 block"
+              >
               <label className="md:col-span-2 text-sm font-bold text-[#31547d]">
                 Imagen del premio (máx. 2 MB)
                 <input
@@ -359,6 +481,7 @@ export default function DashboardSorteosPage() {
                   }
                 />
               </label>
+              </TrainingHint>
               {form.imagen && (
                 <div className="md:col-span-2 overflow-hidden rounded-2xl border border-[#d8e3f5] bg-white/70 p-3 shadow-sm">
                   <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
@@ -370,6 +493,10 @@ export default function DashboardSorteosPage() {
                         Así se verá el premio antes de guardarlo.
                       </p>
                     </div>
+                    <TrainingHint
+                      text="Retira la imagen actual. El cambio queda definitivo al guardar el incentivo."
+                      className="inline-flex"
+                    >
                     <button
                       type="button"
                       onClick={() => setForm({ ...form, imagen: null })}
@@ -377,6 +504,7 @@ export default function DashboardSorteosPage() {
                     >
                       Quitar imagen
                     </button>
+                    </TrainingHint>
                   </div>
                   <img
                     src={form.imagen}
@@ -390,9 +518,14 @@ export default function DashboardSorteosPage() {
                 </div>
               )}
             </div>
-            <button className="mt-5 rounded-xl bg-[#234d8d] px-5 py-3 font-bold text-white">
+            <TrainingHint
+              text="Guarda todos los cambios del incentivo, incluida la imagen agregada, reemplazada o retirada."
+              className="mt-5 inline-flex"
+            >
+            <button className="rounded-xl bg-[#234d8d] px-5 py-3 font-bold text-white">
               Guardar incentivo
             </button>
+            </TrainingHint>
           </form>
         </div>
       )}
@@ -410,7 +543,7 @@ export default function DashboardSorteosPage() {
               <X />
             </button>
             <h2 className="text-xl font-black text-[#173c70]">
-              Registrar ganador
+              {winnerForm.id ? "Editar ganador" : "Registrar ganador"}
             </h2>
             <p className="mt-2 text-sm text-[#5d7698]">
               Ingresa los datos confirmados para <b>{winnerFor.titulo}</b>. El
@@ -418,19 +551,9 @@ export default function DashboardSorteosPage() {
             </p>
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
               <Field
-                label="Nombres"
-                value={winnerForm.nombres}
-                onChange={(nombres) =>
-                  setWinnerForm({ ...winnerForm, nombres })
-                }
-                required
-              />
-              <Field
-                label="Apellidos"
-                value={winnerForm.apellidos}
-                onChange={(apellidos) =>
-                  setWinnerForm({ ...winnerForm, apellidos })
-                }
+                label="Nombre completo"
+                value={winnerForm.nombre}
+                onChange={(nombre) => setWinnerForm({ ...winnerForm, nombre })}
                 required
               />
               <Field
@@ -442,9 +565,14 @@ export default function DashboardSorteosPage() {
                 required
               />
             </div>
-            <button className="mt-5 w-full rounded-xl bg-[#234d8d] px-5 py-3 font-bold text-white shadow-lg shadow-[#234d8d]/25">
-              Guardar ganador
-            </button>
+            <TrainingHint
+              text="Guarda el ganador o sus correcciones. El resultado no será público hasta usar Validar y publicar."
+              className="mt-5 block"
+            >
+              <button className="w-full rounded-xl bg-[#234d8d] px-5 py-3 font-bold text-white shadow-lg shadow-[#234d8d]/25">
+                Guardar ganador
+              </button>
+            </TrainingHint>
           </form>
         </div>
       )}

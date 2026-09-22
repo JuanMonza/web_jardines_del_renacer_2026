@@ -15,10 +15,12 @@ type SorteoRow = {
   fecha_sorteo: string;
   premio: string | null;
   imagen: string | null;
+  terminos_url: string | null;
   estado: string;
   created_at: string;
 };
 type WinnerRow = {
+  id: number;
   sorteo_id: number;
   participante_id: number;
   posicion: number;
@@ -39,7 +41,7 @@ function image(value: unknown) {
 }
 async function data() {
   const sorteos = await query<SorteoRow>(
-    "SELECT id,titulo,descripcion,fecha_sorteo,premio,imagen,estado,created_at FROM sorteos WHERE deleted_at IS NULL ORDER BY fecha_sorteo DESC",
+    "SELECT id,titulo,descripcion,fecha_sorteo,premio,imagen,terminos_url,estado,created_at FROM sorteos WHERE deleted_at IS NULL ORDER BY fecha_sorteo DESC",
   );
   const participants = await query<{
     sorteo_id: number;
@@ -49,7 +51,7 @@ async function data() {
     "SELECT sorteo_id,COUNT(*) total,SUM(habilitado=TRUE) habilitados FROM sorteo_participantes GROUP BY sorteo_id",
   );
   const winners = await query<WinnerRow>(
-    "SELECT g.sorteo_id,g.participante_id,g.posicion,g.validado,p.nombre,p.numero_contrato,g.seleccionado_at FROM sorteo_ganadores g INNER JOIN sorteo_participantes p ON p.id=g.participante_id ORDER BY g.posicion",
+    "SELECT g.id,g.sorteo_id,g.participante_id,g.posicion,g.validado,p.nombre,p.numero_contrato,g.seleccionado_at FROM sorteo_ganadores g INNER JOIN sorteo_participantes p ON p.id=g.participante_id ORDER BY g.posicion",
   );
   return sorteos.map((sorteo) => ({
     ...sorteo,
@@ -100,14 +102,15 @@ export async function POST(request: NextRequest) {
         ? "giveaways.draw"
         : action === "delete"
           ? "giveaways.delete"
-          : action === "winner" ||
-              action === "save" ||
-              action === "participants" ||
-              action === "validate"
-            ? action === "winner" || body.id
+          : action === "save"
+            ? body.id
               ? "giveaways.update"
               : "giveaways.create"
-            : "";
+            : action === "participants"
+              ? "giveaways.create"
+              : ["winner", "remove_winner", "validate"].includes(action)
+                ? "giveaways.update"
+                : "";
     const session = permission
       ? await requireAdminPermission(
           request.cookies.get(ADMIN_SESSION_COOKIE)?.value,
@@ -133,26 +136,38 @@ export async function POST(request: NextRequest) {
           { message: "Completa nombre y fecha del sorteo." },
           { status: 422 },
         );
+      const submittedImage = image(body.imagen);
+      if (body.imagen != null && !submittedImage)
+        return NextResponse.json(
+          { message: "La imagen debe ser JPG, PNG o WEBP y pesar máximo 2 MB." },
+          { status: 422 },
+        );
       const id = Number(body.id);
       const values = [
         title,
         text(body.descripcion, 4000) || null,
         date,
         text(body.premio, 180) || null,
-        image(body.imagen),
+        submittedImage,
         estado,
         text(body.terminosUrl, 255) || null,
         session.userId,
       ];
       if (id > 0)
         await execute(
-          "UPDATE sorteos SET titulo=?,descripcion=?,fecha_sorteo=?,premio=?,imagen=COALESCE(?,imagen),estado=?,terminos_url=?,updated_by=? WHERE id=? AND deleted_at IS NULL",
+          "UPDATE sorteos SET titulo=?,descripcion=?,fecha_sorteo=?,premio=?,imagen=?,estado=?,terminos_url=?,updated_by=? WHERE id=? AND deleted_at IS NULL",
           [...values, id],
         );
       else
         await execute(
           "INSERT INTO sorteos (titulo,descripcion,fecha_sorteo,premio,imagen,estado,terminos_url,created_by,updated_by) VALUES (?,?,?,?,?,?,?,?,?)",
           [...values, session.userId],
+        );
+      const savedId = id > 0 ? id : null;
+      if (savedId)
+        await execute(
+          "INSERT INTO sorteo_activity_logs (sorteo_id,admin_user_id,accion,detalle) VALUES (?,?,?,?)",
+          [savedId, session.userId, "SORTEO_ACTUALIZADO", "Información general e imagen actualizadas desde el panel de Mercadeo"],
         );
     } else if (action === "participants") {
       const sorteoId = Number(body.sorteoId);
@@ -191,6 +206,7 @@ export async function POST(request: NextRequest) {
       );
     } else if (action === "winner") {
       const sorteoId = Number(body.sorteoId),
+        winnerId = Number(body.winnerId),
         nombre = text(body.nombre, 180),
         numeroContrato = text(body.numeroContrato, 80);
       if (!(sorteoId > 0) || !nombre || !numeroContrato)
@@ -207,13 +223,30 @@ export async function POST(request: NextRequest) {
         [sorteoId, numeroContrato],
       );
       if (!participant[0]) throw Error("No se pudo registrar el ganador.");
-      await execute("DELETE FROM sorteo_ganadores WHERE sorteo_id=?", [
-        sorteoId,
-      ]);
-      await execute(
-        "INSERT INTO sorteo_ganadores (sorteo_id,participante_id,posicion,seleccionado_por) VALUES (?,?,1,?)",
-        [sorteoId, participant[0].id, session.userId],
+      const duplicateWinner = await query<{ id: number }>(
+        "SELECT id FROM sorteo_ganadores WHERE sorteo_id=? AND participante_id=? AND id<>? LIMIT 1",
+        [sorteoId, participant[0].id, winnerId > 0 ? winnerId : 0],
       );
+      if (duplicateWinner[0])
+        return NextResponse.json(
+          { message: "Esta persona ya está registrada como ganadora del incentivo." },
+          { status: 409 },
+        );
+      if (winnerId > 0) {
+        await execute(
+          "UPDATE sorteo_ganadores SET participante_id=?,validado=FALSE,validado_por=NULL,validado_at=NULL,seleccionado_por=?,seleccionado_at=NOW() WHERE id=? AND sorteo_id=?",
+          [participant[0].id, session.userId, winnerId, sorteoId],
+        );
+      } else {
+        const positions = await query<{ next_position: number }>(
+          "SELECT COALESCE(MAX(posicion),0)+1 next_position FROM sorteo_ganadores WHERE sorteo_id=?",
+          [sorteoId],
+        );
+        await execute(
+          "INSERT INTO sorteo_ganadores (sorteo_id,participante_id,posicion,seleccionado_por) VALUES (?,?,?,?)",
+          [sorteoId, participant[0].id, positions[0]?.next_position ?? 1, session.userId],
+        );
+      }
       await execute(
         "UPDATE sorteos SET estado='CERRADO',updated_by=? WHERE id=?",
         [session.userId, sorteoId],
@@ -223,8 +256,35 @@ export async function POST(request: NextRequest) {
         [
           sorteoId,
           session.userId,
-          "GANADOR_REGISTRADO_MANUALMENTE",
-          `Ganador registrado manualmente: ${nombre} · Contrato ${numeroContrato}`,
+          winnerId > 0
+            ? "GANADOR_ACTUALIZADO"
+            : "GANADOR_REGISTRADO_MANUALMENTE",
+          `${winnerId > 0 ? "Ganador actualizado" : "Ganador registrado manualmente"}: ${nombre} · Contrato ${numeroContrato}`,
+        ],
+      );
+    } else if (action === "remove_winner") {
+      const sorteoId = Number(body.sorteoId);
+      const winnerId = Number(body.winnerId);
+      if (!(sorteoId > 0) || !(winnerId > 0))
+        return NextResponse.json(
+          { message: "Sorteo inválido." },
+          { status: 422 },
+        );
+      await execute("DELETE FROM sorteo_ganadores WHERE id=? AND sorteo_id=?", [
+        winnerId,
+        sorteoId,
+      ]);
+      await execute(
+        "UPDATE sorteos SET estado='CERRADO',updated_by=? WHERE id=? AND deleted_at IS NULL",
+        [session.userId, sorteoId],
+      );
+      await execute(
+        "INSERT INTO sorteo_activity_logs (sorteo_id,admin_user_id,accion,detalle) VALUES (?,?,?,?)",
+        [
+          sorteoId,
+          session.userId,
+          "GANADOR_RETIRADO",
+          "El ganador fue retirado para permitir una nueva selección o corrección",
         ],
       );
     } else if (action === "draw") {

@@ -22,7 +22,7 @@ export default function SorteosPage() {
     useEffect(() => {
         fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/sorteos/public`)
             .then(async (response) => response.ok ? response.json() : null)
-            .then((payload) => { if (payload?.data?.length) setManagedGiveaways(payload.data as Giveaway[]); })
+            .then((payload) => { if (Array.isArray(payload?.data)) setManagedGiveaways(payload.data as Giveaway[]); })
             .catch(() => undefined);
     }, []);
     const { upcoming, next, past } = useMemo(() => {
@@ -31,7 +31,7 @@ export default function SorteosPage() {
             .filter((g) => new Date(g.date) > now)
             .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-        const pastGiveaways = giveawaysData
+        const pastGiveaways = managedGiveaways
             .filter((g) => new Date(g.date) <= now && g.winner)
             .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 

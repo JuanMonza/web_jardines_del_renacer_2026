@@ -13,12 +13,13 @@ export async function GET() {
       imagen: string | null;
       nombre: string | null;
       numero_contrato: string | null;
+      posicion: number | null;
     }>(
-      `SELECT s.id,s.titulo,s.descripcion,s.fecha_sorteo,s.imagen,p.nombre,p.numero_contrato FROM sorteos s LEFT JOIN sorteo_ganadores g ON g.sorteo_id=s.id AND g.validado=TRUE LEFT JOIN sorteo_participantes p ON p.id=g.participante_id WHERE s.estado IN ('PROGRAMADO','PUBLICADO') AND s.deleted_at IS NULL ORDER BY s.fecha_sorteo ASC`,
+      `SELECT s.id,s.titulo,s.descripcion,s.fecha_sorteo,s.imagen,p.nombre,p.numero_contrato,g.posicion FROM sorteos s LEFT JOIN sorteo_ganadores g ON g.sorteo_id=s.id AND g.validado=TRUE LEFT JOIN sorteo_participantes p ON p.id=g.participante_id WHERE s.estado IN ('PROGRAMADO','PUBLICADO') AND s.deleted_at IS NULL ORDER BY s.fecha_sorteo ASC,g.posicion ASC`,
     );
     return NextResponse.json({
       data: rows.map((row) => ({
-        id: `sorteo-${row.id}`,
+        id: `sorteo-${row.id}${row.posicion ? `-ganador-${row.posicion}` : ""}`,
         date: row.fecha_sorteo,
         title: repairMojibake(row.titulo),
         description: repairMojibake(row.descripcion),

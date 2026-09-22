@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { buildWhatsAppUrl } from '@/config/contact';
-import { giveawaysData } from '@/content/giveaways';
+import { Giveaway, giveawaysData } from '@/content/giveaways';
 import CountdownUnit from '@/components/ui/CountdownUnit';
 
 const PRELOADER_DURATION_MS = 2000;
@@ -14,10 +14,10 @@ const AUTO_CLOSE_MS = 20000;
  * Encuentra el próximo incentivo disponible basándose en la fecha actual.
  * @returns El objeto del próximo incentivo o null si no hay futuros.
  */
-function getNextGiveaway() {
+function getNextGiveaway(giveaways: readonly Giveaway[]) {
   const now = Date.now();
   return (
-    giveawaysData.find((giveaway) => new Date(giveaway.date).getTime() > now) ||
+    giveaways.find((giveaway) => new Date(giveaway.date).getTime() > now) ||
     null
   );
 }
@@ -40,9 +40,22 @@ function getTimeRemaining(targetDateIso: string) {
 export default function MonthlyGiveawayPopup() {
   const [isVisible, setIsVisible] = useState(false);
   const [progress, setProgress] = useState(100);
+  const [managedGiveaways, setManagedGiveaways] = useState<readonly Giveaway[]>(giveawaysData);
+
+  useEffect(() => {
+    fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/sorteos/public`)
+      .then(async (response) => response.ok ? response.json() : null)
+      .then((payload) => {
+        if (Array.isArray(payload?.data)) setManagedGiveaways(payload.data as Giveaway[]);
+      })
+      .catch(() => undefined);
+  }, []);
 
   // Obtiene dinámicamente el próximo incentivo
-  const nextGiveaway = useMemo(() => getNextGiveaway(), []);
+  const nextGiveaway = useMemo(
+    () => getNextGiveaway(managedGiveaways),
+    [managedGiveaways],
+  );
 
   const [timeRemaining, setTimeRemaining] = useState(() =>
     nextGiveaway ? getTimeRemaining(nextGiveaway.date) : null
@@ -62,7 +75,7 @@ export default function MonthlyGiveawayPopup() {
   );
 
   useEffect(() => {
-    if (!nextGiveaway) {
+    if (!nextGiveaway || !isVisible) {
       return;
     }
 
@@ -81,7 +94,16 @@ export default function MonthlyGiveawayPopup() {
       window.clearTimeout(closeTimer);
       window.clearInterval(progressTimer);
     };
-  }, [isVisible]);
+  }, [isVisible, nextGiveaway]);
+
+  useEffect(() => {
+    if (!nextGiveaway) return;
+    const openTimer = window.setTimeout(
+      () => setIsVisible(true),
+      PRELOADER_DURATION_MS + POPUP_DELAY_MS,
+    );
+    return () => window.clearTimeout(openTimer);
+  }, [nextGiveaway]);
 
   // Efecto para abrir el popup después de un retraso
   useEffect(() => {
@@ -97,10 +119,6 @@ export default function MonthlyGiveawayPopup() {
 
   // Si no hay próximos incentivos o el popup no es visible, no se muestra nada
   if (!nextGiveaway || !isVisible) return null;
-
-  if (!isVisible) {
-    return null;
-  }
 
   return (
     <div className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/60 p-3 backdrop-blur-sm sm:p-4">
