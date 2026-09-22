@@ -47,6 +47,16 @@ const trainingGeneralNavigation: AdminNavigationItem[] = [
   { href: '/dashboard/cotizaciones', label: 'Cotizaciones', icon: MessageSquare, permission: 'quotes.view' },
 ];
 
+const crossPanelNavigation: AdminNavigationItem[] = [
+  { href: '/dashboard', label: 'Panel Administración', icon: LayoutDashboard, permission: 'dashboard.admin.view' },
+  { href: '/dashboard-vacantes', label: 'Panel Talento humano', icon: BriefcaseBusiness, permission: 'dashboard.vacantes.view' },
+  { href: '/dashboard-aliados', label: 'Panel Aliados', icon: Handshake, permission: 'dashboard.aliados.view' },
+  { href: '/dashboard-sedes', label: 'Panel Sedes', icon: Building2, permission: 'dashboard.sedes.view' },
+  { href: '/dashboard-talleres', label: 'Panel Talleres', icon: UsersRound, permission: 'dashboard.talleres.view' },
+  { href: '/dashboard-sorteos', label: 'Panel Mercadeo', icon: BadgeCheck, permission: 'dashboard.sorteos.view' },
+  { href: '/dashboard/cotizaciones', label: 'Panel Cotizaciones', icon: MessageSquare, permission: 'quotes.view' },
+];
+
 export default function AdminGlassShell({ children, loginPath, workspace, navigation, requiredPermission }: AdminGlassShellProps) {
   const router = useRouter();
   const [user, setUser] = useState<SessionUser | null>(null);
@@ -61,7 +71,7 @@ export default function AdminGlassShell({ children, loginPath, workspace, naviga
         return response.json() as Promise<{ user: SessionUser }>;
       })
       .then(({ user: authenticatedUser }) => {
-        if (requiredPermission && !authenticatedUser.permissions?.includes(requiredPermission)) throw new Error('Sin permiso');
+        if (requiredPermission && !authenticatedUser.permissions?.includes(requiredPermission) && !authenticatedUser.permissions?.includes('system.manage')) throw new Error('Sin permiso');
         setUser(authenticatedUser);
         setCheckingAccess(false);
       })
@@ -81,8 +91,13 @@ export default function AdminGlassShell({ children, loginPath, workspace, naviga
     ? trainingGeneralNavigation
     : generalNavigation;
   const canManageSystem = user?.permissions?.includes('system.manage');
-  const allowedNavigation: AdminNavigationItem[] = (navigation ?? defaultNavigation)
+  const primaryNavigation = (navigation ?? defaultNavigation)
     .filter((item) => !item.permission || canManageSystem || user?.permissions?.includes(item.permission));
+  const additionalPanels = crossPanelNavigation.filter((panel) =>
+    (canManageSystem || user?.permissions?.includes(panel.permission || ''))
+    && !primaryNavigation.some((item) => item.href === panel.href || (panel.href === '/dashboard-sedes' && item.href === '/dashboard/sedes')),
+  );
+  const allowedNavigation: AdminNavigationItem[] = [...primaryNavigation, ...additionalPanels];
   return (
     <div className="admin-liquid-bg relative min-h-screen overflow-hidden p-2 sm:p-3">
       <div className="pointer-events-none absolute -top-32 right-[15%] h-[30rem] w-[30rem] rounded-full bg-[#94b9e8]/35 blur-3xl" />
