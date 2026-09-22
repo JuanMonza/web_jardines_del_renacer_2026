@@ -45,9 +45,14 @@ function prepareTrainingEnvironment({ schemaSource = false, vps = false } = {}) 
     }
     const adminSecret = process.env.TRAINING_AUTH_JWT_SECRET;
     const candidateSecret = process.env.TRAINING_CANDIDATE_JWT_SECRET;
+    const gatePassword = process.env.TRAINING_GATE_PASSWORD;
+    const gateSecret = process.env.TRAINING_GATE_SECRET;
     if (!adminSecret || adminSecret.length < 32 || !candidateSecret || candidateSecret.length < 32 ||
         adminSecret === productionAdminSecret || candidateSecret === productionCandidateSecret) {
       throw new Error("Define secretos JWT exclusivos de pruebas (mínimo 32 caracteres, diferentes de producción).");
+    }
+    if (!gatePassword || gatePassword.length < 12 || !gateSecret || gateSecret.length < 32) {
+      throw new Error("Define TRAINING_GATE_PASSWORD (mínimo 12 caracteres) y TRAINING_GATE_SECRET (mínimo 32 caracteres).");
     }
     process.env.AUTH_JWT_SECRET = adminSecret;
     process.env.CANDIDATE_JWT_SECRET = candidateSecret;

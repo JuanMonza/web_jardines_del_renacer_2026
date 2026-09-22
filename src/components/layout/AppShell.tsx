@@ -17,11 +17,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     pathname?.startsWith('/dashboard-aliados') ||
     pathname?.startsWith('/dashboard-vacantes');
   const isLoginRoute = pathname?.startsWith('/login');
-  const hideLayoutChrome = isDashboard || isLoginRoute;
+  const isTrainingAccess = pathname?.startsWith('/acceso-capacitacion');
+  const hideLayoutChrome = isDashboard || isLoginRoute || isTrainingAccess;
   return (
     <>
       <TrainingExternalActionGuard />
-      {!isDashboard && <TrainingEnvironmentBanner />}
+      {!isDashboard && !isTrainingAccess && <TrainingEnvironmentBanner />}
       <Preloader />
       {!hideLayoutChrome && <MonthlyGiveawayPopup />}
       {!hideLayoutChrome && <Navbar />}
