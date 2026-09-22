@@ -12,6 +12,21 @@ function environmentHeaders(response: NextResponse) {
   }
   return response;
 }
+
+function publicRequestOrigin(request: NextRequest) {
+  const forwardedHost = request.headers.get('x-forwarded-host')?.split(',')[0]?.trim();
+  const requestHost = request.headers.get('host')?.trim();
+  const candidateHost = forwardedHost || requestHost || request.nextUrl.host;
+  const host = /^[a-z0-9.-]+(?::\d+)?$/i.test(candidateHost)
+    ? candidateHost
+    : request.nextUrl.host;
+  const forwardedProtocol = request.headers.get('x-forwarded-proto')?.split(',')[0]?.trim();
+  const protocol = forwardedProtocol === 'http' || forwardedProtocol === 'https'
+    ? forwardedProtocol
+    : request.nextUrl.protocol.replace(':', '');
+  return `${protocol}://${host}`;
+}
+
 export async function middleware(request: NextRequest) {
   const training = isTrainingEnvironment();
   const basePath = training ? (process.env.TRAINING_BASE_PATH || '') : '';
@@ -33,11 +48,11 @@ export async function middleware(request: NextRequest) {
         if (pathname.startsWith('/api/')) {
           return environmentHeaders(NextResponse.json({ message: 'Acceso de capacitación requerido.' }, { status: 401 }));
         }
-        const accessUrl = request.nextUrl.clone();
-        // nextUrl ya conoce el basePath de Next. Asignarlo otra vez produciría
-        // /ambiente-de-pruebas-jr/ambiente-de-pruebas-jr en el navegador.
-        accessUrl.pathname = '/acceso-capacitacion';
-        accessUrl.search = new URLSearchParams({ next: `${pathname}${request.nextUrl.search}` }).toString();
+        const params = new URLSearchParams({ next: `${pathname}${request.nextUrl.search}` });
+        const accessUrl = new URL(
+          `${basePath}/acceso-capacitacion?${params.toString()}`,
+          publicRequestOrigin(request),
+        );
         return environmentHeaders(NextResponse.redirect(accessUrl));
       }
     }
@@ -57,23 +72,7 @@ export async function middleware(request: NextRequest) {
 
   if (!session || !hasPermission(session, route.permission)) {
     const params = new URLSearchParams({ next: pathname });
-    const forwardedHost = request.headers
-      .get('x-forwarded-host')
-      ?.split(',')[0]
-      .trim();
-    const requestHost = request.headers.get('host')?.trim();
-    const candidateHost = forwardedHost || requestHost || request.nextUrl.host;
-    const host = /^[a-z0-9.-]+(?::\d+)?$/i.test(candidateHost)
-      ? candidateHost
-      : request.nextUrl.host;
-    const forwardedProtocol = request.headers
-      .get('x-forwarded-proto')
-      ?.split(',')[0]
-      .trim();
-    const protocol = forwardedProtocol === 'http' || forwardedProtocol === 'https'
-      ? forwardedProtocol
-      : request.nextUrl.protocol.replace(':', '');
-    const url = new URL(`${basePath}${route.login}?${params.toString()}`, `${protocol}://${host}`);
+    const url = new URL(`${basePath}${route.login}?${params.toString()}`, publicRequestOrigin(request));
 
     // The public Host headers keep an internal proxy origin (for example,
     // localhost:3000) out of redirects returned to production browsers.
