@@ -1,6 +1,7 @@
 "use client";
 
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   BadgeCheck,
   Gift,
@@ -11,6 +12,7 @@ import {
   X,
 } from "lucide-react";
 import TrainingHint from "@/components/training/TrainingHint";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
 type Winner = {
   id: number;
@@ -60,6 +62,12 @@ const emptyWinner = {
   nombre: "",
   numeroContrato: "",
 };
+type WinnerDraft = typeof emptyWinner;
+type Notice = {
+  title: string;
+  description: string;
+  variant: "success" | "error" | "info";
+};
 export default function DashboardSorteosPage() {
   const [sorteos, setSorteos] = useState<Sorteo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,6 +77,13 @@ export default function DashboardSorteosPage() {
   const [showForm, setShowForm] = useState(false);
   const [winnerFor, setWinnerFor] = useState<Sorteo | null>(null);
   const [winnerForm, setWinnerForm] = useState(emptyWinner);
+  const [additionalWinners, setAdditionalWinners] = useState<WinnerDraft[]>([]);
+  const [deleteTarget, setDeleteTarget] = useState<Sorteo | null>(null);
+  const [winnerDeleteTarget, setWinnerDeleteTarget] = useState<{
+    sorteo: Sorteo;
+    winner: Winner;
+  } | null>(null);
+  const [notice, setNotice] = useState<Notice | null>(null);
   const load = async () => {
     setLoading(true);
     try {
@@ -111,54 +126,78 @@ export default function DashboardSorteosPage() {
   };
   const submit = async (e: FormEvent) => {
     e.preventDefault();
+    const wasEditing = Boolean(editing);
     if (await request("save", { id: editing?.id, ...form })) {
       setShowForm(false);
       setEditing(null);
       setForm(empty);
-      setMessage("Incentivo guardado correctamente.");
+      setNotice({
+        title: wasEditing
+          ? "Sorteo actualizado con éxito"
+          : "Sorteo creado con éxito",
+        description: wasEditing
+          ? "La información y la imagen del sorteo quedaron actualizadas."
+          : "El nuevo sorteo quedó guardado y listo para continuar su gestión.",
+        variant: "success",
+      });
     }
   };
   const saveWinner = async (event: FormEvent) => {
     event.preventDefault();
     if (!winnerFor) return;
-    if (
-      await request("winner", {
+    const drafts = [winnerForm, ...additionalWinners].filter(
+      (winner) => winner.nombre.trim() && winner.numeroContrato.trim(),
+    );
+    let saved = 0;
+    for (const winner of drafts) {
+      const ok = await request("winner", {
         sorteoId: winnerFor.id,
-        winnerId: winnerForm.id,
-        nombre: winnerForm.nombre,
-        numeroContrato: winnerForm.numeroContrato,
-      })
-    ) {
+        winnerId: winner.id,
+        nombre: winner.nombre,
+        numeroContrato: winner.numeroContrato,
+      });
+      if (!ok) return;
+      saved += 1;
+    }
+    if (saved > 0) {
       setWinnerFor(null);
       setWinnerForm(emptyWinner);
-      setMessage(
-        "Ganador registrado. Valida y publica cuando confirmes que cumple las condiciones.",
-      );
+      setAdditionalWinners([]);
+      setNotice({
+        title: saved > 1 ? "Ganadores guardados con éxito" : "Ganador guardado con éxito",
+        description: `${saved > 1 ? `${saved} ganadores quedaron registrados` : "El ganador quedó registrado"}. Valida la información antes de publicarla.`,
+        variant: "success",
+      });
     }
   };
   const validate = async (s: Sorteo) => {
     if (await request("validate", { id: s.id, sorteoId: s.id }))
-      setMessage("Ganador validado y resultado publicado.");
+      setNotice({
+        title: "Validado y publicado con éxito",
+        description: "Los ganadores confirmados ya pueden mostrarse en la página pública.",
+        variant: "success",
+      });
   };
   const removeWinner = async (s: Sorteo, winner: Winner) => {
-    if (!window.confirm(`¿Quitar a ${winner.nombre} de “${s.titulo}”?`)) return;
     if (
       await request("remove_winner", {
         sorteoId: s.id,
         winnerId: winner.id,
       })
     )
-      setMessage("Ganador retirado. Ya puedes registrar uno nuevo.");
+      setNotice({
+        title: "Ganador retirado",
+        description: `${winner.nombre} fue retirado del sorteo. Los demás ganadores se conservaron.`,
+        variant: "success",
+      });
   };
   const removeSorteo = async (s: Sorteo) => {
-    if (
-      !window.confirm(
-        `¿Eliminar “${s.titulo}”? Dejará de mostrarse en el panel y en la página pública.`,
-      )
-    )
-      return;
     if (await request("delete", { id: s.id }))
-      setMessage("Incentivo eliminado correctamente.");
+      setNotice({
+        title: "Sorteo eliminado",
+        description: `“${s.titulo}” dejó de mostrarse en el panel y en la página pública.`,
+        variant: "success",
+      });
   };
   return (
     <div className="p-5 md:p-8">
@@ -292,6 +331,7 @@ export default function DashboardSorteosPage() {
                                     nombre: winner.nombre,
                                     numeroContrato: winner.numero_contrato,
                                   });
+                                  setAdditionalWinners([]);
                                 }}
                                 className="rounded-lg border border-amber-200 bg-white px-2 py-1 text-xs font-bold text-amber-800"
                               >
@@ -303,7 +343,9 @@ export default function DashboardSorteosPage() {
                               className="inline-flex"
                             >
                               <button
-                                onClick={() => removeWinner(s, winner)}
+                                onClick={() =>
+                                  setWinnerDeleteTarget({ sorteo: s, winner })
+                                }
                                 className="rounded-lg border border-rose-200 bg-white px-2 py-1 text-xs font-bold text-rose-700"
                               >
                                 Quitar
@@ -348,6 +390,7 @@ export default function DashboardSorteosPage() {
                       onClick={() => {
                         setWinnerFor(s);
                         setWinnerForm(emptyWinner);
+                        setAdditionalWinners([]);
                       }}
                       className="rounded-lg bg-[#234d8d] px-3 py-2 text-sm font-bold text-white disabled:opacity-40"
                     >
@@ -374,7 +417,7 @@ export default function DashboardSorteosPage() {
                     className="inline-flex"
                   >
                   <button
-                    onClick={() => removeSorteo(s)}
+                    onClick={() => setDeleteTarget(s)}
                     className="rounded-lg border border-rose-200 px-3 py-2 text-sm font-bold text-rose-700 hover:bg-rose-50"
                   >
                     <Trash2 className="mr-1 inline h-3.5 w-3.5" />
@@ -393,8 +436,42 @@ export default function DashboardSorteosPage() {
         </div>
         </TrainingHint>
       )}
-      {showForm && (
-        <div className="fixed inset-0 z-[90] grid place-items-center bg-slate-950/55 p-4 backdrop-blur-sm">
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        title="¿Eliminar sorteo?"
+        description={deleteTarget ? `“${deleteTarget.titulo}” dejará de mostrarse en el panel y en la página pública.` : ""}
+        confirmLabel="Sí, eliminar sorteo"
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={() => {
+          const target = deleteTarget;
+          setDeleteTarget(null);
+          if (target) void removeSorteo(target);
+        }}
+      />
+      <ConfirmDialog
+        open={Boolean(winnerDeleteTarget)}
+        title="¿Quitar ganador?"
+        description={winnerDeleteTarget ? `${winnerDeleteTarget.winner.nombre} será retirado de “${winnerDeleteTarget.sorteo.titulo}”. Los demás ganadores se conservarán.` : ""}
+        confirmLabel="Sí, quitar ganador"
+        onCancel={() => setWinnerDeleteTarget(null)}
+        onConfirm={() => {
+          const target = winnerDeleteTarget;
+          setWinnerDeleteTarget(null);
+          if (target) void removeWinner(target.sorteo, target.winner);
+        }}
+      />
+      <ConfirmDialog
+        open={Boolean(notice)}
+        title={notice?.title ?? ""}
+        description={notice?.description ?? ""}
+        confirmLabel="Entendido"
+        showCancel={false}
+        variant={notice?.variant}
+        onCancel={() => setNotice(null)}
+        onConfirm={() => setNotice(null)}
+      />
+      {showForm && createPortal(
+        <div className="fixed inset-0 grid place-items-center bg-slate-950/55 p-4 backdrop-blur-sm" style={{ zIndex: 2147483646 }}>
           <form
             onSubmit={submit}
             className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-[28px] border border-white/70 bg-[#f7fbff] p-6 shadow-2xl"
@@ -527,17 +604,21 @@ export default function DashboardSorteosPage() {
             </button>
             </TrainingHint>
           </form>
-        </div>
+        </div>,
+        document.body,
       )}
-      {winnerFor && (
-        <div className="fixed inset-0 z-[90] grid place-items-center bg-slate-950/55 p-4 backdrop-blur-sm">
+      {winnerFor && createPortal(
+        <div className="fixed inset-0 grid place-items-center bg-slate-950/55 p-4 backdrop-blur-sm" style={{ zIndex: 2147483646 }}>
           <form
             onSubmit={saveWinner}
-            className="w-full max-w-lg rounded-[28px] border border-white/70 bg-[#f7fbff] p-6 shadow-2xl"
+            className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-[28px] border border-white/70 bg-[#f7fbff] p-6 shadow-2xl"
           >
             <button
               type="button"
-              onClick={() => setWinnerFor(null)}
+              onClick={() => {
+                setWinnerFor(null);
+                setAdditionalWinners([]);
+              }}
               className="float-right p-2 text-slate-500"
             >
               <X />
@@ -549,7 +630,8 @@ export default function DashboardSorteosPage() {
               Ingresa los datos confirmados para <b>{winnerFor.titulo}</b>. El
               registro quedará auditado y podrás validarlo antes de publicarlo.
             </p>
-            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            <div className="mt-5 space-y-4">
+              <div className="grid gap-3 sm:grid-cols-2">
               <Field
                 label="Nombre completo"
                 value={winnerForm.nombre}
@@ -564,7 +646,46 @@ export default function DashboardSorteosPage() {
                 }
                 required
               />
+              </div>
+              {!winnerForm.id && additionalWinners.map((winner, index) => (
+                <div key={index} className="rounded-2xl border border-[#d7e4f5] bg-white/70 p-4">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <p className="font-bold text-[#31547d]">Ganador {index + 2}</p>
+                    <button
+                      type="button"
+                      onClick={() => setAdditionalWinners((current) => current.filter((_, itemIndex) => itemIndex !== index))}
+                      className="rounded-lg border border-rose-200 px-2.5 py-1 text-xs font-bold text-rose-700"
+                    >
+                      Quitar
+                    </button>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <Field
+                      label="Nombre completo"
+                      value={winner.nombre}
+                      onChange={(nombre) => setAdditionalWinners((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, nombre } : item))}
+                      required
+                    />
+                    <Field
+                      label="Número de contrato"
+                      value={winner.numeroContrato}
+                      onChange={(numeroContrato) => setAdditionalWinners((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, numeroContrato } : item))}
+                      required
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
+            {!winnerForm.id && (
+              <button
+                type="button"
+                onClick={() => setAdditionalWinners((current) => [...current, { ...emptyWinner }])}
+                className="mt-4 w-full rounded-xl border border-[#9ebbe2] bg-white px-4 py-3 text-sm font-bold text-[#28569a] hover:bg-[#edf5ff]"
+              >
+                <Plus className="mr-1.5 inline h-4 w-4" />
+                Agregar otro ganador
+              </button>
+            )}
             <TrainingHint
               text="Guarda el ganador o sus correcciones. El resultado no será público hasta usar Validar y publicar."
               className="mt-5 block"
@@ -574,7 +695,8 @@ export default function DashboardSorteosPage() {
               </button>
             </TrainingHint>
           </form>
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );
