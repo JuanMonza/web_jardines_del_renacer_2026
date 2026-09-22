@@ -34,7 +34,9 @@ export async function middleware(request: NextRequest) {
           return environmentHeaders(NextResponse.json({ message: 'Acceso de capacitación requerido.' }, { status: 401 }));
         }
         const accessUrl = request.nextUrl.clone();
-        accessUrl.pathname = `${basePath}/acceso-capacitacion`;
+        // nextUrl ya conoce el basePath de Next. Asignarlo otra vez produciría
+        // /ambiente-de-pruebas-jr/ambiente-de-pruebas-jr en el navegador.
+        accessUrl.pathname = '/acceso-capacitacion';
         accessUrl.search = new URLSearchParams({ next: `${pathname}${request.nextUrl.search}` }).toString();
         return environmentHeaders(NextResponse.redirect(accessUrl));
       }
