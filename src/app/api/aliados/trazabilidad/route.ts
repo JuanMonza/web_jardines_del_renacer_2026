@@ -65,7 +65,14 @@ export async function GET(request: NextRequest) {
   if (!session) return NextResponse.json({ message: 'No autorizado.' }, { status: 403 });
   try {
     const access = await getAllyReportAccess(session);
-    if (!access.canView) return NextResponse.json({ message: 'El administrador general aún no te ha habilitado este informe.' }, { status: 403 });
+    // Una sesión válida sin permiso no debe provocar un error de red en el panel.
+    // No se entrega información del informe; las descargas siguen protegidas abajo.
+    if (!access.canView) return NextResponse.json({
+      data: [],
+      summary: { created: 0, deactivated: 0, updated: 0, updatedMovements: 0 },
+      pagination: { page: 1, pageSize: 20, total: 0, totalPages: 1 },
+      access,
+    }, { headers: { 'Cache-Control': 'no-store' } });
     const from = request.nextUrl.searchParams.get('from') || '';
     const to = request.nextUrl.searchParams.get('to') || '';
     if (!validDate(from) || !validDate(to) || (from && to && from > to)) return NextResponse.json({ message: 'Selecciona un rango de fechas válido.' }, { status: 422 });

@@ -88,7 +88,7 @@ function slugify(value: string) {
 }
 
 function normalizeAllyLoginId(value: string) {
-  const suffix = value.toUpperCase().replace(/^JDR-?/, '').replace(/[^A-Z0-9-]/g, '');
+  const suffix = value.toUpperCase().replace(/^JDR-?/, '').replace(/[^A-Z0-9-]/g, '').slice(0, 16);
   return `JDR-${suffix}`;
 }
 
@@ -337,6 +337,13 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
       ? allies.find((ally) => ally.id === editingId)
       : null;
 
+    // Los identificadores antiguos pueden no tener el prefijo JDR-. Al editar
+    // otro campo se conservan literalmente; solo se normalizan si el usuario
+    // cambia el ID o está creando un aliado nuevo.
+    const loginId = editingId && existing && draft.loginId === existing.loginId
+      ? existing.loginId
+      : normalizeAllyLoginId(draft.loginId || `JDR-${slugify(draft.name).slice(0, 3).toUpperCase()}${Date.now().toString().slice(-4)}`);
+
     const allyRecord: CommercialAlly = {
       ...draft,
       id: editingId || `${baseId}-${Date.now().toString(36).slice(-4)}`,
@@ -351,7 +358,7 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
       whatsappNumber: sanitizeWhatsAppNumber(draft.whatsappNumber),
       whatsappTemplate: template,
       actionLabel: draft.actionLabel.trim() || 'Mas informacion',
-      loginId: normalizeAllyLoginId(draft.loginId || `JDR-${slugify(draft.name).slice(0, 3).toUpperCase()}${Date.now().toString().slice(-4)}`),
+      loginId,
       createdAt: existing?.createdAt || now,
       updatedAt: now,
     };
@@ -1146,6 +1153,7 @@ export default function AliadosAdminPanel({ mode = 'admin' }: { mode?: 'admin' |
                   <input
                     value={(draft.loginId ?? 'JDR-').replace(/^JDR-?/, '')}
                     onChange={(event) => setDraft((prev) => ({ ...prev, loginId: normalizeAllyLoginId(event.target.value) }))}
+                    maxLength={16}
                     placeholder="Ej: ALIADO1234"
                     className="min-w-0 flex-1 bg-transparent px-3 py-3 text-text outline-none"
                   />

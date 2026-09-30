@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Download, History, Search } from 'lucide-react';
 
 type Event = { id: number; allyId: number; allyName: string; loginId: string; department: string; city: string; type: 'ALLY_CREATED' | 'ALLY_DEACTIVATED' | 'ALLY_UPDATED'; actor: string; changedFields: string; date: string };
-type Report = { data: Event[]; summary: { created: number; deactivated: number; updated: number; updatedMovements: number }; pagination: { page: number; pageSize: number; total: number; totalPages: number }; access: { canExport: boolean } };
+type Report = { data: Event[]; summary: { created: number; deactivated: number; updated: number; updatedMovements: number }; pagination: { page: number; pageSize: number; total: number; totalPages: number }; access: { canView: boolean; canExport: boolean } };
 const status = {
   ALLY_CREATED: { label: 'Nuevo', color: 'border-emerald-200 bg-emerald-50 text-emerald-800' },
   ALLY_DEACTIVATED: { label: 'Retirado', color: 'border-red-200 bg-red-50 text-red-800' },
@@ -36,11 +36,12 @@ export default function AllyTraceabilityReport() {
     }
     void fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/aliados/trazabilidad?${params}`, { signal: controller.signal, cache: 'no-store' })
       .then(async response => {
-        if (response.status === 403) { setDenied(true); return; }
         const body = await response.json();
+        if (response.status === 403) { setDenied(true); return; }
         if (!response.ok) throw new Error(body.message || 'No fue posible cargar el informe.');
-        setDenied(false);
-        setReport(body);
+        const nextReport = body as Report;
+        setDenied(!nextReport.access.canView);
+        setReport(nextReport.access.canView ? nextReport : null);
       })
       .catch(cause => { if (!controller.signal.aborted) setError(cause instanceof Error ? cause.message : 'No fue posible cargar el informe.'); })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
