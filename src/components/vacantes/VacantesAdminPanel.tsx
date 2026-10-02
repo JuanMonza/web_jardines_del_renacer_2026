@@ -6,6 +6,7 @@ import { createPortal } from "react-dom";
 import SelectionSteps from "@/components/vacantes/SelectionSteps";
 import TrainingHint from "@/components/training/TrainingHint";
 import ScreenDialog from "@/components/ui/ScreenDialog";
+import VacancyWhatsAppShare from "@/components/vacantes/VacancyWhatsAppShare";
 import { useSearchParams } from "next/navigation";
 import { Toaster, toast } from "react-hot-toast";
 import {
@@ -73,7 +74,24 @@ import {
   upsertJobVacancy,
 } from "@/lib/vacanciesStorage";
 
-type CandidateUser = Partial<JobApplication>;
+type CandidateUser = Partial<JobApplication> & {
+  candidateBirthDate?: string | null;
+  candidateAge?: number | null;
+  applicationCount?: number | string;
+};
+
+function calculateAge(birthDate?: string | null) {
+  if (!birthDate) return null;
+  const date = new Date(birthDate);
+  if (Number.isNaN(date.getTime())) return null;
+  const today = new Date();
+  let age = today.getFullYear() - date.getFullYear();
+  const birthdayPending =
+    today.getMonth() < date.getMonth() ||
+    (today.getMonth() === date.getMonth() && today.getDate() < date.getDate());
+  if (birthdayPending) age -= 1;
+  return age >= 0 && age <= 120 ? age : null;
+}
 
 function StatsCard({
   icon: Icon,
@@ -396,6 +414,7 @@ function VacanciesMetrics({
 }
 
 type CandidateDetail = {
+  id: string;
   documentNumber: string;
   firstName: string;
   lastName: string;
@@ -418,13 +437,73 @@ type CandidateDetail = {
 function CandidateApplicationsModal({
   user,
   onClose,
+  onDocumentUpdated,
 }: {
   user: CandidateUser;
   onClose: () => void;
+  onDocumentUpdated: (documentNumber: string) => void;
 }) {
   const [profile, setProfile] = useState<CandidateDetail | null>(null);
   const [applications, setApplications] = useState<JobApplication[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingDocument, setEditingDocument] = useState(false);
+  const [newDocumentNumber, setNewDocumentNumber] = useState(user.candidateDocument || "");
+  const [adminPassword, setAdminPassword] = useState("");
+  const [savingDocument, setSavingDocument] = useState(false);
+  const [documentNotice, setDocumentNotice] = useState<{ tone: "success" | "error"; text: string } | null>(null);
+  const [editingBirthDate, setEditingBirthDate] = useState(false);
+  const [newBirthDate, setNewBirthDate] = useState("");
+  const [birthDatePassword, setBirthDatePassword] = useState("");
+  const [savingBirthDate, setSavingBirthDate] = useState(false);
+  const profileAge = calculateAge(profile?.birthDate);
+
+  const saveDocument = async () => {
+    if (!profile?.id || !/^\d{6,20}$/.test(newDocumentNumber) || !adminPassword || savingDocument) return;
+    setSavingDocument(true);
+    setDocumentNotice(null);
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes/postulante-interno/${profile.id}/documento`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ documentNumber: newDocumentNumber, password: adminPassword }),
+      });
+      const result = await response.json() as { success?: boolean; documentNumber?: string; message?: string };
+      if (!response.ok || !result.success) throw new Error(result.message || "No fue posible corregir la cédula.");
+      const savedDocument = result.documentNumber || newDocumentNumber;
+      setProfile((current) => current ? { ...current, documentNumber: savedDocument } : current);
+      onDocumentUpdated(savedDocument);
+      setEditingDocument(false);
+      setAdminPassword("");
+      setDocumentNotice({ tone: "success", text: "Cédula actualizada. Se conservaron las postulaciones y la trazabilidad; el cambio quedó registrado en auditoría." });
+    } catch (error) {
+      setDocumentNotice({ tone: "error", text: error instanceof Error ? error.message : "No fue posible corregir la cédula." });
+    } finally {
+      setSavingDocument(false);
+    }
+  };
+
+  const saveBirthDate = async () => {
+    if (!profile?.id || !newBirthDate || !birthDatePassword || savingBirthDate) return;
+    setSavingBirthDate(true);
+    setDocumentNotice(null);
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes/postulante-interno/${profile.id}/fecha-nacimiento`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ birthDate: newBirthDate, password: birthDatePassword }),
+      });
+      const result = await response.json() as { success?: boolean; birthDate?: string; message?: string };
+      if (!response.ok || !result.success) throw new Error(result.message || "No fue posible guardar la fecha de nacimiento.");
+      setProfile((current) => current ? { ...current, birthDate: result.birthDate || newBirthDate } : current);
+      setEditingBirthDate(false);
+      setBirthDatePassword("");
+      setDocumentNotice({ tone: "success", text: "Fecha de nacimiento actualizada. La edad se calculó automáticamente y el cambio quedó registrado en auditoría." });
+    } catch (error) {
+      setDocumentNotice({ tone: "error", text: error instanceof Error ? error.message : "No fue posible guardar la fecha de nacimiento." });
+    } finally {
+      setSavingBirthDate(false);
+    }
+  };
 
   useEffect(() => {
     const documentNumber = user.candidateDocument;
@@ -458,14 +537,14 @@ function CandidateApplicationsModal({
         <div className="p-6 border-b border-primary/10 flex justify-between items-center">
           <div>
             <p className="text-xs font-bold uppercase tracking-[.16em] text-primary">
-              Ficha de talento · solo consulta
+              Ficha de talento · gestión segura
             </p>
             <h3 className="mt-1 text-2xl font-bold text-text">
               {user.candidateName}
             </h3>
             <p className="text-sm text-textLight">
-              C.C. {user.candidateDocument} · La edición se administra
-              únicamente desde Administración general.
+              C.C. {profile?.documentNumber || user.candidateDocument}
+              {profileAge !== null ? ` · ${profileAge} años` : ""}
             </p>
           </div>
           <Button
@@ -489,6 +568,13 @@ function CandidateApplicationsModal({
                   Información del postulante
                 </p>
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <p className="text-xs font-bold text-textLight">Cédula</p>
+                    <div className="mt-1 flex flex-wrap items-center gap-2">
+                      <p className="font-semibold text-text">{profile?.documentNumber || user.candidateDocument || "No registrada"}</p>
+                      <button type="button" onClick={() => { setNewDocumentNumber(profile?.documentNumber || user.candidateDocument || ""); setAdminPassword(""); setDocumentNotice(null); setEditingDocument(true); }} className="rounded-lg border border-amber-300 bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-900 transition hover:bg-amber-100">Editar cédula</button>
+                    </div>
+                  </div>
                   <div>
                     <p className="text-xs font-bold text-textLight">Correo</p>
                     <p className="mt-1 break-all font-semibold text-text">
@@ -523,11 +609,14 @@ function CandidateApplicationsModal({
                     <p className="text-xs font-bold text-textLight">
                       Fecha de nacimiento
                     </p>
-                    <p className="mt-1 font-semibold text-text">
-                      {profile?.birthDate
-                        ? formatDate(profile.birthDate)
-                        : "No registrada"}
-                    </p>
+                    <div className="mt-1 flex flex-wrap items-center gap-2">
+                      <p className="font-semibold text-text">
+                        {profile?.birthDate
+                          ? `${formatDate(profile.birthDate)}${profileAge !== null ? ` · ${profileAge} años` : ""}`
+                          : "No registrada"}
+                      </p>
+                      <button type="button" onClick={() => { setNewBirthDate(profile?.birthDate?.slice(0, 10) || ""); setBirthDatePassword(""); setDocumentNotice(null); setEditingBirthDate(true); }} className="rounded-lg border border-sky-200 bg-sky-50 px-2.5 py-1 text-xs font-bold text-sky-800 transition hover:bg-sky-100">{profile?.birthDate ? "Corregir fecha" : "Registrar fecha"}</button>
+                    </div>
                   </div>
                   <div>
                     <p className="text-xs font-bold text-textLight">
@@ -574,6 +663,35 @@ function CandidateApplicationsModal({
                     </p>
                   </div>
                 </div>
+                {editingDocument && (
+                  <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                    <p className="text-sm font-bold text-amber-950">Corregir cédula</p>
+                    <p className="mt-1 text-xs leading-5 text-amber-900">El perfil, sus postulaciones y su historial permanecerán unidos. Confirma el cambio con tu contraseña administrativa.</p>
+                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                      <label className="text-xs font-bold text-amber-950">Nueva cédula<input inputMode="numeric" maxLength={20} value={newDocumentNumber} onChange={(event) => setNewDocumentNumber(event.target.value.replace(/\D/g, ""))} className="mt-1.5 w-full rounded-xl border border-amber-200 bg-white px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-amber-300" /></label>
+                      <label className="text-xs font-bold text-amber-950">Tu contraseña de administrador<input type="password" autoComplete="current-password" maxLength={128} value={adminPassword} onChange={(event) => setAdminPassword(event.target.value)} className="mt-1.5 w-full rounded-xl border border-amber-200 bg-white px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-amber-300" /></label>
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button type="button" disabled={savingDocument || !/^\d{6,20}$/.test(newDocumentNumber) || !adminPassword} onClick={() => void saveDocument()} className="rounded-xl bg-amber-700 px-4 py-2 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50">{savingDocument ? "Guardando..." : "Guardar nueva cédula"}</button>
+                      <button type="button" disabled={savingDocument} onClick={() => { setEditingDocument(false); setAdminPassword(""); }} className="rounded-xl border border-amber-300 bg-white px-4 py-2 text-sm font-bold text-amber-950">Cancelar</button>
+                    </div>
+                  </div>
+                )}
+                {editingBirthDate && (
+                  <div className="mt-5 rounded-2xl border border-sky-200 bg-sky-50 p-4">
+                    <p className="text-sm font-bold text-sky-950">Registrar fecha de nacimiento</p>
+                    <p className="mt-1 text-xs leading-5 text-sky-900">La edad se calculará automáticamente y se mostrará junto a la cédula.</p>
+                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                      <label className="text-xs font-bold text-sky-950">Fecha de nacimiento<input type="date" max={new Date().toISOString().slice(0, 10)} value={newBirthDate} onChange={(event) => setNewBirthDate(event.target.value)} className="mt-1.5 w-full rounded-xl border border-sky-200 bg-white px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-sky-300" /></label>
+                      <label className="text-xs font-bold text-sky-950">Tu contraseña de administrador<input type="password" autoComplete="current-password" maxLength={128} value={birthDatePassword} onChange={(event) => setBirthDatePassword(event.target.value)} className="mt-1.5 w-full rounded-xl border border-sky-200 bg-white px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-sky-300" /></label>
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button type="button" disabled={savingBirthDate || !newBirthDate || !birthDatePassword} onClick={() => void saveBirthDate()} className="rounded-xl bg-sky-700 px-4 py-2 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50">{savingBirthDate ? "Guardando..." : "Guardar fecha"}</button>
+                      <button type="button" disabled={savingBirthDate} onClick={() => { setEditingBirthDate(false); setBirthDatePassword(""); }} className="rounded-xl border border-sky-300 bg-white px-4 py-2 text-sm font-bold text-sky-950">Cancelar</button>
+                    </div>
+                  </div>
+                )}
+                {documentNotice && <div role="status" className={`mt-4 rounded-xl border p-3 text-sm ${documentNotice.tone === "success" ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-red-200 bg-red-50 text-red-800"}`}>{documentNotice.text}</div>}
                 <div className="mt-5 flex flex-wrap gap-2">
                   {profile?.cvUrl && (
                     <a
@@ -726,6 +844,11 @@ function RegisteredUsersList() {
         "N.º": index + 1,
         Nombre: user.candidateName || "No registrado",
         Documento: user.candidateDocument || "No registrado",
+        Edad:
+          user.candidateAge === null || user.candidateAge === undefined
+            ? "No registrada"
+            : Number(user.candidateAge),
+        Postulaciones: Number(user.applicationCount || 0),
         Correo: user.candidateEmail || "No registrado",
         Teléfono: user.candidatePhone || "No registrado",
         "Última postulación": user.appliedAt
@@ -733,7 +856,7 @@ function RegisteredUsersList() {
           : "Sin postulaciones",
       })),
     );
-    const range = XLSX.utils.decode_range(sheet["!ref"] || "A1:F1");
+    const range = XLSX.utils.decode_range(sheet["!ref"] || "A1:H1");
     for (let column = range.s.c; column <= range.e.c; column += 1) {
       const cell = sheet[XLSX.utils.encode_cell({ r: 0, c: column })];
       if (cell)
@@ -747,11 +870,13 @@ function RegisteredUsersList() {
       { wch: 8 },
       { wch: 30 },
       { wch: 18 },
+      { wch: 12 },
+      { wch: 15 },
       { wch: 34 },
       { wch: 18 },
       { wch: 25 },
     ];
-    sheet["!autofilter"] = { ref: sheet["!ref"] || "A1:F1" };
+    sheet["!autofilter"] = { ref: sheet["!ref"] || "A1:H1" };
     sheet["!freeze"] = { xSplit: 0, ySplit: 1 };
     XLSX.utils.book_append_sheet(workbook, sheet, "Usuarios registrados");
     XLSX.writeFile(
@@ -894,9 +1019,18 @@ function RegisteredUsersList() {
                       <p className="font-semibold text-text">
                         {user.candidateName}
                       </p>
-                      <p className="text-xs text-textLight">
-                        C.C. {user.candidateDocument}
-                      </p>
+                      <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-textLight">
+                        <span>C.C. {user.candidateDocument}</span>
+                        <span aria-hidden="true">·</span>
+                        <span>
+                          {user.candidateAge === null || user.candidateAge === undefined
+                            ? "Edad no registrada"
+                            : `${Number(user.candidateAge)} años`}
+                        </span>
+                      </div>
+                      <span className="mt-1.5 inline-flex rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[11px] font-bold text-sky-700">
+                        {Number(user.applicationCount || 0)} postulación{Number(user.applicationCount || 0) === 1 ? "" : "es"}
+                      </span>
                     </div>
                   </div>
                 </td>
@@ -924,14 +1058,14 @@ function RegisteredUsersList() {
                   </div>
                 </td>
                 <td className="p-4">
-                  <Button
-                    variant="outline"
-                    size="sm"
+                  <button
+                    type="button"
                     onClick={() => setSelectedUser(user)}
+                    className="inline-flex items-center gap-2 rounded-xl border border-[#9fc0ea] bg-[#edf4fc] px-4 py-2.5 text-sm font-bold text-[#2454a0] shadow-sm transition hover:bg-[#dfeeff] focus:outline-none focus:ring-2 focus:ring-[#315d98]/30"
                   >
                     <Eye className="mr-2 h-4 w-4" />
                     Ver
-                  </Button>
+                  </button>
                 </td>
               </tr>
             ))}
@@ -949,6 +1083,11 @@ function RegisteredUsersList() {
         <CandidateApplicationsModal
           user={selectedUser}
           onClose={() => setSelectedUser(null)}
+          onDocumentUpdated={(documentNumber) => {
+            const previousDocument = selectedUser.candidateDocument;
+            setUsers((current) => current.map((candidate) => candidate.candidateDocument === previousDocument ? { ...candidate, candidateDocument: documentNumber } : candidate));
+            setSelectedUser((current) => current ? { ...current, candidateDocument: documentNumber } : current);
+          }}
         />
       )}
     </div>
@@ -1016,57 +1155,121 @@ const APPLICATION_PROGRESS_SHORT_LABELS: Record<
   Seleccionado: "Seleccionado",
 };
 
+const APPLICATION_PROGRESS_COLORS: Record<
+  JobApplication["status"],
+  { badge: string; bar: string; trail: string; dot: string; ring: string; text: string; border: string }
+> = {
+  Recibida: {
+    badge: "border-sky-200 bg-sky-50 text-sky-700",
+    bar: "bg-sky-500",
+    trail: "bg-sky-100",
+    dot: "border-sky-500 bg-sky-500",
+    ring: "ring-sky-200",
+    text: "text-sky-700",
+    border: "border-sky-100",
+  },
+  "En revision": {
+    badge: "border-amber-200 bg-amber-50 text-amber-800",
+    bar: "bg-amber-500",
+    trail: "bg-amber-100",
+    dot: "border-amber-500 bg-amber-500",
+    ring: "ring-amber-200",
+    text: "text-amber-800",
+    border: "border-amber-100",
+  },
+  Entrevista: {
+    badge: "border-violet-200 bg-violet-50 text-violet-700",
+    bar: "bg-violet-500",
+    trail: "bg-violet-100",
+    dot: "border-violet-500 bg-violet-500",
+    ring: "ring-violet-200",
+    text: "text-violet-700",
+    border: "border-violet-100",
+  },
+  "Prueba tecnica": {
+    badge: "border-orange-200 bg-orange-50 text-orange-700",
+    bar: "bg-orange-500",
+    trail: "bg-orange-100",
+    dot: "border-orange-500 bg-orange-500",
+    ring: "ring-orange-200",
+    text: "text-orange-700",
+    border: "border-orange-100",
+  },
+  Seleccionado: {
+    badge: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    bar: "bg-emerald-500",
+    trail: "bg-emerald-100",
+    dot: "border-emerald-500 bg-emerald-500",
+    ring: "ring-emerald-200",
+    text: "text-emerald-700",
+    border: "border-emerald-100",
+  },
+  "No continua": {
+    badge: "border-red-200 bg-red-50 text-red-700",
+    bar: "bg-red-500",
+    trail: "bg-red-100",
+    dot: "border-red-500 bg-red-500",
+    ring: "ring-red-200",
+    text: "text-red-700",
+    border: "border-red-100",
+  },
+  Trasladado: {
+    badge: "border-indigo-200 bg-indigo-50 text-indigo-700",
+    bar: "bg-indigo-500",
+    trail: "bg-indigo-100",
+    dot: "border-indigo-500 bg-indigo-500",
+    ring: "ring-indigo-200",
+    text: "text-indigo-700",
+    border: "border-indigo-100",
+  },
+};
+
 function ApplicationProgressTrack({
   status,
 }: {
   status: JobApplication["status"];
 }) {
   const progress = getApplicationProgress(status);
-  const barClass = progress.isRejected ? "bg-red-500" : "bg-primary";
-  const trailClass = progress.isRejected ? "bg-red-100" : "bg-primary/15";
+  const currentColors = APPLICATION_PROGRESS_COLORS[status];
+  const isOutsideStandardFlow = status === "No continua" || status === "Trasladado";
 
   return (
-    <div className="mt-3 rounded-xl border border-primary/10 bg-white/70 p-3">
+    <div className={`mt-3 rounded-xl border bg-white/70 p-3 transition-colors duration-500 ${currentColors.border}`}>
       <div className="flex items-center justify-between gap-3 mb-2">
         <p className="text-[11px] uppercase tracking-[0.12em] text-textLight">
           Ruta del proceso
         </p>
         <span
-          className={`text-[11px] font-semibold px-2 py-1 rounded-full ${
-            progress.isRejected
-              ? "text-red-700 bg-red-100 border border-red-200"
-              : progress.isFinished
-                ? "text-green-700 bg-green-100 border border-green-200"
-                : "text-primary bg-primary/10 border border-primary/20"
-          }`}
+          className={`rounded-full border px-2 py-1 text-[11px] font-semibold transition-colors duration-500 ${currentColors.badge}`}
         >
           {status}
         </span>
       </div>
 
-      <div className={`relative h-1 rounded-full ${trailClass}`}>
+      <div className={`relative h-1 rounded-full transition-colors duration-500 ${currentColors.trail}`}>
         <span
-          className={`absolute left-0 top-0 h-full rounded-full transition-all duration-500 ${barClass}`}
+          className={`absolute left-0 top-0 h-full rounded-full transition-all duration-500 ${currentColors.bar}`}
           style={{ width: `${progress.percent}%` }}
         />
       </div>
 
       <div className="mt-2 grid grid-cols-5 gap-2">
         {APPLICATION_PROGRESS_STEPS.map((step, index) => {
-          const reached = !progress.isRejected && index <= progress.activeIndex;
+          const stepColors = APPLICATION_PROGRESS_COLORS[step];
+          const reached = !isOutsideStandardFlow && index <= progress.activeIndex;
           const isCurrent =
-            !progress.isRejected && index === progress.activeIndex;
+            !isOutsideStandardFlow && index === progress.activeIndex;
 
           return (
             <div key={step} className="flex flex-col items-center gap-1">
               <span
                 className={`h-3 w-3 rounded-full border transition-colors ${
                   reached
-                    ? "bg-primary border-primary"
-                    : "bg-white border-primary/25"
-                } ${isCurrent ? "ring-2 ring-primary/30" : ""}`}
+                    ? stepColors.dot
+                    : "border-slate-300 bg-white"
+                } ${isCurrent ? `ring-2 ring-offset-1 ${stepColors.ring}` : ""}`}
               />
-              <span className="text-[10px] text-textLight text-center leading-tight">
+              <span className={`text-center text-[10px] leading-tight transition-colors ${isCurrent ? `font-bold ${stepColors.text}` : reached ? stepColors.text : "text-textLight"}`}>
                 {APPLICATION_PROGRESS_SHORT_LABELS[step]}
               </span>
             </div>
@@ -1074,9 +1277,9 @@ function ApplicationProgressTrack({
         })}
       </div>
 
-      {progress.isRejected && (
-        <p className="text-xs text-red-700 mt-2">
-          Proceso finalizado en estado "No continua".
+      {isOutsideStandardFlow && (
+        <p className={`mt-2 text-xs font-medium ${currentColors.text}`}>
+          {status === "Trasladado" ? "Proceso trasladado a otra vacante." : "Proceso finalizado en estado “No continúa”."}
         </p>
       )}
     </div>
@@ -1101,6 +1304,7 @@ export default function VacantesAdminPanel() {
     status: JobApplication["status"];
   } | null>(null);
   const [statusObservation, setStatusObservation] = useState("");
+  const [statusUpdateLoading, setStatusUpdateLoading] = useState(false);
   const [search, setSearch] = useState("");
   const searchParams = useSearchParams();
   const initialTab = searchParams.get("tab");
@@ -1406,19 +1610,14 @@ export default function VacantesAdminPanel() {
       (application) => application.id === applicationId,
     );
     const notes = statusObservation.trim();
-    const toastId = toast.loading(
-      "Actualizando estado y enviando notificación...",
-    );
-
-    if (!target || !target.candidateEmail) {
-      toast.error(
-        "Estado actualizado. No se pudo enviar correo porque la postulación no tiene email.",
-        { id: toastId },
-      );
+    if (!target) {
+      setOperationNotice({ title: "No encontramos la postulación", description: "Actualiza la página e intenta nuevamente.", variant: "error" });
       return;
     }
 
+    setStatusUpdateLoading(true);
     void (async () => {
+      let statusSaved = false;
       try {
         const updateResponse = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes/postulaciones/${applicationId}`,
           {
@@ -1433,6 +1632,7 @@ export default function VacantesAdminPanel() {
             updateResult.message || "No se pudo actualizar el seguimiento.",
           );
         }
+        statusSaved = true;
         setApplications((current) =>
           current.map((application) =>
             application.id === applicationId
@@ -1440,6 +1640,14 @@ export default function VacantesAdminPanel() {
               : application,
           ),
         );
+        if (!target.candidateEmail) {
+          setOperationNotice({
+            title: "Estado actualizado",
+            description: "El movimiento quedó guardado en la trazabilidad. No se envió correo porque el postulante no tiene un correo registrado.",
+            variant: "success",
+          });
+          return;
+        }
         const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes/notificar-estado`, {
           method: "POST",
           headers: {
@@ -1463,22 +1671,29 @@ export default function VacantesAdminPanel() {
           message?: string;
         };
         if (!response.ok || !result.ok) {
-          toast.error(
-            `No se pudo notificar por correo: ${result.message || "Error de envío"}`,
-            { id: toastId },
-          );
+          setOperationNotice({
+            title: "Estado actualizado; correo pendiente",
+            description: `El movimiento quedó guardado, pero no fue posible enviar el correo: ${result.message || "error de envío"}.`,
+            variant: "error",
+          });
           return;
         }
 
-        toast.success(
-          result.sent === false
-            ? result.message ||
-                "Estado actualizado. El correo automático está desactivado para esta etapa."
-            : "Estado actualizado y notificado por correo.",
-          { id: toastId },
-        );
-      } catch {
-        toast.error("Falló la notificación por correo.", { id: toastId });
+        setOperationNotice({
+          title: result.sent === false ? "Estado actualizado" : "Estado actualizado y notificado",
+          description: result.sent === false
+            ? result.message || "El movimiento quedó guardado. El correo automático está desactivado para esta etapa."
+            : `El cambio a “${status}” quedó registrado en la trazabilidad y el correo fue enviado correctamente.`,
+          variant: "success",
+        });
+      } catch (error) {
+        setOperationNotice({
+          title: statusSaved ? "Estado actualizado; correo pendiente" : "No fue posible actualizar el estado",
+          description: error instanceof Error ? error.message : statusSaved ? "El movimiento quedó guardado, pero falló la notificación por correo." : "Intenta nuevamente.",
+          variant: "error",
+        });
+      } finally {
+        setStatusUpdateLoading(false);
       }
     })();
   };
@@ -1515,6 +1730,19 @@ export default function VacantesAdminPanel() {
         onCancel={() => setOperationNotice(null)}
         onConfirm={() => setOperationNotice(null)}
       />
+      {statusUpdateLoading && (
+        <div className="fixed inset-0 z-[2147483647] flex items-center justify-center bg-[#07182e]/60 p-4 backdrop-blur-md" role="status" aria-live="polite" aria-label="Actualizando proceso y enviando notificación">
+          <section className="w-full max-w-md rounded-[30px] border border-white/80 bg-white/90 p-7 text-center shadow-[0_28px_80px_rgba(4,24,55,.38)] backdrop-blur-xl">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-[#bcd2ee] bg-gradient-to-br from-[#edf5ff] to-white shadow-lg">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+            <p className="mt-5 text-xs font-bold uppercase tracking-[.18em] text-primary">Trazabilidad del proceso</p>
+            <h2 className="mt-2 text-2xl font-bold text-text">Actualizando estado</h2>
+            <p className="mt-3 text-sm leading-6 text-textLight">Estamos guardando el movimiento y enviando la notificación por correo. Espera un momento.</p>
+            <div className="mt-5 h-1.5 overflow-hidden rounded-full bg-blue-100"><span className="block h-full w-2/3 animate-pulse rounded-full bg-gradient-to-r from-[#315d98] to-[#69a0dc]" /></div>
+          </section>
+        </div>
+      )}
       <ConfirmDialog
         open={Boolean(pendingDelete)}
         title="¿Cerrar esta vacante?"
@@ -2149,6 +2377,9 @@ export default function VacantesAdminPanel() {
                       </div>
 
                       <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-[#edf2f8] pt-4">
+                        <TrainingHint text="Genera una imagen vertical, copia el texto y el enlace directo de la vacante, y abre WhatsApp para que puedas publicarla en tu estado.">
+                          <VacancyWhatsAppShare vacancy={vacancy}/>
+                        </TrainingHint>
                         <TrainingHint text="Editar abre el formulario con los datos actuales de esta vacante. Corrige la información y guarda los cambios; no crea una vacante nueva." className="mr-2 shrink-0">
                           <button
                             type="button"
@@ -2225,9 +2456,7 @@ export default function VacantesAdminPanel() {
 
                                   <div className="mt-2 flex flex-wrap gap-2">
                                     <a
-                                      href={`/dashboard/vacantes/${application.id}`}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
+                                      href={`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/dashboard-vacantes/postulantes?application=${encodeURIComponent(application.id)}`}
                                       className="text-xs font-semibold px-2 py-1 rounded-lg border border-blue-500/25 text-blue-600 hover:bg-blue-500/10 transition-colors"
                                     >
                                       Ver Detalles

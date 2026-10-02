@@ -8,10 +8,14 @@ export async function GET(request: NextRequest) {
   const session = await requireAdminPermission(request.cookies.get(ADMIN_SESSION_COOKIE)?.value, 'vacancies.applications.view');
   if (!session) return NextResponse.json({ success: false, message: 'No autorizado.' }, { status: 403 });
   try {
-    const data = await query(`SELECT c.documento AS candidateDocument, CONCAT(c.nombres, ' ', c.apellidos) AS candidateName, c.email AS candidateEmail, c.telefono AS candidatePhone, MAX(p.created_at) AS appliedAt
+    const data = await query(`SELECT c.documento AS candidateDocument, CONCAT(c.nombres, ' ', c.apellidos) AS candidateName, c.email AS candidateEmail, c.telefono AS candidatePhone,
+        c.fecha_nacimiento AS candidateBirthDate,
+        CASE WHEN c.fecha_nacimiento IS NULL THEN NULL ELSE TIMESTAMPDIFF(YEAR, c.fecha_nacimiento, CURDATE()) END AS candidateAge,
+        COUNT(p.id) AS applicationCount,
+        MAX(p.created_at) AS appliedAt
       FROM candidatos c LEFT JOIN postulaciones p ON p.candidato_id = c.id AND p.deleted_at IS NULL
       WHERE c.deleted_at IS NULL AND c.activo = TRUE
-      GROUP BY c.id, c.documento, c.nombres, c.apellidos, c.email, c.telefono
+      GROUP BY c.id, c.documento, c.nombres, c.apellidos, c.email, c.telefono, c.fecha_nacimiento
       ORDER BY appliedAt DESC, c.created_at DESC`);
     return NextResponse.json({ success: true, data });
   } catch (error) {

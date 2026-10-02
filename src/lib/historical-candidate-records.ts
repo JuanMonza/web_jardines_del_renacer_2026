@@ -1,6 +1,7 @@
 import { createHash } from "crypto";
 import * as XLSX from "xlsx";
 import { execute, query } from "@/lib/db";
+import type { PoolConnection, RowDataPacket } from "mysql2/promise";
 
 export type HistoricalCandidateRow = {
   identityKey: string;
@@ -124,6 +125,53 @@ export async function ensureHistoricalCandidateSchema() {
     if (!rawColumn.length) await execute("ALTER TABLE historical_candidate_movements ADD COLUMN raw_data LONGTEXT AFTER licencia_runt");
   })().catch((error) => { schemaPromise = null; throw error; });
   return schemaPromise;
+}
+
+export async function recordPlatformCandidateMovement(
+  connection: PoolConnection,
+  input: { applicationId: string; status: string; observations?: string; actor?: string },
+) {
+  const [rows] = await connection.query<RowDataPacket[]>(
+    `SELECT c.id AS candidateId, c.documento, c.nombres, c.apellidos, c.email,
+      c.telefono, c.ciudad, c.departamento, v.titulo AS vacancyTitle,
+      p.created_at AS applicationDate, p.fuente
+     FROM postulaciones p
+     INNER JOIN candidatos c ON c.id = p.candidato_id
+     INNER JOIN vacantes v ON v.id = p.vacante_id
+     WHERE p.id = ? LIMIT 1`,
+    [input.applicationId],
+  );
+  const row = rows[0];
+  if (!row) return;
+  const [existingCandidates] = await connection.query<RowDataPacket[]>(
+    `SELECT identity_key FROM historical_candidates
+     WHERE documento = ? OR LOWER(correo) = LOWER(?)
+     ORDER BY updated_at DESC LIMIT 1`,
+    [row.documento, row.email],
+  );
+  const identityKey = String(existingCandidates[0]?.identity_key || hash(`candidate:${row.candidateId}`));
+  const today = new Date().toISOString().slice(0, 10);
+  await connection.execute(
+    `INSERT INTO historical_candidates
+      (identity_key,nombre,documento,correo,telefono,ciudad,departamento,first_seen,last_seen)
+     VALUES (?,?,?,?,?,?,?,?,?)
+     ON DUPLICATE KEY UPDATE nombre=VALUES(nombre),documento=VALUES(documento),
+       correo=VALUES(correo),telefono=VALUES(telefono),ciudad=VALUES(ciudad),
+       departamento=VALUES(departamento),last_seen=VALUES(last_seen)`,
+    [identityKey, `${row.nombres} ${row.apellidos}`.trim(), row.documento, row.email, row.telefono, row.ciudad, row.departamento, today, today],
+  );
+  const sourceKey = hash(`platform:${input.applicationId}:${input.status}:${Date.now()}`);
+  await connection.execute(
+    `INSERT INTO historical_candidate_movements
+      (source_key,identity_key,fecha,vacante,estado,origen,entrevistadores,observaciones,evaluacion,motivo_descarte,licencia_runt,raw_data,hoja_origen,fila_origen)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+    [
+      sourceKey, identityKey, today, row.vacancyTitle, input.status, row.fuente || "Portal Web",
+      input.actor || "", input.observations || "", "", "", "",
+      JSON.stringify({ applicationId: input.applicationId, candidateId: row.candidateId }),
+      "Proceso digital de vacantes", 0,
+    ],
+  );
 }
 
 export async function importHistoricalCandidateRows(rows: HistoricalCandidateRow[]) {

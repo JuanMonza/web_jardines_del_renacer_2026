@@ -9,7 +9,7 @@ import {ACADEMIC_LEVEL_OPTIONS} from "@/config/candidates";
 import {query} from "@/lib/db";
 function text(value:unknown){return typeof value==="string"?value.trim():"";}
 function validName(value:string){return /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s'-]+$/.test(value);}
-type ExistingCandidate={id:number;nombres:string;apellidos:string;documento:string;email:string;telefono:string;ciudad:string;departamento:string;profesion:string;educacion:string;cv_url:string;vacantes:string|null;createdFromDashboard?:number};
+type ExistingCandidate={id:number;nombres:string;apellidos:string;documento:string;email:string;telefono:string;fecha_nacimiento?:string|null;edad?:number|null;ciudad:string;departamento:string;profesion:string;educacion:string;cv_url:string;vacantes:string|null;createdFromDashboard?:number};
 async function notifyInternalApplication(input:{applicationId:string;candidateName:string;candidateDocument:string;candidateEmail:string;vacancyTitle:string;adminName:string}){
   let sent=false;
   try{sent=await sendInternalVacancyMovementEmail({eventTitle:"Postulante asignado a vacante",candidateName:input.candidateName,candidateDocument:input.candidateDocument,candidateEmail:input.candidateEmail,vacancyTitle:input.vacancyTitle,status:"Recibida",notes:"Postulación creada o asignada desde el dashboard administrativo.",adminName:input.adminName,applicationId:`JDR-${input.applicationId.padStart(6,"0")}`});}
@@ -26,12 +26,12 @@ export async function GET(request:NextRequest){
     const professions=await query<{profession:string}>("SELECT DISTINCT TRIM(profesion) AS profession FROM candidatos WHERE deleted_at IS NULL AND TRIM(COALESCE(profesion,''))<>'' ORDER BY profession LIMIT 100");
     if(search.length<2)return NextResponse.json({data:[],professions:professions.map(item=>item.profession)});
     const term=`%${search}%`;
-    const candidates=await query<ExistingCandidate>(`SELECT c.id,c.nombres,c.apellidos,c.documento,c.email,c.telefono,c.ciudad,c.departamento,c.profesion,c.educacion,c.cv_url,
+    const candidates=await query<ExistingCandidate>(`SELECT c.id,c.nombres,c.apellidos,c.documento,c.email,c.telefono,c.fecha_nacimiento,TIMESTAMPDIFF(YEAR,c.fecha_nacimiento,CURDATE()) AS edad,c.ciudad,c.departamento,c.profesion,c.educacion,c.cv_url,
       EXISTS(SELECT 1 FROM activity_logs a WHERE a.tabla_afectada='candidatos' AND a.registro_id=c.id AND a.accion='POSTULANTE_INTERNO_CREADO') AS createdFromDashboard,
       GROUP_CONCAT(DISTINCT v.titulo ORDER BY p.created_at DESC SEPARATOR ' · ') AS vacantes
       FROM candidatos c LEFT JOIN postulaciones p ON p.candidato_id=c.id AND p.deleted_at IS NULL LEFT JOIN vacantes v ON v.id=p.vacante_id
       WHERE c.deleted_at IS NULL AND c.activo=TRUE AND (c.documento LIKE ? OR c.email LIKE ? OR CONCAT(c.nombres,' ',c.apellidos) LIKE ? OR c.profesion LIKE ?)
-      GROUP BY c.id,c.nombres,c.apellidos,c.documento,c.email,c.telefono,c.ciudad,c.departamento,c.profesion,c.educacion,c.cv_url
+      GROUP BY c.id,c.nombres,c.apellidos,c.documento,c.email,c.telefono,c.fecha_nacimiento,c.ciudad,c.departamento,c.profesion,c.educacion,c.cv_url
       ORDER BY c.updated_at DESC LIMIT 20`,[term,term,term,term]);
     return NextResponse.json({data:candidates.map(candidate=>({...candidate,id:String(candidate.id)})),professions:professions.map(item=>item.profession)},{headers:{"Cache-Control":"no-store"}});
   }catch(error){console.error("Error buscando perfiles reutilizables:",error);return NextResponse.json({message:"No fue posible buscar los perfiles guardados."},{status:500});}
@@ -60,16 +60,18 @@ export async function POST(request:NextRequest){
       const internalNotificationSent=await notifyInternalApplication({applicationId,candidateName:fullName,candidateDocument:candidate.documento,candidateEmail:candidate.email,vacancyTitle:vacancy.title,adminName:session.name});
       return NextResponse.json({success:true,data:{candidateId:String(candidate.id),applicationId,vacancyTitle:vacancy.title,applicationEmailSent,internalNotificationSent,reused:true}},{status:201});
     }
-    const firstName=text(body.firstName),lastName=text(body.lastName),documentNumber=text(body.documentNumber).replace(/\D/g,""),email=text(body.email).toLowerCase(),phone=text(body.phone).replace(/\D/g,""),city=text(body.city),department=text(body.department),education=text(body.education),professionalTitle=text(body.professionalTitle),password=text(body.password),vacancyId=text(body.vacancyId);
+    const firstName=text(body.firstName),lastName=text(body.lastName),documentNumber=text(body.documentNumber).replace(/\D/g,""),birthDate=text(body.birthDate),email=text(body.email).toLowerCase(),phone=text(body.phone).replace(/\D/g,""),city=text(body.city),department=text(body.department),education=text(body.education),professionalTitle=text(body.professionalTitle),password=text(body.password),vacancyId=text(body.vacancyId);
     if(!firstName||!lastName||!validName(firstName)||!validName(lastName)||!city||!department)return NextResponse.json({message:"Completa nombres, apellidos y ubicación con información válida."},{status:422});
     if(!/^\d{6,20}$/.test(documentNumber)||!/^\d{7,20}$/.test(phone)||!/^\S+@\S+\.\S+$/.test(email))return NextResponse.json({message:"Revisa la cédula, el teléfono y el correo electrónico."},{status:422});
+    const parsedBirthDate=new Date(`${birthDate}T12:00:00Z`);
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(birthDate)||Number.isNaN(parsedBirthDate.getTime())||parsedBirthDate.toISOString().slice(0,10)!==birthDate||parsedBirthDate>new Date())return NextResponse.json({message:"Ingresa una fecha de nacimiento válida para calcular la edad."},{status:422});
     if(!(ACADEMIC_LEVEL_OPTIONS as readonly string[]).includes(education)||!professionalTitle||professionalTitle.length>120)return NextResponse.json({message:"Selecciona el nivel académico y escribe el nombre del título o profesión."},{status:422});
     if(password.length<8||password.length>128)return NextResponse.json({message:"La contraseña debe tener entre 8 y 128 caracteres."},{status:422});
     const vacancy=vacancyId?await getVacancyByIdFromDB(vacancyId):null;
     if(vacancyId&&!vacancy)return NextResponse.json({message:"La vacante seleccionada está pausada, cerrada o ya no está disponible."},{status:409});
     if(await getCandidateAccountByDocumentOrEmail({documentNumber,email}))return NextResponse.json({message:"Ya existe una persona con ese documento o correo."},{status:409});
     const passwordHash=await hashCandidatePasswordForDB(password);
-    const id=await createCandidateAccountInDB({firstName,lastName,documentNumber,email,phone,city,department,education,professionalTitle,passwordHash});
+    const id=await createCandidateAccountInDB({firstName,lastName,documentNumber,birthDate,email,phone,city,department,education,professionalTitle,passwordHash});
     const fullName=`${firstName} ${lastName}`;
     await recordVacancyAudit({action:"POSTULANTE_INTERNO_CREADO",table:"candidatos",recordId:id,description:`Administrador ${session.name} (ID ${session.userId}) creó la cuenta interna de ${fullName} (${documentNumber}).`});
     let welcomeEmailSent=false,applicationEmailSent=false,applicationId="";

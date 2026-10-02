@@ -1,4 +1,4 @@
-import { institutionalEmailLayout } from "@/lib/institutional-email";
+import { institutionalEmailLayout, institutionalEmailSiteUrl } from "@/lib/institutional-email";
 import { prepareOutboundEmail, trainingEmailNotice } from "@/lib/training-environment";
 
 async function sendTrainingSafeEmail(
@@ -58,6 +58,24 @@ function internalVacanciesRecipient() {
   ).join(", ");
 }
 
+function candidateSiteUrl() {
+  return institutionalEmailSiteUrl();
+}
+
+function vacancyEmailHero(vacancyTitle: string, label: string) {
+  const imageUrl = `${candidateSiteUrl()}/images/images-baners/Trabaja_con_nosotros.webp`;
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;border-collapse:separate;border-spacing:0;overflow:hidden;border-radius:20px;background:#173f73">
+    <tr><td><img src="${imageUrl}" width="572" alt="Equipo Jardines del Renacer" style="display:block;width:100%;max-width:572px;height:auto;border:0"></td></tr>
+    <tr><td style="padding:22px 24px 24px;background:linear-gradient(135deg,#173f73,#3972ad);color:#fff">
+      <div style="margin:0 0 10px;font-size:12px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:#dbeafe">${escapeHtml(label)}</div>
+      <div style="padding:17px 18px;border:1px solid rgba(255,255,255,.35);border-radius:14px;background:rgba(255,255,255,.14)">
+        <div style="margin:0 0 6px;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#dbeafe">Vacante</div>
+        <div style="font-size:24px;line-height:1.25;font-weight:800;color:#fff">${escapeHtml(vacancyTitle)}</div>
+      </div>
+    </td></tr>
+  </table>`;
+}
+
 export async function sendInternalVacancyMovementEmail(input: {
   eventTitle: string;
   candidateName: string;
@@ -89,18 +107,20 @@ export async function sendInternalVacancyMovementEmail(input: {
   const notes = input.notes
     ? `<div style="margin-top:18px;padding:15px 17px;border-left:4px solid #2454a0;background:#f3f7fc"><strong>Observación</strong><p style="margin:7px 0 0">${escapeHtml(input.notes)}</p></div>`
     : "";
+  const receivedHero = input.status === "Recibida"
+    ? vacancyEmailHero(input.vacancyTitle, "Nueva postulación recibida")
+    : "";
   await sendTrainingSafeEmail(transporter, {
     from: smtp.from,
     to: recipient,
     subject: `${input.eventTitle} | ${input.vacancyTitle}`,
-    html: institutionalEmailLayout(`<h1 style="font-size:24px;margin:0 0 8px">${escapeHtml(input.eventTitle)}</h1><p style="margin:0 0 20px;color:#526b8b">Se registró un movimiento en el módulo de Talento Humano.</p><div style="padding:18px;border-radius:12px;background:#edf3fc"><p style="margin:0 0 8px"><strong>Postulante:</strong> ${escapeHtml(input.candidateName)}</p><p style="margin:0 0 8px"><strong>Documento:</strong> ${escapeHtml(input.candidateDocument)}</p>${contact}<p style="margin:0 0 8px"><strong>Vacante:</strong> ${escapeHtml(input.vacancyTitle)}</p><p style="margin:0 0 8px"><strong>Estado:</strong> ${escapeHtml(input.status)}</p><p style="margin:0"><strong>Código de postulación:</strong> ${escapeHtml(input.applicationId)}</p></div>${notes}<p style="margin:18px 0 0;font-size:13px;color:#667085">Movimiento registrado por ${escapeHtml(input.adminName)}.</p>`, "Talento Humano · Notificación interna"),
+    html: institutionalEmailLayout(`${receivedHero}<h1 style="font-size:24px;margin:0 0 8px;color:#173f73">${escapeHtml(input.eventTitle)}</h1><p style="margin:0 0 20px;color:#526b8b">Se registró un movimiento en el módulo de Talento Humano.</p><div style="padding:18px;border:1px solid #d4e2f3;border-radius:14px;background:#edf3fc"><p style="margin:0 0 8px"><strong>Postulante:</strong> ${escapeHtml(input.candidateName)}</p><p style="margin:0 0 8px"><strong>Documento:</strong> ${escapeHtml(input.candidateDocument)}</p>${contact}<p style="margin:0 0 8px"><strong>Vacante:</strong> ${escapeHtml(input.vacancyTitle)}</p><p style="margin:0 0 8px"><strong>Estado:</strong> <span style="display:inline-block;padding:4px 9px;border-radius:999px;background:#dff7e9;color:#087443;font-size:12px;font-weight:700">${escapeHtml(input.status)}</span></p><p style="margin:0"><strong>Código de postulación:</strong> ${escapeHtml(input.applicationId)}</p></div>${notes}<p style="margin:18px 0 0;font-size:13px;color:#667085">Movimiento registrado por ${escapeHtml(input.adminName)}.</p>`, "Talento Humano · Notificación interna"),
   });
   return true;
 }
 
 function candidatePortalUrl() {
-  const baseUrl = asText(process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || "https://jardinesdelrenacer.com").replace(/\/$/, "");
-  return `${baseUrl}/servicios/trabaja-con-nosotros/postulante`;
+  return `${candidateSiteUrl()}/servicios/trabaja-con-nosotros/postulante`;
 }
 
 export async function sendCandidateWelcomeEmail({
@@ -221,6 +241,7 @@ export async function sendCandidateApplicationReceivedEmail({
   const recipientName = escapeHtml(name || "Postulante");
   const position = escapeHtml(vacancyTitle || "la vacante seleccionada");
   const tracking = escapeHtml(trackingCode || "No registrado");
+  const portalUrl = candidatePortalUrl();
   const transporter = nodemailer.createTransport({
     host: smtp.host,
     port: smtp.port,
@@ -231,7 +252,7 @@ export async function sendCandidateApplicationReceivedEmail({
     from: smtp.from,
     to: email,
     subject: `Recibimos tu postulación - ${vacancyTitle}`,
-    html: institutionalEmailLayout(`<h1 style="font-size:26px;margin:0 0 16px">Recibimos tu postulación</h1><p>Hola, <strong>${recipientName}</strong>.</p><p>Confirmamos que tu postulación para <strong>${position}</strong> fue recibida correctamente por el equipo de Talento Humano.</p><div style="margin:24px 0;padding:16px 18px;border-radius:12px;background:#edf3fc"><p style="margin:0 0 8px"><strong>Estado actual:</strong> Recibida</p><p style="margin:0"><strong>Código de seguimiento:</strong> ${tracking}</p></div><p>Te notificaremos en este correo cuando tu proceso avance a una nueva etapa.</p>`, "Portal de postulantes"),
+    html: institutionalEmailLayout(`${vacancyEmailHero(vacancyTitle || "Vacante seleccionada", "¡Estamos buscando talento!")}<h1 style="font-size:27px;line-height:1.2;margin:0 0 14px;color:#173f73">Recibimos tu postulación</h1><p style="font-size:16px;line-height:1.6">Hola, <strong>${recipientName}</strong>.</p><p style="font-size:16px;line-height:1.6">Confirmamos que tu postulación para <strong>${position}</strong> fue recibida correctamente por el equipo de Talento Humano.</p><div style="margin:24px 0;padding:18px;border:1px solid #c9ddf3;border-radius:14px;background:#eef5fc"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="padding-bottom:10px"><strong style="color:#173f73">Estado actual</strong></td><td style="padding-bottom:10px;text-align:right"><span style="display:inline-block;padding:6px 12px;border-radius:999px;background:#dff7e9;color:#087443;font-size:12px;font-weight:700">Recibida</span></td></tr><tr><td style="color:#526b8b">Código de seguimiento</td><td style="text-align:right;font-weight:700;color:#173f73">${tracking}</td></tr></table></div><p style="font-size:15px;line-height:1.6">Te notificaremos en este correo cuando tu proceso avance a una nueva etapa.</p><p style="margin:24px 0 8px;text-align:center"><a href="${portalUrl}" style="display:inline-block;padding:13px 22px;border-radius:12px;background:#245c9b;color:#fff;text-decoration:none;font-weight:700">Consultar mi proceso</a></p>`, "Portal de postulantes"),
   });
   return true;
 }

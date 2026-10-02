@@ -42,6 +42,9 @@ export default function DashboardSidebar({
   onOpenTrainingGuide,
 }: DashboardSidebarProps) {
   const pathname = usePathname();
+  const activeHref = navigation
+    .filter(({ href, external }) => !external && (pathname === href || pathname.startsWith(`${href}/`)))
+    .sort((left, right) => right.href.length - left.href.length)[0]?.href;
 
   return (
     <aside className="fixed inset-y-3 left-3 z-20 hidden w-[17.5rem] flex-col rounded-[28px] border border-white/55 bg-white/58 p-3 shadow-[0_24px_70px_-38px_rgba(8,37,88,0.75)] backdrop-blur-2xl lg:flex">
@@ -61,7 +64,7 @@ export default function DashboardSidebar({
       <nav className="mt-6 min-h-0 flex-1 space-y-1.5 overflow-y-auto" aria-label={`Navegación ${workspace}`}>
         <p className="px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#6a83a5]">Espacio de trabajo</p>
         {navigation.map(({ href, label, icon: Icon, external }) => {
-          const active = !external && (pathname === href || (href !== '/dashboard' && pathname.startsWith(`${href}/`)));
+          const active = !external && activeHref === href;
           const [targetPath, targetHash = ''] = href.split('#');
           const notice = !external ? sectionNotice(workspace, targetPath, targetHash ? `#${targetHash}` : '') : null;
           return (

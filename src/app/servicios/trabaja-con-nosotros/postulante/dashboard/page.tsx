@@ -11,6 +11,7 @@ import {
   LogOut,
   MapPin,
   Save,
+  ShieldCheck,
   User,
 } from "lucide-react";
 import type { CandidateProfile, JobApplication } from "@/config/candidates";
@@ -54,6 +55,8 @@ function PostulanteDashboardContent() {
   const [profile, setProfile] = useState<CandidateProfile>(
     createEmptyCandidateProfile(),
   );
+  const [savedDocumentNumber, setSavedDocumentNumber] = useState("");
+  const [documentPassword, setDocumentPassword] = useState("");
   const [applications, setApplications] = useState<JobApplication[]>([]);
   const [vacancies, setVacancies] = useState<JobVacancy[]>([]);
   const [loading, setLoading] = useState(true);
@@ -140,6 +143,7 @@ function PostulanteDashboardContent() {
         }
 
         setProfile(profileResult.data);
+        setSavedDocumentNumber(profileResult.data.documentNumber);
         setApplications(applicationsResult.data);
         if (vacanciesResponse.ok) {
           const vacanciesResult =
@@ -184,6 +188,13 @@ function PostulanteDashboardContent() {
     setFeedback("");
 
     try {
+      const documentChanged = profile.documentNumber !== savedDocumentNumber;
+      if (documentChanged && !/^\d{6,20}$/.test(profile.documentNumber)) {
+        throw new Error("La cédula debe tener entre 6 y 20 dígitos.");
+      }
+      if (documentChanged && !documentPassword) {
+        throw new Error("Escribe tu contraseña actual para confirmar el cambio de cédula.");
+      }
       const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/postulantes/perfil`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -195,7 +206,22 @@ function PostulanteDashboardContent() {
         throw new Error(result.message || "No se pudo guardar el perfil.");
       }
 
-      setProfile(result.data);
+      let updatedProfile = result.data;
+      if (documentChanged) {
+        const documentResponse = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/postulantes/documento`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ documentNumber: profile.documentNumber, password: documentPassword }),
+        });
+        const documentResult = (await documentResponse.json()) as ApiResponse<{ documentNumber: string }>;
+        if (!documentResponse.ok || !documentResult.success || !documentResult.data) {
+          throw new Error(documentResult.message || "No se pudo actualizar la cédula.");
+        }
+        updatedProfile = { ...result.data, documentNumber: documentResult.data.documentNumber };
+        setSavedDocumentNumber(documentResult.data.documentNumber);
+        setDocumentPassword("");
+      }
+      setProfile(updatedProfile);
       setFeedback("Perfil actualizado correctamente.");
       setNotice({
         title: "Perfil actualizado",
@@ -504,8 +530,31 @@ function PostulanteDashboardContent() {
                     <Input
                       label="Documento"
                       value={profile.documentNumber}
-                      disabled
+                      inputMode="numeric"
+                      maxLength={20}
+                      pattern="[0-9]{6,20}"
+                      onChange={(event) => setProfile((prev) => ({
+                        ...prev,
+                        documentNumber: event.target.value.replace(/\D/g, ""),
+                      }))}
                     />
+                    {profile.documentNumber !== savedDocumentNumber && (
+                      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                        <div className="mb-3 flex items-start gap-3 text-amber-900">
+                          <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0" />
+                          <p className="text-xs leading-5">Confirma tu contraseña actual. El cambio conservará todas tus postulaciones y quedará registrado en la trazabilidad.</p>
+                        </div>
+                        <Input
+                          label="Contraseña actual"
+                          type="password"
+                          autoComplete="current-password"
+                          maxLength={128}
+                          value={documentPassword}
+                          onChange={(event) => setDocumentPassword(event.target.value)}
+                          required
+                        />
+                      </div>
+                    )}
                     <Input
                       label="Correo"
                       type="email"

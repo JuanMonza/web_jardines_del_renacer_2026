@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import ApplicationFollowup from "@/components/vacantes/ApplicationFollowup";
 import InternalCandidate from "@/components/vacantes/InternalCandidate";
@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import TrainingHint from "@/components/training/TrainingHint";
+import { useSearchParams } from "next/navigation";
 
 type Application = {
   id: string;
@@ -29,6 +30,8 @@ type Application = {
 };
 
 export default function PostulantesAdminPanel() {
+  const searchParams = useSearchParams();
+  const openedApplicationId = useRef<string | null>(null);
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -66,6 +69,10 @@ export default function PostulantesAdminPanel() {
   const [transferTargetId, setTransferTargetId] = useState("");
   const [transferNotes, setTransferNotes] = useState("");
   const [transferring, setTransferring] = useState(false);
+  const [editingDocument, setEditingDocument] = useState(false);
+  const [newDocumentNumber, setNewDocumentNumber] = useState("");
+  const [documentAdminPassword, setDocumentAdminPassword] = useState("");
+  const [savingDocument, setSavingDocument] = useState(false);
 
   const openCandidateDetail = (application: Application) => {
     setSelectedApplication(application);
@@ -73,6 +80,9 @@ export default function PostulantesAdminPanel() {
     setCandidateHistory([]);
     setTransferTargetId("");
     setTransferNotes("");
+    setEditingDocument(false);
+    setNewDocumentNumber(application.candidateDocument || "");
+    setDocumentAdminPassword("");
     void fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes/postulaciones/${application.id}/candidate`)
       .then((response) => response.json())
       .then((result) => {
@@ -80,6 +90,55 @@ export default function PostulantesAdminPanel() {
         setCandidateHistory(result.history || []);
       });
   };
+
+  const saveCandidateDocument = async () => {
+    const candidateId = String(candidateDetail?.candidato_id || "");
+    if (!selectedApplication || !candidateId || !/^\d{6,20}$/.test(newDocumentNumber) || !documentAdminPassword) return;
+    setSavingDocument(true);
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes/postulante-interno/${candidateId}/documento`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ documentNumber: newDocumentNumber, password: documentAdminPassword }),
+      });
+      const result = await response.json() as { success?: boolean; documentNumber?: string; message?: string };
+      if (!response.ok || !result.success) throw new Error(result.message || "No fue posible corregir la cédula.");
+      const savedDocument = result.documentNumber || newDocumentNumber;
+      setApplications((current) => current.map((application) => application.id === selectedApplication.id ? { ...application, candidateDocument: savedDocument } : application));
+      setSelectedApplication((current) => current ? { ...current, candidateDocument: savedDocument } : current);
+      setCandidateDetail((current) => current ? { ...current, documento: savedDocument } : current);
+      setEditingDocument(false);
+      setDocumentAdminPassword("");
+      setNotice({
+        title: "Cédula actualizada",
+        description: "La nueva cédula quedó aplicada al perfil y a sus postulaciones. La trazabilidad se conservó y el cambio quedó registrado en auditoría.",
+        variant: "success",
+      });
+    } catch (error) {
+      setNotice({
+        title: "No fue posible actualizar la cédula",
+        description: error instanceof Error ? error.message : "Verifica los datos y vuelve a intentarlo.",
+        variant: "error",
+      });
+    } finally {
+      setSavingDocument(false);
+    }
+  };
+
+  useEffect(() => {
+    const requestedApplicationId = searchParams.get("application")?.trim();
+    if (
+      loading ||
+      !requestedApplicationId ||
+      openedApplicationId.current === requestedApplicationId
+    ) return;
+    const requestedApplication = applications.find(
+      (application) => String(application.id) === requestedApplicationId,
+    );
+    if (!requestedApplication) return;
+    openedApplicationId.current = requestedApplicationId;
+    openCandidateDetail(requestedApplication);
+  }, [applications, loading, searchParams]);
 
   const updateStatus = async (id: string, status: string, notes?: string) => {
     setUpdatingId(id);
@@ -888,6 +947,27 @@ export default function PostulantesAdminPanel() {
                       </div>
                       <div>
                         <p className="text-xs font-bold uppercase text-textLight">
+                          Cédula
+                        </p>
+                        <div className="mt-1 flex flex-wrap items-center gap-2">
+                          <p className="font-semibold text-text">
+                            {candidateDetail?.documento || selectedApplication.candidateDocument || "No registrada"}
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setNewDocumentNumber(candidateDetail?.documento || selectedApplication.candidateDocument || "");
+                              setDocumentAdminPassword("");
+                              setEditingDocument(true);
+                            }}
+                            className="rounded-lg border border-amber-300 bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-900 transition hover:bg-amber-100"
+                          >
+                            Editar cédula
+                          </button>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold uppercase text-textLight">
                           Estado
                         </p>
                         <div className="mt-2">
@@ -914,6 +994,24 @@ export default function PostulantesAdminPanel() {
                         </p>
                       </div>
                     </div>
+                    {editingDocument && (
+                      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                        <p className="text-sm font-bold text-amber-950">Corregir cédula del postulante</p>
+                        <p className="mt-1 text-xs leading-5 text-amber-900">Se actualizará el perfil y todas sus postulaciones sin borrar el historial. El cambio requiere tu contraseña y quedará auditado.</p>
+                        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                          <label className="text-xs font-bold text-amber-950">Nueva cédula
+                            <input inputMode="numeric" maxLength={20} value={newDocumentNumber} onChange={(event) => setNewDocumentNumber(event.target.value.replace(/\D/g, ""))} className="mt-1.5 w-full rounded-xl border border-amber-200 bg-white px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-amber-300" />
+                          </label>
+                          <label className="text-xs font-bold text-amber-950">Tu contraseña de administrador
+                            <input type="password" autoComplete="current-password" maxLength={128} value={documentAdminPassword} onChange={(event) => setDocumentAdminPassword(event.target.value)} className="mt-1.5 w-full rounded-xl border border-amber-200 bg-white px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-amber-300" />
+                          </label>
+                        </div>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <button type="button" disabled={savingDocument || !/^\d{6,20}$/.test(newDocumentNumber) || !documentAdminPassword} onClick={() => void saveCandidateDocument()} className="rounded-xl bg-amber-700 px-4 py-2 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50">{savingDocument ? "Guardando..." : "Guardar nueva cédula"}</button>
+                          <button type="button" disabled={savingDocument} onClick={() => { setEditingDocument(false); setDocumentAdminPassword(""); }} className="rounded-xl border border-amber-300 bg-white px-4 py-2 text-sm font-bold text-amber-950">Cancelar</button>
+                        </div>
+                      </div>
+                    )}
                     {candidateDetail?.cv_url && (
                       <TrainingHint text="Abre la hoja de vida adjunta por el postulante para revisar formación y experiencia antes de tomar una decisión.">
                       <a

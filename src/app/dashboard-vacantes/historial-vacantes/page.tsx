@@ -2,9 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Archive, ChevronDown, Copy, FileText, Search, Users } from "lucide-react";
+import { Archive, ArrowRightLeft, CheckCircle2, ChevronDown, Copy, FileText, Loader2, Search, Users, X } from "lucide-react";
 import type { JobVacancy } from "@/config/vacancies";
 import TrainingHint from "@/components/training/TrainingHint";
+import ScreenDialog from "@/components/ui/ScreenDialog";
 
 type Application = {
   id: string;
@@ -31,16 +32,65 @@ const statusTone: Record<string, string> = {
 
 export default function VacancyHistoryPage() {
   const [vacancies, setVacancies] = useState<ClosedVacancy[]>([]);
+  const [activeVacancies, setActiveVacancies] = useState<JobVacancy[]>([]);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [transfer, setTransfer] = useState<{ application: Application; sourceVacancy: ClosedVacancy } | null>(null);
+  const [targetVacancyId, setTargetVacancyId] = useState("");
+  const [transferNotes, setTransferNotes] = useState("");
+  const [transferring, setTransferring] = useState(false);
+  const [notice, setNotice] = useState<{ tone: "success" | "error"; title: string; text: string } | null>(null);
+
+  const loadHistory = async () => {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes/historial`, { cache: "no-store" });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.message || "No fue posible cargar el historial.");
+    setVacancies(result.data ?? []);
+  };
+
   useEffect(() => {
-    void fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes/historial`)
-      .then((response) => response.json())
-      .then((result) => setVacancies(result.data ?? []))
+    void Promise.all([
+      loadHistory(),
+      fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes?admin=1`, { cache: "no-store" })
+        .then(response => response.ok ? response.json() : [])
+        .then(result => setActiveVacancies(Array.isArray(result) ? result.filter(item => item.status === "Publicada") : [])),
+    ])
       .catch(() => setVacancies([]))
       .finally(() => setLoading(false));
   }, []);
+
+  const openTransfer = (application: Application, sourceVacancy: ClosedVacancy) => {
+    setTransfer({ application, sourceVacancy });
+    setTargetVacancyId("");
+    setTransferNotes("");
+    setNotice(null);
+  };
+
+  const submitTransfer = async () => {
+    if (!transfer || !targetVacancyId || transferNotes.trim().length < 5 || transferring) return;
+    setTransferring(true);
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_TRAINING_BASE_PATH || ""}/api/vacantes/postulaciones/${transfer.application.id}/trasladar`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ targetVacancyId, notes: transferNotes.trim() }),
+      });
+      const result = await response.json() as { success?: boolean; message?: string; data?: { vacancyTitle?: string; internalNotificationSent?: boolean } };
+      if (!response.ok || !result.success) throw new Error(result.message || "No fue posible trasladar al postulante.");
+      await loadHistory();
+      setTransfer(null);
+      setNotice({
+        tone: "success",
+        title: "Postulante trasladado",
+        text: `${transfer.application.name} quedó registrado en “${result.data?.vacancyTitle || "la nueva vacante"}”. El proceso anterior permanece en el historial y la acción quedó auditada.`,
+      });
+    } catch (error) {
+      setNotice({ tone: "error", title: "No fue posible trasladar", text: error instanceof Error ? error.message : "Intenta nuevamente." });
+    } finally {
+      setTransferring(false);
+    }
+  };
   const visible = useMemo(() => {
     const query = search.trim().toLowerCase();
     if (!query) return vacancies;
@@ -72,6 +122,10 @@ export default function VacancyHistoryPage() {
         </p>
       </section>
       <section className="rounded-3xl border border-[#dbe5f3] bg-white p-6 shadow-[0_10px_28px_rgba(32,69,113,.08)]">
+        {notice && <div role="status" className={`mb-5 flex items-start gap-3 rounded-2xl border p-4 ${notice.tone === "success" ? "border-emerald-200 bg-emerald-50 text-emerald-900" : "border-red-200 bg-red-50 text-red-900"}`}>
+          {notice.tone === "success" ? <CheckCircle2 className="mt-0.5 shrink-0" size={20}/> : <span className="font-black">!</span>}
+          <div><p className="font-bold">{notice.title}</p><p className="mt-1 text-sm">{notice.text}</p></div>
+        </div>}
         <TrainingHint text="Busca entre vacantes cerradas por cargo, ciudad, nombre, cédula o correo de una persona postulada. El archivo original no se modifica."><label className="relative block">
           <Search className="absolute left-4 top-3.5 h-4 w-4 text-textLight" />
           <input
@@ -140,6 +194,7 @@ export default function VacancyHistoryPage() {
                               <th className="p-3">Estado final</th>
                               <th className="p-3">Observación</th>
                               <th className="p-3">Fecha</th>
+                              <th className="p-3 text-center">Acciones</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -175,6 +230,13 @@ export default function VacancyHistoryPage() {
                                     application.appliedAt,
                                   ).toLocaleDateString("es-CO")}
                                 </td>
+                                <td className="p-3 text-center">
+                                  <TrainingHint text="Traslada este mismo perfil a otra vacante publicada. El proceso cerrado no se borra y el movimiento queda registrado en la trazabilidad.">
+                                    <button type="button" onClick={() => openTransfer(application, vacancy)} className="inline-flex items-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-xs font-bold text-violet-800 transition hover:bg-violet-100">
+                                      <ArrowRightLeft size={15}/> Trasladar
+                                    </button>
+                                  </TrainingHint>
+                                </td>
                               </tr>
                             ))}
                           </tbody>
@@ -196,6 +258,35 @@ export default function VacancyHistoryPage() {
           )}
         </div>
       </section>
+      {transfer && <ScreenDialog ariaLabel="Trasladar postulante a otra vacante" onClose={() => !transferring && setTransfer(null)}>
+        <section onClick={event => event.stopPropagation()} className="relative w-full max-w-xl overflow-hidden rounded-[30px] border border-white/80 bg-white/90 p-6 shadow-2xl backdrop-blur-xl sm:p-8">
+          <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-violet-500 via-primary to-sky-400"/>
+          <div className="flex items-start justify-between gap-4">
+            <div><p className="text-xs font-bold uppercase tracking-[.16em] text-violet-700">Movimiento interno</p><h2 className="mt-2 text-2xl font-bold text-text">Trasladar a otra vacante</h2></div>
+            <button type="button" disabled={transferring} onClick={() => setTransfer(null)} className="rounded-xl border border-border bg-white p-2 text-textLight disabled:opacity-50"><X size={19}/></button>
+          </div>
+          <div className="mt-5 rounded-2xl border border-[#dbe5f3] bg-[#f5f8fd]/80 p-4">
+            <p className="font-bold text-text">{transfer.application.name}</p>
+            <p className="mt-1 text-sm text-textLight">C.C. {transfer.application.document} · desde “{transfer.sourceVacancy.title}”</p>
+          </div>
+          {notice?.tone === "error" && <div role="alert" className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-900"><p className="font-bold">{notice.title}</p><p className="mt-1">{notice.text}</p></div>}
+          <label className="mt-5 block text-sm font-bold text-text">Vacante destino
+            <select autoFocus value={targetVacancyId} onChange={event => setTargetVacancyId(event.target.value)} className="mt-2 w-full rounded-xl border border-border bg-white px-4 py-3 font-medium outline-none focus:border-primary focus:ring-2 focus:ring-primary/15">
+              <option value="">Seleccionar vacante publicada</option>
+              {activeVacancies.filter(item => String(item.id) !== String(transfer.sourceVacancy.id)).map(item => <option key={item.id} value={item.id}>{item.title} · {item.city}</option>)}
+            </select>
+          </label>
+          {!activeVacancies.length && <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">No hay vacantes publicadas disponibles para recibir el traslado.</p>}
+          <label className="mt-5 block text-sm font-bold text-text">Observación del traslado
+            <textarea value={transferNotes} maxLength={1000} onChange={event => setTransferNotes(event.target.value)} rows={4} placeholder="Ej.: El perfil también cumple los requisitos de la nueva vacante. Se confirmó disponibilidad por llamada." className="mt-2 w-full resize-none rounded-xl border border-border bg-white p-4 font-normal outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"/>
+          </label>
+          <p className="mt-2 text-xs leading-5 text-textLight">La vacante anterior y sus observaciones se conservarán. Se creará una nueva postulación y el movimiento quedará en auditoría.</p>
+          <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <button type="button" disabled={transferring} onClick={() => setTransfer(null)} className="rounded-xl border border-border bg-white px-5 py-3 font-bold text-text disabled:opacity-50">Cancelar</button>
+            <button type="button" disabled={transferring || !targetVacancyId || transferNotes.trim().length < 5} onClick={() => void submitTransfer()} className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 font-bold text-white shadow-lg disabled:opacity-50">{transferring?<><Loader2 className="animate-spin" size={18}/>Trasladando...</>:<><ArrowRightLeft size={18}/>Confirmar traslado</>}</button>
+          </div>
+        </section>
+      </ScreenDialog>}
     </div>
   );
 }

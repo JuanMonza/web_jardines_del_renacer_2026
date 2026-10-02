@@ -11,7 +11,7 @@ import mysql from "mysql2/promise";
 import db, { query, execute } from "./db";
 import { recordHiring } from "@/lib/hiring-history";
 import { ensureSelectionSchema } from "@/lib/selection-followup";
-import { ensureHistoricalCandidateSchema } from "@/lib/historical-candidate-records";
+import { ensureHistoricalCandidateSchema, recordPlatformCandidateMovement } from "@/lib/historical-candidate-records";
 import { ensureCandidateCvStorageSchema } from "@/lib/candidate-cv-storage";
 
 type DbApplicationRow = {
@@ -99,6 +99,7 @@ export type CandidateRegistrationInput = {
   lastName?: string;
   email: string;
   phone?: string;
+  birthDate?: string;
   passwordHash: string;
   city?: string;
   department?: string;
@@ -488,7 +489,8 @@ export async function updateApplicationStatusInDB(input: {
   const note=input.notes?.trim()||"";
   if(input.status!=="Recibida"&&!note)return false;
   const corporateStatus={Recibida:"Postulado","En revision":"En revisión",Entrevista:"Entrevista RH","Prueba tecnica":"Prueba técnica",Seleccionado:"Contratado","No continua":"No seleccionado",Trasladado:"No seleccionado"}[input.status];
-  if(input.status==="Seleccionado"){await ensureSelectionSchema();await ensureHistoricalCandidateSchema();}
+  await ensureHistoricalCandidateSchema();
+  if(input.status==="Seleccionado")await ensureSelectionSchema();
   const connection=await db.getConnection();
   try {
     await connection.beginTransaction();
@@ -497,6 +499,7 @@ export async function updateApplicationStatusInDB(input: {
     await connection.execute("UPDATE postulaciones SET estado=?,observaciones_rh=CONCAT(?, '\\n', COALESCE(observaciones_rh,'')) WHERE id=?",[corporateStatus,note,input.id]);
     const admin=`${input.adminName||"Administrador"} (ID ${input.adminUserId||"No registrado"})`;
     await connection.execute("INSERT INTO activity_logs(usuario_tipo,accion,modulo,tabla_afectada,registro_id,descripcion) VALUES ('Admin','POSTULACION_ESTADO_ACTUALIZADO','Vacantes','postulaciones',?,?)",[input.id,`Administrador ${admin} actualizó el proceso. Estado informado: ${input.status}. Observación: ${note}`]);
+    await recordPlatformCandidateMovement(connection,{applicationId:input.id,status:input.status,observations:note,actor:admin});
     if(input.status==="Seleccionado")await recordHiring(connection,input.id,admin,note);
     await connection.commit();return true;
   } catch(error){await connection.rollback();throw error;}
@@ -532,6 +535,7 @@ export async function createCandidateAccountInDB(
       apellidos,
       email,
       telefono,
+      fecha_nacimiento,
       password_hash,
       ciudad,
       departamento,
@@ -543,7 +547,7 @@ export async function createCandidateAccountInDB(
       cv_url,
       activo
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
   `;
 
   const result = await execute(sql, [
@@ -552,6 +556,7 @@ export async function createCandidateAccountInDB(
     input.lastName?.trim() ?? "",
     email,
     input.phone?.trim() ?? "",
+    input.birthDate?.trim() || null,
     input.passwordHash,
     input.city?.trim() ?? "",
     input.department?.trim() ?? "",
@@ -562,6 +567,13 @@ export async function createCandidateAccountInDB(
     input.portfolioUrl?.trim() ?? "",
     input.cvUrl?.trim() ?? "",
   ]);
+
+  await execute(
+    `INSERT INTO activity_logs
+      (usuario_tipo, accion, modulo, tabla_afectada, registro_id, descripcion)
+     VALUES ('Postulante','POSTULANTE_REGISTRADO','Vacantes','candidatos',?,?)`,
+    [result.insertId, `Se registró el perfil de ${buildFullName(input.firstName, input.lastName)} (${documentNumber}) en la plataforma.`],
+  );
 
   return String(result.insertId);
 }
@@ -808,6 +820,21 @@ export async function updateCandidateProfileInDB(input: {
     ],
   );
 
+  if (result.affectedRows) {
+    const candidates = await query<{ id: number }>(
+      "SELECT id FROM candidatos WHERE documento = ? AND LOWER(email) = ? AND deleted_at IS NULL LIMIT 1",
+      [normalizeDocumentNumber(input.documentNumber), normalizeEmail(input.email)],
+    );
+    if (candidates[0]) {
+      await execute(
+        `INSERT INTO activity_logs
+          (usuario_tipo, accion, modulo, tabla_afectada, registro_id, descripcion)
+         VALUES ('Postulante','POSTULANTE_PERFIL_ACTUALIZADO','Vacantes','candidatos',?,?)`,
+        [candidates[0].id, "El postulante actualizó la información de su perfil profesional."],
+      );
+    }
+  }
+
   return result.affectedRows;
 }
 
@@ -973,6 +1000,22 @@ export async function createApplicationInDB(
   ];
 
   const result = await execute(sql, params);
+  try {
+    await ensureHistoricalCandidateSchema();
+    const connection = await db.getConnection();
+    try {
+      await recordPlatformCandidateMovement(connection, {
+        applicationId: String(result.insertId),
+        status: "Recibida",
+        observations: "Postulación registrada en la plataforma.",
+        actor: applicationSource,
+      });
+    } finally {
+      connection.release();
+    }
+  } catch (error) {
+    console.error("No fue posible reflejar la postulación en el historial laboral:", error);
+  }
   return String(result.insertId);
 }
 
